@@ -1,4 +1,4 @@
-# Getränkekassen-Webapp
+# Beverage Cash Management Web App
 
 [![CI/CD](https://img.shields.io/github/actions/workflow/status/<USERNAME>/<REPO>/ci.yml?label=CI%2FCD)](https://github.com/<USERNAME>/<REPO>/actions)
 [![Docker](https://img.shields.io/badge/Docker-ready-blue?logo=docker)](https://hub.docker.com/r/<USERNAME>/<REPO>)
@@ -7,61 +7,61 @@
 [![Flask](https://img.shields.io/badge/Flask-2.x-black?logo=flask)](https://flask.palletsprojects.com/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-blue?logo=postgresql)](https://www.postgresql.org/)
 
-Eine **Flask-basierte Webanwendung** zur Verwaltung einer Getränkekasse mit moderner Architektur, Sicherheitsfunktionen und Exportmöglichkeiten.
+A **Flask-based application** to manage a beverage cash box with modern architecture, security features, and export options.
 
 ---
 
-## Inhaltsverzeichnis
+## Table of Contents
 - [Features](#-features)
-- [Tech-Stack](#️-tech-stack)
+- [Tech Stack](#️-tech-stack)
 - [Installation & Setup](#-installation--setup)
-- [Beispiel `.env`](#-beispiel-env)
-- [Nutzung](#-nutzung)
+- [Example `.env`](#-example-env)
+- [Usage](#-usage)
 - [Tests](#-tests)
-- [Sicherheit](#-sicherheit)
+- [Security](#-security)
 - [Screenshots](#-screenshots)
-- [Lizenz](#-lizenz)
+- [License](#-license)
 
 ## 🚀 Features
-- **Inventar- und Kassenverwaltung** (Vollgut, Leergut, Einnahmen, Ausgaben)
-- **Benutzerverwaltung mit RBAC** (Role-Based Access Control)
-- **Zwei-Faktor-Authentifizierung (2FA)**
-- **Audit-Logs** für Nachvollziehbarkeit
-- **Export als CSV und PDF**
-- **Responsive UI** mit Jinja2-Templates
+- **Inventory and cash tracking** (full bottles, empties, income, expenses)
+- **User management with RBAC** (Role-Based Access Control)
+- **Two-Factor Authentication (2FA)**
+- **Audit logs** for traceability
+- **CSV and PDF export**
+- **Responsive UI** using Jinja2 templates
 - **CI/CD** via GitHub Actions
-- **Docker-Compose Setup** für einfache Bereitstellung
+- **Docker-Compose** for simple deployment
 
-## 🛠️ Tech-Stack
+## 🛠️ Tech Stack
 - **Backend:** Flask (Python)
 - **Frontend:** Jinja2, HTML, CSS
-- **Datenbank:** PostgreSQL
-- **Containerisierung:** Docker & Docker-Compose
+- **Database:** PostgreSQL
+- **Containerization:** Docker & Docker-Compose
 - **CI/CD:** GitHub Actions
 
 ## 📦 Installation & Setup
 
-### Voraussetzungen
+### Requirements
 - Docker & Docker-Compose
 - Git
 
-### Schritte
+### Steps
 ```bash
-# Repository klonen
+# Clone
 git clone https://github.com/<USERNAME>/<REPO>.git
 cd <REPO>
 
-# .env anlegen (siehe unten)
+# Create .env (see below)
 cp .env.example .env || true
 
-# Docker-Compose starten
-# Falls deine Datei "docker-compose 1.yml" heißt:
+# Start with Docker Compose
+# If your file is named "docker-compose 1.yml":
 docker compose -f "docker-compose 1.yml" up -d --build
-# Ansonsten (Standardname):
+# Otherwise (default):
 # docker compose up -d --build
 ```
 
-Lokaler Start (ohne Docker):
+Local run (without Docker):
 ```bash
 python -m venv .venv
 source .venv/bin/activate  # Windows: .venv\Scripts\activate
@@ -69,9 +69,9 @@ pip install -r requirements.txt
 flask --app app.py run
 ```
 
-## ⚙️ Beispiel .env
+## ⚙️ Example .env
 ```env
-SECRET_KEY=dein-geheimer-schlüssel
+SECRET_KEY=your-secret-key
 DB_HOST=getraenkekasse-db
 DB_NAME=getraenkekasse
 DB_USER=db-user
@@ -79,37 +79,37 @@ DB_PASS=db-password
 SMTP_HOST=smtp.example.com
 SMTP_PORT=587
 SMTP_USER=mailer@example.com
-SMTP_PASS=dein-smtp-passwort
+SMTP_PASS=your-smtp-password
 SMTP_TLS=true
 FROM_EMAIL=mailer@example.com
 APP_BASE_URL=http://localhost:5000
 ```
 
-## ▶️ Nutzung
-- **Startseite:** Übersicht Inventar & Kassenbestand
-- **Filter:** Zeitraum & Suche
+## ▶️ Usage
+- **Dashboard:** Overview of inventory and cash balance
+- **Filters:** Date range & search
 - **Export:** PDF & CSV
-- **Admin:** Benutzerrollen & Audit-Logs
+- **Admin:** User roles & audit logs
 
 ## ✅ Tests
 ```bash
 pytest -q
 ```
 
-## 🔒 Sicherheit
-- Passwort-Hashing (Werkzeug)
+## 🔒 Security
+- Password hashing (Werkzeug)
 - 2FA via TOTP
-- Rollenbasierte Zugriffssteuerung
-- Empfohlene Header: HSTS, CSP, X-Frame-Options, X-Content-Type-Options
+- Role-based access control
+- Recommended headers: HSTS, CSP, X-Frame-Options, X-Content-Type-Options
 
 ## 🖼️ Screenshots
-Füge deine Screenshots im Ordner `docs/screenshots/` hinzu und verlinke sie hier:
+Place screenshots into `docs/screenshots/` and reference them here:
 
 ```markdown
 ![Dashboard](docs/screenshots/dashboard.png)
-![Formular](docs/screenshots/form.png)
+![Form](docs/screenshots/form.png)
 ![Export](docs/screenshots/export.png)
 ```
 
-## 📄 Lizenz
-Dieses Projekt steht unter der MIT-Lizenz. Siehe [LICENSE](LICENSE).
+## 📄 License
+This project is licensed under the MIT License. See [LICENSE](LICENSE).

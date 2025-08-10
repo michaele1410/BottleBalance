@@ -48,7 +48,7 @@ Eine **Flask-basierte Webanwendung** zur Verwaltung einer Getränkekasse mit mod
 ### Schritte
 ```bash
 # Repository klonen
-git clone https://github.com/<USERNAME>/<REPO>.git
+git clone [https://github.com/<USERNAME>/<REPO>.git](https://github.com/michaele1410/BottleBalance)
 cd <REPO>
 
 # .env anlegen (siehe unten)

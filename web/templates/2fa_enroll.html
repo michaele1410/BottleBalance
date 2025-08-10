@@ -1,0 +1,16 @@
+
+{% extends "base.html" %}
+{% block content %}
+<div class="row justify-content-center"><div class="col-md-8 col-lg-6">
+  <div class="card shadow-sm"><div class="card-body">
+    <h5 class="card-title">2FA einrichten</h5>
+    <p>Scanne den QR‑Code mit deiner Authenticator‑App und gib anschließend den 6‑stelligen Code ein.</p>
+    <img class="img-fluid mb-3 border" alt="2FA QR" src="{{ qr_data_url }}" />
+    <p class="text-muted">Manueller Schlüssel: <code>{{ secret }}</code></p>
+    <form method="post" action="{{ url_for('confirm_2fa') }}" class="d-flex gap-2">
+      <input name="code" placeholder="6‑stelliger Code" class="form-control">
+      <button class="btn btn-primary">Bestätigen</button>
+    </form>
+  </div></div>
+</div></div>
+{% endblock %}

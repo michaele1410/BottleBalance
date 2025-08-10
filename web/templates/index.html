@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+  <div class="row g-3 align-items-start">
+
+    <!-- Left: two equal cards with label + spark each -->
+    <div class="col-lg-8">
+      <div class="row g-3 mb-1">
+        <!-- Inventar card -->
+        <div class="col-sm-6">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body py-3">
+              <div class="d-flex justify-content-between align-items-baseline mb-2">
+                <div class="small text-muted">
+                  <span class="fw-semibold">Inventar (aktuell):</span>
+                  <span>{{ inv_aktuell }}</span> <span class="text-muted">Flaschen</span>
+                </div>
+                {% if request.args.get('from') or request.args.get('to') %}
+                  <div class="small text-muted text-nowrap">Im Filter: {{ filter_inv }}</div>
+                {% endif %}
+              </div>
+              <div class="chart-wrap" style="height:72px;">
+                <canvas id="sparkInventar" aria-label="Sparkline Inventar" role="img"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Kassenbestand card -->
+        <div class="col-sm-6">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body py-3">
+              <div class="d-flex justify-content-between align-items-baseline mb-2">
+                <div class="small text-muted">
+                  <span class="fw-semibold">Kassenbestand (aktuell):</span>
+                  <span>{{ format_eur_de(kas_aktuell) }}</span>
+                </div>
+                {% if request.args.get('from') or request.args.get('to') %}
+                  <div class="small text-muted text-nowrap">Im Filter: {{ format_eur_de(filter_kas) }}</div>
+                {% endif %}
+              </div>
+              <div class="chart-wrap" style="height:72px;">
+                <canvas id="sparkKasse" aria-label="Sparkline Kassenbestand" role="img"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Form stays in a white card with labels -->
+    {% if can_add %}
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <h6 class="card-title mb-3">Neuen Datensatz hinzufügen</h6>
+          <form method="post" action="{{ url_for('add') }}" class="row g-3">
+            <div class="col-12">
+              <label for="f_datum" class="form-label">Datum</label>
+              <input id="f_datum" type="date" name="datum" class="form-control" required>
+            </div>
+            <div class="col-6">
+              <label for="f_vollgut" class="form-label">Vollgut</label>
+              <input id="f_vollgut" type="number" name="vollgut" class="form-control" value="0" placeholder="0">
+            </div>
+            <div class="col-6">
+              <label for="f_leergut" class="form-label">Leergut</label>
+              <input id="f_leergut" type="number" name="leergut" class="form-control" value="0" placeholder="0">
+            </div>
+            <div class="col-6">
+              <label for="f_einnahme" class="form-label">Einnahme (€)</label>
+              <input id="f_einnahme" type="number" step="0.01" name="einnahme" class="form-control" placeholder="z. B. 12,34">
+            </div>
+            <div class="col-6">
+              <label for="f_ausgabe" class="form-label">Ausgabe (€)</label>
+              <input id="f_ausgabe" type="number" step="0.01" name="ausgabe" class="form-control" placeholder="z. B. -5,00">
+            </div>
+            <div class="col-12">
+              <label for="f_bemerkung" class="form-label">Bemerkung</label>
+              <input id="f_bemerkung" type="text" name="bemerkung" class="form-control" placeholder="Notiz">
+            </div>
+            <div class="col-12">
+              <button type="submit" class="btn btn-success w-100">Hinzufügen</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Entries table -->
+  <div class="card mt-3">
+    <div class="card-body">
+      <h6 class="card-title mb-3">Einträge</h6>
+      <form method="get" class="row g-2 align-items-end mb-3">
+        <div class="col-md-4 col-lg-3">
+          <label for="f_q" class="form-label">Suche</label>
+          <input id="f_q" type="text" name="q" class="form-control" placeholder="Datum/Bemerkung" value="{{ request.args.get('q') }}">
+        </div>
+        <div class="col-md-4 col-lg-2">
+          <label for="f_from" class="form-label">Von</label>
+          <input id="f_from" type="date" name="from" class="form-control" value="{{ request.args.get('from') }}">
+        </div>
+        <div class="col-md-4 col-lg-2">
+          <label for="f_to" class="form-label">Bis</label>
+          <input id="f_to" type="date" name="to" class="form-control" value="{{ request.args.get('to') }}">
+        </div>
+        <div class="col-auto">
+          <button type="submit" class="btn btn-primary">Filtern</button>
+        </div>
+        <div class="col-auto">
+          <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">Zurücksetzen</a>
+        </div>
+        <div class="col-auto ms-auto">
+          {% if can_export_pdf %}
+            <a href="{{ url_for('export_pdf', q=request.args.get('q'), from=request.args.get('from'), to=request.args.get('to')) }}" class="btn btn-outline-danger">PDF</a>
+          {% endif %}
+          {% if can_export_csv %}
+            <a href="{{ url_for('export_csv', q=request.args.get('q'), from=request.args.get('from'), to=request.args.get('to')) }}" class="btn btn-outline-success">CSV</a>
+          {% endif %}
+        </div>
+      </form>
+
+      <div class="table-responsive">
+        <table class="table table-sm table-striped table-hover align-middle mb-0">
+          <thead>
+            <tr>
+              <th>Datum</th>
+              <th>Vollgut</th>
+              <th>Leergut</th>
+              <th>Inventar</th>
+              <th>Einnahme</th>
+              <th>Ausgabe</th>
+              <th>Kassenbestand</th>
+              <th>Bemerkung</th>
+              <th class="text-nowrap">Aktionen</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for e in entries %}
+            <tr>
+              <td>{{ format_date_de(e.datum) }}</td>
+              <td>{{ e.vollgut }}</td>
+              <td>{{ e.leergut }}</td>
+              <td>{{ e.inventar }}</td>
+              <td>{{ format_eur_de(e.einnahme) }}</td>
+              <td>{{ format_eur_de(e.ausgabe) }}</td>
+              <td>{{ format_eur_de(e.kassenbestand) }}</td>
+              <td>{{ e.bemerkung }}</td>
+              <td class="text-nowrap">
+                <a href="{{ url_for('edit', entry_id=e.id) }}" class="btn btn-sm btn-outline-primary me-1">Bearbeiten</a>
+                <form method="post" action="{{ url_for('delete', entry_id=e.id) }}" class="d-inline" onsubmit="return confirm('Eintrag wirklich löschen?');">
+                  <button type="submit" class="btn btn-sm btn-outline-danger">Löschen</button>
+                </form>
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="9" class="text-center">Keine Einträge vorhanden.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Chart.js from CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  (function() {
+    // Prefer backend-provided arrays, else build from entries (oldest -> newest)
+    const labels = {% if spark_labels is defined %}{{ spark_labels|safe }}{% else %}[
+      {% for e in entries|reverse %}"{{ format_date_de(e.datum) }}"{% if not loop.last %}, {% endif %}{% endfor %}
+    ]{% endif %};
+
+    const dataInv = {% if spark_inventar is defined %}{{ spark_inventar|safe }}{% else %}[
+      {% for e in entries|reverse %}{{ e.inventar|default(0) }}{% if not loop.last %}, {% endif %}{% endfor %}
+    ]{% endif %};
+
+    const dataKas = {% if spark_kasse is defined %}{{ spark_kasse|safe }}{% else %}[
+      {% for e in entries|reverse %}{{ e.kassenbestand|default(0) }}{% if not loop.last %}, {% endif %}{% endfor %}
+    ]{% endif %};
+
+    function makeSpark(id, data, color) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      new Chart(el.getContext('2d'), {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: data,
+            borderColor: color,
+            borderWidth: 2,
+            pointRadius: 0,
+            fill: false,
+            tension: 0.3
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false }, tooltip: { enabled: false } },
+          scales: { x: { display: false }, y: { display: false } }
+        }
+      });
+    }
+
+    makeSpark('sparkInventar', dataInv, '#0d6efd');
+    makeSpark('sparkKasse',   dataKas, '#198754');
+  })();
+</script>
+{% endblock %}

@@ -1,0 +1,38 @@
+
+version: '3.8'
+volumes:
+  getraenkekasse-db:
+services:
+  getraenkekasse-db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - getraenkekasse-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+  getraenkekasse-web:
+    build: ./web
+    ports:
+      - "5000:5000"
+    environment:
+      - DB_HOST=${DB_HOST}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASS}
+      - SECRET_KEY=${SECRET_KEY}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASS=${SMTP_PASS}
+      - SMTP_TLS=${SMTP_TLS}
+      - FROM_EMAIL=${FROM_EMAIL}
+      - APP_BASE_URL=${APP_BASE_URL}
+    depends_on:
+      getraenkekasse-db:
+        condition: service_healthy

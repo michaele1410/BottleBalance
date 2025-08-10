@@ -1,0 +1,18 @@
+
+{% extends "base.html" %}
+{% block content %}
+<div class="row justify-content-center"><div class="col-lg-8">
+  <div class="card shadow-sm"><div class="card-body">
+    <h5 class="card-title">Datensatz bearbeiten</h5>
+    <form method="post" class="row g-3">
+      <div class="col-md-3"><label class="form-label">Datum</label><input name="datum" value="{{ data.datum }}" class="form-control"></div>
+      <div class="col-md-3"><label class="form-label">Vollgut</label><input name="vollgut" value="{{ data.vollgut }}" type="number" class="form-control"></div>
+      <div class="col-md-3"><label class="form-label">Leergut</label><input name="leergut" value="{{ data.leergut }}" type="number" class="form-control"></div>
+      <div class="col-md-3"><label class="form-label">Einnahme (€)</label><input name="einnahme" value="{{ data.einnahme }}" class="form-control"></div>
+      <div class="col-md-3"><label class="form-label">Ausgabe (€)</label><input name="ausgabe" value="{{ data.ausgabe }}" class="form-control"></div>
+      <div class="col-12"><label class="form-label">Bemerkung</label><input name="bemerkung" value="{{ data.bemerkung }}" class="form-control"></div>
+      <div class="col-12 d-flex gap-2"><a href="{{ url_for('index') }}" class="btn btn-outline-secondary">Abbrechen</a><button class="btn btn-primary">Speichern</button></div>
+    </form>
+  </div></div>
+</div></div>
+{% endblock %}

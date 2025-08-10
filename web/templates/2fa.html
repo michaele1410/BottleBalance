@@ -1,0 +1,13 @@
+
+{% extends "base.html" %}
+{% block content %}
+<div class="row justify-content-center"><div class="col-md-6 col-lg-4">
+  <div class="card shadow-sm"><div class="card-body">
+    <h5 class="card-title">2‑Faktor‑Authentifizierung</h5>
+    <form method="post" action="{{ url_for('login_2fa_post') }}">
+      <div class="mb-3"><label class="form-label">6‑stelliger Code</label><input name="code" maxlength="6" class="form-control"></div>
+      <button class="btn btn-primary w-100">Bestätigen</button>
+    </form>
+  </div></div>
+</div></div>
+{% endblock %}

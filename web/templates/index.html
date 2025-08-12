@@ -4,19 +4,19 @@
 <div class="row g-3 mb-4">
   <div class="col-12 col-lg-4">
     <div class="p-3 bg-light rounded-3 h-100">
-      <div class="mb-1"><strong>Inventar (aktuell):</strong> <span class="fs-5 ms-1">{{ inv_aktuell }}</span> Flaschen</div>
+      <div class="mb-1"><strong>Inventory (current):</strong> <span class="fs-5 ms-1">{{ inv_aktuell }}</span> Bottles</div>
       <div><canvas id="sparkInv" height="40"></canvas></div>
       {% if request.args.get('from') or request.args.get('to') %}
-      <div class="small text-muted mt-1">Im Filter: {{ filter_inv }} Flaschen</div>
+      <div class="small text-muted mt-1">In the filter: {{ filter_inv }} Bottles</div>
       {% endif %}
     </div>
   </div>
   <div class="col-12 col-lg-4">
     <div class="p-3 bg-light rounded-3 h-100">
-      <div class="mb-1"><strong>Kassenbestand (aktuell):</strong> <span class="fs-5 ms-1">{{ format_eur_de(kas_aktuell) }}</span></div>
+      <div class="mb-1"><strong>Cash on hand (current):</strong> <span class="fs-5 ms-1">{{ format_eur_de(kas_aktuell) }}</span></div>
       <div><canvas id="sparkKas" height="40"></canvas></div>
       {% if request.args.get('from') or request.args.get('to') %}
-      <div class="small text-muted mt-1">Im Filter: {{ format_eur_de(filter_kas) }}</div>
+      <div class="small text-muted mt-1">In the filter: {{ format_eur_de(filter_kas) }}</div>
       {% endif %}
     </div>
   </div>
@@ -25,34 +25,34 @@
   <div class="col-12 col-lg-4">
     <div class="card shadow-sm h-100">
       <div class="card-body">
-        <h2 class="h6 mb-3">Neuen Datensatz hinzufügen</h2>
+        <h2 class="h6 mb-3">Add new record</h2>
         <form method="post" action="{{ url_for('add') }}" class="row g-2">
           <div class="col-12">
-            <label class="form-label">Datum</label>
+            <label class="form-label">Date</label>
             <input name="datum" id="datum" class="form-control" value="{{ default_date }}" placeholder="dd.MM.yyyy">
           </div>
           <div class="col-6">
-            <label class="form-label">Vollgut</label>
+            <label class="form-label">full bottle</label>
             <input name="vollgut" type="number" step="1" class="form-control" placeholder="0">
           </div>
           <div class="col-6">
-            <label class="form-label">Leergut</label>
+            <label class="form-label">empty bottles</label>
             <input name="leergut" type="number" step="1" class="form-control" placeholder="0">
           </div>
           <div class="col-6">
-            <label class="form-label">Einnahme (€)</label>
+            <label class="form-label">Revenue (€)</label>
             <input name="einnahme" class="form-control" placeholder="z.B. 12,34">
           </div>
           <div class="col-6">
-            <label class="form-label">Ausgabe (€)</label>
+            <label class="form-label">Expenditure (€)</label>
             <input name="ausgabe" class="form-control" placeholder="z.B. -5,00">
           </div>
           <div class="col-12">
-            <label class="form-label">Bemerkung</label>
+            <label class="form-label">Comment</label>
             <input name="bemerkung" class="form-control" maxlength="500" placeholder="Notiz">
           </div>
           <div class="col-12">
-            <button class="btn btn-success w-100"><i class="bi-plus-lg me-1"></i> Hinzufügen</button>
+            <button class="btn btn-success w-100"><i class="bi-plus-lg me-1"></i> Add</button>
           </div>
         </form>
       </div>
@@ -68,21 +68,21 @@
       <form method="get" class="row g-2 align-items-end w-100 w-md-auto">
         <div class="col-12 col-md-3">
           <label class="form-label">Suche</label>
-          <input type="text" name="q" class="form-control" placeholder="Datum/Bemerkung" value="{{ request.args.get('q','') }}">
+          <input type="text" name="q" class="form-control" placeholder="Date/Comment" value="{{ request.args.get('q','') }}">
         </div>
         <div class="col-6 col-md-2">
-          <label class="form-label">Von</label>
+          <label class="form-label">From</label>
           <input type="date" name="from" class="form-control" value="{{ request.args.get('from','') }}">
         </div>
         <div class="col-6 col-md-2">
-          <label class="form-label">Bis</label>
+          <label class="form-label">To</label>
           <input type="date" name="to" class="form-control" value="{{ request.args.get('to','') }}">
         </div>
         <div class="col-12 col-md-2 d-grid">
-          <button class="btn btn-outline-primary"><i class="bi-search me-1"></i> Filtern</button>
+          <button class="btn btn-outline-primary"><i class="bi-search me-1"></i> Filter</button>
         </div>
         <div class="col-12 col-md-2 d-grid">
-          <a class="btn btn-outline-secondary" href="{{ url_for('index') }}">Zurücksetzen</a>
+          <a class="btn btn-outline-secondary" href="{{ url_for('index') }}">Reset</a>
         </div>
       </form>
       <div class="d-flex gap-2 mt-2 mt-md-0">
@@ -99,15 +99,15 @@
       <table class="table table-sm align-middle table-striped">
         <thead class="table-light">
           <tr>
-            <th>Datum</th>
-            <th>Vollgut</th>
-            <th>Leergut</th>
-            <th>Inventar</th>
-            <th>Einnahme</th>
-            <th>Ausgabe</th>
-            <th>Kassenbestand</th>
-            <th>Bemerkung</th>
-            <th class="text-end">Aktionen</th>
+            <th>Date</th>
+            <th>Full bottle</th>
+            <th>Empty bottles</th>
+            <th>Inventory</th>
+            <th>Revenue</th>
+            <th>Expenditure</th>
+            <th>Cash on hand</th>
+            <th>Comment</th>
+            <th class="text-end">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -123,13 +123,13 @@
             <td>{{ e.bemerkung }}</td>
             <td class="text-end">
               <a class="btn btn-sm btn-outline-primary" href="{{ url_for('edit', entry_id=e.id) }}" title="Bearbeiten"><i class="bi-pencil-square"></i></a>
-              <form method="post" action="{{ url_for('delete', entry_id=e.id) }}" class="d-inline" onsubmit="return confirm('Eintrag wirklich löschen?');">
-                <button class="btn btn-sm btn-outline-danger" title="Löschen"><i class="bi-trash"></i></button>
+              <form method="post" action="{{ url_for('delete', entry_id=e.id) }}" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this entry?');">
+                <button class="btn btn-sm btn-outline-danger" title="Delete"><i class="bi-trash"></i></button>
               </form>
             </td>
           </tr>
         {% else %}
-          <tr><td colspan="9" class="text-center text-muted">Keine Einträge vorhanden.</td></tr>
+          <tr><td colspan="9" class="text-center text-muted">No entries available.</td></tr>
         {% endfor %}
         </tbody>
       </table>

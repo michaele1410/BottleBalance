@@ -27,7 +27,7 @@ from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import mm
 
 # -----------------------
-# Konfiguration
+# Configuration
 # -----------------------
 SECRET_KEY = os.getenv("SECRET_KEY") or secrets.token_hex(24)
 DB_HOST = os.getenv("DB_HOST", "BottleBalance-db")
@@ -70,7 +70,7 @@ ROLES = {
 app = Flask(__name__)
 app.secret_key = SECRET_KEY
 
-# ROLES und set() global für Jinja2 verfügbar machen
+# Make ROLES and set() globally available for Jinja2
 app.jinja_env.globals.update(ROLES=ROLES, set=set)
 
 # -----------------------

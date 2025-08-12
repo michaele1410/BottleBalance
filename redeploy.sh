@@ -1,17 +1,16 @@
 #!/bin/bash
-
-# Verzeichnisse anpassen (falls nötig)
+# Customise directories (if necessary)
 APP_DIR="/var/lib/docker/volumes//bottlebalance"
 
-echo ">>> Wechsel in das App-Verzeichnis: $APP_DIR"
-cd "$APP_DIR" || { echo "Verzeichnis nicht gefunden!"; exit 1; }
+echo ">>> Switch to the app directory: $APP_DIR"
+cd "$APP_DIR" || { echo "Directory not found!"; exit 1; }
 
-echo ">>> Container stoppen und alte Images entfernen..."
+echo ">>> Stop containers and remove old images..."
 #docker compose down --volumes
 docker compose down
 
-echo ">>> Neu bauen und starten..."
+echo ">>> Build anew and start over..."
 docker compose up --build -d
 
-echo ">>> Logs (Strg+C zum Beenden)"
+echo ">>> Logs (Strg+C to exit)"
 docker compose logs -f

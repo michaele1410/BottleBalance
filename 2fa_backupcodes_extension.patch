@@ -1,0 +1,85 @@
+diff --git a/test_login.py b/test_login.py
+index 3b18f2a..f2a1c3b 100644
+--- a/test_login.py
++++ b/test_login.py
+@@ def test_login_page():
+     assert b"Login" in response.data
++
++
++def test_backup_code_login(client):
++    # Simuliere einen Benutzer mit Backup-Code
++    test_code = "abcd1234"
++    with client.session_transaction() as sess:
++        sess["pending_2fa_user_id"] = 1
++    # Füge den Code in die Datenbank ein
++    from app import engine
++    from sqlalchemy import text
++    with engine.begin() as conn:
++        conn.execute(text("UPDATE users SET backup_codes=:bc WHERE id=1"), {"bc": test_code})
++    # Sende den Code als Login
++    response = client.post("/2fa", data={"code": test_code}, follow_redirects=True)
++    assert b"Inventar" in response.data or b"Kassenbestand" in response.data
+diff --git a/app.py b/app.py
+index 3b18f2a..f2a1c3b 100644
+--- a/app.py
++++ b/app.py
+@@ def migrate_columns(conn):
+     conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP NOT NULL DEFAULT NOW()"))
++    conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS backup_codes TEXT"))
+@@ def current_user():
+-    row = conn.execute(text("SELECT id, username, email, role, active, must_change_password, totp_enabled FROM users WHERE id=:id"), {'id': uid}).mappings().first()
++    row = conn.execute(text("SELECT id, username, email, role, active, must_change_password, totp_enabled, backup_codes FROM users WHERE id=:id"), {'id': uid}).mappings().first()
+@@ def confirm_2fa():
+-    conn.execute(text("UPDATE users SET totp_secret=:s, totp_enabled=TRUE, updated_at=NOW() WHERE id=:id"), {'s': secret, 'id': uid})
++    codes = [secrets.token_hex(4) for _ in range(10)]
++    codes_str = ",".join(codes)
++    conn.execute(text("UPDATE users SET totp_secret=:s, totp_enabled=TRUE, backup_codes=:bc, updated_at=NOW() WHERE id=:id"), {'s': secret, 'bc': codes_str, 'id': uid})
+@@ def login_2fa_post():
+-    if not totp.verify(code, valid_window=1):
+-        flash('Ungültiger 2FA-Code.')
+-        return redirect(url_for('login_2fa'))
++    if not totp.verify(code, valid_window=1):
++        backup_codes = user.get('backup_codes', '')
++        if code in backup_codes.split(','):
++            new_codes = [c for c in backup_codes.split(',') if c != code]
++            conn.execute(text("UPDATE users SET backup_codes=:bc WHERE id=:id"), {'bc': ",".join(new_codes), 'id': uid})
++        else:
++            flash('Ungültiger 2FA-Code.')
++            return redirect(url_for('login_2fa'))
+@@ def profile():
+-    return render_template('profile.html', user=current_user(), ROLES=ROLES)
++    return render_template('profile.html', user=current_user(), ROLES=ROLES, datetime=datetime)
++
++
++@app.post('/profile/2fa/regen')
++@login_required
++def regen_backup_codes():
++    uid = session['user_id']
++    with engine.begin() as conn:
++        current = conn.execute(text("SELECT backup_codes FROM users WHERE id=:id"), {'id': uid}).scalar_one()
++        if not current:
++            codes = [secrets.token_hex(4) for _ in range(10)]
++            codes_str = ",".join(codes)
++            conn.execute(text("UPDATE users SET backup_codes=:bc WHERE id=:id"), {'bc': codes_str, 'id': uid})
++            flash("Neue Backup-Codes wurden generiert.")
++        else:
++            flash("Backup-Codes sind noch vorhanden.")
++    return redirect(url_for('profile'))
+diff --git a/profile.html b/profile.html
+index 3b18f2a..f2a1c3b 100644
+--- a/profile.html
++++ b/profile.html
+@@
+ {% if user.backup_codes %}
+   <h4>Backup-Codes</h4>
+   <ul>
+     {% for code in user.backup_codes.split(',') %}
+       <li>{{ code }}</li>
+     {% endfor %}
+   </ul>
+ {% else %}
+   <p>Keine Backup-Codes vorhanden.</p>
+   <form method="post" action="{{ url_for('regen_backup_codes') }}">
+     <button type="submit" class="btn btn-sm btn-outline-secondary">Neue Backup-Codes generieren</button>
+   </form>
+ {% endif %}

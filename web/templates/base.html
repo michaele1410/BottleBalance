@@ -18,7 +18,7 @@
     {% if session.get('user_id') %}
     <div class="d-flex gap-2">
       {% if 'users:manage' in (ROLES.get(session.get('role'), set())) %}
-      <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('users_list') }}"><i class="bi-people me-1"></i> Benutzer</a>
+      <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('users_list') }}"><i class="bi-people me-1"></i> User</a>
       {% endif %}
       {% if 'audit:view' in (ROLES.get(session.get('role'), set())) %}
       <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('audit_list') }}"><i class="bi-shield-check me-1"></i> Audit</a>

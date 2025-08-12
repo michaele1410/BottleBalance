@@ -7,7 +7,7 @@
     <form method="get" class="row g-2 align-items-end mb-3">
       <div class="col-12 col-md-4">
         <label class="form-label">Suche</label>
-        <input type="text" name="q" class="form-control" placeholder="Aktion/Entry-ID" value="{{ request.args.get('q','') }}">
+        <input type="text" name="q" class="form-control" placeholder="Action/Entry ID" value="{{ request.args.get('q','') }}">
       </div>
       <div class="col-6 col-md-3">
         <label class="form-label">Von</label>
@@ -18,7 +18,7 @@
         <input type="date" name="to" class="form-control" value="{{ request.args.get('to','') }}">
       </div>
       <div class="col-12 col-md-2 d-grid">
-        <button class="btn btn-outline-primary"><i class="bi-search me-1"></i> Filtern</button>
+        <button class="btn btn-outline-primary"><i class="bi-search me-1"></i> Filter</button>
       </div>
     </form>
 
@@ -26,9 +26,9 @@
       <table class="table table-sm table-striped align-middle">
         <thead class="table-light">
           <tr>
-            <th>Zeitpunkt</th>
+            <th>Date</th>
             <th>User</th>
-            <th>Aktion</th>
+            <th>Action</th>
             <th>Entry-ID</th>
             <th>Details</th>
           </tr>
@@ -43,7 +43,7 @@
             <td>{{ a.detail or '—' }}</td>
           </tr>
         {% else %}
-          <tr><td colspan="5" class="text-center text-muted">Keine Einträge.</td></tr>
+          <tr><td colspan="5" class="text-center text-muted">No entries.</td></tr>
         {% endfor %}
         </tbody>
       </table>

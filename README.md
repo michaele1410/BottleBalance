@@ -6,7 +6,7 @@
 
 [![CI](https://img.shields.io/github/actions/workflow/status/OWNER/REPO/ci.yml?label=CI&logo=github)](https://github.com/OWNER/REPO/actions)
 ![Docker](https://img.shields.io/badge/docker-ready-0db7ed?logo=docker)
-![License](https://img.shields.io/badge/license-MIT-green.svg)
+![License](https://img.shields.io/badge/license-GPLv3-blue.svg)
 
 A secure, lightweight web app to manage a shared cash box (e.g., beverages) — built with **Flask**, **PostgreSQL**, and **Docker Compose**.
 
@@ -26,8 +26,8 @@ A secure, lightweight web app to manage a shared cash box (e.g., beverages) — 
 - [Deployment](#deployment)
 - [Security Notes](#security-notes)
 - [Planned](#planned)
-- [Contributing](#contributing)
 - [License](#license)
+- [Contributing](#contributing)
 - [Deutsch · Ausführliche Beschreibung](#deutsch--ausführliche-beschreibung)
 
 ---
@@ -111,6 +111,19 @@ APP_BASE_URL=http://localhost:5000
 ## Planned
 
 
+- **Deletion of User:** Posability to soft and hard delete Users
+- **Better Sparklines:** 
+- **Better Sparklines:** 
+- **Multilanguage support:** 
+- **Financial approval formular:**
+- **Docker image:** 
+
+
+## License
+
+This project is licensed under the **GNU General Public License v3.0 (GPL‑3.0)**. See **./LICENSE** for the full, legally binding text.
+
+> **Deutsch (Kurz):** Dieses Projekt steht unter der **GNU GPL v3**. Jede Weitergabe und jedes abgeleitete Werk müssen **ebenfalls unter GPL v3** veröffentlicht werden. Eine **deutsche Übersetzung** findest du in **./LICENSE_DE.md** (nur zu Informationszwecken; rechtlich bindend ist das englische Original in `LICENSE`).
 
 ## Contributing
 
@@ -132,4 +145,3 @@ Contributions are welcome! Please open an issue/PR. For larger changes, discuss 
 **Schnellstart:** `.env` erstellen → `docker compose -f "docker-compose.yml" up -d --build` → App unter `http://localhost:5000` öffnen.
 
 **Betrieb & Sicherheit:** Reverse Proxy mit TLS, regelmäßige DB‑Backups, Log‑Monitoring, Updates per Compose, 2FA für Admins verpflichtend.
-

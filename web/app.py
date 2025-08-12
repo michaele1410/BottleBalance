@@ -6,6 +6,7 @@ from email.message import EmailMessage
 from datetime import datetime, date, timedelta
 from decimal import Decimal, InvalidOperation
 
+from flask_babel import Babel, gettext as _
 from flask import Flask, render_template, request, redirect, url_for, session, send_file, flash, abort
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import Engine
@@ -68,6 +69,13 @@ ROLES = {
 }
 
 app = Flask(__name__)
+
+app.config['BABEL_DEFAULT_LOCALE'] = 'de'
+babel = Babel(app)
+
+@babel.localeselector
+def get_locale():
+    return session.get('language') or request.accept_languages.best_match(['de', 'en'])
 app.secret_key = SECRET_KEY
 
 # ROLES und set() global für Jinja2 verfügbar machen
@@ -919,3 +927,12 @@ def export_pdf():
 if __name__ == '__main__':
     os.environ.setdefault('TZ', 'Europe/Berlin')
     app.run(host='0.0.0.0', port=5000, debug=False)
+
+@app.post('/profile/lang')
+@login_required
+def set_language():
+    lang = request.form.get('language')
+    if lang in ['de', 'en']:
+        session['language'] = lang
+        flash(_('Sprache geändert.') if lang == 'de' else _('Language changed.'))
+    return redirect(url_for('profile'))

@@ -50,18 +50,18 @@
         
 
         {% if user.backup_codes %}
-          <hr>
-          <h5>Backup-Codes</h5>
-          <p>Diese Codes können einmalig beim Login verwendet werden:</p>
-          <ul>
+          <hr/>
+<h5>Backup-Codes</h5>
+<p>Diese Codes können einmalig beim Login verwendet werden:</p>
+<ul>
             {% for code in user.backup_codes.split(',') %}
               <li><code>{{ code }}</code></li>
             {% endfor %}
           </ul>
         {% elif user.totp_enabled %}
-          <form method="post" action="{{ url_for('regen_backup_codes') }}">
-            <button type="submit" class="btn btn-sm btn-outline-secondary">Neue Backup-Codes generieren</button>
-          </form>
+          <form action="{{ url_for('regen_backup_codes') }}" method="post">
+<button class="btn btn-sm btn-outline-secondary" type="submit">Neue Backup-Codes generieren</button>
+</form>
         {% endif %}
 
       </div>
@@ -69,3 +69,4 @@
 </div>
 </div>
 {% endblock %}
+<form action="/profile/lang" method="post"><label for="language">Sprache / Language:</label><select id="language" name="language"><option value="de">Deutsch</option><option value="en">English</option></select><button type="submit">Speichern / Save</button></form>

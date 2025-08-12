@@ -2,68 +2,53 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="row justify-content-center">
-  <div class="col-12 col-lg-8">
-    <div class="card shadow-sm mb-3">
-      <div class="card-body">
-        <h2 class="h6 mb-3">Profil</h2>
-        <form method="post" action="{{ url_for('profile_post') }}" class="row g-3">
-          <div class="col-12 col-md-6">
-            <label class="form-label">E-Mail (für Passwort-Reset)</label>
-            <input type="email" name="email" class="form-control" value="{{ user.email or '' }}">
-          </div>
-          <div class="col-12"><hr></div>
-          <div class="col-12 col-md-6">
-            <label class="form-label">Neues Passwort</label>
-            <input type="password" name="password" class="form-control" placeholder="leer lassen, um nicht zu ändern">
-          </div>
-          <div class="col-12 col-md-6">
-            <label class="form-label">Neues Passwort (Wiederholen)</label>
-            <input type="password" name="password2" class="form-control" placeholder="leer lassen, um nicht zu ändern">
-          </div>
-          <div class="col-12 d-flex gap-2">
-            <a class="btn btn-outline-secondary" href="{{ url_for('index') }}">Abbrechen</a>
-            <button class="btn btn-primary">Speichern</button>
-          </div>
-        </form>
-      </div>
-    </div>
-
-    <div class="card shadow-sm">
-      <div class="card-body">
-        <h2 class="h6 mb-3">2-Faktor-Authentifizierung</h2>
+<div class="col-12 col-lg-8">
+<div class="card shadow-sm mb-3">
+<div class="card-body">
+<h2 class="h6 mb-3">Profil</h2>
+<form action="{{ url_for('profile_post') }}" class="row g-3" method="post">
+<div class="col-12 col-md-6">
+<label class="form-label">E-Mail (für Passwort-Reset)</label>
+<input class="form-control" name="email" type="email" value="{{ user.email or '' }}"/>
+</div>
+<div class="col-12"><hr/></div>
+<div class="col-12 col-md-6">
+<label class="form-label">Neues Passwort</label>
+<input class="form-control" name="password" placeholder="leer lassen, um nicht zu ändern" type="password"/>
+</div>
+<div class="col-12 col-md-6">
+<label class="form-label">Neues Passwort (Wiederholen)</label>
+<input class="form-control" name="password2" placeholder="leer lassen, um nicht zu ändern" type="password"/>
+</div>
+<div class="col-12 d-flex gap-2">
+<a class="btn btn-outline-secondary" href="{{ url_for('index') }}">Abbrechen</a>
+<button class="btn btn-primary">Speichern</button>
+</div>
+</form>
+</div>
+</div>
+<div class="card shadow-sm">
+<div class="card-body">
+<h2 class="h6 mb-3">2-Faktor-Authentifizierung</h2>
         {% if user.totp_enabled %}
           <p class="text-success">2FA ist <strong>aktiviert</strong>.</p>
-          <form method="post" action="{{ url_for('disable_2fa') }}" class="row g-2 align-items-end">
-            <div class="col-12 col-md-6">
-              <label class="form-label">Bestätige mit Passwort</label>
-              <input type="password" name="password" class="form-control" required>
-            </div>
-            <div class="col-12 col-md-6">
-              <button class="btn btn-outline-danger">2FA deaktivieren
-{% if user.backup_codes %}
-  <h4>Backup-Codes</h4>
-  <ul>
-    {% for code in user.backup_codes.split(',') %}
-      <li>{{ code }}</li>
-    {% endfor %}
-  </ul>
-  {% if user.backup_codes.split(',')|length == 0 %}
-    <form method="post" action="{{ url_for('regen_backup_codes') }}">
-      <button type="submit">Neue Backup-Codes generieren</button>
-    </form>
-  {% endif %}
-{% endif %}
-</button>
-            </div>
-          </form>
+<form action="{{ url_for('disable_2fa') }}" class="row g-2 align-items-end" method="post">
+<div class="col-12 col-md-6">
+<label class="form-label">Bestätige mit Passwort</label>
+<input class="form-control" name="password" required="" type="password"/>
+</div>
+<div class="col-12 col-md-6">
+<button class="btn btn-outline-danger">2FA deaktivieren</button>
+</div>
+</form>
         {% else %}
           <p class="text-muted">2FA ist aktuell <strong>deaktiviert</strong>.</p>
-          <form method="post" action="{{ url_for('enable_2fa') }}">
-            <button class="btn btn-outline-primary">2FA einrichten</button>
-          </form>
+<form action="{{ url_for('enable_2fa') }}" method="post">
+<button class="btn btn-outline-primary">2FA einrichten</button>
+</form>
         {% endif %}
       </div>
-    </div>
-  </div>
+</div>
+</div>
 </div>
 {% endblock %}

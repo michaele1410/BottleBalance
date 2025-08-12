@@ -50,6 +50,7 @@ A secure, lightweight web app to manage a shared cash box (e.g., beverages) — 
 
 - **User & Role Management (RBAC):** Fine‑grained permissions for admins, cashiers, and regular users.
 - **Two‑Factor Authentication (2FA, TOTP):** App‑based codes (RFC 6238) using `pyotp`.
+- **Backup Codes for 2FA:** Generated on activation and shown in the user profile; usable during login when the authenticator is unavailable.
 - **Audit Logs:** Tamper‑evident logging of critical actions (logins, settings, transactions).
 - **Transactions & Balances:** Deposits/withdrawals, categories, and notes.
 - **Exports:** **CSV** and **PDF** for reconciliation and reporting.
@@ -69,21 +70,19 @@ A secure, lightweight web app to manage a shared cash box (e.g., beverages) — 
 2. Build & start services:
 
 ```bash
-docker compose -f "docker-compose 1.yml" up -d --build
+docker compose -f "docker-compose.yml" up -d --build
 ```
 
 3. Open the app: `http://localhost:5000`
 
 4. Create the first **admin** account via the app, or provision via the database if self‑registration is disabled.
 
-> **Note:** Your current DB service name is `getraenkekasse-db`. It remains valid; you can rename it later if desired.
-
 ## Configuration (.env)
 
 ```env
 SECRET_KEY=your-secret-key
-DB_HOST=getraenkekasse-db
-DB_NAME=getraenkekasse
+DB_HOST=bottlebalance-db
+DB_NAME=bottlebalance
 DB_USER=db-user
 DB_PASS=db-password
 SMTP_HOST=smtp.example.com
@@ -111,15 +110,11 @@ APP_BASE_URL=http://localhost:5000
 
 ## Planned
 
-- **Backup Codes for 2FA:** Generated on activation and shown in the user profile; usable during login when the authenticator is unavailable.
+
 
 ## Contributing
 
 Contributions are welcome! Please open an issue/PR. For larger changes, discuss your proposal first.
-
-## License
-
-MIT — see `LICENSE` (or your chosen license).
 
 ---
 
@@ -129,12 +124,12 @@ MIT — see `LICENSE` (or your chosen license).
 
 **Funktionen:**
 - RBAC‑Rollen (Admin/Kassenführung/Nutzer)
-- 2FA (TOTP, `pyotp`) — _Backup‑Codes geplant_
+- 2FA (TOTP, `pyotp`) — _Backup‑Codes enthalten
 - Audit‑Logs für sicherheitsrelevante Ereignisse
 - CSV/PDF‑Export
 - SMTP‑Benachrichtigungen
 
-**Schnellstart:** `.env` erstellen → `docker compose -f "docker-compose 1.yml" up -d --build` → App unter `http://localhost:5000` öffnen.
+**Schnellstart:** `.env` erstellen → `docker compose -f "docker-compose.yml" up -d --build` → App unter `http://localhost:5000` öffnen.
 
 **Betrieb & Sicherheit:** Reverse Proxy mit TLS, regelmäßige DB‑Backups, Log‑Monitoring, Updates per Compose, 2FA für Admins verpflichtend.
 

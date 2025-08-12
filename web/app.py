@@ -320,7 +320,7 @@ def login_post():
     with engine.begin() as conn:
         user = conn.execute(text("SELECT id, username, password_hash, role, active, must_change_password, totp_enabled FROM users WHERE username=:u"), {'u': username}).mappings().first()
     if not user or not check_password_hash(user['password_hash'], password) or not user['active']:
-        flash('Login fehlgeschlagen.')
+        flash('Login failed.')
         return redirect(url_for('login'))
 
     if user['totp_enabled']:
@@ -330,7 +330,7 @@ def login_post():
     session['user_id'] = user['id']
     session['role'] = user['role']
     if user['must_change_password']:
-        flash('Bitte Passwort ändern (erforderlich).')
+        flash('Please change your password (required).')
         return redirect(url_for('profile'))
     return redirect(url_for('index'))
 
@@ -349,11 +349,11 @@ def login_2fa_post():
     with engine.begin() as conn:
         user = conn.execute(text("SELECT id, role, totp_secret FROM users WHERE id=:id"), {'id': uid}).mappings().first()
     if not user or not user['totp_secret']:
-        flash('2FA nicht aktiv.')
+        flash('2FA not active.')
         return redirect(url_for('login'))
     totp = pyotp.TOTP(user['totp_secret'])
     if not totp.verify(code, valid_window=1):
-        flash('Ungültiger 2FA-Code.')
+        flash('2FA code invalid.')
         return redirect(url_for('login_2fa'))
     session.pop('pending_2fa_user_id', None)
     session['user_id'] = user['id']
@@ -382,10 +382,10 @@ def profile_post():
     email = (request.form.get('email') or '').strip()
     if pwd or pwd2:
         if len(pwd) < 8:
-            flash('Passwort muss mindestens 8 Zeichen haben.')
+            flash('Password must be at least 8 characters long.')
             return redirect(url_for('profile'))
         if pwd != pwd2:
-            flash('Passwörter stimmen nicht überein.')
+            flash('Passwords do not match.')
             return redirect(url_for('profile'))
     uid = session['user_id']
     with engine.begin() as conn:
@@ -395,7 +395,7 @@ def profile_post():
         else:
             conn.execute(text("UPDATE users SET email=:em, updated_at=NOW() WHERE id=:id"),
                          {'em': email or None, 'id': uid})
-    flash('Profil aktualisiert.')
+    flash('Profile updated.')
     return redirect(url_for('index'))
 
 @app.post('/profile/2fa/enable')
@@ -420,17 +420,17 @@ def confirm_2fa():
     uid = session['user_id']
     secret = session.get('enroll_totp_secret')
     if not secret:
-        flash('Kein 2FA-Setup aktiv.')
+        flash('No 2FA setup active.')
         return redirect(url_for('profile'))
     code = (request.form.get('code') or '').strip()
     totp = pyotp.TOTP(secret)
     if not totp.verify(code, valid_window=1):
-        flash('Ungültiger 2FA-Code.')
+        flash('2FA code invalid.')
         return redirect(url_for('enable_2fa'))
     with engine.begin() as conn:
         conn.execute(text("UPDATE users SET totp_secret=:s, totp_enabled=TRUE, updated_at=NOW() WHERE id=:id"), {'s': secret, 'id': uid})
     session.pop('enroll_totp_secret', None)
-    flash('2FA aktiviert.')
+    flash('2FA activated.')
     return redirect(url_for('profile'))
 
 @app.post('/profile/2fa/disable')
@@ -441,11 +441,11 @@ def disable_2fa():
     with engine.begin() as conn:
         user = conn.execute(text("SELECT password_hash FROM users WHERE id=:id"), {'id': uid}).mappings().first()
     if not user or not check_password_hash(user['password_hash'], pwd):
-        flash('Passwortprüfung fehlgeschlagen.')
+        flash('Password verification failed.')
         return redirect(url_for('profile'))
     with engine.begin() as conn:
         conn.execute(text("UPDATE users SET totp_secret=NULL, totp_enabled=FALSE, updated_at=NOW() WHERE id=:id"), {'id': uid})
-    flash('2FA deaktiviert.')
+    flash('2FA deactivated.')
     return redirect(url_for('profile'))
 
 # -----------------------
@@ -487,9 +487,9 @@ def users_reset_link(uid: int):
     body = f"""Klick zum Zurücksetzen: {reset_url}
 Dieser Link ist 2 Stunden gültig."""
     if email and SMTP_HOST:
-        sent = send_mail(email, 'Passwort zurücksetzen', body)
+        sent = send_mail(email, 'Passwort reset', body)
         if sent:
-            flash('Reset-Link per E-Mail versendet.')
+            flash('Reset-Link sent via E-Mail.')
         else:
             flash(f'Reset-Link: {reset_url}')
     else:
@@ -505,17 +505,17 @@ def reset_post(token):
     pwd = (request.form.get('password') or '').strip()
     pwd2 = (request.form.get('password2') or '').strip()
     if len(pwd) < 8 or pwd != pwd2:
-        flash('Passwortanforderungen nicht erfüllt oder stimmen nicht überein.')
+        flash('Password requirements not met or do not match.')
         return redirect(url_for('reset_form', token=token))
     with engine.begin() as conn:
         trow = conn.execute(text("SELECT id, user_id, expires_at, used FROM password_reset_tokens WHERE token=:t"), {'t': token}).mappings().first()
         if not trow or trow['used'] or trow['expires_at'] < datetime.utcnow():
-            flash('Link ungültig oder abgelaufen.')
+            flash('Link invalid or expired.')
             return redirect(url_for('login'))
         conn.execute(text("UPDATE users SET password_hash=:ph, must_change_password=FALSE, updated_at=NOW() WHERE id=:id"),
                      {'ph': generate_password_hash(pwd), 'id': trow['user_id']})
         conn.execute(text("UPDATE password_reset_tokens SET used=TRUE WHERE id=:id"), {'id': trow['id']})
-    flash('Passwort aktualisiert. Bitte einloggen.')
+    flash('Password changed. Please login.')
     return redirect(url_for('login'))
 
 # -----------------------
@@ -538,13 +538,13 @@ def users_add():
     role = (request.form.get('role') or 'Viewer').strip()
     pwd = (request.form.get('password') or '').strip()
     if not username:
-        flash('Benutzername darf nicht leer sein.')
+        flash('User can not be empty.')
         return redirect(url_for('users_list'))
     if role not in ROLES:
-        flash('Ungültige Rolle.')
+        flash('Invalid role.')
         return redirect(url_for('users_list'))
     if len(pwd) < 8:
-        flash('Passwort muss mindestens 8 Zeichen haben.')
+        flash('Password must have at least 8 characters.')
         return redirect(url_for('users_list'))
     try:
         with engine.begin() as conn:
@@ -552,9 +552,9 @@ def users_add():
                 INSERT INTO users (username, email, password_hash, role, active, must_change_password)
                 VALUES (:u, :e, :ph, :r, TRUE, FALSE)
             """), {'u': username, 'e': email, 'ph': generate_password_hash(pwd), 'r': role})
-        flash('Benutzer angelegt.')
+        flash('User created.')
     except Exception as e:
-        flash(f'Fehler: {e}')
+        flash(f'Error: {e}')
     return redirect(url_for('users_list'))
 
 @app.post('/admin/users/<int:uid>/toggle')
@@ -571,7 +571,7 @@ def users_toggle(uid: int):
 def users_change_role(uid: int):
     role = (request.form.get('role') or 'Viewer').strip()
     if role not in ROLES:
-        flash('Ungültige Rolle.')
+        flash('Invalid role.')
         return redirect(url_for('users_list'))
     with engine.begin() as conn:
         conn.execute(text("UPDATE users SET role=:r, updated_at=NOW() WHERE id=:id"), {'r': role, 'id': uid})
@@ -583,12 +583,12 @@ def users_change_role(uid: int):
 def users_reset_pw(uid: int):
     newpw = (request.form.get('password') or '').strip()
     if len(newpw) < 8:
-        flash('Neues Passwort muss mindestens 8 Zeichen haben.')
+        flash('New password must have at least 8 characters.')
         return redirect(url_for('users_list'))
     with engine.begin() as conn:
         conn.execute(text("UPDATE users SET password_hash=:ph, must_change_password=FALSE, updated_at=NOW() WHERE id=:id"),
                      {'ph': generate_password_hash(newpw), 'id': uid})
-    flash('Passwort gesetzt.')
+    flash('Passwort set.')
     return redirect(url_for('users_list'))
 
 @app.get('/audit')
@@ -674,7 +674,7 @@ def add():
         ausgabe = parse_german_decimal(request.form.get('ausgabe') or '0')
         bemerkung = (request.form.get('bemerkung') or '').strip()
     except Exception as e:
-        flash(f'Eingabefehler: {e}')
+        flash(f'Input error: {e}')
         return redirect(url_for('index'))
     with engine.begin() as conn:
         res = conn.execute(text("""
@@ -692,7 +692,7 @@ def edit(entry_id: int):
     with engine.begin() as conn:
         row = conn.execute(text("SELECT id, datum, vollgut, leergut, einnahme, ausgabe, bemerkung, created_by FROM entries WHERE id=:id"), {'id': entry_id}).mappings().first()
     if not row:
-        flash('Eintrag nicht gefunden.')
+        flash('Entry not found.')
         return redirect(url_for('index'))
     # RBAC
     allowed = ROLES.get(session.get('role'), set())
@@ -727,7 +727,7 @@ def edit_post(entry_id: int):
         ausgabe = parse_german_decimal(request.form.get('ausgabe') or '0')
         bemerkung = (request.form.get('bemerkung') or '').strip()
     except Exception as e:
-        flash(f'Eingabefehler: {e}')
+        flash(f'Input error: {e}')
         return redirect(url_for('edit', entry_id=entry_id))
     with engine.begin() as conn:
         conn.execute(text("""
@@ -788,7 +788,7 @@ def import_csv():
     file = request.files.get('file')
     replace_all = request.form.get('replace_all') == 'on'
     if not file or file.filename == '':
-        flash('Bitte eine CSV-Datei auswählen.')
+        flash('Please select a CSV file.')
         return redirect(url_for('index'))
     try:
         content = file.read().decode('utf-8-sig')
@@ -820,9 +820,9 @@ def import_csv():
                     INSERT INTO entries (datum, vollgut, leergut, einnahme, ausgabe, bemerkung)
                     VALUES (:datum,:vollgut,:leergut,:einnahme,:ausgabe,:bemerkung)
                 """), r)
-        flash(f'Import erfolgreich: {len(rows_to_insert)} Zeilen übernommen.')
+        flash(f'Import successful: {len(rows_to_insert)} lines adopted.')
     except Exception as e:
-        flash(f'Import fehlgeschlagen: {e}')
+        flash(f'Import failed: {e}')
     return redirect(url_for('index'))
 
 # -----------------------

@@ -7,7 +7,7 @@ from datetime import datetime, date, timedelta
 from decimal import Decimal, InvalidOperation
 
 from flask_babel import Babel, gettext as _
-from flask import Flask, render_template, g, request, redirect, url_for, session, send_file, flash, abort
+from flask import Flask, render_template, request, redirect, url_for, session, send_file, flash, abort
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import OperationalError
@@ -70,7 +70,7 @@ ROLES = {
 
 def get_locale():
     # if a user is logged in, use the locale from the user settings
-    user = getattr(g, 'user', None)
+    user = current_user()
     if user is not None:
         return user.locale
     # otherwise try to guess the language from the user accept
@@ -79,7 +79,7 @@ def get_locale():
     return request.accept_languages.best_match(['de', 'fr', 'en'])
 
 def get_timezone():
-    user = getattr(g, 'user', None)
+    user = current_user()
     if user is not None:
         return user.timezone
     
@@ -159,6 +159,11 @@ def migrate_columns(conn):
     conn.execute(text("ALTER TABLE entries ADD COLUMN IF NOT EXISTS created_by INTEGER"))
     conn.execute(text("ALTER TABLE entries ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT NOW()"))
     conn.execute(text("ALTER TABLE entries ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP NOT NULL DEFAULT NOW()"))
+    conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS backup_codes TEXT"))
+    conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS locale TEXT"))
+    conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS timezone TEXT"))
+
+
 
 def init_db():
     with engine.begin() as conn:

@@ -1,115 +1,78 @@
-# Getränkekassen-Webapp
 
-[![CI/CD](https://img.shields.io/github/actions/workflow/status/<USERNAME>/<REPO>/ci.yml?label=CI%2FCD)](https://github.com/<USERNAME>/<REPO>/actions)
-[![Docker](https://img.shields.io/badge/Docker-ready-blue?logo=docker)](https://hub.docker.com/r/<USERNAME>/<REPO>)
-[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
-[![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
-[![Flask](https://img.shields.io/badge/Flask-2.x-black?logo=flask)](https://flask.palletsprojects.com/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-blue?logo=postgresql)](https://www.postgresql.org/)
+# 🥤 BottleBalance Webapp – RBAC + 2FA + Audit + CI
 
-Eine **Flask-basierte Webanwendung** zur Verwaltung einer Getränkekasse mit moderner Architektur, Sicherheitsfunktionen und Exportmöglichkeiten.
+[Deutsch](#-deutsch) • [English](#-english)
 
 ---
 
-## Inhaltsverzeichnis
-- [Features](#-features)
-- [Tech-Stack](#️-tech-stack)
-- [Installation & Setup](#-installation--setup)
-- [Beispiel `.env`](#-beispiel-env)
-- [Nutzung](#-nutzung)
-- [Tests](#-tests)
-- [Sicherheit](#-sicherheit)
-- [Screenshots](#-screenshots)
-- [Lizenz](#-lizenz)
+## 🇩🇪 Deutsch
 
-## 🚀 Features
-- **Inventar- und Kassenverwaltung** (Vollgut, Leergut, Einnahmen, Ausgaben)
-- **Benutzerverwaltung mit RBAC** (Role-Based Access Control)
-- **Zwei-Faktor-Authentifizierung (2FA)**
-- **Audit-Logs** für Nachvollziehbarkeit
-- **Export als CSV und PDF**
-- **Responsive UI** mit Jinja2-Templates
-- **CI/CD** via GitHub Actions
-- **Docker-Compose Setup** für einfache Bereitstellung
+### Highlights
+- **RBAC**: Rollen *Admin, Manager, Editor, Viewer, Auditor*
+- **Benutzerverwaltung** (Admin): Anlegen, aktivieren/deaktivieren, Rolle ändern, Passwort setzen, **Reset‑Link generieren**
+- **2FA (TOTP)**: Einrichten über QR‑Code, Login mit Code (Microsoft/Google Authenticator)
+- **Passwort‑Reset**: Tokenbasiert, Link 2h gültig (SMTP optional)
+- **Audit‑Log**: Ansicht mit Filter (Zeit, Text), bis 500 Einträge
+- **Filter**: Datum von/bis + Suche, **Summen im Filterbereich**
+- **Sparklines** unter Inventar/Kassenbestand
+- **CSV/PDF‑Export**, **CSV‑Import**
+- **Keine Klartext‑Logins** in Dateien; Default‑Admin zur Laufzeit
+- **CI/CD (GitHub Actions)**: Image bauen & in GHCR pushen
 
-## 🛠️ Tech-Stack
-- **Backend:** Flask (Python)
-- **Frontend:** Jinja2, HTML, CSS
-- **Datenbank:** PostgreSQL
-- **Containerisierung:** Docker & Docker-Compose
-- **CI/CD:** GitHub Actions
-
-## 📦 Installation & Setup
-
-### Voraussetzungen
-- Docker & Docker-Compose
-- Git
-
-### Schritte
+### Schnellstart
 ```bash
-# Repository klonen
-git clone [https://github.com/<USERNAME>/<REPO>.git](https://github.com/michaele1410/BottleBalance)
-cd <REPO>
-
-# .env anlegen (siehe unten)
-cp .env.example .env || true
-
-# Docker-Compose starten
-# Falls deine Datei "docker-compose 1.yml" heißt:
-docker compose -f "docker-compose 1.yml" up -d --build
-# Ansonsten (Standardname):
-# docker compose up -d --build
+docker compose up --build
+# Browser: http://localhost:5000
+# Erstlogin: admin / admin  → Passwortänderung wird erzwungen
 ```
 
-Lokaler Start (ohne Docker):
+### Konfiguration (ENV)
+- **Optional**: `SECRET_KEY` (sonst wird zufällig generiert)
+- **SMTP (optional)** für Passwort‑Reset per E‑Mail:
+  - `SMTP_HOST`, `SMTP_PORT` (587), `SMTP_USER`, `SMTP_PASS`, `SMTP_TLS` (true/false)
+  - `FROM_EMAIL` (Default = SMTP_USER)
+  - `APP_BASE_URL` (Default `http://localhost:5000`) für Links im Mailtext
+
+### CI/CD (GitHub Actions)
+Workflow unter `.github/workflows/docker.yml` baut ein Image und pusht nach **GHCR** (`ghcr.io/<OWNER>/<REPO>:latest`).
+Für Push brauchst du Packages‑Berechtigung; Standard `GITHUB_TOKEN` reicht in privaten Repos je nach Sichtbarkeit/Policy.
+
+### Sicherheit
+- **Nach Erstlogin**: Passwort stark setzen
+- **Produktion**: `SECRET_KEY` als Secret/ENV setzen; SMTP‑Zugangsdaten als Secrets
+
+### Lizenz / Kontakt
+© [Michael Eitdorf](mailto:webmaster@michaeleitdorf.de)
+
+---
+
+## 🇬🇧 English
+
+### Highlights
+- **RBAC**: roles *Admin, Manager, Editor, Viewer, Auditor*
+- **User admin** (Admin): create, enable/disable, change role, set password, **generate reset link**
+- **2FA (TOTP)**: enroll via QR, login with 6‑digit code
+- **Password reset**: token‑based, 2h validity (SMTP optional)
+- **Audit log**: view with filters (time/text), up to 500 entries
+- **Filters**: date range + search, **filtered totals**
+- **Sparklines** under inventory/cash
+- **CSV/PDF export**, **CSV import**
+- **No plaintext credentials** in files; default admin at runtime
+- **CI/CD (GitHub Actions)**: build & push to GHCR
+
+### Quick Start
 ```bash
-python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
-flask --app app.py run
+docker compose up --build
+# Open: http://localhost:5000
+# First login: admin / admin → forced password change
 ```
 
-## ⚙️ Beispiel .env
-```env
-SECRET_KEY=dein-geheimer-schlüssel
-DB_HOST=getraenkekasse-db
-DB_NAME=getraenkekasse
-DB_USER=db-user
-DB_PASS=db-password
-SMTP_HOST=smtp.example.com
-SMTP_PORT=587
-SMTP_USER=mailer@example.com
-SMTP_PASS=dein-smtp-passwort
-SMTP_TLS=true
-FROM_EMAIL=mailer@example.com
-APP_BASE_URL=http://localhost:5000
-```
+### Config (ENV)
+- Optional `SECRET_KEY`
+- SMTP (optional) for email reset: `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_TLS`, `FROM_EMAIL`, `APP_BASE_URL`
 
-## ▶️ Nutzung
-- **Startseite:** Übersicht Inventar & Kassenbestand
-- **Filter:** Zeitraum & Suche
-- **Export:** PDF & CSV
-- **Admin:** Benutzerrollen & Audit-Logs
+### Security
+- Change admin password after first login
+- Pass `SECRET_KEY` and SMTP creds via secrets in production
 
-## ✅ Tests
-```bash
-pytest -q
-```
-
-## 🔒 Sicherheit
-- Passwort-Hashing (Werkzeug)
-- 2FA via TOTP
-- Rollenbasierte Zugriffssteuerung
-- Empfohlene Header: HSTS, CSP, X-Frame-Options, X-Content-Type-Options
-
-## 🖼️ Screenshots
-Füge deine Screenshots im Ordner `docs/screenshots/` hinzu und verlinke sie hier:
-
-```markdown
-![Dashboard](docs/screenshots/dashboard.png)
-![Formular](docs/screenshots/form.png)
-![Export](docs/screenshots/export.png)
-```
-
-## 📄 Lizenz
-Dieses Projekt steht unter der MIT-Lizenz. Siehe [LICENSE](LICENSE).
+© [Michael Eitdorf](mailto:webmaster@michaeleitdorf.de)

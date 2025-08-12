@@ -1,7 +1,8 @@
-
 #!/bin/bash
+
 # Verzeichnisse anpassen (falls nötig)
-APP_DIR="/var/lib/docker/volumes//getraenkekasse"
+APP_DIR="/var/lib/docker/volumes//bottlebalance"
+
 echo ">>> Wechsel in das App-Verzeichnis: $APP_DIR"
 cd "$APP_DIR" || { echo "Verzeichnis nicht gefunden!"; exit 1; }
 

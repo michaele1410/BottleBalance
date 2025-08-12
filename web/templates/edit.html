@@ -1,18 +1,43 @@
 
 {% extends "base.html" %}
 {% block content %}
-<div class="row justify-content-center"><div class="col-lg-8">
-  <div class="card shadow-sm"><div class="card-body">
-    <h5 class="card-title">Datensatz bearbeiten</h5>
-    <form method="post" class="row g-3">
-      <div class="col-md-3"><label class="form-label">Datum</label><input name="datum" value="{{ data.datum }}" class="form-control"></div>
-      <div class="col-md-3"><label class="form-label">Vollgut</label><input name="vollgut" value="{{ data.vollgut }}" type="number" class="form-control"></div>
-      <div class="col-md-3"><label class="form-label">Leergut</label><input name="leergut" value="{{ data.leergut }}" type="number" class="form-control"></div>
-      <div class="col-md-3"><label class="form-label">Einnahme (€)</label><input name="einnahme" value="{{ data.einnahme }}" class="form-control"></div>
-      <div class="col-md-3"><label class="form-label">Ausgabe (€)</label><input name="ausgabe" value="{{ data.ausgabe }}" class="form-control"></div>
-      <div class="col-12"><label class="form-label">Bemerkung</label><input name="bemerkung" value="{{ data.bemerkung }}" class="form-control"></div>
-      <div class="col-12 d-flex gap-2"><a href="{{ url_for('index') }}" class="btn btn-outline-secondary">Abbrechen</a><button class="btn btn-primary">Speichern</button></div>
-    </form>
-  </div></div>
-</div></div>
+<div class="row justify-content-center">
+  <div class="col-12 col-lg-8">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h1 class="h5 mb-3">Datensatz bearbeiten</h1>
+        <form method="post" action="{{ url_for('edit_post', entry_id=data.id) }}" class="row g-3">
+          <div class="col-6 col-md-4">
+            <label class="form-label">Datum</label>
+            <input name="datum" id="datum" class="form-control" value="{{ data.datum }}">
+          </div>
+          <div class="col-6 col-md-4">
+            <label class="form-label">Vollgut</label>
+            <input name="vollgut" type="number" step="1" class="form-control" value="{{ data.vollgut }}" placeholder="0">
+          </div>
+          <div class="col-6 col-md-4">
+            <label class="form-label">Leergut</label>
+            <input name="leergut" type="number" step="1" class="form-control" value="{{ data.leergut }}" placeholder="0">
+          </div>
+          <div class="col-6 col-md-4">
+            <label class="form-label">Einnahme (€)</label>
+            <input name="einnahme" class="form-control" value="{{ data.einnahme }}" placeholder="z.B. 12,34">
+          </div>
+          <div class="col-6 col-md-4">
+            <label class="form-label">Ausgabe (€)</label>
+            <input name="ausgabe" class="form-control" value="{{ data.ausgabe }}" placeholder="z.B. -5,00">
+          </div>
+          <div class="col-12">
+            <label class="form-label">Bemerkung</label>
+            <input name="bemerkung" class="form-control" value="{{ data.bemerkung }}" placeholder="Notiz">
+          </div>
+          <div class="col-12 d-flex gap-2">
+            <a class="btn btn-outline-secondary" href="{{ url_for('index') }}">Abbrechen</a>
+            <button class="btn btn-primary">Speichern</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}

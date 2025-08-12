@@ -2,15 +2,24 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="row justify-content-center">
-  <div class="col-md-6 col-lg-4">
-    <div class="card shadow-sm"><div class="card-body">
-      <h5 class="card-title">Anmeldung</h5>
-      <form method="post" action="{{ url_for('login_post') }}">
-        <div class="mb-3"><label class="form-label">Benutzername</label><input name="username" class="form-control" autofocus></div>
-        <div class="mb-3"><label class="form-label">Passwort</label><input type="password" name="password" class="form-control"></div>
-        <button class="btn btn-primary w-100">Login</button>
-      </form>
-    </div></div>
+  <div class="col-12 col-sm-10 col-md-6 col-lg-4">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h1 class="h4 mb-3">Anmeldung</h1>
+        <form method="post" action="{{ url_for('login_post') }}">
+          <div class="mb-3">
+            <label class="form-label">Benutzername</label>
+            <input name="username" class="form-control" autocomplete="username" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Passwort</label>
+            <input type="password" name="password" class="form-control" autocomplete="current-password" required>
+          </div>
+          <button class="btn btn-primary w-100">Login</button>
+        </form>
+        <!--p class="mt-3 small text-muted">Erstinstallation: Nutzer <code>admin</code>, Passwort <code>admin</code> – nach Login Passwort im Profil ändern (erzwungen). Falls 2FA aktiviert, wird ein Code abgefragt.</p-->
+      </div>
+    </div>
   </div>
 </div>
 {% endblock %}

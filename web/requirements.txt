@@ -3,6 +3,7 @@ Flask==3.0.3
 SQLAlchemy==2.0.30
 psycopg2-binary==2.9.9
 Werkzeug==3.0.3
+python-dateutil==2.9.0.post0
 reportlab==4.2.2
 pyotp==2.9.0
 qrcode==7.4.2

@@ -1,0 +1,9 @@
+
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: en\n"
+
+#: template_babel_snippet.html:1
+msgid "Willkommen bei BottleBalance"
+msgstr "Welcome to BottleBalance"

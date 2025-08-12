@@ -1,22 +1,22 @@
 volumes:
-  db:
+  bottlebalance-db:
 
 services:
-  db:
+  bottlebalance-db:
     image: postgres:15
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASS}
       POSTGRES_DB: ${DB_NAME}
     volumes:
-      - db:/var/lib/postgresql/data
+      - bottlebalance-db:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
       interval: 5s
       timeout: 3s
       retries: 10
 
-  app:
+  bottlebalance-web:
     build: ./web
     ports:
       - "5000:5000"
@@ -26,5 +26,5 @@ services:
       - DB_USER=${DB_USER}
       - DB_PASS=${DB_PASS}
     depends_on:
-      db:
+      bottlebalance-db:
         condition: service_healthy

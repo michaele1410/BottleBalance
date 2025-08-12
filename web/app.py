@@ -7,7 +7,7 @@ from datetime import datetime, date, timedelta
 from decimal import Decimal, InvalidOperation
 
 from flask_babel import Babel, gettext as _
-from flask import Flask, render_template, request, redirect, url_for, session, send_file, flash, abort
+from flask import Flask, render_template, g, request, redirect, url_for, session, send_file, flash, abort
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import OperationalError
@@ -68,15 +68,28 @@ ROLES = {
     }
 }
 
+def get_locale():
+    # if a user is logged in, use the locale from the user settings
+    user = getattr(g, 'user', None)
+    if user is not None:
+        return user.locale
+    # otherwise try to guess the language from the user accept
+    # header the browser transmits.  We support de/fr/en in this
+    # example.  The best match wins.
+    return request.accept_languages.best_match(['de', 'fr', 'en'])
+
+def get_timezone():
+    user = getattr(g, 'user', None)
+    if user is not None:
+        return user.timezone
+    
+    #return session.get('language') or request.accept_languages.best_match(['de', 'en'])
+
 app = Flask(__name__)
 
 app.config['BABEL_DEFAULT_LOCALE'] = 'de'
-babel = Babel(app)
+babel = Babel(app, locale_selector=get_locale, timezone_selector=get_timezone)
 
-@babel.locale_selector
-def get_locale():
-
-    return session.get('language') or request.accept_languages.best_match(['de', 'en'])
 app.secret_key = SECRET_KEY
 
 # ROLES und set() global für Jinja2 verfügbar machen

@@ -186,8 +186,11 @@ def current_user():
     if not uid:
         return None
     with engine.begin() as conn:
-        row = conn.execute(text("SELECT id, username, email, role, active, must_change_password, totp_enabled FROM users WHERE id=:id"), {'id': uid}).mappings().first()
-        return row
+        row = conn.execute(text("""
+            SELECT id, username, email, role, active, must_change_password, totp_enabled, backup_codes
+            FROM users WHERE id=:id
+        """), {'id': uid}).mappings().first()
+    return row
 
 def login_required(fn):
     @wraps(fn)
@@ -345,20 +348,55 @@ def login_2fa_post():
     uid = session.get('pending_2fa_user_id')
     if not uid:
         return redirect(url_for('login'))
+
     code = (request.form.get('code') or '').strip()
+
     with engine.begin() as conn:
-        user = conn.execute(text("SELECT id, role, totp_secret FROM users WHERE id=:id"), {'id': uid}).mappings().first()
-    if not user or not user['totp_secret']:
-        flash('2FA nicht aktiv.')
-        return redirect(url_for('login'))
-    totp = pyotp.TOTP(user['totp_secret'])
-    if not totp.verify(code, valid_window=1):
-        flash('Ungültiger 2FA-Code.')
-        return redirect(url_for('login_2fa'))
-    session.pop('pending_2fa_user_id', None)
-    session['user_id'] = user['id']
-    session['role'] = user['role']
-    return redirect(url_for('index'))
+        user = conn.execute(text("""
+            SELECT id, role, totp_secret, backup_codes
+            FROM users WHERE id=:id
+        """), {'id': uid}).mappings().first()
+
+        if not user or not user['totp_secret']:
+            flash('2FA nicht aktiv.')
+            return redirect(url_for('login'))
+
+        totp = pyotp.TOTP(user['totp_secret'])
+
+        # ✅ TOTP-Code gültig
+        if totp.verify(code, valid_window=1):
+            session.pop('pending_2fa_user_id', None)
+            session['user_id'] = user['id']
+            session['role'] = user['role']
+            return redirect(url_for('index'))
+
+        # ✅ Backup-Code gültig
+        if user.get('backup_codes'):
+            codes = user['backup_codes'].split(',')
+            if code in codes:
+                codes.remove(code)
+                conn.execute(text("UPDATE users SET backup_codes=:bc WHERE id=:id"),
+                             {'bc': ",".join(codes), 'id': uid})
+                session.pop('pending_2fa_user_id', None)
+                session['user_id'] = user['id']
+                session['role'] = user['role']
+                flash('Backup-Code verwendet. Bitte neue Codes generieren.')
+                return redirect(url_for('index'))
+
+    flash('Ungültiger 2FA-Code oder Backup-Code.')
+    return redirect(url_for('login_2fa'))
+
+
+@app.post('/profile/2fa/regen')
+@login_required
+def regen_backup_codes():
+    uid = session['user_id']
+    codes = [secrets.token_hex(4) for _ in range(10)]
+    codes_str = ",".join(codes)
+    with engine.begin() as conn:
+        conn.execute(text("UPDATE users SET backup_codes=:bc WHERE id=:id"), {'bc': codes_str, 'id': uid})
+    flash("Neue Backup-Codes wurden generiert.")
+    return redirect(url_for('profile'))
 
 @app.get('/logout')
 @login_required

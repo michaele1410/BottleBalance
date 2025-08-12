@@ -9,7 +9,7 @@
         <form method="post" action="{{ url_for('login_2fa_post') }}">
           <div class="mb-3">
             <label class="form-label">6-stelliger Code</label>
-            <input name="code" class="form-control" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" required>
+            <input name="code" class="form-control" inputmode="numeric" autocomplete="one-time-code" required>
           </div>
           <button class="btn btn-primary w-100">Bestätigen</button>
         </form>

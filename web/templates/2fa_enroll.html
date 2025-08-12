@@ -5,16 +5,16 @@
   <div class="col-12 col-md-6 col-lg-5">
     <div class="card shadow-sm">
       <div class="card-body text-center">
-        <h1 class="h5 mb-3">2FA einrichten</h1>
-        <p>Scanne den QR-Code mit deiner Authenticator-App (z.B. Microsoft Authenticator, Google Authenticator) und gib anschließend den 6-stelligen Code ein.</p>
+        <h1 class="h5 mb-3">{{ _('2FA einrichten') }}</h1>
+        <p>{{ _('Scanne den QR-Code mit deiner Authenticator-App (z.B. Microsoft Authenticator, Google Authenticator) und gib anschließend den 6-stelligen Code ein.') }}</p>
         <img src="{{ qr_data_url }}" alt="2FA QR" class="img-fluid mb-3" style="max-width: 240px;"/>
-        <div class="alert alert-light">Manueller Schlüssel: <code>{{ secret }}</code></div>
+        <div class="alert alert-light">{{ _('2FA Manueller Schlüssel:') }} <code>{{ secret }}</code></div>
         <form method="post" action="{{ url_for('confirm_2fa') }}" class="row g-2 justify-content-center">
           <div class="col-8">
-            <input name="code" class="form-control" inputmode="numeric" pattern="[0-9]*" placeholder="6-stelliger Code" required>
+            <input name="code" class="form-control" inputmode="numeric" pattern="[0-9]*" placeholder="{{ _('6-stelliger Code') }}" required>
           </div>
           <div class="col-4 d-grid">
-            <button class="btn btn-primary">Bestätigen</button>
+            <button class="btn btn-primary">{{ _('Bestätigen') }}</button>
           </div>
         </form>
       </div>

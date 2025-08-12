@@ -960,7 +960,7 @@ def set_language():
             with engine.begin() as conn:
                 conn.execute(text("UPDATE users SET locale=:lang, updated_at=NOW() WHERE id=:id"),
                              {'lang': lang, 'id': uid})
-        flash(_('Sprache geändert.') if lang == 'de' else _('Language changed.'))
+        flash('Sprache geändert.')
     return redirect(url_for('profile'))
 
 

@@ -3,29 +3,29 @@
 {% block content %}
 <div class="card shadow-sm">
   <div class="card-body">
-    <h1 class="h5 mb-3">Benutzerverwaltung</h1>
+    <h1 class="h5 mb-3">{{ _('Benutzerverwaltung') }}</h1>
 
     <form method="post" action="{{ url_for('users_add') }}" class="row g-2 align-items-end mb-3">
       <div class="col-12 col-md-3">
-        <label class="form-label">Benutzername</label>
+        <label class="form-label">{{ _('Benutzername') }}</label>
         <input name="username" class="form-control" required>
       </div>
       <div class="col-12 col-md-3">
-        <label class="form-label">E-Mail</label>
+        <label class="form-label">{{ _('E-Mail') }}</label>
         <input name="email" type="email" class="form-control">
       </div>
       <div class="col-12 col-md-2">
-        <label class="form-label">Rolle</label>
+        <label class="form-label">{{ _('Rolle') }}</label>
         <select class="form-select" name="role">
           {% for r in ROLES.keys() %}<option value="{{ r }}">{{ r }}</option>{% endfor %}
         </select>
       </div>
       <div class="col-12 col-md-2">
-        <label class="form-label">Passwort</label>
+        <label class="form-label">{{ _('Passwort') }}</label>
         <input type="password" name="password" class="form-control" required>
       </div>
       <div class="col-12 col-md-2">
-        <button class="btn btn-success w-100"><i class="bi-plus-lg me-1"></i> Anlegen</button>
+        <button class="btn btn-success w-100"><i class="bi-plus-lg me-1"></i> {{ _('Anlegen') }}</button>
       </div>
     </form>
 
@@ -33,12 +33,12 @@
       <table class="table table-sm align-middle table-striped">
         <thead class="table-light">
           <tr>
-            <th>Benutzername</th>
-            <th>E-Mail</th>
-            <th>Rolle</th>
-            <th>Aktiv</th>
-            <th>Erstellt</th>
-            <th class="text-end">Aktionen</th>
+            <th>{{ _('Benutzername') }}</th>
+            <th>{{ _('E-Mail') }}</th>
+            <th>{{ _('Rolle') }}</th>
+            <th>{{ _('Aktiv') }}</th>
+            <th>{{ _('Erstellt') }}</th>
+            <th class="text-end">{{ _('Aktionen') }}</th>
           </tr>
         </thead>
         <tbody>
@@ -51,7 +51,7 @@
                 <select class="form-select form-select-sm" name="role">
                   {% for r in ROLES.keys() %}<option value="{{ r }}" {% if r==u.role %}selected{% endif %}>{{ r }}</option>{% endfor %}
                 </select>
-                <button class="btn btn-sm btn-outline-primary">Ändern</button>
+                <button class="btn btn-sm btn-outline-primary">{{ _('SpeÄndernichern') }}</button>
               </form>
             </td>
             <td>
@@ -65,17 +65,17 @@
             <td class="text-end">
               <div class="d-flex gap-2 justify-content-end">
                 <form method="post" action="{{ url_for('users_reset_pw', uid=u.id) }}" class="d-inline d-flex gap-2">
-                  <input type="password" class="form-control form-control-sm" name="password" placeholder="Neues Passwort" required style="max-width: 180px;">
-                  <button class="btn btn-sm btn-outline-warning">Passwort setzen</button>
+                  <input type="password" class="form-control form-control-sm" name="password" placeholder="{{ _('Neues Passwort') }}" required style="max-width: 180px;">
+                  <button class="btn btn-sm btn-outline-warning">{{ _('Passwort setzen') }}</button>
                 </form>
                 <form method="post" action="{{ url_for('users_reset_link', uid=u.id) }}" class="d-inline">
-                  <button class="btn btn-sm btn-outline-info" title="Reset-Link generieren">Reset-Link</button>
+                  <button class="btn btn-sm btn-outline-info" title="Reset-Link generieren">{{ _('Reset-Link') }}</button>
                 </form>
               </div>
             </td>
           </tr>
           {% else %}
-          <tr><td colspan="6" class="text-center text-muted">Keine Benutzer vorhanden.</td></tr>
+          <tr><td colspan="6" class="text-center text-muted">{{ _('Keine Benutzer vorhanden') }}.</td></tr>
           {% endfor %}
         </tbody>
       </table>

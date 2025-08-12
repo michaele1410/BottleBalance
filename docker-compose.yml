@@ -1,5 +1,6 @@
 volumes:
   bottlebalance-db:
+  bottlebalance-app:
 
 services:
   bottlebalance-db:
@@ -25,6 +26,9 @@ services:
       - DB_NAME=${DB_NAME}
       - DB_USER=${DB_USER}
       - DB_PASS=${DB_PASS}
+    volumes:
+      - bottlebalance-app:/app
+
     depends_on:
       bottlebalance-db:
         condition: service_healthy

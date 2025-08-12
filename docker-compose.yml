@@ -26,5 +26,5 @@ services:
       - DB_USER=${DB_USER}
       - DB_PASS=${DB_PASS}
     depends_on:
-      bottlebalance-db:
+      db:
         condition: service_healthy

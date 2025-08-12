@@ -81,7 +81,7 @@ docker compose -f "docker-compose.yml" up -d --build
 
 ```env
 SECRET_KEY=your-secret-key
-DB_HOST=bottlebalance-db
+DB_HOST=db
 DB_NAME=bottlebalance
 DB_USER=db-user
 DB_PASS=db-password

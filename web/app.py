@@ -31,8 +31,8 @@ from reportlab.lib.units import mm
 # Konfiguration
 # -----------------------
 SECRET_KEY = os.getenv("SECRET_KEY") or secrets.token_hex(24)
-DB_HOST = os.getenv("DB_HOST", "BottleBalance-db")
-DB_NAME = os.getenv("DB_NAME", "BottleBalance")
+DB_HOST = os.getenv("DB_HOST", "db")
+DB_NAME = os.getenv("DB_NAME", "bottlebalance")
 DB_USER = os.getenv("DB_USER", "admin")
 DB_PASS = os.getenv("DB_PASS", "admin")
 
@@ -73,8 +73,9 @@ app = Flask(__name__)
 app.config['BABEL_DEFAULT_LOCALE'] = 'de'
 babel = Babel(app)
 
-@babel.localeselector
+@babel.locale_selector
 def get_locale():
+
     return session.get('language') or request.accept_languages.best_match(['de', 'en'])
 app.secret_key = SECRET_KEY
 

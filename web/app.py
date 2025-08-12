@@ -68,22 +68,25 @@ ROLES = {
     }
 }
 
+
 def get_locale():
-    # if a user is logged in, use the locale from the user settings
     user = current_user()
-    if user is not None:
-        return user.locale
-    # otherwise try to guess the language from the user accept
-    # header the browser transmits.  We support de/fr/en in this
-    # example.  The best match wins.
-    return request.accept_languages.best_match(['de', 'fr', 'en'])
+    if user:
+        # robust: dict ODER Row-Objekt unterstützen
+        pref = user.get('locale') if isinstance(user, dict) else getattr(user, 'locale', None)
+        return (
+            pref
+            or session.get('language')
+            or request.accept_languages.best_match(['de', 'en'])
+        )
+    # anonyme Nutzer: Session-Override oder Browser-Header
+    return session.get('language') or request.accept_languages.best_match(['de', 'en'])
 
 def get_timezone():
     user = current_user()
-    if user is not None:
-        return user.timezone
-    
-    #return session.get('language') or request.accept_languages.best_match(['de', 'en'])
+    if user:
+        return user.get('timezone') if isinstance(user, dict) else getattr(user, 'timezone', None)
+    return None  # oder ein Default wie 'Europe/Berlin'
 
 app = Flask(__name__)
 
@@ -214,10 +217,12 @@ def current_user():
         return None
     with engine.begin() as conn:
         row = conn.execute(text("""
-            SELECT id, username, email, role, active, must_change_password, totp_enabled, backup_codes
-            FROM users WHERE id=:id
+            SELECT id, username, email, role, active, must_change_password, totp_enabled, backup_codes, locale, timezone
+            FROM users
+            WHERE id=:id
         """), {'id': uid}).mappings().first()
-    return row
+    return dict(row) if row else None
+
 
 def login_required(fn):
     @wraps(fn)
@@ -949,8 +954,15 @@ def set_language():
     lang = request.form.get('language')
     if lang in ['de', 'en']:
         session['language'] = lang
+        # optional: persistent per-user preference
+        uid = session.get('user_id')
+        if uid:
+            with engine.begin() as conn:
+                conn.execute(text("UPDATE users SET locale=:lang, updated_at=NOW() WHERE id=:id"),
+                             {'lang': lang, 'id': uid})
         flash(_('Sprache geändert.') if lang == 'de' else _('Language changed.'))
     return redirect(url_for('profile'))
+
 
 if __name__ == '__main__':
     os.environ.setdefault('TZ', 'Europe/Berlin')

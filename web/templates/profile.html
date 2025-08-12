@@ -39,7 +39,21 @@
               <input type="password" name="password" class="form-control" required>
             </div>
             <div class="col-12 col-md-6">
-              <button class="btn btn-outline-danger">2FA deaktivieren</button>
+              <button class="btn btn-outline-danger">2FA deaktivieren
+{% if user.backup_codes %}
+  <h4>Backup-Codes</h4>
+  <ul>
+    {% for code in user.backup_codes.split(',') %}
+      <li>{{ code }}</li>
+    {% endfor %}
+  </ul>
+  {% if user.backup_codes.split(',')|length == 0 %}
+    <form method="post" action="{{ url_for('regen_backup_codes') }}">
+      <button type="submit">Neue Backup-Codes generieren</button>
+    </form>
+  {% endif %}
+{% endif %}
+</button>
             </div>
           </form>
         {% else %}

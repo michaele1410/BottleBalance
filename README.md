@@ -111,7 +111,7 @@ APP_BASE_URL=http://localhost:5000
 ## Planned
 
 
-- **Deletion of User:** Posability to soft and hard delete Users
+- **Deletion of User:** Possibility to soft and hard delete Users
 - **Better Sparklines:** 
 - **Better Sparklines:** 
 - **Multilanguage support:** 

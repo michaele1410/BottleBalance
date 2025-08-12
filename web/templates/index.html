@@ -32,11 +32,11 @@
             <input name="datum" id="datum" class="form-control" value="{{ default_date }}" placeholder="dd.MM.yyyy">
           </div>
           <div class="col-6">
-            <label class="form-label">full bottle</label>
+            <label class="form-label">Full bottles</label>
             <input name="vollgut" type="number" step="1" class="form-control" placeholder="0">
           </div>
           <div class="col-6">
-            <label class="form-label">empty bottles</label>
+            <label class="form-label">Empty bottles</label>
             <input name="leergut" type="number" step="1" class="form-control" placeholder="0">
           </div>
           <div class="col-6">
@@ -49,7 +49,7 @@
           </div>
           <div class="col-12">
             <label class="form-label">Comment</label>
-            <input name="bemerkung" class="form-control" maxlength="500" placeholder="Notiz">
+            <input name="bemerkung" class="form-control" maxlength="500" placeholder="Note">
           </div>
           <div class="col-12">
             <button class="btn btn-success w-100"><i class="bi-plus-lg me-1"></i> Add</button>
@@ -64,10 +64,10 @@
 <div class="card shadow-sm">
   <div class="card-body">
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
-      <h2 class="h5 m-0">Einträge</h2>
+      <h2 class="h5 m-0">Entries</h2>
       <form method="get" class="row g-2 align-items-end w-100 w-md-auto">
         <div class="col-12 col-md-3">
-          <label class="form-label">Suche</label>
+          <label class="form-label">Search</label>
           <input type="text" name="q" class="form-control" placeholder="Date/Comment" value="{{ request.args.get('q','') }}">
         </div>
         <div class="col-6 col-md-2">

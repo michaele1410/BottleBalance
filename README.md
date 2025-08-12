@@ -38,13 +38,11 @@ A secure, lightweight web app to manage a shared cash box (e.g., beverages) — 
   <img src="assets/screenshots/login.png" alt="BottleBalance Login" width="75%"/>
 </p>
 <p align="center">
-  <img src="assets/screenshots/dashboard.png" alt="BottleBalance Dashboard" width="75%"/>
-</p>
-<p align="center">
   <img src="assets/screenshots/2fa.png" alt="BottleBalance 2FA" width="75%"/>
 </p>
-
-> Replace the placeholder images in `assets/screenshots/` with real screenshots using the **same filenames**.
+<p align="center">
+  <img src="assets/screenshots/dashboard.png" alt="BottleBalance Dashboard" width="75%"/>
+</p>
 
 ---
 

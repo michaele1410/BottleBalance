@@ -943,10 +943,6 @@ def export_pdf():
     filename = f"bottlebalance_{date.today().strftime('%Y%m%d')}.pdf"
     return send_file(buffer, as_attachment=True, download_name=filename, mimetype='application/pdf')
 
-if __name__ == '__main__':
-    os.environ.setdefault('TZ', 'Europe/Berlin')
-    app.run(host='0.0.0.0', port=5000, debug=False)
-
 @app.post('/profile/lang')
 @login_required
 def set_language():
@@ -955,3 +951,7 @@ def set_language():
         session['language'] = lang
         flash(_('Sprache geändert.') if lang == 'de' else _('Language changed.'))
     return redirect(url_for('profile'))
+
+if __name__ == '__main__':
+    os.environ.setdefault('TZ', 'Europe/Berlin')
+    app.run(host='0.0.0.0', port=5000, debug=False)

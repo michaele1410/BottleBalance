@@ -4,7 +4,7 @@
 <div class="row g-3 mb-4">
   <div class="col-12 col-lg-4">
     <div class="p-3 bg-light rounded-3 h-100">
-      <div class="mb-1"><strong>{{ _('Inventar (aktuell)') }}</strong> <span class="fs-5 ms-1">{{ inv_aktuell }}</span> {{ _('Flaschen') }}</div>
+      <div class="mb-1"><strong>{{ _('Inventar (aktuell):') }}</strong> <span class="fs-5 ms-1">{{ inv_aktuell }}</span> {{ _('Flaschen') }}</div>
       <div><canvas id="sparkInv" height="40"></canvas></div>
       {% if request.args.get('from') or request.args.get('to') %}
       <div class="small text-muted mt-1">{{ _('Im Filter:') }} {{ filter_inv }} {{ _('Flaschen') }}</div>

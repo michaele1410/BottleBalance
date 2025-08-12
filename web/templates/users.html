@@ -55,9 +55,9 @@
               </form>
             </td>
             <td>
-              <form method="post" action="{{ url_for('users_toggle', uid=u.id) }}">
+              <form method="post" action="{{ url_for('users_toggle', uid=u.id) }}">      
                 <button class="btn btn-sm {{ 'btn-outline-success' if not u.active else 'btn-outline-secondary' }}">
-                  {{ 'Aktivieren' if not u.active else 'Deaktivieren' }}
+                    {{ _('Aktivieren') if not u.active else _('Deaktivieren') }}
                 </button>
               </form>
             </td>

@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2025-08-12 23:35+0200\n"
+"POT-Creation-Date: 2025-08-13 01:11+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -13,6 +13,110 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.17.0\n"
+
+#: app.py:358
+msgid "Login fehlgeschlagen."
+msgstr "Login failed."
+
+#: app.py:368
+msgid "Bitte Passwort ändern (erforderlich)."
+msgstr "Please change your password (required)."
+
+#: app.py:393
+msgid "2FA nicht aktiv."
+msgstr "2FA is currently"
+
+#: app.py:415
+msgid "Backup-Code verwendet. Bitte neue Codes generieren."
+msgstr "Backup code used. Please generate new codes."
+
+#: app.py:418
+msgid "Ungültiger 2FA-Code oder Backup-Code."
+msgstr "Invalid 2FA code or backup code."
+
+#: app.py:430
+msgid "Neue Backup-Codes wurden generiert.:"
+msgstr "New backup codes have been generated.:"
+
+#: app.py:455 app.py:617
+msgid "Passwort muss mindestens 8 Zeichen haben."
+msgstr "Password must be at least 8 characters long."
+
+#: app.py:458
+msgid "Passwörter stimmen nicht überein."
+msgstr "Passwords do not match."
+
+#: app.py:468
+msgid "Profil aktualisiert."
+msgstr "Profile updated."
+
+#: app.py:493
+msgid "Kein 2FA-Setup aktiv."
+msgstr "Kein 2FA-Setup aktiv."
+
+#: app.py:498
+msgid "Ungültiger 2FA-Code."
+msgstr "Invalid 2FA code."
+
+#: app.py:503
+msgid "2FA aktiviert."
+msgstr "2FA enabled."
+
+#: app.py:514
+msgid "Passwortprüfung fehlgeschlagen."
+msgstr "Password verification failed."
+
+#: app.py:518
+msgid "2FA deaktiviert."
+msgstr "2FA disabled."
+
+#: app.py:562
+msgid "Reset-Link per E-Mail versendet."
+msgstr "Reset link sent by email."
+
+#: app.py:578
+msgid "Passwortanforderungen nicht erfüllt oder stimmen nicht überein."
+msgstr "Password requirements not met or do not match."
+
+#: app.py:583
+msgid "Link ungültig oder abgelaufen."
+msgstr "Link invalid or expired."
+
+#: app.py:588
+msgid "Passwort aktualisiert. Bitte einloggen."
+msgstr "Password updated. Please log in."
+
+#: app.py:611
+msgid "Benutzername darf nicht leer sein."
+msgstr "Username cannot be empty."
+
+#: app.py:614 app.py:644
+msgid "Ungültige Rolle."
+msgstr "Invalid role."
+
+#: app.py:625
+msgid "Benutzer angelegt."
+msgstr "User created."
+
+#: app.py:656
+msgid "Neues Passwort muss mindestens 8 Zeichen haben."
+msgstr "New password must be at least 8 characters long."
+
+#: app.py:661
+msgid "Passwort gesetzt."
+msgstr "Reset password"
+
+#: app.py:765
+msgid "Eintrag nicht gefunden."
+msgstr "Entry not found."
+
+#: app.py:861
+msgid "Bitte eine CSV-Datei auswählen."
+msgstr "Please select a CSV file."
+
+#: app.py:963
+msgid "Sprache geändert."
+msgstr "Language changed."
 
 #: templates/2fa.html:8 templates/profile.html:34
 msgid "2-Faktor-Authentifizierung"
@@ -35,11 +139,13 @@ msgid ""
 "Scanne den QR-Code mit deiner Authenticator-App (z.B. Microsoft "
 "Authenticator, Google Authenticator) und gib anschließend den 6-stelligen"
 " Code ein."
-msgstr "Scan the QR code with your authenticator app (e.g. Microsoft Authenticator, Google Authenticator) and then enter the 6-digit code."
+msgstr ""
+"Scan the QR code with your authenticator app (e.g. Microsoft "
+"Authenticator, Google Authenticator) and then enter the 6-digit code."
 
 #: templates/2fa_enroll.html:11
-msgid "2FA Manueller Schlüssel:"
-msgstr "2FA Manual Key:"
+msgid "2FA Geheimer Schlüssel:"
+msgstr "2FA secret key:"
 
 #: templates/audit.html:6
 msgid "Audit-Log"
@@ -52,6 +158,14 @@ msgstr "Search"
 #: templates/audit.html:10
 msgid "Aktion/Entry-ID"
 msgstr "Action/Entry ID"
+
+#: templates/audit.html:13 templates/index.html:74
+msgid "Von"
+msgstr "From"
+
+#: templates/audit.html:17 templates/index.html:78
+msgid "Bis"
+msgstr "To"
 
 #: templates/audit.html:21 templates/index.html:82
 msgid "Filtern"
@@ -82,7 +196,6 @@ msgid "Keine Einträge."
 msgstr "No Entries."
 
 #: templates/base.html:6 templates/base.html:17
-#, fuzzy
 msgid "BottleBalance"
 msgstr "Welcome to BottleBalance"
 
@@ -113,23 +226,31 @@ msgstr "Date"
 
 #: templates/edit.html:15 templates/index.html:35 templates/index.html:103
 msgid "Vollgut"
-msgstr "Full bottle"
+msgstr "Full bottles"
 
 #: templates/edit.html:19 templates/index.html:39 templates/index.html:104
 msgid "Leergut"
-msgstr "Empty bottle"
+msgstr "Empty bottles"
+
+#: templates/edit.html:24 templates/edit.html:28
+msgid "z.B."
+msgstr "e.g."
 
 #: templates/edit.html:27 templates/index.html:47 templates/index.html:107
 msgid "Ausgabe"
 msgstr "Expenditure"
 
-#: templates/edit.html:27
+#: templates/edit.html:23 templates/edit.html:27
 msgid "(waehrung)"
 msgstr "($)"
 
 #: templates/edit.html:31 templates/index.html:51 templates/index.html:109
 msgid "Bemerkung"
 msgstr "Comment"
+
+#: templates/edit.html:32 templates/index.html:52
+msgid "Notiz"
+msgstr "Note"
 
 #: templates/edit.html:35 templates/profile.html:26 templates/reset.html:19
 msgid "Abbrechen"
@@ -160,25 +281,21 @@ msgstr "Cash balance (current):"
 msgid "Neuen Datensatz hinzufügen"
 msgstr "Add new entry"
 
-#: templates/index.html:43 templates/index.html:106
+#: templates/edit.html:23 templates/index.html:43 templates/index.html:106
 msgid "Einnahme"
 msgstr "Revenue"
 
 #: templates/index.html:43 templates/index.html:47
-msgid "Waehrung"
+msgid "waehrung"
 msgstr "$"
 
 #: templates/index.html:44
-msgid "z.B."
-msgstr "e.g."
+msgid "z.B. 12,34"
+msgstr "e.g. 12,34"
 
 #: templates/index.html:48
-msgid "z.B."
-msgstr "e.g."
-
-#: templates/index.html:52
-msgid "Notiz"
-msgstr "Note"
+msgid "z.B. -5,00"
+msgstr "e.g. -5,00"
 
 #: templates/index.html:55
 msgid "Hinzufügen"
@@ -192,25 +309,17 @@ msgstr "Entries"
 msgid "Datum/Bemerkung"
 msgstr "Date/Comment"
 
-#: templates/index.html:74
-msgid "Von"
-msgstr "From"
-
-#: templates/index.html:78
-msgid "Bis"
-msgstr "To"
-
 #: templates/index.html:85
 msgid "Zurücksetzen"
 msgstr "Reset"
 
 #: templates/index.html:90
 msgid "PDF"
-msgstr ""
+msgstr "PDF"
 
 #: templates/index.html:93
 msgid "CSV"
-msgstr ""
+msgstr "CSV"
 
 #: templates/index.html:105
 msgid "Inventar"
@@ -220,7 +329,7 @@ msgstr "Inventory"
 msgid "Kassenbestand"
 msgstr "Cash balance"
 
-#: templates/index.html:110
+#: templates/index.html:110 templates/users.html:41
 msgid "Aktionen"
 msgstr "Actions"
 
@@ -232,11 +341,11 @@ msgstr "No entries available."
 msgid "Anmeldung"
 msgstr "Login"
 
-#: templates/login.html:10
+#: templates/login.html:10 templates/users.html:10 templates/users.html:36
 msgid "Benutzername"
 msgstr "Username"
 
-#: templates/login.html:14
+#: templates/login.html:14 templates/users.html:24
 msgid "Passwort"
 msgstr "Password"
 
@@ -248,7 +357,7 @@ msgstr "Login"
 msgid "E-Mail (für Passwort-Reset)"
 msgstr "Email (for password reset)"
 
-#: templates/profile.html:17 templates/reset.html:11
+#: templates/profile.html:17 templates/reset.html:11 templates/users.html:68
 msgid "Neues Passwort"
 msgstr "New password"
 
@@ -312,3 +421,50 @@ msgstr "English"
 msgid "Passwort zurücksetzen"
 msgstr "Reset password"
 
+#: templates/users.html:6
+msgid "Benutzerverwaltung"
+msgstr "User management"
+
+#: templates/users.html:14 templates/users.html:37
+msgid "E-Mail"
+msgstr "E-Mail"
+
+#: templates/users.html:18 templates/users.html:38
+msgid "Rolle"
+msgstr "Role"
+
+#: templates/users.html:28
+msgid "Anlegen"
+msgstr "Create"
+
+#: templates/users.html:39
+msgid "Aktiv"
+msgstr "Active"
+
+#: templates/users.html:40
+msgid "Erstellt"
+msgstr "Created"
+
+#: templates/users.html:54
+msgid "SpeÄndernichern"
+msgstr "Save"
+
+#: templates/users.html:60
+msgid "Aktivieren"
+msgstr "Activate"
+
+#: templates/users.html:60
+msgid "Deaktivieren"
+msgstr "Deactivate"
+
+#: templates/users.html:69
+msgid "Passwort setzen"
+msgstr "Reset password"
+
+#: templates/users.html:72
+msgid "Reset-Link"
+msgstr "Reset-Link"
+
+#: templates/users.html:78
+msgid "Keine Benutzer vorhanden"
+msgstr "No entries available."

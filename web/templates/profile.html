@@ -71,13 +71,17 @@
     <div class="card shadow-sm mb-3">
       <div class="card-body">
         <h2 class="h6 mb-3">{{ _('Profil') }}</h2>
-        <form action="/profile/lang" class="row g-2 align-items-end" method="post">
+        <form action="{{ url_for('set_language') }}" class="row g-2 align-items-end" method="post">
             <label class="form-label">{{ _('Sprache:') }}</label>
-            <select id="language" name="language">
-              <option value="de">{{ _('Deutsch') }}</option>
-              <option value="en">{{ _('Englisch') }}</option>
+            <select id="language" name="language" class="form-select">
+              <option value="de" {{ 'selected' if user['locale'] == 'de' else '' }}>
+          {{ _('Deutsch') }}
+        </option>
+        <option value="en" {{ 'selected' if user['locale'] == 'en' else '' }}>
+          {{ _('Englisch') }}
+        </option>
             </select>
-          <button  class="btn btn-outline-primary" type="submit">{{ _('Speichern') }}</button>
+          <button class="btn btn-outline-primary" type="submit">{{ _('Speichern') }}</button>
         </form>
       </div>
     </div>

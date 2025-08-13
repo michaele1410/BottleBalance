@@ -197,6 +197,8 @@ def migrate_columns(conn):
     conn.execute(text("ALTER TABLE entries ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP NOT NULL DEFAULT NOW()"))
     conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS locale TEXT"))
     conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS timezone TEXT"))
+    conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS theme_preference TEXT DEFAULT 'system'"))
+
 def init_db():
     with engine.begin() as conn:
         conn.execute(text(CREATE_TABLE_ENTRIES))
@@ -467,7 +469,9 @@ def logout():
     session.clear()
     return redirect(url_for('login'))
 
+# -----------------------
 # Profile & 2FA management
+# -----------------------
 @app.get('/profile')
 @login_required
 def profile():
@@ -547,6 +551,49 @@ def disable_2fa():
         conn.execute(text("UPDATE users SET totp_secret=NULL, totp_enabled=FALSE, updated_at=NOW() WHERE id=:id"), {'id': uid})
     flash(_('2FA deaktiviert.'))
     return redirect(url_for('profile'))
+
+@app.post('/profile/theme')
+@login_required
+def update_theme():
+    theme = request.form.get('theme')
+    if theme not in ['light', 'dark', 'system']:
+        flash(_('Ungültige Theme-Auswahl.'))
+        return redirect(url_for('profile'))
+    uid = session.get('user_id')
+    with engine.begin() as conn:
+        conn.execute(text("UPDATE users SET theme_preference=:t, updated_at=NOW() WHERE id=:id"),
+                     {'t': theme, 'id': uid})
+    flash(_('Theme-Einstellung gespeichert.'))
+    return redirect(url_for('profile'))
+
+@app.post('/profile/preferences')
+@login_required
+def update_preferences():
+    uid = session.get('user_id')
+    language = request.form.get('language')
+    theme = request.form.get('theme')
+
+    if language not in ['de', 'en']:
+        flash(_('Ungültige Sprache.'))
+        return redirect(url_for('profile'))
+
+    if theme not in ['light', 'dark', 'system']:
+        flash(_('Ungültige Theme-Auswahl.'))
+        return redirect(url_for('profile'))
+
+    with engine.begin() as conn:
+        conn.execute(text("""
+            UPDATE users SET locale=:lang, theme_preference=:theme, updated_at=NOW() WHERE id=:id
+        """), {'lang': language, 'theme': theme, 'id': uid})
+
+    flash(_('Einstellungen gespeichert.'))
+    return redirect(url_for('profile'))
+
+app.context_processor
+def inject_theme():
+    user = current_user()
+    theme = user.get('theme_preference') if user else 'system'
+    return {'theme_preference': theme}
 
 # -----------------------
 # Password reset tokens

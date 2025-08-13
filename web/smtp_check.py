@@ -37,11 +37,14 @@ def check_smtp_configuration():
 
         server.login(SMTP_USER, SMTP_PASS)
 
-        # Test-E-Mail senden
-        message = f"""Subject: SMTP-Test von BottleBalance
+        # UTF-8-kodierte Test-E-Mail senden
+        message = (
+            "Subject: SMTP-Test von BottleBalance\n"
+            "Content-Type: text/plain; charset=utf-8\n"
+            "\n"
+            "Dies ist eine automatische Testnachricht zum Überprüfen der SMTP-Konfiguration. Enthält Umlaute wie Ü, Ä, Ö und ß."
+        ).encode("utf-8")
 
-Dies ist eine automatische Testnachricht zum Überprüfen der SMTP-Konfiguration.
-"""
         server.sendmail(FROM_EMAIL, TO_EMAIL, message)
         server.quit()
         logger.info("SMTP-Verbindung erfolgreich und Test-E-Mail versendet.")

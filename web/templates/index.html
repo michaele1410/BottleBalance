@@ -145,18 +145,56 @@
 
 {% block scripts %}
 <script>
-flatpickr('#datum', {dateFormat:'d.m.Y', defaultDate: '{{ default_date }}', locale: 'de'});
-const invData = {{ series_inv | tojson }};
-const kasData = {{ series_kas | tojson }};
-function sparkline(canvasId, data, color){
-  const ctx = document.getElementById(canvasId);
-  if(!ctx) return;
-  new Chart(ctx, { type: 'line', data: { labels: data.map((_,i)=>i+1), datasets: [{ data, borderColor: color, pointRadius: 0, fill: false, tension: 0.3 }] },
-    options: { responsive:true, maintainAspectRatio:false, scales:{x:{display:false}, y:{display:false}}, plugins:{legend:{display:false}, tooltip:{enabled:false}}, elements:{line:{borderWidth:2}} }
-  });
-}
-sparkline('sparkInv', invData, '#0d6efd');
-sparkline('sparkKas', kasData, '#198754');
+  function sparkline(canvasId, data, color){
+    const ctx = document.getElementById(canvasId);
+    if(!ctx) return;
+
+    // Farbverlauf für modernen Look
+    const gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 60);
+    gradient.addColorStop(0, color + '88'); // halbtransparent
+    gradient.addColorStop(1, color + '00'); // transparent
+
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: data.map((_, i) => i + 1),
+        datasets: [{
+          data,
+          borderColor: color,
+          backgroundColor: gradient,
+          pointRadius: 0,
+          fill: true,
+          tension: 0.4 // weichere Kurven
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: {
+          duration: 1000,
+          easing: 'easeOutQuart'
+        },
+        scales: {
+          x: { display: false },
+          y: { display: false }
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            enabled: true,
+            backgroundColor: '#fff',
+            titleColor: '#333',
+            bodyColor: '#333',
+            borderColor: color,
+            borderWidth: 1
+          }
+        },
+        elements: {
+          line: { borderWidth: 2 }
+        }
+      }
+    });
+  }
 </script>
 <script>
   document.addEventListener('DOMContentLoaded', function() {

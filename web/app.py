@@ -763,6 +763,21 @@ def audit_list():
         """), params).mappings().all()
     return render_template('audit.html', logs=rows)
 
+@app.post('/admin/users/<int:uid>/delete')
+@login_required
+@require_perms('users:manage')
+def users_delete(uid: int):
+    current_uid = session.get('user_id')
+    if uid == current_uid:
+        flash(_('Du kannst dich nicht selbst löschen.'))
+        return redirect(url_for('users_list'))
+
+    with engine.begin() as conn:
+        conn.execute(text("DELETE FROM users WHERE id=:id"), {'id': uid})
+    log_action(current_uid, 'users:delete', None, f"user_id={uid}")
+    flash(_('Benutzer gelöscht.'))
+    return redirect(url_for('users_list'))
+
 # -----------------------
 # CRUD & Index with filters
 # -----------------------

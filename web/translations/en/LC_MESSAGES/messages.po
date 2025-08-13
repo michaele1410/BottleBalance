@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2025-08-13 14:50+0200\n"
+"POT-Creation-Date: 2025-08-13 18:02+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -14,108 +14,117 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.17.0\n"
 
-#: app.py:394
+#: app.py:388
 msgid "Login fehlgeschlagen."
 msgstr "Login failed."
 
-#: app.py:404
+#: app.py:398
 msgid "Bitte Passwort ändern (erforderlich)."
 msgstr "Please change your password (required)."
 
-#: app.py:429
+#: app.py:423
 msgid "2FA nicht aktiv."
 msgstr "2FA is currently"
 
-#: app.py:451
+#: app.py:445
 msgid "Backup-Code verwendet. Bitte neue Codes generieren."
 msgstr "Backup code used. Please generate new codes."
 
-#: app.py:454
+#: app.py:448
 msgid "Ungültiger 2FA-Code oder Backup-Code."
 msgstr "Invalid 2FA code or backup code."
 
-#: app.py:465
+#: app.py:459
 #, fuzzy
 msgid "Neue Backup-Codes wurden generiert. Bitte sicher aufbewahren."
 msgstr "New backup codes have been generated. Please keep them safe."
 
-#: app.py:490 app.py:693
+#: app.py:484 app.py:688
 msgid "Passwort muss mindestens 8 Zeichen haben."
 msgstr "Password must be at least 8 characters long."
 
-#: app.py:493
+#: app.py:487
 msgid "Passwörter stimmen nicht überein."
 msgstr "Passwords do not match."
 
-#: app.py:503
+#: app.py:497
 msgid "Profil aktualisiert."
 msgstr "Profile updated."
 
-#: app.py:528
+#: app.py:522
 msgid "Kein 2FA-Setup aktiv."
 msgstr "Kein 2FA-Setup aktiv."
 
-#: app.py:533
+#: app.py:527
 msgid "Ungültiger 2FA-Code."
 msgstr "Invalid 2FA code."
 
-#: app.py:538
+#: app.py:532
 msgid "2FA aktiviert."
 msgstr "2FA enabled."
 
-#: app.py:549
+#: app.py:544
 msgid "Passwortprüfung fehlgeschlagen."
 msgstr "Password verification failed."
 
-#: app.py:553
+#: app.py:548
 msgid "2FA deaktiviert."
 msgstr "2FA disabled."
 
-#: app.py:628
+#: app.py:623
 msgid "Reset-Link per E-Mail versendet."
 msgstr "Reset link sent by email."
 
-#: app.py:651
+#: app.py:646
 msgid "Passwortanforderungen nicht erfüllt oder stimmen nicht überein."
 msgstr "Password requirements not met or do not match."
 
-#: app.py:659
+#: app.py:654
 msgid "Link ungültig oder abgelaufen."
 msgstr "Link invalid or expired."
 
-#: app.py:664
+#: app.py:659
 msgid "Passwort aktualisiert. Bitte einloggen."
 msgstr "Password updated. Please log in."
 
-#: app.py:687
+#: app.py:682
 msgid "Benutzername darf nicht leer sein."
 msgstr "Username cannot be empty."
 
-#: app.py:690 app.py:720
+#: app.py:685 app.py:715
 msgid "Ungültige Rolle."
 msgstr "Invalid role."
 
-#: app.py:701
+#: app.py:696
 msgid "Benutzer angelegt."
 msgstr "User created."
 
-#: app.py:732
+#: app.py:727
 msgid "Neues Passwort muss mindestens 8 Zeichen haben."
 msgstr "New password must be at least 8 characters long."
 
-#: app.py:737
+#: app.py:732
 msgid "Passwort gesetzt."
 msgstr "Reset password"
 
-#: app.py:841
+#: app.py:772
+msgid "Du kannst dich nicht selbst löschen."
+msgstr "You cannot delete yourself."
+
+#: app.py:778
+#, fuzzy
+msgid "Benutzer gelöscht."
+msgstr "User created."
+
+#: app.py:851
 msgid "Eintrag nicht gefunden."
 msgstr "Entry not found."
 
-#: app.py:937
+#: app.py:947
 msgid "Bitte eine CSV-Datei auswählen."
 msgstr "Please select a CSV file."
 
-#: app.py:1039
+#: app.py:1049
 msgid "Sprache geändert."
 msgstr "Language changed."
 
@@ -146,7 +155,7 @@ msgstr ""
 
 #: templates/2fa_enroll.html:11
 #, fuzzy
-msgid "2FA geheimer Schlüssel"
+msgid "2FA geheimer Schlüssel:"
 msgstr "2FA secret key:"
 
 #: templates/audit.html:6
@@ -267,7 +276,7 @@ msgid "Abbrechen"
 msgstr "Cancel"
 
 #: templates/edit.html:36 templates/profile.html:27 templates/profile.html:84
-#: templates/reset.html:23
+#: templates/reset.html:23 templates/users.html:54
 msgid "Speichern"
 msgstr "Save"
 
@@ -451,10 +460,6 @@ msgstr "Active"
 msgid "Erstellt"
 msgstr "Created"
 
-#: templates/users.html:54
-msgid "Speichern"
-msgstr "Save"
-
 #: templates/users.html:60
 msgid "Aktivieren"
 msgstr "Activate"
@@ -471,6 +476,11 @@ msgstr "Reset password"
 msgid "Reset-Link"
 msgstr "Reset-Link"
 
-#: templates/users.html:78
+#: templates/users.html:75
+msgid "Löschen"
+msgstr "Delete"
+
+#: templates/users.html:81
 msgid "Keine Benutzer vorhanden"
 msgstr "No entries available."
+

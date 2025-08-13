@@ -1,7 +1,8 @@
 
 import os
 import secrets
-import smtplib
+import ssl
+from smtplib import SMTP, SMTP_SSL, SMTPException
 from email.message import EmailMessage
 from datetime import datetime, date, timedelta
 from decimal import Decimal, InvalidOperation
@@ -40,6 +41,9 @@ SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
 SMTP_USER = os.getenv("SMTP_USER")
 SMTP_PASS = os.getenv("SMTP_PASS")
 SMTP_TLS  = os.getenv("SMTP_TLS", "true").lower() in ("1","true","yes","on")
+SMTP_SSL_ON = os.getenv("SMTP_SSL", "false").lower() in ("1","true","yes","on")
+SMTP_TIMEOUT = int(os.getenv("SMTP_TIMEOUT", "10"))
+
 FROM_EMAIL = os.getenv("FROM_EMAIL") or SMTP_USER or "no-reply@example.com"
 APP_BASE_URL = os.getenv("APP_BASE_URL") or "http://localhost:5000"
 
@@ -131,9 +135,11 @@ CREATE TABLE IF NOT EXISTS password_reset_tokens (
 
 def migrate_columns(conn):
     # Best-effort migrations for added columns
+    def migrate_columns(conn):
     conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS email TEXT"))
     conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS totp_secret TEXT"))
     conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS totp_enabled BOOLEAN NOT NULL DEFAULT FALSE"))
+    conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS backup_codes TEXT"))  # <-- neu
     conn.execute(text("ALTER TABLE entries ADD COLUMN IF NOT EXISTS created_by INTEGER"))
     conn.execute(text("ALTER TABLE entries ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT NOW()"))
     conn.execute(text("ALTER TABLE entries ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP NOT NULL DEFAULT NOW()"))
@@ -489,41 +495,68 @@ def disable_2fa():
 # -----------------------
 # Password reset tokens
 # -----------------------
+def build_base_url():
+    # bevorzuge APP_BASE_URL, fallback auf request.url_root
+    try:
+        from flask import request
+        base = os.getenv("APP_BASE_URL") or request.url_root
+    except RuntimeError:
+        base = os.getenv("APP_BASE_URL") or "http://localhost:5000/"
+    return base.rstrip("/") + "/"
 
-def send_mail(to_email: str, subject: str, body: str):
+
+
+def send_mail(to_email: str, subject: str, body: str) -> bool:
     if not SMTP_HOST:
         return False
     msg = EmailMessage()
-    msg['From'] = FROM_EMAIL
-    msg['To'] = to_email
-    msg['Subject'] = subject
+    msg["From"] = FROM_EMAIL
+    msg["To"] = to_email
+    msg["Subject"] = subject
     msg.set_content(body)
-    if SMTP_TLS:
-        with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as s:
-            s.starttls()
-            if SMTP_USER and SMTP_PASS:
-                s.login(SMTP_USER, SMTP_PASS)
-            s.send_message(msg)
-    else:
-        with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as s:
-            if SMTP_USER and SMTP_PASS:
-                s.login(SMTP_USER, SMTP_PASS)
-            s.send_message(msg)
-    return True
+
+    try:
+        if SMTP_SSL_ON:
+            context = ssl.create_default_context()
+            with SMTP_SSL(SMTP_HOST, SMTP_PORT, timeout=SMTP_TIMEOUT, context=context) as s:
+                if SMTP_USER and SMTP_PASS:
+                    s.login(SMTP_USER, SMTP_PASS)
+                s.send_message(msg)
+        else:
+            with SMTP(SMTP_HOST, SMTP_PORT, timeout=SMTP_TIMEOUT) as s:
+                s.ehlo()
+                if SMTP_TLS:
+                    s.starttls(context=ssl.create_default_context())
+                    s.ehlo()
+                if SMTP_USER and SMTP_PASS:
+                    s.login(SMTP_USER, SMTP_PASS)
+                s.send_message(msg)
+        return True
+    except SMTPException as e:
+        # optional: Logging via audit_log oder Logger
+        return False
 
 @app.post('/admin/users/<int:uid>/resetlink')
 @login_required
 @require_perms('users:manage')
 def users_reset_link(uid: int):
     token = secrets.token_urlsafe(32)
-    expires = datetime.utcnow() + timedelta(hours=2)
+    expires = datetime.utcnow() + timedelta(minutes=30)
+    base = build_base_url()
+    reset_url = f"{base}reset/{token}"
     with engine.begin() as conn:
         conn.execute(text("INSERT INTO password_reset_tokens (user_id, token, expires_at) VALUES (:u,:t,:e)"),
                      {'u': uid, 't': token, 'e': expires})
         email = conn.execute(text("SELECT email FROM users WHERE id=:id"), {'id': uid}).scalar_one()
-    reset_url = f"{request.url_root}reset/{token}"
-    body = f"""Klick zum Zurücksetzen: {reset_url}
-Dieser Link ist 2 Stunden gültig."""
+    #####reset_url = f"{request.url_root}reset/{token}"  
+    body = f"""
+    Dein Passwort-Reset-Token lautet:
+
+    {token}
+
+    Dieser Token ist 30 Minuten gültig.
+    Bitte gib ihn auf der Reset-Seite ein: {APP_BASE_URL}/reset
+    """
     if email and SMTP_HOST:
         sent = send_mail(email, 'Passwort zurücksetzen', body)
         if sent:
@@ -552,7 +585,9 @@ def reset_post(token):
             return redirect(url_for('login'))
         conn.execute(text("UPDATE users SET password_hash=:ph, must_change_password=FALSE, updated_at=NOW() WHERE id=:id"),
                      {'ph': generate_password_hash(pwd), 'id': trow['user_id']})
-        conn.execute(text("UPDATE password_reset_tokens SET used=TRUE WHERE id=:id"), {'id': trow['id']})
+        #####conn.execute(text("UPDATE password_reset_tokens SET used=TRUE WHERE id=:id"), {'id': trow['id']})
+        conn.execute(text("UPDATE password_reset_tokens SET used=TRUE WHERE user_id=:uid AND used=FALSE"), {"uid": trow['user_id']})
+
     flash('Passwort aktualisiert. Bitte einloggen.')
     return redirect(url_for('login'))
 

@@ -47,19 +47,13 @@ SMTP_PASS = os.getenv("SMTP_PASS")
 SMTP_TLS  = os.getenv("SMTP_TLS", "true").lower() in ("1","true","yes","on")
 SMTP_SSL_ON = os.getenv("SMTP_SSL", "false").lower() in ("1","true","yes","on")
 SMTP_TIMEOUT = int(os.getenv("SMTP_TIMEOUT", "10"))
-SEND_TEST_MAIL = os.getenv("SEND_TEST_MAIL", "true").lower() in ("1", "true", "yes", "on")
+SEND_TEST_MAIL = os.getenv("SEND_TEST_MAIL", "false").lower() in ("1", "true", "yes", "on")
                    
 FROM_EMAIL = os.getenv("FROM_EMAIL") or SMTP_USER or "no-reply@example.com"
 APP_BASE_URL = os.getenv("APP_BASE_URL") or "http://localhost:5000"
 
 DATABASE_URL = f"postgresql+psycopg2://{DB_USER}:{DB_PASS}@{DB_HOST}:5432/{DB_NAME}"
 engine: Engine = create_engine(DATABASE_URL, future=True, pool_pre_ping=True)
-
-# -----------------------
-# SMTP Test Mail if paraam SEND_TEST_MAIL is set to true
-# -----------------------
-if SEND_TEST_MAIL:
-    check_smtp_configuration()
 
 # -----------------------
 # Logging
@@ -462,7 +456,7 @@ def regen_backup_codes():
     codes_str = ",".join(codes)
     with engine.begin() as conn:
         conn.execute(text("UPDATE users SET backup_codes=:bc WHERE id=:id"), {'bc': codes_str, 'id': uid})
-    flash(_('Neue Backup-Codes wurden generiert:'))
+    flash(_('Neue Backup-Codes wurden generiert. Bitte sicher aufbewahren.'))
     return redirect(url_for('profile'))
 
 @app.get('/logout')
@@ -536,6 +530,7 @@ def confirm_2fa():
         conn.execute(text("UPDATE users SET totp_secret=:s, totp_enabled=TRUE, updated_at=NOW() WHERE id=:id"), {'s': secret, 'id': uid})
     session.pop('enroll_totp_secret', None)
     flash(_('2FA aktiviert.'))
+    regen_backup_codes()
     return redirect(url_for('profile'))
 
 @app.post('/profile/2fa/disable')
@@ -1084,6 +1079,13 @@ def admin_smtp():
         status = f"SMTP-Konfiguration erkannt für Host {SMTP_HOST}:{SMTP_PORT}."
 
     return render_template("admin_smtp.html", status=status)
+
+    # -----------------------
+    # SMTP Test Mail if paraam SEND_TEST_MAIL is set to true
+    # -----------------------
+    logger.info("ENV SEND_TEST_MAIL in .env  is set to %s", SEND_TEST_MAIL)
+    if SEND_TEST_MAIL:
+        check_smtp_configuration()
 
 
 if __name__ == '__main__':

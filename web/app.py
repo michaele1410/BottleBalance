@@ -763,6 +763,15 @@ def audit_list():
         """), params).mappings().all()
     return render_template('audit.html', logs=rows)
 
+@app.post('/admin/users/<int:uid>/delete')
+@login_required
+@require_perms('users:manage')
+def users_delete(uid: int):
+    with engine.begin() as conn:
+        conn.execute(text("DELETE FROM users WHERE id=:id"), {'id': uid})
+    flash(_('Benutzer gelöscht.'))
+    return redirect(url_for('users_list'))
+
 # -----------------------
 # CRUD & Index with filters
 # -----------------------

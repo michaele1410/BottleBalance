@@ -339,6 +339,10 @@ msgstr "Cash balance"
 msgid "Aktionen"
 msgstr "Actions"
 
+#: templates/users.html:75
+msgid "Löschen"
+msgstr "Delete"
+
 #: templates/index.html:132
 msgid "Keine Einträge vorhanden."
 msgstr "No entries available."

@@ -1,5 +1,10 @@
 .table td, .table th { vertical-align: middle; }
-canvas{width:100%;max-height:60px;}
+
+canvas {
+  width: 100%;
+  height: auto;
+  max-height: 100%;
+}
 
 :root {
   --bg-color: #ffffff;

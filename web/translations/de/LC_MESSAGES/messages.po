@@ -340,7 +340,7 @@ msgid "Erstellt"
 msgstr ""
 
 #: templates/users.html:54
-msgid "SpeÄndernichern"
+msgid "Speichern"
 msgstr ""
 
 #: templates/users.html:69

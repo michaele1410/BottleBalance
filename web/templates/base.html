@@ -1,6 +1,6 @@
 
 <!doctype html>
-<html lang="de">
+<html lang="de" data-bs-theme="{{ theme_preference|default('system') }}">
 <head>
   <meta charset="utf-8">
   <title>{{ _('BottleBalance') }}</title>
@@ -10,6 +10,16 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/airbnb.css">
   <link rel="stylesheet" href="{{ url_for('static', filename='custom.css') }}">
+
+  <meta name="color-scheme" content="light dark">
+  <script>
+  (() => {
+    const stored = localStorage.getItem('theme') || '{{ theme_preference|default("system") }}';
+    const systemDark = window.matchMedia('(prefers-color-scheme: dark)');
+    const effective = stored === 'system' ? (systemDark.matches ? 'dark' : 'light') : stored;
+    document.documentElement.setAttribute('data-bs-theme', effective);
+  })();
+  </script>
 </head>
 <body>
 <nav class="navbar navbar-expand-lg bg-body-tertiary border-bottom">
@@ -50,6 +60,26 @@
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/de.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-{% block scripts %}{% endblock %}
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const mq = window.matchMedia('(prefers-color-scheme: dark)');
+  function applyTheme(mode) {
+    const effective = mode === 'system' ? (mq.matches ? 'dark' : 'light') : mode;
+    localStorage.setItem('theme', mode);
+    document.documentElement.setAttribute('data-bs-theme', effective);
+  }
+  document.querySelectorAll('input[name="theme"]').forEach(radio => {
+    radio.addEventListener('change', e => applyTheme(e.target.value));
+  });
+  mq.addEventListener('change', () => {
+    if ((localStorage.getItem('theme') || '{{ theme_preference|default("system") }}') === 'system') {
+      applyTheme('system');
+    }
+  });
+});
+</script>
+
+{% endblock %}
 </body>
 </html>

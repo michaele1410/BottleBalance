@@ -37,8 +37,10 @@ services:
       - SMTP_TLS=${SMTP_TLS}
       - FROM_EMAIL=${FROM_EMAIL}
       - APP_BASE_URL=${APP_BASE_URL}
+
       # Optional, sinnvoll für Links in Mails (lokal):
       #- APP_BASE_URL=http://localhost:5000
+      
     volumes:
       - bottlebalance-app:/app
     depends_on:

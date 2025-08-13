@@ -39,9 +39,9 @@ def check_smtp_configuration():
 
         # UTF-8-kodierte Test-E-Mail senden
         message = (
-            "Subject: SMTP-Test von BottleBalance\n"
-            "Content-Type: text/plain; charset=utf-8\n"
-            "\n"
+            "Subject: SMTP-Test von BottleBalance\r\n"
+            "Content-Type: text/plain; charset=utf-8\r\n"
+            "\r\n"
             "Dies ist eine automatische Testnachricht zum Überprüfen der SMTP-Konfiguration. Enthält Umlaute wie Ü, Ä, Ö und ß."
         ).encode("utf-8")
 
@@ -50,6 +50,3 @@ def check_smtp_configuration():
         logger.info("SMTP-Verbindung erfolgreich und Test-E-Mail versendet.")
     except Exception as e:
         logger.warning(f"SMTP-Test fehlgeschlagen: {e}")
-
-# Diese Funktion kann beim App-Start aufgerufen werden
-check_smtp_configuration()

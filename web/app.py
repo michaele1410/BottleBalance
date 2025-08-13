@@ -31,9 +31,6 @@ from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import mm
 
-
-check_smtp_configuration()
-
 # -----------------------
 # Konfiguration
 # -----------------------
@@ -50,12 +47,19 @@ SMTP_PASS = os.getenv("SMTP_PASS")
 SMTP_TLS  = os.getenv("SMTP_TLS", "true").lower() in ("1","true","yes","on")
 SMTP_SSL_ON = os.getenv("SMTP_SSL", "false").lower() in ("1","true","yes","on")
 SMTP_TIMEOUT = int(os.getenv("SMTP_TIMEOUT", "10"))
-
+SEND_TEST_MAIL = os.getenv("SEND_TEST_MAIL", "true").lower() in ("1", "true", "yes", "on")
+                   
 FROM_EMAIL = os.getenv("FROM_EMAIL") or SMTP_USER or "no-reply@example.com"
 APP_BASE_URL = os.getenv("APP_BASE_URL") or "http://localhost:5000"
 
 DATABASE_URL = f"postgresql+psycopg2://{DB_USER}:{DB_PASS}@{DB_HOST}:5432/{DB_NAME}"
 engine: Engine = create_engine(DATABASE_URL, future=True, pool_pre_ping=True)
+
+# -----------------------
+# SMTP Test Mail if paraam SEND_TEST_MAIL is set to true
+# -----------------------
+if SEND_TEST_MAIL:
+    check_smtp_configuration()
 
 # -----------------------
 # Logging

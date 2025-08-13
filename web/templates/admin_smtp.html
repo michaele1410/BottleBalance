@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="de">
+<head>
+    <meta charset="utf-8">
+    <title>SMTP-Adminseite</title>
+</head>
+<body>
+    <h1>SMTP-Konfiguration prüfen</h1>
+    <p>Status: {{ status }}</p>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <ul>
+        {% for category, message in messages %}
+          <li style="color: {% if category == 'error' %}red{% else %}green{% endif %};">{{ message }}</li>
+        {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+    <form method="post">
+        <button type="submit">Test-E-Mail senden</button>
+    </form>
+</body>
+</html>

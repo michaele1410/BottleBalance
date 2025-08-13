@@ -8,12 +8,14 @@ from email.message import EmailMessage
 from datetime import datetime, date, timedelta
 from decimal import Decimal, InvalidOperation
 from flask_babel import Babel, gettext as _
-from flask import Flask, render_template, request, redirect, url_for, session, send_file, flash, abort
+from flask import Flask, render_template, request, redirect, url_for, session, send_file, flash, abort, render_template_string
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import OperationalError
 from werkzeug.security import generate_password_hash, check_password_hash
 from smtp_check import check_smtp_configuration
+from email.mime.text import MIMEText
+from email.header import Header
 import csv
 import io
 import time
@@ -1032,6 +1034,53 @@ def set_language():
                              {'lang': lang, 'id': uid})
         flash(_('Sprache geändert.'))
     return redirect(url_for('profile'))
+
+
+@app.route("/admin/smtp", methods=["GET", "POST"])
+@login_required
+@require_perms('users:manage')
+def admin_smtp():
+    status = None
+    if request.method == "POST":
+        try:
+            if not SMTP_HOST or not SMTP_PORT or not SMTP_USER or not SMTP_PASS:
+                flash("SMTP-Konfiguration unvollständig.", "error")
+                return redirect(url_for("admin_smtp"))
+
+            # Verbindung aufbauen
+            if SMTP_SSL_ON:
+                context = ssl.create_default_context()
+                server = SMTP_SSL(SMTP_HOST, SMTP_PORT, timeout=SMTP_TIMEOUT, context=context)
+            else:
+                server = SMTP(SMTP_HOST, SMTP_PORT, timeout=SMTP_TIMEOUT)
+                if SMTP_TLS:
+                    server.starttls(context=ssl.create_default_context())
+
+            server.login(SMTP_USER, SMTP_PASS)
+
+            # UTF-8 sicheres Test-Mail-Objekt
+            subject = Header("SMTP-Test von BottleBalance", "utf-8")
+            body_text = "Dies ist eine Testnachricht zur Überprüfung der SMTP-Konfiguration."
+            message = MIMEText(body_text, "plain", "utf-8")
+            message["Subject"] = subject
+            message["From"] = FROM_EMAIL
+            message["To"] = SMTP_USER
+
+            server.sendmail(FROM_EMAIL, SMTP_USER, message.as_string())
+            server.quit()
+
+            flash("SMTP-Test erfolgreich – Test-E-Mail wurde versendet.", "success")
+        except Exception as e:
+            flash(f"SMTP-Test fehlgeschlagen: {e}", "error")
+        return redirect(url_for("admin_smtp"))
+
+    if not SMTP_HOST or not SMTP_PORT or not SMTP_USER or not SMTP_PASS:
+        status = "SMTP-Konfiguration unvollständig."
+    else:
+        status = f"SMTP-Konfiguration erkannt für Host {SMTP_HOST}:{SMTP_PORT}."
+
+    return render_template("admin_smtp.html", status=status)
+
 
 if __name__ == '__main__':
     os.environ.setdefault('TZ', 'Europe/Berlin')

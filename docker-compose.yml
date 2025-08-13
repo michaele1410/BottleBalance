@@ -22,13 +22,34 @@ services:
     ports:
       - "5000:5000"
     environment:
+      # --- Bestehende DB-Parameter ---
       - DB_HOST=${DB_HOST}
       - DB_NAME=${DB_NAME}
       - DB_USER=${DB_USER}
       - DB_PASS=${DB_PASS}
+      - SECRET_KEY=${SECRET_KEY}
+
+      #Email-Konfiguration
+      #- SMTP_HOST=${SMTP_HOST}
+      #- SMTP_PORT=${SMTP_PORT}
+      #- SMTP_USER=${SMTP_USER}
+      #- SMTP_PASS=${SMTP_PASS}
+      #- SMTP_TLS=${SMTP_TLS}
+      #- FROM_EMAIL=${FROM_EMAIL}
+
+      # Optional, sinnvoll für Links in Mails (lokal):
+      - APP_BASE_URL=http://localhost:5000
     volumes:
       - bottlebalance-app:/app
-
     depends_on:
       bottlebalance-db:
         condition: service_healthy
+      #mailhog:
+      #  condition: service_started
+
+  #mailhog:
+  #  image: mailhog/mailhog
+  #  restart: unless-stopped
+  #  ports:
+  #    - "1025:1025"   # SMTP
+  #    - "8025:8025"   # Web UI (http://localhost:8025)

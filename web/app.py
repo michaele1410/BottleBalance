@@ -1,17 +1,19 @@
-
 import os
 import secrets
-import smtplib
+import ssl
+import logging
+from logging.handlers import RotatingFileHandler
+from smtplib import SMTP, SMTP_SSL, SMTPException
 from email.message import EmailMessage
 from datetime import datetime, date, timedelta
 from decimal import Decimal, InvalidOperation
-
 from flask_babel import Babel, gettext as _
 from flask import Flask, render_template, request, redirect, url_for, session, send_file, flash, abort
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import OperationalError
 from werkzeug.security import generate_password_hash, check_password_hash
+from smtp_check import check_smtp_configuration
 import csv
 import io
 import time
@@ -27,11 +29,14 @@ from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import mm
 
+
+check_smtp_configuration()
+
 # -----------------------
 # Konfiguration
 # -----------------------
 SECRET_KEY = os.getenv("SECRET_KEY") or secrets.token_hex(24)
-DB_HOST = os.getenv("DB_HOST", "db")
+DB_HOST = os.getenv("DB_HOST", "bottlebalance-db")
 DB_NAME = os.getenv("DB_NAME", "bottlebalance")
 DB_USER = os.getenv("DB_USER", "admin")
 DB_PASS = os.getenv("DB_PASS", "admin")
@@ -41,11 +46,38 @@ SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
 SMTP_USER = os.getenv("SMTP_USER")
 SMTP_PASS = os.getenv("SMTP_PASS")
 SMTP_TLS  = os.getenv("SMTP_TLS", "true").lower() in ("1","true","yes","on")
+SMTP_SSL_ON = os.getenv("SMTP_SSL", "false").lower() in ("1","true","yes","on")
+SMTP_TIMEOUT = int(os.getenv("SMTP_TIMEOUT", "10"))
+
 FROM_EMAIL = os.getenv("FROM_EMAIL") or SMTP_USER or "no-reply@example.com"
 APP_BASE_URL = os.getenv("APP_BASE_URL") or "http://localhost:5000"
 
 DATABASE_URL = f"postgresql+psycopg2://{DB_USER}:{DB_PASS}@{DB_HOST}:5432/{DB_NAME}"
 engine: Engine = create_engine(DATABASE_URL, future=True, pool_pre_ping=True)
+
+# -----------------------
+# Logging
+# -----------------------
+LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
+LOG_FILE = os.getenv("LOG_FILE", "app.log")
+LOG_MAX_BYTES = int(os.getenv("LOG_MAX_BYTES", "10485760"))  # 10 MB
+LOG_BACKUP_COUNT = int(os.getenv("LOG_BACKUP_COUNT", "5"))
+
+def configure_logging():
+    root = logging.getLogger()
+    if root.handlers:
+        return
+    root.setLevel(LOG_LEVEL)
+    fmt = logging.Formatter("%(asctime)s %(levelname)s [%(name)s] %(message)s")
+    fh = RotatingFileHandler(LOG_FILE, maxBytes=LOG_MAX_BYTES, backupCount=LOG_BACKUP_COUNT)
+    fh.setFormatter(fmt)
+    sh = logging.StreamHandler()
+    sh.setFormatter(fmt)
+    root.addHandler(fh)
+    root.addHandler(sh)
+
+configure_logging()
+logger = logging.getLogger(__name__)
 
 ROLES = {
     'Admin': {
@@ -159,15 +191,12 @@ def migrate_columns(conn):
     conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS email TEXT"))
     conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS totp_secret TEXT"))
     conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS totp_enabled BOOLEAN NOT NULL DEFAULT FALSE"))
+    conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS backup_codes TEXT"))
     conn.execute(text("ALTER TABLE entries ADD COLUMN IF NOT EXISTS created_by INTEGER"))
     conn.execute(text("ALTER TABLE entries ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT NOW()"))
     conn.execute(text("ALTER TABLE entries ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP NOT NULL DEFAULT NOW()"))
-    conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS backup_codes TEXT"))
     conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS locale TEXT"))
     conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS timezone TEXT"))
-
-
-
 def init_db():
     with engine.begin() as conn:
         conn.execute(text(CREATE_TABLE_ENTRIES))
@@ -204,6 +233,13 @@ def _ensure_init_once():
     global _initialized
     if not _initialized:
         init_db_with_retry()
+        # Basen-URL Hygienecheck (nur Hinweis-Log)
+        if "localhost" in (APP_BASE_URL or "") or APP_BASE_URL.strip() == "":
+            logging.warning(
+                "APP_BASE_URL ist nicht produktionsgeeignet gesetzt (aktuell '%s'). "
+                "Setze eine öffentlich erreichbare Basis-URL, damit Hinweise/Links in Mails korrekt sind.",
+                APP_BASE_URL,
+            )
         _initialized = True
 
 # -----------------------
@@ -218,11 +254,9 @@ def current_user():
     with engine.begin() as conn:
         row = conn.execute(text("""
             SELECT id, username, email, role, active, must_change_password, totp_enabled, backup_codes, locale, timezone
-            FROM users
-            WHERE id=:id
+            FROM users WHERE id=:id
         """), {'id': uid}).mappings().first()
     return dict(row) if row else None
-
 
 def login_required(fn):
     @wraps(fn)
@@ -249,7 +283,6 @@ def require_perms(*perms):
 # -----------------------
 # Utils: Formatting
 # -----------------------
-
 def today_ddmmyyyy():
     return date.today().strftime('%d.%m.%Y')
 
@@ -284,7 +317,6 @@ def format_eur_de(value: Decimal | float | int) -> str:
 # -----------------------
 # Data Access
 # -----------------------
-
 def fetch_entries(search: str | None = None, date_from: date | None = None, date_to: date | None = None):
     where = []
     params = {}
@@ -324,7 +356,6 @@ def fetch_entries(search: str | None = None, date_from: date | None = None, date
         })
     return result
 
-
 def current_totals():
     with engine.begin() as conn:
         rows = conn.execute(text("SELECT vollgut, leergut, einnahme, ausgabe FROM entries ORDER BY datum ASC, id ASC")).fetchall()
@@ -334,7 +365,6 @@ def current_totals():
         inv += (voll or 0) - (leer or 0)
         kas = (kas + Decimal(ein or 0) - Decimal(aus or 0)).quantize(Decimal('0.01'))
     return inv, kas
-
 
 def log_action(user_id: int | None, action: str, entry_id: int | None, detail: str | None = None):
     with engine.begin() as conn:
@@ -418,7 +448,6 @@ def login_2fa_post():
     flash(_('Ungültiger 2FA-Code oder Backup-Code.'))
     return redirect(url_for('login_2fa'))
 
-
 @app.post('/profile/2fa/regen')
 @login_required
 def regen_backup_codes():
@@ -427,7 +456,7 @@ def regen_backup_codes():
     codes_str = ",".join(codes)
     with engine.begin() as conn:
         conn.execute(text("UPDATE users SET backup_codes=:bc WHERE id=:id"), {'bc': codes_str, 'id': uid})
-    flash(_('Neue Backup-Codes wurden generiert.:'))
+    flash(_('Neue Backup-Codes wurden generiert:'))
     return redirect(url_for('profile'))
 
 @app.get('/logout')
@@ -521,70 +550,111 @@ def disable_2fa():
 # -----------------------
 # Password reset tokens
 # -----------------------
+def build_base_url():
+    # bevorzuge APP_BASE_URL, fallback auf request.url_root
+    try:
+        from flask import request
+        base = os.getenv("APP_BASE_URL") or request.url_root
+    except RuntimeError:
+        base = os.getenv("APP_BASE_URL") or "http://localhost:5000/"
+    return base.rstrip("/") + "/"
 
-def send_mail(to_email: str, subject: str, body: str):
+def send_mail(to_email: str, subject: str, body: str) -> bool:
     if not SMTP_HOST:
+        logger.warning("SMTP_HOST nicht gesetzt – Mailversand übersprungen (to=%s, subject=%s).", to_email, subject)
         return False
     msg = EmailMessage()
-    msg['From'] = FROM_EMAIL
-    msg['To'] = to_email
-    msg['Subject'] = subject
+    msg["From"] = FROM_EMAIL
+    msg["To"] = to_email
+    msg["Subject"] = subject
     msg.set_content(body)
-    if SMTP_TLS:
-        with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as s:
-            s.starttls()
-            if SMTP_USER and SMTP_PASS:
-                s.login(SMTP_USER, SMTP_PASS)
-            s.send_message(msg)
-    else:
-        with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as s:
-            if SMTP_USER and SMTP_PASS:
-                s.login(SMTP_USER, SMTP_PASS)
-            s.send_message(msg)
-    return True
+
+    try:
+        if SMTP_SSL_ON:
+            context = ssl.create_default_context()
+            with SMTP_SSL(SMTP_HOST, SMTP_PORT, timeout=SMTP_TIMEOUT, context=context) as s:
+                if SMTP_USER and SMTP_PASS:
+                    s.login(SMTP_USER, SMTP_PASS)
+                s.send_message(msg)
+        else:
+            with SMTP(SMTP_HOST, SMTP_PORT, timeout=SMTP_TIMEOUT) as s:
+                s.ehlo()
+                if SMTP_TLS:
+                    s.starttls(context=ssl.create_default_context())
+                    s.ehlo()
+                if SMTP_USER and SMTP_PASS:
+                    s.login(SMTP_USER, SMTP_PASS)
+                s.send_message(msg)
+        logger.info("E-Mail erfolgreich gesendet (to=%s, subject=%s).", to_email, subject)
+        return True
+    except SMTPException as e:
+        logger.error("SMTP-Fehler beim Mailversand (to=%s, subject=%s): %s", to_email, subject, e, exc_info=True)
+        # optional zusätzlich ins Audit-Log schreiben (best effort)
+        try:
+            log_action(None, "email_error", None, f"to={to_email}, subject={subject}, err={e}")
+        except Exception:
+            logger.debug("Audit-Log für SMTP-Fehler konnte nicht geschrieben werden.", exc_info=True)
+        return False
 
 @app.post('/admin/users/<int:uid>/resetlink')
 @login_required
 @require_perms('users:manage')
 def users_reset_link(uid: int):
     token = secrets.token_urlsafe(32)
-    expires = datetime.utcnow() + timedelta(hours=2)
+    expires = datetime.utcnow() + timedelta(minutes=30)
+    base = build_base_url()
+    reset_url = f"{base}reset/{token}"
     with engine.begin() as conn:
         conn.execute(text("INSERT INTO password_reset_tokens (user_id, token, expires_at) VALUES (:u,:t,:e)"),
                      {'u': uid, 't': token, 'e': expires})
         email = conn.execute(text("SELECT email FROM users WHERE id=:id"), {'id': uid}).scalar_one()
-    reset_url = f"{request.url_root}reset/{token}"
-    body = f"""Klick zum Zurücksetzen: {reset_url}
-Dieser Link ist 2 Stunden gültig."""
+    body = f"""
+    Dein Passwort-Reset-Token lautet:
+
+    {token}
+
+    Dieser Token ist 30 Minuten gültig.
+    Bitte gib ihn auf der Reset-Seite ein: {APP_BASE_URL}/reset
+    """
     if email and SMTP_HOST:
         sent = send_mail(email, 'Passwort zurücksetzen', body)
         if sent:
             flash(_('Reset-Link per E-Mail versendet.'))
         else:
             flash(f"{_('Reset-Link:')} {reset_url}")
+            logger.warning("E-Mail-Versand fehlgeschlagen – Token im UI angezeigt (user_id=%s).", uid)
     else:
         flash(f"{_('Reset-Link:')} {reset_url}")
+        logger.warning("Keine E-Mail-Adresse oder kein SMTP_HOST – Token im UI angezeigt (user_id=%s).", uid)
     return redirect(url_for('users_list'))
 
-@app.get('/reset/<token>')
-def reset_form(token):
-    return render_template('reset.html', token=token)
+# Reset-Formular (Token-only)
+@app.get('/reset')
+def reset_form():
+    return render_template('reset.html')
 
-@app.post('/reset/<token>')
-def reset_post(token):
-    pwd = (request.form.get('password') or '').strip()
-    pwd2 = (request.form.get('password2') or '').strip()
+@app.post('/reset')
+def reset_post():
+    token = (request.form.get('token') or '').strip()
+    pwd   = (request.form.get('password')  or '').strip()
+    pwd2  = (request.form.get('password2') or '').strip()
+    if not token:
+        flash('Reset‑Token fehlt.')
+        return redirect(url_for('reset_form'))
     if len(pwd) < 8 or pwd != pwd2:
         flash(_('Passwortanforderungen nicht erfüllt oder stimmen nicht überein.'))
-        return redirect(url_for('reset_form', token=token))
+        return redirect(url_for('reset_form'))
     with engine.begin() as conn:
-        trow = conn.execute(text("SELECT id, user_id, expires_at, used FROM password_reset_tokens WHERE token=:t"), {'t': token}).mappings().first()
+        trow = conn.execute(
+            text("SELECT id, user_id, expires_at, used FROM password_reset_tokens WHERE token=:t"),
+            {'t': token}
+        ).mappings().first()
         if not trow or trow['used'] or trow['expires_at'] < datetime.utcnow():
             flash(_('Link ungültig oder abgelaufen.'))
             return redirect(url_for('login'))
         conn.execute(text("UPDATE users SET password_hash=:ph, must_change_password=FALSE, updated_at=NOW() WHERE id=:id"),
                      {'ph': generate_password_hash(pwd), 'id': trow['user_id']})
-        conn.execute(text("UPDATE password_reset_tokens SET used=TRUE WHERE id=:id"), {'id': trow['id']})
+        conn.execute(text("UPDATE password_reset_tokens SET used=TRUE WHERE user_id=:uid AND used=FALSE"), {"uid": trow['user_id']})
     flash(_('Passwort aktualisiert. Bitte einloggen.'))
     return redirect(url_for('login'))
 
@@ -962,7 +1032,6 @@ def set_language():
                              {'lang': lang, 'id': uid})
         flash(_('Sprache geändert.'))
     return redirect(url_for('profile'))
-
 
 if __name__ == '__main__':
     os.environ.setdefault('TZ', 'Europe/Berlin')

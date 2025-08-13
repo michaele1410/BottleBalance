@@ -140,7 +140,6 @@
 {% endblock %}
 
 {% block scripts %}
-
 <script>
   function sparkline(canvasId, data, color){
     const ctx = document.getElementById(canvasId);
@@ -192,10 +191,6 @@
       }
     });
   }
-
-  // Aufruf mit deinen Daten
-  sparkline('sparkInv', {{ series_inv | tojson }}, '#0d6efd'); // Blau
-  sparkline('sparkKas', {{ series_kas | tojson }}, '#198754'); // Grün
 </script>
 
 {% endblock %}

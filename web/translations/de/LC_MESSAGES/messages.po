@@ -1,0 +1,360 @@
+
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2025-08-13 00:38+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: de\n"
+"Language-Team: de <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
+
+#: templates/2fa.html:8 templates/profile.html:34
+msgid "2-Faktor-Authentifizierung"
+msgstr ""
+
+#: templates/2fa.html:11 templates/2fa_enroll.html:14
+msgid "6-stelliger Code"
+msgstr ""
+
+#: templates/2fa.html:14 templates/2fa_enroll.html:17
+msgid "Bestätigen"
+msgstr ""
+
+#: templates/2fa_enroll.html:8 templates/profile.html:49
+msgid "2FA einrichten"
+msgstr ""
+
+#: templates/2fa_enroll.html:9
+msgid ""
+"Scanne den QR-Code mit deiner Authenticator-App (z.B. Microsoft "
+"Authenticator, Google Authenticator) und gib anschließend den 6-stelligen"
+" Code ein."
+msgstr ""
+
+#: templates/2fa_enroll.html:11
+msgid "2FA geheinmer Schlüssel:"
+msgstr ""
+
+#: templates/audit.html:6
+msgid "Audit-Log"
+msgstr ""
+
+#: templates/audit.html:9 templates/index.html:70
+msgid "Suche"
+msgstr ""
+
+#: templates/audit.html:10
+msgid "Aktion/Entry-ID"
+msgstr ""
+
+#: templates/audit.html:13 templates/index.html:74
+msgid "Von"
+msgstr ""
+
+#: templates/audit.html:17 templates/index.html:78
+msgid "Bis"
+msgstr ""
+
+#: templates/audit.html:21 templates/index.html:82
+msgid "Filtern"
+msgstr ""
+
+#: templates/audit.html:29
+msgid "Zeitpunkt"
+msgstr ""
+
+#: templates/audit.html:30
+msgid "User"
+msgstr "Benutzer"
+
+#: templates/audit.html:31
+msgid "Aktion"
+msgstr ""
+
+#: templates/audit.html:32
+msgid "Entry-ID"
+msgstr ""
+
+#: templates/audit.html:33
+msgid "Details"
+msgstr ""
+
+#: templates/audit.html:47
+msgid "Keine Einträge."
+msgstr ""
+
+#: templates/base.html:6 templates/base.html:17
+msgid "BottleBalance"
+msgstr "Willkommen bei BottleBalance"
+
+#: templates/base.html:21
+msgid "Benutzer"
+msgstr ""
+
+#: templates/base.html:24
+msgid "Audit"
+msgstr ""
+
+#: templates/base.html:26 templates/profile.html:7 templates/profile.html:73
+msgid "Profil"
+msgstr ""
+
+#: templates/base.html:27
+msgid "Logout"
+msgstr ""
+
+#: templates/edit.html:8
+msgid "Datensatz bearbeiten"
+msgstr ""
+
+#: templates/edit.html:11 templates/index.html:31 templates/index.html:102
+#: templates/index.html:126
+msgid "Datum"
+msgstr ""
+
+#: templates/edit.html:15 templates/index.html:35 templates/index.html:103
+msgid "Vollgut"
+msgstr ""
+
+#: templates/edit.html:19 templates/index.html:39 templates/index.html:104
+msgid "Leergut"
+msgstr ""
+
+#: templates/edit.html:24 templates/edit.html:28
+msgid "z.B."
+msgstr ""
+
+#: templates/edit.html:27 templates/index.html:47 templates/index.html:107
+msgid "Ausgabe"
+msgstr ""
+
+#: templates/edit.html:27
+msgid "(waehrung)"
+msgstr "(€)"
+
+#: templates/edit.html:31 templates/index.html:51 templates/index.html:109
+msgid "Bemerkung"
+msgstr ""
+
+#: templates/edit.html:32 templates/index.html:52
+msgid "Notiz"
+msgstr ""
+
+#: templates/edit.html:35 templates/profile.html:26 templates/reset.html:19
+msgid "Abbrechen"
+msgstr ""
+
+#: templates/edit.html:36 templates/profile.html:27 templates/profile.html:80
+#: templates/reset.html:20
+msgid "Speichern"
+msgstr ""
+
+#: templates/index.html:7
+msgid "Inventar (aktuell):"
+msgstr ""
+
+#: templates/index.html:7 templates/index.html:10
+msgid "Flaschen"
+msgstr ""
+
+#: templates/index.html:10 templates/index.html:19
+msgid "Im Filter:"
+msgstr ""
+
+#: templates/index.html:16
+msgid "Kassenbestand (aktuell):"
+msgstr ""
+
+#: templates/index.html:28
+msgid "Neuen Datensatz hinzufügen"
+msgstr ""
+
+#: templates/index.html:43 templates/index.html:106
+msgid "Einnahme"
+msgstr ""
+
+#: templates/index.html:43 templates/index.html:47
+msgid "waehrung"
+msgstr "€"
+
+#: templates/index.html:44
+msgid "z.B. 12,34"
+msgstr ""
+
+#: templates/index.html:48
+msgid "z.B. -5,00"
+msgstr ""
+
+#: templates/index.html:55
+msgid "Hinzufügen"
+msgstr ""
+
+#: templates/index.html:67
+msgid "Einträge"
+msgstr ""
+
+#: templates/index.html:71
+msgid "Datum/Bemerkung"
+msgstr ""
+
+#: templates/index.html:85
+msgid "Zurücksetzen"
+msgstr ""
+
+#: templates/index.html:90
+msgid "PDF"
+msgstr ""
+
+#: templates/index.html:93
+msgid "CSV"
+msgstr ""
+
+#: templates/index.html:105
+msgid "Inventar"
+msgstr ""
+
+#: templates/index.html:108
+msgid "Kassenbestand"
+msgstr ""
+
+#: templates/index.html:110 templates/users.html:41
+msgid "Aktionen"
+msgstr ""
+
+#: templates/index.html:132
+msgid "Keine Einträge vorhanden."
+msgstr ""
+
+#: templates/login.html:7
+msgid "Anmeldung"
+msgstr ""
+
+#: templates/login.html:10 templates/users.html:10 templates/users.html:36
+msgid "Benutzername"
+msgstr ""
+
+#: templates/login.html:14 templates/users.html:24
+msgid "Passwort"
+msgstr ""
+
+#: templates/login.html:17
+msgid "Login"
+msgstr ""
+
+#: templates/profile.html:10
+msgid "E-Mail (für Passwort-Reset)"
+msgstr ""
+
+#: templates/profile.html:17 templates/reset.html:11 templates/users.html:68
+msgid "Neues Passwort"
+msgstr ""
+
+#: templates/profile.html:18 templates/profile.html:22
+msgid "leer lassen, um nicht zu ändern"
+msgstr ""
+
+#: templates/profile.html:21 templates/reset.html:15
+msgid "Neues Passwort (Wiederholen)"
+msgstr ""
+
+#: templates/profile.html:36
+msgid "2FA ist"
+msgstr ""
+
+#: templates/profile.html:36
+msgid "aktiviert"
+msgstr ""
+
+#: templates/profile.html:39
+msgid "Bestätige mit Passwort"
+msgstr ""
+
+#: templates/profile.html:43
+msgid "2FA deaktivieren"
+msgstr ""
+
+#: templates/profile.html:47
+msgid "2FA ist aktuell"
+msgstr ""
+
+#: templates/profile.html:47
+msgid "deaktiviert"
+msgstr ""
+
+#: templates/profile.html:56
+msgid "Backup-Codes"
+msgstr ""
+
+#: templates/profile.html:57
+msgid "Diese Codes können einmalig beim Login verwendet werden:"
+msgstr ""
+
+#: templates/profile.html:65
+msgid "Neue Backup-Codes generieren"
+msgstr ""
+
+#: templates/profile.html:75
+msgid "Sprache:"
+msgstr ""
+
+#: templates/profile.html:77
+msgid "Deutsch"
+msgstr ""
+
+#: templates/profile.html:78
+msgid "Englisch"
+msgstr ""
+
+#: templates/reset.html:8
+msgid "Passwort zurücksetzen"
+msgstr ""
+
+#: templates/users.html:6
+msgid "Benutzerverwaltung"
+msgstr ""
+
+#: templates/users.html:14 templates/users.html:37
+msgid "E-Mail"
+msgstr ""
+
+#: templates/users.html:18 templates/users.html:38
+msgid "Rolle"
+msgstr ""
+
+#: templates/users.html:28
+msgid "Anlegen"
+msgstr ""
+
+#: templates/users.html:39
+msgid "Aktiv"
+msgstr ""
+
+#: templates/users.html:40
+msgid "Erstellt"
+msgstr ""
+
+#: templates/users.html:54
+msgid "SpeÄndernichern"
+msgstr ""
+
+#: templates/users.html:69
+msgid "Passwort setzen"
+msgstr ""
+
+#: templates/users.html:72
+msgid "Reset-Link"
+msgstr ""
+
+#: templates/users.html:78
+msgid "Keine Benutzer vorhanden"
+msgstr ""
+
+#~ msgid "Inventar (aktuell:)"
+#~ msgstr ""
+

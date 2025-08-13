@@ -1,71 +1,90 @@
-
 {% extends "base.html" %}
 {% block content %}
 <div class="row justify-content-center">
-<div class="col-12 col-lg-8">
-<div class="card shadow-sm mb-3">
-<div class="card-body">
-<h2 class="h6 mb-3">Profil</h2>
-<form action="{{ url_for('profile_post') }}" class="row g-3" method="post">
-<div class="col-12 col-md-6">
-<label class="form-label">E-Mail (für Passwort-Reset)</label>
-<input class="form-control" name="email" type="email" value="{{ user.email or '' }}"/>
-</div>
-<div class="col-12"><hr/></div>
-<div class="col-12 col-md-6">
-<label class="form-label">Neues Passwort</label>
-<input class="form-control" name="password" placeholder="leer lassen, um nicht zu ändern" type="password"/>
-</div>
-<div class="col-12 col-md-6">
-<label class="form-label">Neues Passwort (Wiederholen)</label>
-<input class="form-control" name="password2" placeholder="leer lassen, um nicht zu ändern" type="password"/>
-</div>
-<div class="col-12 d-flex gap-2">
-<a class="btn btn-outline-secondary" href="{{ url_for('index') }}">Abbrechen</a>
-<button class="btn btn-primary">Speichern</button>
-</div>
-</form>
-</div>
-</div>
-<div class="card shadow-sm">
-<div class="card-body">
-<h2 class="h6 mb-3">2-Faktor-Authentifizierung</h2>
+  <div class="col-12 col-lg-8">
+    <div class="card shadow-sm mb-3">
+      <div class="card-body">
+        <h2 class="h6 mb-3">{{ _('Profil') }}</h2>
+        <form action="{{ url_for('profile_post') }}" class="row g-3" method="post">
+          <div class="col-12 col-md-6">
+            <label class="form-label">{{ _('E-Mail (für Passwort-Reset)') }}</label>
+            <input class="form-control" name="email" type="email" value="{{ user.email or '' }}" />
+          </div>
+          <div class="col-12">
+            <hr />
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label">{{ _('Neues Passwort') }}</label>
+            <input class="form-control" name="password" placeholder="{{ _('leer lassen, um nicht zu ändern') }}" type="password" />
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label">{{ _('Neues Passwort (Wiederholen)') }}</label>
+            <input class="form-control" name="password2" placeholder="{{ _('leer lassen, um nicht zu ändern') }}"
+              type="password" />
+          </div>
+          <div class="col-12 d-flex gap-2">
+            <a class="btn btn-outline-secondary" href="{{ url_for('index') }}">{{ _('Abbrechen') }}</a>
+            <button class="btn btn-primary">{{ _('Speichern') }}</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h2 class="h6 mb-3">{{ _('2-Faktor-Authentifizierung') }}</h2>
         {% if user.totp_enabled %}
-          <p class="text-success">2FA ist <strong>aktiviert</strong>.</p>
-<form action="{{ url_for('disable_2fa') }}" class="row g-2 align-items-end" method="post">
-<div class="col-12 col-md-6">
-<label class="form-label">Bestätige mit Passwort</label>
-<input class="form-control" name="password" required="" type="password"/>
-</div>
-<div class="col-12 col-md-6">
-<button class="btn btn-outline-danger">2FA deaktivieren</button>
-</div>
-</form>
+        <p class="text-success">{{ _('2FA ist') }} <strong>{{ _('aktiviert') }}</strong>.</p>
+        <form action="{{ url_for('disable_2fa') }}" class="row g-2 align-items-end" method="post">
+          <div class="col-12 col-md-6">
+            <label class="form-label">{{ _('Bestätige mit Passwort') }}</label>
+            <input class="form-control" name="password" required="" type="password" />
+          </div>
+          <div class="col-12 col-md-6">
+            <button class="btn btn-outline-danger">{{ _('2FA deaktivieren') }}</button>
+          </div>
+        </form>
         {% else %}
-          <p class="text-muted">2FA ist aktuell <strong>deaktiviert</strong>.</p>
-<form action="{{ url_for('enable_2fa') }}" method="post">
-<button class="btn btn-outline-primary">2FA einrichten</button>
-</form>
+        <p class="text-muted">{{ _('2FA ist aktuell') }} <strong>{{ _('deaktiviert') }}</strong>.</p>
+        <form action="{{ url_for('enable_2fa') }}" method="post">
+          <button class="btn btn-outline-primary">{{ _('2FA einrichten') }}</button>
+        </form>
         {% endif %}
-        
+
 
         {% if user.backup_codes %}
-          <hr>
-          <h5>Backup-Codes</h5>
-          <p>Diese Codes können einmalig beim Login verwendet werden:</p>
-          <ul>
-            {% for code in user.backup_codes.split(',') %}
-              <li><code>{{ code }}</code></li>
-            {% endfor %}
-          </ul>
+        <hr />
+        <h5>{{ _('Backup-Codes') }}</h5>
+        <p>{{ _('Diese Codes können einmalig beim Login verwendet werden:') }}</p>
+        <ul>
+          {% for code in user.backup_codes.split(',') %}
+          <li><code>{{ code }}</code></li>
+          {% endfor %}
+        </ul>
         {% elif user.totp_enabled %}
-          <form method="post" action="{{ url_for('regen_backup_codes') }}">
-            <button type="submit" class="btn btn-sm btn-outline-secondary">Neue Backup-Codes generieren</button>
-          </form>
+        <form action="{{ url_for('regen_backup_codes') }}" method="post">
+          <button class="btn btn-sm btn-outline-secondary" type="submit">{{ _('Neue Backup-Codes generieren') }}</button>
+        </form>
         {% endif %}
 
       </div>
-</div>
-</div>
+    </div>
+    <div class="card shadow-sm mb-3">
+      <div class="card-body">
+        <h2 class="h6 mb-3">{{ _('Profil') }}</h2>
+        <form action="{{ url_for('set_language') }}" class="row g-2 align-items-end" method="post">
+            <label class="form-label">{{ _('Sprache:') }}</label>
+            <select id="language" name="language" class="form-select">
+              <option value="de" {{ 'selected' if user['locale'] == 'de' else '' }}>
+          {{ _('Deutsch') }}
+        </option>
+        <option value="en" {{ 'selected' if user['locale'] == 'en' else '' }}>
+          {{ _('Englisch') }}
+        </option>
+            </select>
+          <button class="btn btn-outline-primary" type="submit">{{ _('Speichern') }}</button>
+        </form>
+      </div>
+    </div>
+  </div>
 </div>
 {% endblock %}

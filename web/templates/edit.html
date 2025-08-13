@@ -5,35 +5,35 @@
   <div class="col-12 col-lg-8">
     <div class="card shadow-sm">
       <div class="card-body">
-        <h1 class="h5 mb-3">Datensatz bearbeiten</h1>
+        <h1 class="h5 mb-3">{{ _('Datensatz bearbeiten') }}</h1>
         <form method="post" action="{{ url_for('edit_post', entry_id=data.id) }}" class="row g-3">
           <div class="col-6 col-md-4">
-            <label class="form-label">Datum</label>
+            <label class="form-label">{{ _('Datum') }}</label>
             <input name="datum" id="datum" class="form-control" value="{{ data.datum }}">
           </div>
           <div class="col-6 col-md-4">
-            <label class="form-label">Vollgut</label>
+            <label class="form-label">{{ _('Vollgut') }}</label>
             <input name="vollgut" type="number" step="1" class="form-control" value="{{ data.vollgut }}" placeholder="0">
           </div>
           <div class="col-6 col-md-4">
-            <label class="form-label">Leergut</label>
+            <label class="form-label">{{ _('Leergut') }}</label>
             <input name="leergut" type="number" step="1" class="form-control" value="{{ data.leergut }}" placeholder="0">
           </div>
           <div class="col-6 col-md-4">
-            <label class="form-label">Einnahme (€)</label>
-            <input name="einnahme" class="form-control" value="{{ data.einnahme }}" placeholder="z.B. 12,34">
+            <label class="form-label">{{ _('Einnahme') }} {{ _('(waehrung)') }}</label>
+            <input name="einnahme" class="form-control" value="{{ data.einnahme }}" placeholder="{{ _('z.B.') }} 12,34">
           </div>
           <div class="col-6 col-md-4">
-            <label class="form-label">Ausgabe (€)</label>
-            <input name="ausgabe" class="form-control" value="{{ data.ausgabe }}" placeholder="z.B. -5,00">
+            <label class="form-label">{{ _('Ausgabe') }} {{ _('(waehrung)') }}</label>
+            <input name="ausgabe" class="form-control" value="{{ data.ausgabe }}" placeholder="{{ _('z.B.') }} 5,00">
           </div>
           <div class="col-12">
-            <label class="form-label">Bemerkung</label>
-            <input name="bemerkung" class="form-control" value="{{ data.bemerkung }}" placeholder="Notiz">
+            <label class="form-label">{{ _('Bemerkung') }}</label>
+            <input name="bemerkung" class="form-control" value="{{ data.bemerkung }}" placeholder="{{ _('Notiz') }}">
           </div>
           <div class="col-12 d-flex gap-2">
-            <a class="btn btn-outline-secondary" href="{{ url_for('index') }}">Abbrechen</a>
-            <button class="btn btn-primary">Speichern</button>
+            <a class="btn btn-outline-secondary" href="{{ url_for('index') }}">{{ _('Abbrechen') }}</a>
+            <button class="btn btn-primary">{{ _('Speichern') }}</button>
           </div>
         </form>
       </div>

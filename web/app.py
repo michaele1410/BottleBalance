@@ -1051,7 +1051,7 @@ def export_pdf():
     styles = getSampleStyleSheet()
     story = []
 
-    logo_path = os.path.join(app.root_path, 'static', 'logo.png')
+    logo_path = os.path.join(app.root_path, 'static', '/images/logo.png')
     if os.path.exists(logo_path):
         story.append(RLImage(logo_path, width=40*mm, height=12*mm))
         story.append(Spacer(1, 6))

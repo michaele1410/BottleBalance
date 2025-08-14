@@ -1,26 +1,39 @@
-
 {% extends "base.html" %}
 {% block content %}
 <div class="row g-3 mb-4">
+  <!-- Inventar -->
   <div class="col-12 col-lg-4">
     <div class="p-3 bg-light rounded-3 h-100">
-      <div class="mb-1"><strong>{{ _('Inventar (aktuell):') }}</strong> <span class="fs-5 ms-1">{{ inv_aktuell }}</span> {{ _('Flaschen') }}</div>
-      <div><canvas id="sparkInv" height="40"></canvas></div>
+      <div class="mb-1">
+        <strong>{{ _('Inventar (aktuell):') }}</strong>
+        <span class="fs-5 ms-1">{{ inv_aktuell }}</span> {{ _('Flaschen') }}
+      </div>
+      <div>
+        <canvas id="sparkInv" height="40"></canvas>
+      </div>
       {% if request.args.get('from') or request.args.get('to') %}
       <div class="small text-muted mt-1">{{ _('Im Filter:') }} {{ filter_inv }} {{ _('Flaschen') }}</div>
       {% endif %}
     </div>
   </div>
+
+  <!-- Kassenbestand -->
   <div class="col-12 col-lg-4">
     <div class="p-3 bg-light rounded-3 h-100">
-      <div class="mb-1"><strong>{{ _('Kassenbestand (aktuell):') }}</strong> <span class="fs-5 ms-1">{{ format_eur_de(kas_aktuell) }}</span></div>
-      <div><canvas id="sparkKas" height="40"></canvas></div>
+      <div class="mb-1">
+        <strong>{{ _('Kassenbestand (aktuell):') }}</strong>
+        <span class="fs-5 ms-1">{{ format_eur_de(kas_aktuell) }}</span>
+      </div>
+      <div>
+        <canvas id="sparkKas" height="40"></canvas>
+      </div>
       {% if request.args.get('from') or request.args.get('to') %}
       <div class="small text-muted mt-1">{{ _('Im Filter:') }} {{ format_eur_de(filter_kas) }}</div>
       {% endif %}
     </div>
   </div>
 
+  <!-- Formular für neuen Datensatz -->
   {% if can_add %}
   <div class="col-12 col-lg-4">
     <div class="card shadow-sm h-100">
@@ -44,12 +57,10 @@
             <input name="einnahme" type="number" step="0.01" inputmode="decimal"
                   class="form-control" placeholder="{{ _('z.B. 12,34') }}" id="einnahme">
           </div>
-
           <div class="col-6">
             <label class="form-label">{{ _('Ausgabe') }} {{ _('waehrung') }}</label>
             <input name="ausgabe" type="number" step="0.01" inputmode="decimal"
                   class="form-control" placeholder="{{ _('z.B. -5,00') }}" id="ausgabe">
-          </div>
           </div>
           <div class="col-12">
             <label class="form-label">{{ _('Bemerkung') }}</label>
@@ -65,10 +76,12 @@
   {% endif %}
 </div>
 
+<!-- Tabelle -->
 <div class="card shadow-sm">
   <div class="card-body">
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
       <h2 class="h5 m-0">{{ _('Einträge') }}</h2>
+      <!-- Filter -->
       <form method="get" class="row g-2 align-items-end w-100 w-md-auto">
         <div class="col-12 col-md-3">
           <label class="form-label">{{ _('Suche') }}</label>
@@ -93,22 +106,24 @@
           </div>
         </div>
       </form>
+      <!-- Export -->
       <div class="col-12 col-md-auto">
         <div class="d-flex flex-row flex-wrap gap-2 align-items-center">
           {% if can_export_pdf %}
             <a class="btn btn-outline-danger" href="{{ url_for('export_pdf', q=request.args.get('q'), from=request.args.get('from'), to=request.args.get('to')) }}">
               <i class="bi-file-earmark-pdf me-1"></i> PDF
             </a>
-            {% endif %}
-            {% if can_export_csv %}
+          {% endif %}
+          {% if can_export_csv %}
             <a class="btn btn-outline-primary" href="{{ url_for('export_csv', q=request.args.get('q'), from=request.args.get('from'), to=request.args.get('to')) }}">
               <i class="bi-download me-1"></i> CSV
             </a>
-            {% endif %}
+          {% endif %}
         </div>
       </div>
     </div>
 
+    <!-- Tabelle -->
     <div class="table-responsive">
       <table class="table table-sm align-middle table-striped">
         <thead class="table-light">
@@ -148,7 +163,6 @@
         </tbody>
       </table>
     </div>
-
   </div>
 </div>
 {% endblock %}
@@ -159,10 +173,14 @@
     const ctx = document.getElementById(canvasId);
     if(!ctx) return;
 
-    // Farbverlauf für modernen Look
+    if(!data || data.length === 0){
+      ctx.parentNode.innerHTML = '<div class="text-muted small">{{ _("Keine Daten für Chart") }}</div>';
+      return;
+    }
+
     const gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 60);
-    gradient.addColorStop(0, color + '88'); // halbtransparent
-    gradient.addColorStop(1, color + '00'); // transparent
+    gradient.addColorStop(0, color + '88');
+    gradient.addColorStop(1, color + '00');
 
     new Chart(ctx, {
       type: 'line',
@@ -174,106 +192,27 @@
           backgroundColor: gradient,
           pointRadius: 0,
           fill: true,
-          tension: 0.4 // weichere Kurven
+          tension: 0.4
         }]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        animation: {
-          duration: 1000,
-          easing: 'easeOutQuart'
-        },
-        scales: {
-          x: { display: false },
-          y: { display: false }
-        },
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            enabled: true,
-            backgroundColor: '#fff',
-            titleColor: '#333',
-            bodyColor: '#333',
-            borderColor: color,
-            borderWidth: 1
-          }
-        },
-        elements: {
-          line: { borderWidth: 2 }
-        }
+        scales: { x: { display: false }, y: { display: false } },
+        plugins: { legend: { display: false } }
       }
     });
   }
-</script>
-<script>
+
   document.addEventListener('DOMContentLoaded', function() {
-    const fields = ['einnahme', 'ausgabe'];
+    const invData = {{ series_inv|tojson }};
+    const kasData = {{ series_kas|tojson }};
+    const rootStyles = getComputedStyle(document.documentElement);
+    const colorInv = rootStyles.getPropertyValue('--bs-primary') || '#007bff';
+    const colorKas = rootStyles.getPropertyValue('--bs-success') || '#28a745';
 
-    fields.forEach(id => {
-      const input = document.getElementById(id);
-      let interval;
-      let speed = 150; // Startgeschwindigkeit (ms)
-      let holdTime = 0; // Dauer des Haltens in ms
-      let increment = parseFloat(input.step) || 0.01;
-
-      // Komma in Punkt umwandeln
-      input.addEventListener('input', () => {
-        input.value = input.value.replace(',', '.');
-      });
-
-      function getIncrement() {
-        if (holdTime > 2000) return 1;    // ab 2s -> 1.00
-        if (holdTime > 1000) return 0.1;  // ab 1s -> 0.10
-        return 0.01;                      // Standard
-      }
-
-      function changeValue(direction) {
-        increment = getIncrement();
-        const current = parseFloat(input.value || 0);
-        input.value = (current + direction * increment).toFixed(2);
-      }
-
-      function startChanging(direction) {
-        holdTime = 0;
-        changeValue(direction);
-        interval = setInterval(() => {
-          holdTime += speed;
-          changeValue(direction);
-          if (speed > 30) speed -= 10; // Beschleunigung
-          clearInterval(interval);
-          interval = setInterval(() => {
-            holdTime += speed;
-            changeValue(direction);
-          }, speed);
-        }, speed);
-      }
-
-      function stopChanging() {
-        clearInterval(interval);
-        speed = 150; // Reset Geschwindigkeit
-        holdTime = 0;
-      }
-
-      // Tastatur ↑/↓ mit Beschleunigung
-      let keyHeld = false;
-      input.addEventListener('keydown', (e) => {
-        if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
-          if (!keyHeld) {
-            keyHeld = true;
-            startChanging(e.key === 'ArrowUp' ? 1 : -1);
-          }
-          e.preventDefault();
-        }
-      });
-      input.addEventListener('keyup', (e) => {
-        if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
-          keyHeld = false;
-          stopChanging();
-        }
-      });
-    });
+    sparkline('sparkInv', invData, colorInv.trim());
+    sparkline('sparkKas', kasData, colorKas.trim());
   });
 </script>
-
 {% endblock %}

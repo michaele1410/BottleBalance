@@ -255,7 +255,7 @@ def current_user():
         return None
     with engine.begin() as conn:
         row = conn.execute(text("""
-            SELECT id, username, email, role, active, must_change_password, totp_enabled, backup_codes, locale, timezone
+            SELECT id, username, email, role, active, must_change_password, totp_enabled, backup_codes, locale, timezone, theme_preference
             FROM users WHERE id=:id
         """), {'id': uid}).mappings().first()
     return dict(row) if row else None
@@ -475,7 +475,10 @@ def logout():
 @app.get('/profile')
 @login_required
 def profile():
-    return render_template('profile.html', user=current_user(), ROLES=ROLES)
+    user = current_user()
+    theme = user.get('theme_preference') if user else 'system'
+    return render_template('profile.html', user=user, theme_preference=theme, ROLES=ROLES)
+
 
 @app.post('/profile')
 @login_required
@@ -571,7 +574,8 @@ def update_theme():
 def update_preferences():
     uid = session.get('user_id')
     language = request.form.get('language')
-    theme = request.form.get('theme')
+    theme = request.form.get('theme') or 'system'
+
 
     if language not in ['de', 'en']:
         flash(_('Ungültige Sprache.'))
@@ -737,8 +741,8 @@ def users_add():
     try:
         with engine.begin() as conn:
             conn.execute(text("""
-                INSERT INTO users (username, email, password_hash, role, active, must_change_password)
-                VALUES (:u, :e, :ph, :r, TRUE, FALSE)
+                INSERT INTO users (username, email, password_hash, role, active, must_change_password, theme_preference)
+                VALUES (:u, :e, :ph, :r, TRUE, FALSE, 'system')
             """), {'u': username, 'e': email, 'ph': generate_password_hash(pwd), 'r': role})
         flash(_('Benutzer angelegt.'))
     except Exception as e:

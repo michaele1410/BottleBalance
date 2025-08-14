@@ -128,7 +128,7 @@ babel = Babel(app, locale_selector=get_locale, timezone_selector=get_timezone)
 app.secret_key = SECRET_KEY
 
 # ROLES und set() global für Jinja2 verfügbar machen
-app.jinja_env.globals.update(ROLES=ROLES, set=set)
+#app.jinja_env.globals.update(ROLES=ROLES, set=set, current_user=current_user)
 
 # -----------------------
 # DB Init & Migration
@@ -593,11 +593,11 @@ def update_preferences():
     flash(_('Einstellungen gespeichert.'))
     return redirect(url_for('profile'))
 
-app.context_processor
+@app.context_processor
 def inject_theme():
     user = current_user()
     theme = user.get('theme_preference') if user else 'system'
-    return {'theme_preference': theme}
+    return {'theme_preference': theme, 'current_user': current_user, 'ROLES': ROLES, 'set': set, }
 
 # -----------------------
 # Password reset tokens

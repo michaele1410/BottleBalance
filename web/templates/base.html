@@ -24,11 +24,13 @@
 <body>
 <nav class="navbar navbar-expand-lg bg-body-tertiary border-bottom">
   <div class="container">
-    <a class="navbar-brand fw-semibold" href="{{ url_for('index') }}">{{ _('BottleBalance') }}</a>
+    <a class="navbar-brand fw-semibold" href="{{ url_for('index') }}">
+      {{ _('BottleBalance') }}{% if session.get('user_id') %}, {{ current_user().username|capitalize }}{% endif %}
+    </a>
     {% if session.get('user_id') %}
     <div class="d-flex gap-2">
       <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('index') }}"><i class="bi-house me-1"></i>  {{ _('Dashboard') }}</a>
-      {% if 'users:manage' in (ROLES.get(session.get('role'), set())) %}
+      {% if 'users:manage' in (ROLES.get(session.get('role'), [])) %}
       <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('users_list') }}"><i class="bi-people me-1"></i> {{ _('Benutzer') }}</a>
       {% endif %}
       {% if 'audit:view' in (ROLES.get(session.get('role'), set())) %}

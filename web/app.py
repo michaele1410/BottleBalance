@@ -1051,16 +1051,18 @@ def export_pdf():
     if os.path.exists(logo_path):
         story.append(RLImage(logo_path, width=40*mm, height=12*mm))
         story.append(Spacer(1, 6))
-    story.append(Paragraph('<b>BottleBalance – Export</b>', styles['Title']))
+    story.append(Paragraph(f"<b>{_('BottleBalance – Export')}</b>", styles['Title']))
     story.append(Spacer(1, 6))
 
-    data = [['Datum','Vollgut','Leergut','Inventar','Einnahme','Ausgabe','Kassenbestand','Bemerkung']]
+    
+    data = [[_('Datum'), _('Vollgut'), _('Leergut'), _('Inventar'), _('Einnahme'), _('Ausgabe'), _('Kassenbestand'), _('Bemerkung')]]
     for e in entries:
         data.append([
             format_date_de(e['datum']), str(e['vollgut']), str(e['leergut']), str(e['inventar']),
-            str(e['einnahme']).replace('.', ',') + ' €', str(e['ausgabe']).replace('.', ',') + ' €', str(e['kassenbestand']).replace('.', ',') + ' €', e['bemerkung']
+            str(e['einnahme']).replace('.', ',') + ' €', str(e['ausgabe']).replace('.', ',') + ' €', str(e['kassenbestand']).replace('.', ',') + ' €', Paragraph(e['bemerkung'], styles['Normal'])
+
         ])
-    col_widths = [25*mm,20*mm,20*mm,25*mm,30*mm,30*mm,35*mm,110*mm]
+    col_widths = [25*mm,25*mm,25*mm,25*mm,30*mm,30*mm,30*mm,110*mm]
     table = Table(data, colWidths=col_widths, repeatRows=1)
     table.setStyle(TableStyle([
         ('BACKGROUND',(0,0),(-1,0),colors.HexColor('#f1f3f5')),

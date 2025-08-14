@@ -12,7 +12,7 @@ def parse_date_de_or_today(s: str | None) -> date:
 def format_date_de(d: date) -> str:
     return d.strftime('%d.%m.%Y')
 
-def parse_german_decimal(s: str | None) -> Decimal:
+def parse_money(s: str | None) -> Decimal:
     if s is None:
         return Decimal('0')
     s = s.strip()

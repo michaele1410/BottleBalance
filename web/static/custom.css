@@ -27,7 +27,7 @@ body {
 }
 
 .logo-img {
-  height: 100px;
+  height: 80px;
   width: auto;
   vertical-align: middle;
 }
@@ -56,3 +56,54 @@ body {
   background-color: #2c2f33;
   color: #f8f9fa;
 }
+
+/* Flatpickr – Dark Mode Bridge für Bootstrap */
+:root[data-bs-theme="dark"] .flatpickr-calendar {
+  background-color: var(--bs-body-bg);
+  color: var(--bs-body-color);
+  border: 1px solid var(--bs-border-color);
+  box-shadow: 0 .5rem 1rem rgba(0,0,0,.15);
+}
+
+:root[data-bs-theme="dark"] .flatpickr-months,
+:root[data-bs-theme="dark"] .flatpickr-weekdays {
+  background-color: var(--bs-body-bg);
+  border-bottom: 1px solid var(--bs-border-color);
+}
+
+:root[data-bs-theme="dark"] .flatpickr-day {
+  color: var(--bs-body-color);
+}
+
+:root[data-bs-theme="dark"] .flatpickr-day:hover {
+  background: rgba(255,255,255,.08);
+}
+
+:root[data-bs-theme="dark"] .flatpickr-day.today {
+  border-color: var(--bs-primary);
+}
+
+:root[data-bs-theme="dark"] .flatpickr-day.selected,
+:root[data-bs-theme="dark"] .flatpickr-day.startRange,
+:root[data-bs-theme="dark"] .flatpickr-day.endRange {
+  background: var(--bs-primary);
+  border-color: var(--bs-primary);
+  color: #fff;
+}
+
+
+:root[data-bs-theme="light"] {
+  --bg-color: #ffffff;
+  --text-color: #000000;
+}
+
+:root[data-bs-theme="dark"] {
+  --bg-color: #121212;
+  --text-color: #e0e0e0;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+}
+

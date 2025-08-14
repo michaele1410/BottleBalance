@@ -2,6 +2,7 @@ import os
 import secrets
 import ssl
 import logging
+import re
 from logging.handlers import RotatingFileHandler
 from smtplib import SMTP, SMTP_SSL, SMTPException
 from email.message import EmailMessage
@@ -336,18 +337,6 @@ def parse_date_de_or_today(s: str | None) -> date:
 def format_date_de(d: date) -> str:
     return d.strftime('%d.%m.%Y')
 
-def parse_german_decimal(s: str | None) -> Decimal:
-    if s is None:
-        return Decimal('0')
-    s = s.strip()
-    if not s:
-        return Decimal('0')
-    s = s.replace('.', '').replace(',', '.')
-    try:
-        return Decimal(s)
-    except InvalidOperation:
-        raise ValueError(f'Ungültige Zahl: {s}')
-
 def format_eur_de(value: Decimal | float | int) -> str:
     d = Decimal(value).quantize(Decimal('0.01'))
     sign = '-' if d < 0 else ''
@@ -355,6 +344,90 @@ def format_eur_de(value: Decimal | float | int) -> str:
     whole, frac = divmod(int(d * 100), 100)
     whole_str = f"{whole:,}".replace(',', '.')
     return f"{sign}{whole_str},{frac:02d} €"
+
+# Money parsing utility
+
+
+def parse_money(value: str | None) -> Decimal:
+    """
+    Akzeptiert: '12,50', '12.50', '1.234,56', '1,234.56',
+                '  -1 234,56 € ', '', None
+    Liefert: Decimal (Default 0)
+    """
+    if value is None:
+        return Decimal('0')
+
+    s = str(value).strip()
+    if s == '':
+        return Decimal('0')
+
+    # Währung/Spaces entfernen (inkl. NBSP/NNBSP/Narrow NBSP)
+    s = s.replace('€', '').replace('EUR', '')
+    s = re.sub(r'[\s\u00A0\u202F]', '', s)
+
+    # Optionales führendes '+'
+    if s.startswith('+'):
+        s = s[1:]
+
+    has_comma = ',' in s
+    has_dot = '.' in s
+
+    if has_comma and has_dot:
+        # Rechtester Separator (',' oder '.') ist Dezimaltrennzeichen
+        last_comma = s.rfind(',')
+        last_dot = s.rfind('.')
+        dec_pos = max(last_comma, last_dot)
+
+        int_part = s[:dec_pos]
+        frac_part = s[dec_pos+1:]
+
+        # Tausenderzeichen aus dem Ganzzahlteil entfernen
+        int_part = int_part.replace(',', '').replace('.', '')
+
+        # Dezimalpunkt vereinheitlichen auf '.'
+        s = f"{int_part}.{frac_part}"
+
+    elif has_comma:
+        # Nur Kommas vorhanden
+        if s.count(',') > 1:
+            # Letztes Komma als Dezimaltrenner interpretieren
+            dec_pos = s.rfind(',')
+            int_part = s[:dec_pos].replace(',', '').replace('.', '')
+            frac_part = s[dec_pos+1:]
+            s = f"{int_part}.{frac_part}"
+        else:
+            # Einfach: Komma = Dezimal, Punkte (falls vorhanden) = Tausender
+            s = s.replace('.', '')
+            s = s.replace(',', '.')
+
+    elif has_dot:
+        # Nur Punkte vorhanden
+        if s.count('.') > 1:
+            # Letzter Punkt als Dezimaltrenner
+            dec_pos = s.rfind('.')
+            int_part = s[:dec_pos].replace('.', '').replace(',', '')
+            frac_part = s[dec_pos+1:]
+            s = f"{int_part}.{frac_part}"
+        # Bei genau einem Punkt: ist bereits Dezimalpunkt
+
+    # Sonst: keine Separatoren → unverändert
+
+    try:
+        return Decimal(s)
+    except InvalidOperation:
+        return Decimal('0')
+
+# Utility to parse strict integers
+def parse_int_strict(value: str):
+    if value is None:
+        return None
+    s = str(value).strip()
+    if s == '':
+        return None
+    # nur Ziffern erlauben (optional führendes +/-, hier nicht nötig)
+    if not s.isdigit():
+        return None
+    return int(s)
 
 # -----------------------
 # Data Access
@@ -917,8 +990,8 @@ def add():
         datum = parse_date_de_or_today(request.form.get('datum'))
         vollgut = int((request.form.get('vollgut') or '0').strip() or '0')
         leergut = int((request.form.get('leergut') or '0').strip() or '0')
-        einnahme = parse_german_decimal(request.form.get('einnahme') or '0')
-        ausgabe = parse_german_decimal(request.form.get('ausgabe') or '0')
+        einnahme = parse_money(request.form.get('einnahme') or '0')
+        ausgabe = parse_money(request.form.get('ausgabe') or '0')
         bemerkung = (request.form.get('bemerkung') or '').strip()
     except Exception as e:
         flash(f"{_('Eingabefehler:')} {e}")
@@ -970,8 +1043,8 @@ def edit_post(entry_id: int):
         datum = parse_date_de_or_today(request.form.get('datum'))
         vollgut = int((request.form.get('vollgut') or '0').strip() or '0')
         leergut = int((request.form.get('leergut') or '0').strip() or '0')
-        einnahme = parse_german_decimal(request.form.get('einnahme') or '0')
-        ausgabe = parse_german_decimal(request.form.get('ausgabe') or '0')
+        einnahme = parse_money(request.form.get('einnahme') or '0')
+        ausgabe = parse_money(request.form.get('ausgabe') or '0')
         bemerkung = (request.form.get('bemerkung') or '').strip()
     except Exception as e:
         flash(f"{_('Eingabefehler:')} {e}")
@@ -1015,7 +1088,7 @@ def export_csv():
     date_to = datetime.strptime(dt, '%Y-%m-%d').date() if dt else None
     entries = fetch_entries(q or None, date_from, date_to)
     output = io.StringIO()
-    writer = csv.writer(output, delimiter=';', lineterminator='')
+    writer = csv.writer(output, delimiter=';', lineterminator='\n')
     writer.writerow(['Datum','Vollgut','Leergut','Inventar','Einnahme','Ausgabe','Kassenbestand','Bemerkung'])
     for e in entries:
         writer.writerow([
@@ -1054,8 +1127,8 @@ def import_csv():
             datum = parse_date_de_or_today(datum_s)
             vollgut = int((voll_s or '0').strip() or 0)
             leergut = int((leer_s or '0').strip() or 0)
-            einnahme = parse_german_decimal(ein_s or '0')
-            ausgabe = parse_german_decimal(aus_s or '0')
+            einnahme = parse_money(ein_s or '0')
+            ausgabe = parse_money(aus_s or '0')
             bemerkung = (bem or '').strip()
             rows_to_insert.append({'datum': datum, 'vollgut': vollgut, 'leergut': leergut,
                                    'einnahme': str(einnahme), 'ausgabe': str(ausgabe), 'bemerkung': bemerkung})
@@ -1091,7 +1164,7 @@ def export_pdf():
     styles = getSampleStyleSheet()
     story = []
 
-    logo_path = os.path.join(app.root_path, 'static', '/images/logo.png')
+    logo_path = os.path.join(app.root_path, 'static', 'images/logo.png')
     if os.path.exists(logo_path):
         story.append(RLImage(logo_path, width=40*mm, height=12*mm))
         story.append(Spacer(1, 6))

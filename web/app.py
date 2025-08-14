@@ -24,6 +24,9 @@ import qrcode
 import base64
 from PIL import Image
 
+import subprocess
+
+
 # PDF (ReportLab)
 from reportlab.lib.pagesizes import A4, landscape
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image as RLImage
@@ -126,6 +129,11 @@ app.config['BABEL_DEFAULT_LOCALE'] = 'de'
 babel = Babel(app, locale_selector=get_locale, timezone_selector=get_timezone)
 
 app.secret_key = SECRET_KEY
+
+
+# For Error Pages
+app.config.setdefault("SUPPORT_EMAIL", "support@example.com")   # ggf. aus ENV laden
+app.config.setdefault("SUPPORT_URL",   "https://support.example.com")  # optional
 
 # ROLES und set() global für Jinja2 verfügbar machen
 #app.jinja_env.globals.update(ROLES=ROLES, set=set, current_user=current_user)
@@ -243,6 +251,38 @@ def _ensure_init_once():
                 APP_BASE_URL,
             )
         _initialized = True
+
+# -----------------------
+# Error Handling
+#404 – Not Found: Für nicht existierende Routen.
+#500 – Internal Server Error: Für unerwartete Serverfehler.
+#403 – Forbidden: Für Zugriffsverletzungen.
+#401 – Unauthorized: Für fehlende Authentifizierung.
+# -----------------------
+
+def _error_common_context():
+    return {
+        "home_url": url_for("main.index") if app.url_map.is_endpoint_expecting("main.index") or "main.index" in app.view_functions else url_for("index"),
+        "support_email": current_app.config.get("SUPPORT_EMAIL"),
+        "support_url": current_app.config.get("SUPPORT_URL"),
+        # "request_id": getattr(g, "request_id", None),  # wenn du so etwas nutzt
+    }
+
+@app.errorhandler(401)
+def page_not_found(e):
+    return render_template('errors/404.html'), 401
+
+@app.errorhandler(403)
+def page_not_found(e):
+    return render_template('errors/403.html'), 403
+
+@app.errorhandler(404)
+def internal_error(e):
+    return render_template('errors/404.html'), 404
+
+@app.errorhandler(500)
+def internal_error(e):
+    return render_template('errors/500.html'), 500
 
 # -----------------------
 # Helpers: Current user, RBAC
@@ -1102,6 +1142,54 @@ def set_language():
         flash(_('Sprache geändert.'))
     return redirect(url_for('profile'))
 
+# -----------------------
+# DB Export url/admin/export-db
+# -----------------------
+
+@app.get('/admin/export-db')
+@login_required
+@require_perms('users:manage')  # oder eigene Permission wie 'db:export'
+def admin_export_page():
+    return render_template('admin_export.html')
+
+@app.post('/admin/export-db')
+@login_required
+@require_perms('users:manage')
+def admin_export_dump():
+    dump_file = "/tmp/bottlebalance_dump.sql"
+    db_user = DB_USER
+    db_name = DB_NAME
+    db_host = DB_HOST
+    db_pass = DB_PASS
+
+    # Passwort für pg_dump setzen
+    env = os.environ.copy()
+    env["PGPASSWORD"] = db_pass
+
+    try:
+        with open(dump_file, "w") as f:
+            subprocess.run([
+                "pg_dump",
+                "-U", db_user,
+                "-h", db_host,
+                db_name
+            ], stdout=f, env=env, check=True)
+
+        # Audit-Log-Eintrag
+        log_action(session.get('user_id'), 'db:export', None, f'Dump von {db_name} erzeugt')
+
+        flash(_('Datenbank-Dump erfolgreich erzeugt.'))
+        return send_file(dump_file, as_attachment=True, download_name="bottlebalance_dump.sql")
+
+    except subprocess.CalledProcessError as e:
+        flash(_('Fehler beim Datenbank-Dump: ') + str(e))
+        log_action(session.get('user_id'), 'db:export:error', None, f'Dump fehlgeschlagen: {e}')
+        return redirect(url_for('admin_export_page'))
+
+
+# -----------------------
+# SMTP Test Mail via url/admin/smtp
+# -----------------------
 
 @app.route("/admin/smtp", methods=["GET", "POST"])
 @login_required
@@ -1155,6 +1243,66 @@ def admin_smtp():
     if SEND_TEST_MAIL:
         check_smtp_configuration()
 
+
+
+
+
+# -----------------------
+# SMTP Test Mail if paraam SEND_TEST_MAIL is set to true
+# -----------------------
+
+@app.route("/admin/tools", methods=["GET", "POST"])
+@login_required
+@require_perms('users:manage')
+def admin_tools():
+    status = None
+    if request.method == "POST":
+        action = request.form.get("action")
+        if action == "smtp":
+            try:
+                if not SMTP_HOST or not SMTP_PORT or not SMTP_USER or not SMTP_PASS:
+                    flash(_("SMTP-Konfiguration unvollständig."), "error")
+                else:
+                    server = SMTP_SSL(SMTP_HOST, SMTP_PORT, timeout=SMTP_TIMEOUT) if SMTP_SSL_ON else SMTP(SMTP_HOST, SMTP_PORT, timeout=SMTP_TIMEOUT)
+                    if SMTP_TLS:
+                        server.starttls(context=ssl.create_default_context())
+                    server.login(SMTP_USER, SMTP_PASS)
+                    message = MIMEText("Dies ist eine Testnachricht zur Überprüfung der SMTP-Konfiguration.", "plain", "utf-8")
+                    message["Subject"] = Header("SMTP-Test von BottleBalance", "utf-8")
+                    message["From"] = FROM_EMAIL
+                    message["To"] = SMTP_USER
+                    server.sendmail(FROM_EMAIL, SMTP_USER, message.as_string())
+                    server.quit()
+                    flash(_("SMTP-Test erfolgreich – Test-E-Mail wurde versendet."), "success")
+            except Exception as e:
+                flash(_("SMTP-Test fehlgeschlagen: ") + str(e), "error")
+
+        elif action == "dump":
+            dump_file = "/tmp/bottlebalance_dump.sql"
+            env = os.environ.copy()
+            env["PGPASSWORD"] = DB_PASS
+            try:
+                with open(dump_file, "w") as f:
+                    subprocess.run([
+                        "pg_dump",
+                        "-U", DB_USER,
+                        "-h", DB_HOST,
+                        DB_NAME
+                    ], stdout=f, env=env, check=True)
+                log_action(session.get('user_id'), 'db:export', None, f'Dump von {DB_NAME} erzeugt')
+                flash(_('Datenbank-Dump erfolgreich erzeugt.'), "success")
+                return send_file(dump_file, as_attachment=True, download_name="bottlebalance_dump.sql")
+            except subprocess.CalledProcessError as e:
+                flash(_('Fehler beim Datenbank-Dump: ') + str(e), "error")
+                log_action(session.get('user_id'), 'db:export:error', None, f'Dump fehlgeschlagen: {e}')
+
+    if not SMTP_HOST or not SMTP_PORT or not SMTP_USER or not SMTP_PASS:
+        status = _("SMTP-Konfiguration unvollständig.")
+    else:
+        status = _("SMTP-Konfiguration erkannt für Host {}:{}.".format(SMTP_HOST, SMTP_PORT))
+        
+
+    return render_template("admin_tools.html", status=status)
 
 if __name__ == '__main__':
     os.environ.setdefault('TZ', 'Europe/Berlin')

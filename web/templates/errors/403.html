@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}{{ _("Zugriff verweigert") }} | 403{% endblock %}
+
+{% block content %}
+<section class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-12 col-lg-8 text-center">
+      <h1 class="display-5 mb-3">403 – {{ _("Zugriff verweigert") }}</h1>
+      <p class="lead text-muted">
+        {{ _("Du hast keine Berechtigung, um auf diese Seite zuzugreifen.") }}
+      </p>
+
+      <div class="mt-4 d-flex gap-2 justify-content-center flex-wrap">
+        {% if home_url %}
+          <a class="btn btn-primary" href="{{ home_url }}">
+            {{ _("Zur Startseite") }}
+          </a>
+        {% endif %}
+        {% if support_url %}
+          <a class="btn btn-outline-secondary" href="{{ support_url }}" rel="noopener">
+            {{ _("Zum Support-Portal") }}
+          </a>
+        {% endif %}
+        {% if support_email %}
+          <a class="btn btn-outline-secondary" href="mailto:{{ support_email }}">
+            {{ _("Support kontaktieren") }}
+          </a>
+        {% endif %}
+      </div>
+
+      {% if request_id %}
+        <p class="mt-4 text-muted small">
+          {{ _("Referenz") }}: <code>{{ request_id }}</code>
+        </p>
+      {% endif %}
+    </div>
+  </div>
+</section>
+{% endblock %}

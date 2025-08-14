@@ -37,7 +37,7 @@
         <tbody>
         {% for a in logs %}
           <tr>
-            <td class="text-nowrap">{{ a.created_at }}</td>
+            <td class="text-nowrap">{{ a.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
             <td>{{ a.username or ('#'+(a.user_id|string)) }}</td>
             <td>{{ a.action }}</td>
             <td>{{ a.entry_id or '—' }}</td>

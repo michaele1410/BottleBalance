@@ -1,39 +1,39 @@
 {% extends "base.html" %}
-{% block title %}{{ _("Zugriff verweigert") }} | 403{% endblock %}
+{% block title %}{{ _("Zugriff verweigert") }} 403{% endblock %}
 
 {% block content %}
-<section class="container py-5">
-  <div class="row justify-content-center">
-    <div class="col-12 col-lg-8 text-center">
-      <h1 class="display-5 mb-3">403 – {{ _("Zugriff verweigert") }}</h1>
-      <p class="lead text-muted">
-        {{ _("Du hast keine Berechtigung, um auf diese Seite zuzugreifen.") }}
-      </p>
+<div class="d-flex justify-content-center align-items-center" style="min-height: 70vh;">
+  <div class="card shadow-lg text-center error-card" style="max-width: 500px; width: 100%;">
+    <div class="card-header bg-warning text-dark">
+      <i class="bi bi-slash-circle-fill me-2"></i>
+      <span>403 – {{ _("Zugriff verweigert") }}</span>
+    </div>
 
-      <div class="mt-4 d-flex gap-2 justify-content-center flex-wrap">
+    <div class="card-body p-4">
+      <p class="mb-4">{{ _("Du musst angemeldet sein, um diese Seite zu sehen.") }}</p>
+      <div class="d-flex flex-column gap-2">
         {% if home_url %}
-          <a class="btn btn-primary" href="{{ home_url }}">
-            {{ _("Zur Startseite") }}
+          <a href="{{ home_url }}" class="btn btn-primary w-100">
+            <i class="bi bi-house-door-fill me-1"></i> {{ _("Zur Startseite") }}
           </a>
         {% endif %}
         {% if support_url %}
-          <a class="btn btn-outline-secondary" href="{{ support_url }}" rel="noopener">
-            {{ _("Zum Support-Portal") }}
+          <a href="{{ support_url }}" class="btn btn-outline-secondary w-100">
+            <i class="bi bi-life-preserver me-1"></i> {{ _("Zum Support-Portal") }}
           </a>
         {% endif %}
         {% if support_email %}
-          <a class="btn btn-outline-secondary" href="mailto:{{ support_email }}">
-            {{ _("Support kontaktieren") }}
+          <a href="mailto:{{ support_email }}" class="btn btn-outline-secondary w-100">
+            <i class="bi bi-envelope-fill me-1"></i> {{ _("Support kontaktieren") }}
           </a>
         {% endif %}
       </div>
-
-      {% if request_id %}
-        <p class="mt-4 text-muted small">
-          {{ _("Referenz") }}: <code>{{ request_id }}</code>
-        </p>
-      {% endif %}
     </div>
+    {% if request_id %}
+      <div class="card-footer text-muted small">
+        {{ _("Referenz") }}: {{ request_id }}
+      </div>
+    {% endif %}
   </div>
-</section>
+</div>
 {% endblock %}

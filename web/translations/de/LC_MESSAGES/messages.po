@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2025-08-13 00:38+0200\n"
+"POT-Creation-Date: 2025-08-15 01:17+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: de\n"
@@ -13,6 +13,197 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.17.0\n"
+
+#: app.py:503
+msgid "Login fehlgeschlagen."
+msgstr ""
+
+#: app.py:513
+msgid "Bitte Passwort ändern (erforderlich)."
+msgstr ""
+
+#: app.py:538
+msgid "2FA nicht aktiv."
+msgstr ""
+
+#: app.py:560
+msgid "Backup-Code verwendet. Bitte neue Codes generieren."
+msgstr ""
+
+#: app.py:563
+msgid "Ungültiger 2FA-Code oder Backup-Code."
+msgstr ""
+
+#: app.py:574
+msgid "Neue Backup-Codes wurden generiert. Bitte sicher aufbewahren."
+msgstr ""
+
+#: app.py:604 app.py:852
+msgid "Passwort muss mindestens 8 Zeichen haben."
+msgstr ""
+
+#: app.py:607
+msgid "Passwörter stimmen nicht überein."
+msgstr ""
+
+#: app.py:617
+msgid "Profil aktualisiert."
+msgstr ""
+
+#: app.py:642
+msgid "Kein 2FA-Setup aktiv."
+msgstr ""
+
+#: app.py:647
+msgid "Ungültiger 2FA-Code."
+msgstr ""
+
+#: app.py:652
+msgid "2FA aktiviert."
+msgstr ""
+
+#: app.py:664
+msgid "Passwortprüfung fehlgeschlagen."
+msgstr ""
+
+#: app.py:668
+msgid "2FA deaktiviert."
+msgstr ""
+
+#: app.py:676 app.py:698
+msgid "Ungültige Theme-Auswahl."
+msgstr ""
+
+#: app.py:682
+msgid "Theme-Einstellung gespeichert."
+msgstr ""
+
+#: app.py:694
+msgid "Ungültige Sprache."
+msgstr ""
+
+#: app.py:706
+msgid "Einstellungen gespeichert."
+msgstr ""
+
+#: app.py:787
+msgid "Reset-Link per E-Mail versendet."
+msgstr ""
+
+#: app.py:810
+msgid "Passwortanforderungen nicht erfüllt oder stimmen nicht überein."
+msgstr ""
+
+#: app.py:818
+msgid "Link ungültig oder abgelaufen."
+msgstr ""
+
+#: app.py:823
+msgid "Passwort aktualisiert. Bitte einloggen."
+msgstr ""
+
+#: app.py:846
+msgid "Benutzername darf nicht leer sein."
+msgstr ""
+
+#: app.py:849 app.py:879
+msgid "Ungültige Rolle."
+msgstr ""
+
+#: app.py:860
+msgid "Benutzer angelegt."
+msgstr ""
+
+#: app.py:891
+msgid "Neues Passwort muss mindestens 8 Zeichen haben."
+msgstr ""
+
+#: app.py:896
+msgid "Passwort gesetzt."
+msgstr ""
+
+#: app.py:936
+msgid "Du kannst dich nicht selbst löschen."
+msgstr ""
+
+#: app.py:942
+msgid "Benutzer gelöscht."
+msgstr ""
+
+#: app.py:1015
+msgid "Eintrag nicht gefunden."
+msgstr ""
+
+#: app.py:1111
+msgid "Bitte eine CSV-Datei auswählen."
+msgstr ""
+
+#: app.py:1175 templates/edit.html:11 templates/index.html:47
+#: templates/index.html:150
+msgid "Datum"
+msgstr ""
+
+#: app.py:1175 templates/edit.html:15 templates/index.html:53
+#: templates/index.html:151
+msgid "Vollgut"
+msgstr ""
+
+#: app.py:1175 templates/edit.html:19 templates/index.html:59
+#: templates/index.html:152
+msgid "Leergut"
+msgstr ""
+
+#: app.py:1175 templates/index.html:153
+msgid "Inventar"
+msgstr ""
+
+#: app.py:1175 templates/edit.html:23 templates/index.html:67
+#: templates/index.html:154
+msgid "Einnahme"
+msgstr ""
+
+#: app.py:1175 templates/edit.html:27 templates/index.html:76
+#: templates/index.html:155
+msgid "Ausgabe"
+msgstr ""
+
+#: app.py:1175 templates/index.html:156
+msgid "Kassenbestand"
+msgstr ""
+
+#: app.py:1175 templates/edit.html:31 templates/index.html:83
+#: templates/index.html:157
+msgid "Bemerkung"
+msgstr ""
+
+#: app.py:1215
+msgid "Sprache geändert."
+msgstr ""
+
+#: app.py:1254 app.py:1366
+msgid "Datenbank-Dump erfolgreich erzeugt."
+msgstr ""
+
+#: app.py:1258 app.py:1369
+msgid "Fehler beim Datenbank-Dump: "
+msgstr ""
+
+#: app.py:1337 app.py:1373
+msgid "SMTP-Konfiguration unvollständig."
+msgstr ""
+
+#: app.py:1349
+msgid "SMTP-Test erfolgreich – Test-E-Mail wurde versendet."
+msgstr ""
+
+#: app.py:1351
+msgid "SMTP-Test fehlgeschlagen: "
+msgstr ""
+
+#: app.py:1375
+#, python-brace-format
+msgid "SMTP-Konfiguration erkannt für Host {}:{}."
+msgstr ""
 
 #: templates/2fa.html:8 templates/profile.html:34
 msgid "2-Faktor-Authentifizierung"
@@ -38,14 +229,34 @@ msgid ""
 msgstr ""
 
 #: templates/2fa_enroll.html:11
-msgid "2FA geheinmer Schlüssel:"
+msgid "2FA geheimer Schlüssel:"
+msgstr ""
+
+#: templates/admin_tools.html:3 templates/base.html:46
+msgid "Admin-Werkzeuge"
+msgstr ""
+
+#: templates/admin_tools.html:9
+msgid "SMTP-Konfiguration prüfen"
+msgstr ""
+
+#: templates/admin_tools.html:27
+msgid "Test-E-Mail senden"
+msgstr ""
+
+#: templates/admin_tools.html:36
+msgid "PostgreSQL-Datenbankexport"
+msgstr ""
+
+#: templates/admin_tools.html:41
+msgid "Datenbank-Dump erzeugen und herunterladen"
 msgstr ""
 
 #: templates/audit.html:6
 msgid "Audit-Log"
 msgstr ""
 
-#: templates/audit.html:9 templates/index.html:70
+#: templates/audit.html:9 templates/index.html:105
 msgid "Suche"
 msgstr ""
 
@@ -53,15 +264,15 @@ msgstr ""
 msgid "Aktion/Entry-ID"
 msgstr ""
 
-#: templates/audit.html:13 templates/index.html:74
+#: templates/audit.html:13 templates/index.html:109
 msgid "Von"
 msgstr ""
 
-#: templates/audit.html:17 templates/index.html:78
+#: templates/audit.html:17 templates/index.html:113
 msgid "Bis"
 msgstr ""
 
-#: templates/audit.html:21 templates/index.html:82
+#: templates/audit.html:21 templates/index.html:119
 msgid "Filtern"
 msgstr ""
 
@@ -89,23 +300,27 @@ msgstr ""
 msgid "Keine Einträge."
 msgstr ""
 
-#: templates/base.html:6 templates/base.html:17
+#: templates/base.html:6 templates/base.html:33
 msgid "BottleBalance"
 msgstr "Willkommen bei BottleBalance"
 
-#: templates/base.html:21
+#: templates/base.html:37
+msgid "Dashboard"
+msgstr ""
+
+#: templates/base.html:39
 msgid "Benutzer"
 msgstr ""
 
-#: templates/base.html:24
+#: templates/base.html:42
 msgid "Audit"
 msgstr ""
 
-#: templates/base.html:26 templates/profile.html:7 templates/profile.html:73
+#: templates/base.html:44 templates/profile.html:7
 msgid "Profil"
 msgstr ""
 
-#: templates/base.html:27
+#: templates/base.html:48
 msgid "Logout"
 msgstr ""
 
@@ -113,122 +328,77 @@ msgstr ""
 msgid "Datensatz bearbeiten"
 msgstr ""
 
-#: templates/edit.html:11 templates/index.html:31 templates/index.html:102
-#: templates/index.html:126
-msgid "Datum"
-msgstr ""
-
-#: templates/edit.html:15 templates/index.html:35 templates/index.html:103
-msgid "Vollgut"
-msgstr ""
-
-#: templates/edit.html:19 templates/index.html:39 templates/index.html:104
-msgid "Leergut"
-msgstr ""
+#: templates/edit.html:23 templates/edit.html:27
+msgid "(waehrung)"
+msgstr "(€)"
 
 #: templates/edit.html:24 templates/edit.html:28
 msgid "z.B."
 msgstr ""
 
-#: templates/edit.html:27 templates/index.html:47 templates/index.html:107
-msgid "Ausgabe"
-msgstr ""
-
-#: templates/edit.html:27
-msgid "(waehrung)"
-msgstr "(€)"
-
-#: templates/edit.html:31 templates/index.html:51 templates/index.html:109
-msgid "Bemerkung"
-msgstr ""
-
-#: templates/edit.html:32 templates/index.html:52
+#: templates/edit.html:32 templates/index.html:82
 msgid "Notiz"
 msgstr ""
 
-#: templates/edit.html:35 templates/profile.html:26 templates/reset.html:19
+#: templates/edit.html:35 templates/profile.html:25 templates/reset.html:22
 msgid "Abbrechen"
 msgstr ""
 
-#: templates/edit.html:36 templates/profile.html:27 templates/profile.html:80
-#: templates/reset.html:20
+#: templates/edit.html:36 templates/profile.html:26 templates/profile.html:101
+#: templates/reset.html:23 templates/users.html:54
 msgid "Speichern"
 msgstr ""
 
-#: templates/index.html:7
+#: templates/index.html:10
 msgid "Inventar (aktuell):"
 msgstr ""
 
-#: templates/index.html:7 templates/index.html:10
-msgid "Flaschen"
-msgstr ""
-
-#: templates/index.html:10 templates/index.html:19
-msgid "Im Filter:"
-msgstr ""
-
-#: templates/index.html:16
+#: templates/index.html:25
 msgid "Kassenbestand (aktuell):"
 msgstr ""
 
-#: templates/index.html:28
+#: templates/index.html:41
 msgid "Neuen Datensatz hinzufügen"
 msgstr ""
 
-#: templates/index.html:43 templates/index.html:106
-msgid "Einnahme"
-msgstr ""
-
-#: templates/index.html:43 templates/index.html:47
-msgid "waehrung"
-msgstr "€"
-
-#: templates/index.html:44
-msgid "z.B. 12,34"
-msgstr ""
-
-#: templates/index.html:48
-msgid "z.B. -5,00"
-msgstr ""
-
-#: templates/index.html:55
+#: templates/index.html:87
 msgid "Hinzufügen"
 msgstr ""
 
-#: templates/index.html:67
+#: templates/index.html:100
 msgid "Einträge"
 msgstr ""
 
-#: templates/index.html:71
+#: templates/index.html:106
 msgid "Datum/Bemerkung"
 msgstr ""
 
-#: templates/index.html:85
+#: templates/index.html:122
 msgid "Zurücksetzen"
 msgstr ""
 
-#: templates/index.html:90
-msgid "PDF"
-msgstr ""
-
-#: templates/index.html:93
-msgid "CSV"
-msgstr ""
-
-#: templates/index.html:105
-msgid "Inventar"
-msgstr ""
-
-#: templates/index.html:108
-msgid "Kassenbestand"
-msgstr ""
-
-#: templates/index.html:110 templates/users.html:41
+#: templates/index.html:158 templates/users.html:41
 msgid "Aktionen"
 msgstr ""
 
-#: templates/index.html:132
+#: templates/index.html:173
+msgid "Bearbeiten"
+msgstr ""
+
+#: templates/index.html:177
+msgid "Eintrag wirklich löschen?"
+msgstr ""
+
+#: templates/index.html:178 templates/users.html:75
+msgid "Löschen"
+msgstr ""
+
+#: templates/index.html:185
 msgid "Keine Einträge vorhanden."
+msgstr ""
+
+#: templates/index.html:229
+msgid "Flaschen"
 msgstr ""
 
 #: templates/login.html:7
@@ -251,15 +421,15 @@ msgstr ""
 msgid "E-Mail (für Passwort-Reset)"
 msgstr ""
 
-#: templates/profile.html:17 templates/reset.html:11 templates/users.html:68
+#: templates/profile.html:15 templates/reset.html:14 templates/users.html:68
 msgid "Neues Passwort"
 msgstr ""
 
-#: templates/profile.html:18 templates/profile.html:22
+#: templates/profile.html:16 templates/profile.html:21
 msgid "leer lassen, um nicht zu ändern"
 msgstr ""
 
-#: templates/profile.html:21 templates/reset.html:15
+#: templates/profile.html:20 templates/reset.html:18
 msgid "Neues Passwort (Wiederholen)"
 msgstr ""
 
@@ -287,31 +457,39 @@ msgstr ""
 msgid "deaktiviert"
 msgstr ""
 
-#: templates/profile.html:56
+#: templates/profile.html:55
 msgid "Backup-Codes"
 msgstr ""
 
-#: templates/profile.html:57
+#: templates/profile.html:56
 msgid "Diese Codes können einmalig beim Login verwendet werden:"
 msgstr ""
 
-#: templates/profile.html:65
+#: templates/profile.html:64
 msgid "Neue Backup-Codes generieren"
 msgstr ""
 
-#: templates/profile.html:75
+#: templates/profile.html:72
+msgid "System"
+msgstr ""
+
+#: templates/profile.html:76
 msgid "Sprache:"
 msgstr ""
 
-#: templates/profile.html:77
+#: templates/profile.html:78
 msgid "Deutsch"
 msgstr ""
 
-#: templates/profile.html:78
+#: templates/profile.html:79
 msgid "Englisch"
 msgstr ""
 
-#: templates/reset.html:8
+#: templates/profile.html:84
+msgid "Darstellung"
+msgstr ""
+
+#: templates/reset.html:7
 msgid "Passwort zurücksetzen"
 msgstr ""
 
@@ -339,8 +517,12 @@ msgstr ""
 msgid "Erstellt"
 msgstr ""
 
-#: templates/users.html:54
-msgid "Speichern"
+#: templates/users.html:60
+msgid "Aktivieren"
+msgstr ""
+
+#: templates/users.html:60
+msgid "Deaktivieren"
 msgstr ""
 
 #: templates/users.html:69
@@ -351,10 +533,72 @@ msgstr ""
 msgid "Reset-Link"
 msgstr ""
 
-#: templates/users.html:78
+#: templates/users.html:81
 msgid "Keine Benutzer vorhanden"
 msgstr ""
 
+#: templates/errors/401.html:2 templates/errors/401.html:9
+msgid "Nicht autorisiert"
+msgstr ""
+
+#: templates/errors/401.html:12 templates/errors/403.html:13
+#: templates/errors/404.html:13 templates/errors/500.html:13
+msgid "Du musst angemeldet sein, um diese Seite zu sehen."
+msgstr ""
+
+#: templates/errors/401.html:16 templates/errors/403.html:17
+#: templates/errors/404.html:17 templates/errors/500.html:17
+msgid "Zur Startseite"
+msgstr ""
+
+#: templates/errors/401.html:21 templates/errors/403.html:22
+#: templates/errors/404.html:22 templates/errors/500.html:22
+msgid "Zum Support-Portal"
+msgstr ""
+
+#: templates/errors/401.html:26 templates/errors/403.html:27
+#: templates/errors/404.html:27 templates/errors/500.html:27
+msgid "Support kontaktieren"
+msgstr ""
+
+#: templates/errors/401.html:33 templates/errors/403.html:34
+#: templates/errors/404.html:34 templates/errors/500.html:34
+msgid "Referenz"
+msgstr ""
+
+#: templates/errors/403.html:2 templates/errors/403.html:9
+msgid "Zugriff verweigert"
+msgstr ""
+
+#: templates/errors/404.html:2 templates/errors/404.html:9
+msgid "Seite nicht gefunden"
+msgstr ""
+
+#: templates/errors/500.html:2 templates/errors/500.html:9
+msgid "Unerwarteter Fehler"
+msgstr ""
+
 #~ msgid "Inventar (aktuell:)"
+#~ msgstr ""
+
+#~ msgid "2FA geheinmer Schlüssel:"
+#~ msgstr ""
+
+#~ msgid "Im Filter:"
+#~ msgstr ""
+
+#~ msgid "waehrung"
+#~ msgstr "€"
+
+#~ msgid "z.B. 12,34"
+#~ msgstr ""
+
+#~ msgid "z.B. -5,00"
+#~ msgstr ""
+
+#~ msgid "PDF"
+#~ msgstr ""
+
+#~ msgid "CSV"
 #~ msgstr ""
 

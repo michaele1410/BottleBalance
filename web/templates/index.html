@@ -34,48 +34,63 @@
   </div>
 
   <!-- Formular für neuen Datensatz -->
-  {% if can_add %}
-  <div class="col-12 col-lg-4">
-    <div class="card shadow-sm h-100">
-      <div class="card-body">
-        <h2 class="h6 mb-3">{{ _('Neuen Datensatz hinzufügen') }}</h2>
-        <form method="post" action="{{ url_for('add') }}" class="row g-2">
-          <div class="col-12">
-            <label class="form-label">{{ _('Datum') }}</label>
-            <input name="datum" id="datum" class="form-control" value="{{ default_date }}" placeholder="dd.MM.yyyy">
+{% if can_add %}
+<div class="col-12 col-lg-4">
+  <div class="card shadow-sm h-100">
+    <div class="card-body">
+      <h2 class="h6 mb-3">{{ _('Neuen Datensatz hinzufügen') }}</h2>
+      <form method="post" action="{{ url_for('add') }}" id="transaction-form" novalidate>
+        
+        <!-- Datum -->
+        <div class="form-floating mb-3">
+          <input type="text" name="datum" id="datum" class="form-control" placeholder="Datum" value="{{ default_date }}" required autofocus>
+          <label for="datum">{{ _('Datum') }}</label>
+        </div>
+
+        <!-- Vollgut -->
+        <div class="form-floating mb-3">
+          <input id="vollgut" name="vollgut" type="number" inputmode="numeric" min="0" step="1" class="form-control" placeholder="0" autocomplete="off">
+          <label for="vollgut">{{ _('Vollgut') }}</label>
+        </div>
+
+        <!-- Leergut -->
+        <div class="form-floating mb-3">
+          <input id="leergut" name="leergut" type="number" inputmode="numeric" min="0" step="1" class="form-control" placeholder="0" autocomplete="off">
+          <label for="leergut">{{ _('Leergut') }}</label>
+        </div>
+
+        <!-- Einnahme -->
+        <div class="input-group mb-3">
+          <span class="input-group-text">€</span>
+          <div class="form-floating flex-grow-1">
+            <input name="einnahme" type="number" step="0.01" inputmode="decimal" class="form-control" placeholder="0.00" id="einnahme" autocomplete="off">
+            <label for="einnahme">{{ _('Einnahme') }}</label>
           </div>
-          <div class="col-6">
-            <label class="form-label">{{ _('Vollgut') }}</label>
-            <input name="vollgut" type="number" step="1" class="form-control" placeholder="0">
+        </div>
+
+        <!-- Ausgabe -->
+        <div class="input-group mb-3">
+          <span class="input-group-text">€</span>
+          <div class="form-floating flex-grow-1">
+            <input name="ausgabe" type="number" step="0.01" inputmode="decimal" class="form-control" placeholder="0.00" id="ausgabe" autocomplete="off">
+            <label for="ausgabe">{{ _('Ausgabe') }}</label>
           </div>
-          <div class="col-6">
-            <label class="form-label">{{ _('Leergut') }}</label>
-            <input name="leergut" type="number" step="1" class="form-control" placeholder="0">
-          </div>
-          <div class="col-6">
-            <label class="form-label">{{ _('Einnahme') }} {{ _('waehrung') }}</label>
-            <input name="einnahme" type="number" step="0.01" inputmode="decimal"
-                   class="form-control" placeholder="{{ _('z.B. 12,34') }}" id="einnahme">
-          </div>
-          <div class="col-6">
-            <label class="form-label">{{ _('Ausgabe') }} {{ _('waehrung') }}</label>
-            <input name="ausgabe" type="number" step="0.01" inputmode="decimal"
-                   class="form-control" placeholder="{{ _('z.B. -5,00') }}" id="ausgabe">
-          </div>
-          <div class="col-12">
-            <label class="form-label">{{ _('Bemerkung') }}</label>
-            <input name="bemerkung" class="form-control" maxlength="500" placeholder="{{ _('Notiz') }}">
-          </div>
-          <div class="col-12">
-            <button class="btn btn-success w-100">
-              <i class="bi-plus-lg me-1"></i> {{ _('Hinzufügen') }}
-            </button>
-          </div>
-        </form>
-      </div>
+        </div>
+
+        <!-- Bemerkung -->
+        <div class="form-floating mb-3">
+          <input id="bemerkung" name="bemerkung" class="form-control" maxlength="500" placeholder="{{ _('Notiz') }}">
+          <label for="bemerkung">{{ _('Bemerkung') }}</label>
+        </div>
+
+        <button class="btn btn-success w-100">
+          <i class="bi-plus-lg me-1"></i> {{ _('Hinzufügen') }}
+        </button>
+      </form>
     </div>
   </div>
-  {% endif %}
+</div>
+{% endif %}
 </div>
 
 <!-- Tabelle -->
@@ -179,9 +194,6 @@
 
 
 {% block scripts %}
-<!-- Chart.js (vor Inline-Script laden) -->
-<script src.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js></script>
-
 <script>
 (function () {
   // Daten aus Flask
@@ -286,5 +298,93 @@
     });
   }
 })();
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  // ---------- Einstellungen & Referenzen ----------
+  const form = document.getElementById('transaction-form');
+
+  // Reihenfolge für Auto-Tab
+  const orderIds = ['datum', 'vollgut', 'leergut', 'einnahme', 'ausgabe', 'bemerkung'];
+  const fields = orderIds
+    .map(id => document.getElementById(id) || form?.querySelector(`[name="${id}"]`))
+    .filter(Boolean);
+
+  // ---------- Auto-Tab (Enter = weiter, Shift+Enter = zurück) ----------
+  function focusByOffset(currentEl, delta) {
+    const idx = Number(currentEl?.dataset?.idx ?? -1);
+    if (idx < 0) return;
+    const next = fields[idx + delta];
+    if (next) next.focus({ preventScroll: true });
+  }
+
+  fields.forEach((el, idx) => {
+    el.dataset.idx = idx;
+    el.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        focusByOffset(el, e.shiftKey ? -1 : 1);
+      }
+    });
+
+    // Verhindert versehentliches Scroll-Ändern bei Number-Feldern
+    if (el.type === 'number') {
+      el.addEventListener('wheel', (e) => e.preventDefault(), { passive: false });
+    }
+  });
+
+  // ---------- Flatpickr mit DE & Dark-Mode-Brücke ----------
+  function isDark() {
+    return document.documentElement.getAttribute('data-bs-theme') === 'dark';
+  }
+  function toggleCalendarDark(calEl, dark) {
+    if (!calEl) return;
+    calEl.classList.toggle('flatpickr-dark', !!dark);
+  }
+
+  if (window.flatpickr) {
+    if (flatpickr.l10ns?.de) flatpickr.localize(flatpickr.l10ns.de);
+
+    const fp = flatpickr('#datum', {
+      allowInput: true,
+      dateFormat: 'd.m.Y',
+      clickOpens: true,
+      disableMobile: false, // auf true setzen, wenn du immer Flatpickr willst
+      onClose: () => {
+        const el = document.getElementById('datum');
+        focusByOffset(el, 1);
+      },
+      onOpen: (selectedDates, dateStr, instance) => {
+        toggleCalendarDark(instance.calendarContainer, isDark());
+      }
+    });
+
+    // Theme-Wechsel übernehmen
+    const themeObserver = new MutationObserver(() => {
+      const dark = isDark();
+      document.querySelectorAll('.flatpickr-calendar').forEach(c => toggleCalendarDark(c, dark));
+    });
+    themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-bs-theme'] });
+  }
+
+  // ---------- Haptisches Feedback (iOS/unterstützte Geräte) ----------
+  function hapticFeedback() { if (navigator.vibrate) navigator.vibrate(10); }
+  form?.querySelectorAll('input, textarea, select').forEach(el => {
+    el.addEventListener('focus', hapticFeedback);
+  });
+
+  // ---------- Bootstrap Client-Validation ----------
+  if (form) {
+    form.addEventListener('submit', (event) => {
+      // KEINE Dezimal-Normalisierung mehr im Frontend (Weg A)!
+      if (!form.checkValidity()) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      form.classList.add('was-validated');
+    }, false);
+  }
+});
 </script>
 {% endblock %}

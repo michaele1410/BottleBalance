@@ -90,6 +90,26 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  // Flatpickr für Datum
+  flatpickr("#datum", {
+    dateFormat: "d.m.Y",
+    locale: "de"
+  });
+
+  // Haptisches Feedback für iOS
+  function hapticFeedback() {
+    if (navigator.vibrate) navigator.vibrate(10);
+  }
+  document.querySelectorAll('#transaction-form input').forEach(el => {
+    el.addEventListener('focus', hapticFeedback);
+  });
+});
+</script>
+
+
 {% endblock %}
 </body>
 </html>

@@ -82,39 +82,31 @@
           <label class="form-label">{{ _('Bis') }}</label>
           <input type="date" name="to" class="form-control" value="{{ request.args.get('to','') }}">
         </div>
-       <div class="d-flex flex-wrap gap-2">
-          <button class="btn btn-outline-primary btn-sm px-5 py-1 text-nowrap">
-            <i class="bi-search"></i> {{ _('Filtern') }}
-          </button>
-          <a class="btn btn-outline-secondary btn-sm px-5 py-1 text-nowrap" href="{{ url_for('index') }}">
-            {{ _('Zurücksetzen') }}
-          </a>
-          {% if can_export_pdf %}
-          <a class="btn btn-outline-danger btn-sm px-5 py-1 text-nowrap" href="{{ url_for('export_pdf', q=request.args.get('q'), from=request.args.get('from'), to=request.args.get('to')) }}">
-            <i class="bi-file-earmark-pdf"></i> PDF
-          </a>
-          {% endif %}
-          {% if can_export_csv %}
-          <a class="btn btn-outline-primary btn-sm px-5 py-1 text-nowrap" href="{{ url_for('export_csv', q=request.args.get('q'), from=request.args.get('from'), to=request.args.get('to')) }}">
-            <i class="bi-download"></i> CSV
-          </a>
-          {% endif %}
+        <div class="col-12 col-md-auto">
+          <div class="d-flex flex-row flex-wrap gap-2 align-items-center">
+            <button class="btn btn-outline-primary" type="submit">
+              <i class="bi-search me-1"></i> {{ _('Filtern') }}
+            </button>
+            <a class="btn btn-outline-secondary" href="{{ url_for('index') }}">
+              <i class="bi-x-circle me-1"></i> {{ _('Zurücksetzen') }}
+            </a>
+          </div>
         </div>
       </form>
-      <!--div class="col-12 col-md-auto">
-        <div class="d-flex flex-row gap-2 flex-wrap">
+      <div class="col-12 col-md-auto">
+        <div class="d-flex flex-row flex-wrap gap-2 align-items-center">
           {% if can_export_pdf %}
-          <a class="btn btn-outline-danger btn-sm px-2 py-3 text-nowrap" href="{{ url_for('export_pdf', q=request.args.get('q'), from=request.args.get('from'), to=request.args.get('to')) }}">
-            <i class="bi-file-earmark-pdf"></i> PDF
-          </a>
-          {% endif %}
-          {% if can_export_csv %}
-          <a class="btn btn-outline-primary btn-sm px-2 py-3 text-nowrap" href="{{ url_for('export_csv', q=request.args.get('q'), from=request.args.get('from'), to=request.args.get('to')) }}">
-            <i class="bi-download"></i> CSV
-          </a>
-          {% endif %}
+            <a class="btn btn-outline-danger" href="{{ url_for('export_pdf', q=request.args.get('q'), from=request.args.get('from'), to=request.args.get('to')) }}">
+              <i class="bi-file-earmark-pdf me-1"></i> PDF
+            </a>
+            {% endif %}
+            {% if can_export_csv %}
+            <a class="btn btn-outline-primary" href="{{ url_for('export_csv', q=request.args.get('q'), from=request.args.get('from'), to=request.args.get('to')) }}">
+              <i class="bi-download me-1"></i> CSV
+            </a>
+            {% endif %}
         </div>
-      </div-->
+      </div>
     </div>
 
     <div class="table-responsive">

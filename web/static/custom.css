@@ -25,3 +25,19 @@ body {
   background-color: var(--bg-color);
   color: var(--text-color);
 }
+
+.logo-img {
+  height: 100px;
+  width: auto;
+  vertical-align: middle;
+}
+
+.logo-wrapper svg {
+  height: 28px !important;
+  width: auto !important;
+  vertical-align: middle;
+}
+
+.navbar-brand {
+  font-size: 1.5rem; /* Beispielgröße für den Text */
+}

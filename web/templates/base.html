@@ -10,6 +10,8 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/airbnb.css">
   <link rel="stylesheet" href="{{ url_for('static', filename='custom.css') }}">
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='images/favicon.svg') }}">
+  <link rel="alternate icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
 
   <meta name="color-scheme" content="light dark">
   <script>
@@ -24,8 +26,11 @@
 <body>
 <nav class="navbar navbar-expand-lg bg-body-tertiary border-bottom">
   <div class="container">
-    <a class="navbar-brand fw-semibold" href="{{ url_for('index') }}">
-      {{ _('BottleBalance') }}{% if session.get('user_id') %}, {{ current_user().username|capitalize }}{% endif %}
+    <a class="navbar-brand fw-semibold d-flex align-items-center gap-2" href="{{ url_for('index') }}">
+      <span class="logo-wrapper">
+        <img src="{{ url_for('static', filename='images/logo.svg') }}" alt="Logo" class="logo-img">
+      </span>
+      <span>{{ _('BottleBalance') }}{% if session.get('user_id') %}, {{ current_user().username|capitalize }}{% endif %}</span>
     </a>
     {% if session.get('user_id') %}
     <div class="d-flex gap-2">

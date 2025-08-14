@@ -120,7 +120,7 @@ def get_timezone():
         return user.get('timezone') if isinstance(user, dict) else getattr(user, 'timezone', None)
     return None  # oder ein Default wie 'Europe/Berlin'
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='static')
 
 app.config['BABEL_DEFAULT_LOCALE'] = 'de'
 babel = Babel(app, locale_selector=get_locale, timezone_selector=get_timezone)

@@ -1,0 +1,14 @@
+<!-- templates/admin_export.html -->
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Datenbankexport</title>
+</head>
+<body>
+    <h1>PostgreSQL-Datenbankexport</h1>
+    <form action="{{ url_for('admin_export_dump') }}" method="post">
+        <button type="submit">Datenbank-Dump erzeugen und herunterladen</button>
+    </form>
+</body>
+</html>

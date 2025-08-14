@@ -11,6 +11,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     zlib1g-dev  \
     gettext  \
     nano  \
+    postgresql-client  \
     && rm -rf /var/lib/apt/lists/*
 
 RUN sed -i '/de_DE.UTF-8/s/^# //g' /etc/locale.gen && locale-gen
@@ -34,6 +35,8 @@ RUN test -f ./scripts/update_translations.sh \
 
 # Compile translation files (initial)
 RUN pybabel compile -d translations
+
+
 
 # Expose port
 EXPOSE 5000

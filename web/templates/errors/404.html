@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}{{ _("Seite nicht gefunden") }} | 404{% endblock %}
+
+{% block content %}
+<section class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-12 col-lg-8 text-center">
+      <h1 class="display-5 mb-3">404 – {{ _("Seite nicht gefunden") }}</h1>
+      <p class="lead text-muted">
+        {{ _("Die angeforderte Seite konnte nicht gefunden werden. Prüfe die URL oder nutze die Navigation.") }}
+      </p>
+
+      {# Optional: zusätzliche Detailnachricht vom View (z. B. warum 404) #}
+      {% if error_detail %}
+        <p class="text-muted small">{{ error_detail }}</p>
+      {% endif %}
+
+      <div class="mt-4 d-flex gap-2 justify-content-center flex-wrap">
+        {# Optional: Link zur Startseite #}
+        {% if home_url %}
+          <a class="btn btn-primary" href="{{ home_url }}">
+            {{ _("Zur Startseite") }}
+          </a>
+        {% endif %}
+
+        {# Optional: Support-Kontakt – E-Mail und/oder Support-URL #}
+        {% if support_url %}
+          <a class="btn btn-outline-secondary" href="{{ support_url }}" rel="noopener">
+            {{ _("Zum Support-Portal") }}
+          </a>
+        {% endif %}
+        {% if support_email %}
+          <a class="btn btn-outline-secondary" href="mailto:{{ support_email }}">
+            {{ _("Support kontaktieren") }}
+          </a>
+        {% endif %}
+      </div>
+
+      {# Optional: Request-ID zur Fehlernachverfolgung #}
+      {% if request_id %}
+        <p class="mt-4 text-muted small">
+          {{ _("Referenz") }}: <code>{{ request_id }}</code>
+        </p>
+      {% endif %}
+    </div>
+  </div>
+</section>
+{% endblock %}

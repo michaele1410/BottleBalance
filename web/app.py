@@ -1,3 +1,4 @@
+
 import os
 import secrets
 import ssl
@@ -7,12 +8,20 @@ from smtplib import SMTP, SMTP_SSL, SMTPException
 from email.message import EmailMessage
 from datetime import datetime, date, timedelta
 from decimal import Decimal, InvalidOperation
+from typing import Optional
+
 from flask_babel import Babel, gettext as _
-from flask import Flask, render_template, request, redirect, url_for, session, send_file, flash, abort, render_template_string
+from flask import (
+    Flask, render_template, request, redirect, url_for, session,
+    send_file, flash, abort, render_template_string, current_app, g,
+    after_this_request
+)
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import OperationalError
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.routing import BuildError
+
 from smtp_check import check_smtp_configuration
 from email.mime.text import MIMEText
 from email.header import Header
@@ -23,9 +32,7 @@ import pyotp
 import qrcode
 import base64
 from PIL import Image
-
 import subprocess
-
 
 # PDF (ReportLab)
 from reportlab.lib.pagesizes import A4, landscape
@@ -51,7 +58,7 @@ SMTP_TLS  = os.getenv("SMTP_TLS", "true").lower() in ("1","true","yes","on")
 SMTP_SSL_ON = os.getenv("SMTP_SSL", "false").lower() in ("1","true","yes","on")
 SMTP_TIMEOUT = int(os.getenv("SMTP_TIMEOUT", "10"))
 SEND_TEST_MAIL = os.getenv("SEND_TEST_MAIL", "false").lower() in ("1", "true", "yes", "on")
-                   
+
 FROM_EMAIL = os.getenv("FROM_EMAIL") or SMTP_USER or "no-reply@example.com"
 APP_BASE_URL = os.getenv("APP_BASE_URL") or "http://localhost:5000"
 
@@ -134,9 +141,6 @@ app.secret_key = SECRET_KEY
 # For Error Pages
 app.config.setdefault("SUPPORT_EMAIL", "support@example.com")   # ggf. aus ENV laden
 app.config.setdefault("SUPPORT_URL",   "https://support.example.com")  # optional
-
-# ROLES und set() global für Jinja2 verfügbar machen
-#app.jinja_env.globals.update(ROLES=ROLES, set=set, current_user=current_user)
 
 # -----------------------
 # DB Init & Migration
@@ -250,39 +254,47 @@ def _ensure_init_once():
                 "Setze eine öffentlich erreichbare Basis-URL, damit Hinweise/Links in Mails korrekt sind.",
                 APP_BASE_URL,
             )
+        # Optional: einmaliger SMTP-Quickcheck bei Start
+        try:
+            current_app.logger.info("ENV SEND_TEST_MAIL is %s", SEND_TEST_MAIL)
+            if SEND_TEST_MAIL:
+                check_smtp_configuration()
+        except Exception:
+            current_app.logger.exception("SEND_TEST_MAIL check failed")
         _initialized = True
 
 # -----------------------
 # Error Handling
-#404 – Not Found: Für nicht existierende Routen.
-#500 – Internal Server Error: Für unerwartete Serverfehler.
-#403 – Forbidden: Für Zugriffsverletzungen.
-#401 – Unauthorized: Für fehlende Authentifizierung.
 # -----------------------
 
 def _error_common_context():
+    try:
+        home_url = url_for('main.index')
+    except BuildError:
+        home_url = url_for('index')
     return {
-        "home_url": url_for("main.index") if app.url_map.is_endpoint_expecting("main.index") or "main.index" in app.view_functions else url_for("index"),
+        "home_url": home_url,
         "support_email": current_app.config.get("SUPPORT_EMAIL"),
         "support_url": current_app.config.get("SUPPORT_URL"),
-        # "request_id": getattr(g, "request_id", None),  # wenn du so etwas nutzt
+        "request_id": getattr(g, "request_id", None),
     }
 
 @app.errorhandler(401)
-def page_not_found(e):
-    return render_template('errors/404.html'), 401
+def handle_401(e):
+    return render_template('errors/401.html', **_error_common_context()), 401
 
 @app.errorhandler(403)
-def page_not_found(e):
-    return render_template('errors/403.html'), 403
+def handle_403(e):
+    return render_template('errors/403.html', **_error_common_context()), 403
 
 @app.errorhandler(404)
-def internal_error(e):
-    return render_template('errors/404.html'), 404
+def handle_404(e):
+    return render_template('errors/404.html', **_error_common_context()), 404
 
 @app.errorhandler(500)
-def internal_error(e):
-    return render_template('errors/500.html'), 500
+def handle_500(e):
+    current_app.logger.exception("Unhandled exception: %s", e)
+    return render_template('errors/500.html', **_error_common_context()), 500
 
 # -----------------------
 # Helpers: Current user, RBAC
@@ -325,10 +337,11 @@ def require_perms(*perms):
 # -----------------------
 # Utils: Formatting
 # -----------------------
+
 def today_ddmmyyyy():
     return date.today().strftime('%d.%m.%Y')
 
-def parse_date_de_or_today(s: str | None) -> date:
+def parse_date_de_or_today(s: Optional[str]) -> date:
     if not s or not s.strip():
         return date.today()
     return datetime.strptime(s.strip(), '%d.%m.%Y').date()
@@ -336,7 +349,7 @@ def parse_date_de_or_today(s: str | None) -> date:
 def format_date_de(d: date) -> str:
     return d.strftime('%d.%m.%Y')
 
-def parse_german_decimal(s: str | None) -> Decimal:
+def parse_german_decimal(s: Optional[str]) -> Decimal:
     if s is None:
         return Decimal('0')
     s = s.strip()
@@ -348,7 +361,7 @@ def parse_german_decimal(s: str | None) -> Decimal:
     except InvalidOperation:
         raise ValueError(f'Ungültige Zahl: {s}')
 
-def format_eur_de(value: Decimal | float | int) -> str:
+def format_eur_de(value) -> str:
     d = Decimal(value).quantize(Decimal('0.01'))
     sign = '-' if d < 0 else ''
     d = abs(d)
@@ -359,7 +372,8 @@ def format_eur_de(value: Decimal | float | int) -> str:
 # -----------------------
 # Data Access
 # -----------------------
-def fetch_entries(search: str | None = None, date_from: date | None = None, date_to: date | None = None):
+
+def fetch_entries(search: Optional[str] = None, date_from: Optional[date] = None, date_to: Optional[date] = None):
     where = []
     params = {}
     if search:
@@ -408,7 +422,7 @@ def current_totals():
         kas = (kas + Decimal(ein or 0) - Decimal(aus or 0)).quantize(Decimal('0.01'))
     return inv, kas
 
-def log_action(user_id: int | None, action: str, entry_id: int | None, detail: str | None = None):
+def log_action(user_id: Optional[int], action: str, entry_id: Optional[int], detail: Optional[str] = None):
     with engine.begin() as conn:
         conn.execute(text("INSERT INTO audit_log (user_id, action, entry_id, detail) VALUES (:u,:a,:e,:d)"),
                      {'u': user_id, 'a': action, 'e': entry_id, 'd': detail})
@@ -616,7 +630,6 @@ def update_preferences():
     language = request.form.get('language')
     theme = request.form.get('theme') or 'system'
 
-
     if language not in ['de', 'en']:
         flash(_('Ungültige Sprache.'))
         return redirect(url_for('profile'))
@@ -642,10 +655,10 @@ def inject_theme():
 # -----------------------
 # Password reset tokens
 # -----------------------
+
 def build_base_url():
     # bevorzuge APP_BASE_URL, fallback auf request.url_root
     try:
-        from flask import request
         base = os.getenv("APP_BASE_URL") or request.url_root
     except RuntimeError:
         base = os.getenv("APP_BASE_URL") or "http://localhost:5000/"
@@ -1015,7 +1028,7 @@ def export_csv():
     date_to = datetime.strptime(dt, '%Y-%m-%d').date() if dt else None
     entries = fetch_entries(q or None, date_from, date_to)
     output = io.StringIO()
-    writer = csv.writer(output, delimiter=';', lineterminator='')
+    writer = csv.writer(output, delimiter=';', lineterminator='\n')
     writer.writerow(['Datum','Vollgut','Leergut','Inventar','Einnahme','Ausgabe','Kassenbestand','Bemerkung'])
     for e in entries:
         writer.writerow([
@@ -1091,20 +1104,18 @@ def export_pdf():
     styles = getSampleStyleSheet()
     story = []
 
-    logo_path = os.path.join(app.root_path, 'static', '/images/logo.png')
+    logo_path = os.path.join(app.root_path, 'static', 'images/logo.png')
     if os.path.exists(logo_path):
         story.append(RLImage(logo_path, width=40*mm, height=12*mm))
         story.append(Spacer(1, 6))
     story.append(Paragraph(f"<b>{_('BottleBalance – Export')}</b>", styles['Title']))
     story.append(Spacer(1, 6))
 
-    
     data = [[_('Datum'), _('Vollgut'), _('Leergut'), _('Inventar'), _('Einnahme'), _('Ausgabe'), _('Kassenbestand'), _('Bemerkung')]]
     for e in entries:
         data.append([
             format_date_de(e['datum']), str(e['vollgut']), str(e['leergut']), str(e['inventar']),
             str(e['einnahme']).replace('.', ',') + ' €', str(e['ausgabe']).replace('.', ',') + ' €', str(e['kassenbestand']).replace('.', ',') + ' €', Paragraph(e['bemerkung'], styles['Normal'])
-
         ])
     col_widths = [25*mm,25*mm,25*mm,25*mm,30*mm,30*mm,30*mm,110*mm]
     table = Table(data, colWidths=col_widths, repeatRows=1)
@@ -1178,6 +1189,14 @@ def admin_export_dump():
         # Audit-Log-Eintrag
         log_action(session.get('user_id'), 'db:export', None, f'Dump von {db_name} erzeugt')
 
+        @after_this_request
+        def _cleanup(resp):
+            try:
+                os.remove(dump_file)
+            except Exception:
+                current_app.logger.warning("Konnte Dump nicht löschen: %s", dump_file)
+            return resp
+
         flash(_('Datenbank-Dump erfolgreich erzeugt.'))
         return send_file(dump_file, as_attachment=True, download_name="bottlebalance_dump.sql")
 
@@ -1236,19 +1255,8 @@ def admin_smtp():
 
     return render_template("admin_smtp.html", status=status)
 
-    # -----------------------
-    # SMTP Test Mail if paraam SEND_TEST_MAIL is set to true
-    # -----------------------
-    logger.info("ENV SEND_TEST_MAIL in .env  is set to %s", SEND_TEST_MAIL)
-    if SEND_TEST_MAIL:
-        check_smtp_configuration()
-
-
-
-
-
 # -----------------------
-# SMTP Test Mail if paraam SEND_TEST_MAIL is set to true
+# SMTP Test Mail / Tools
 # -----------------------
 
 @app.route("/admin/tools", methods=["GET", "POST"])
@@ -1300,7 +1308,6 @@ def admin_tools():
         status = _("SMTP-Konfiguration unvollständig.")
     else:
         status = _("SMTP-Konfiguration erkannt für Host {}:{}.".format(SMTP_HOST, SMTP_PORT))
-        
 
     return render_template("admin_tools.html", status=status)
 

@@ -382,10 +382,10 @@ def login():
 
 @app.post('/login')
 def login_post():
-    username = (request.form.get('username') or '').strip()
+    username = (request.form.get('username') or '').strip().lower()
     password = (request.form.get('password') or '').strip()
     with engine.begin() as conn:
-        user = conn.execute(text("SELECT id, username, password_hash, role, active, must_change_password, totp_enabled FROM users WHERE username=:u"), {'u': username}).mappings().first()
+        user = conn.execute(text("SELECT id, username, password_hash, role, active, must_change_password, totp_enabled FROM users WHERE username ILIKE :u"), {'u': username}).mappings().first()
     if not user or not check_password_hash(user['password_hash'], password) or not user['active']:
         flash(_('Login fehlgeschlagen.'))
         return redirect(url_for('login'))
@@ -721,7 +721,7 @@ def users_list():
 @login_required
 @require_perms('users:manage')
 def users_add():
-    username = (request.form.get('username') or '').strip()
+    username = (request.form.get('username') or '').strip().lower()
     email = (request.form.get('email') or '').strip() or None
     role = (request.form.get('role') or 'Viewer').strip()
     pwd = (request.form.get('password') or '').strip()

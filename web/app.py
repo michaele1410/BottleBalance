@@ -133,8 +133,8 @@ app.secret_key = SECRET_KEY
 
 
 # For Error Pages
-app.config.setdefault("SUPPORT_EMAIL", "support@example.com")   # ggf. aus ENV laden
-app.config.setdefault("SUPPORT_URL",   "https://support.example.com")  # optional
+app.config["SUPPORT_EMAIL"] = os.getenv("SUPPORT_EMAIL", "support@example.com")
+app.config["SUPPORT_URL"]   = os.getenv("SUPPORT_URL", "https://support.example.com")
 
 # ROLES und set() global für Jinja2 verfügbar machen
 #app.jinja_env.globals.update(ROLES=ROLES, set=set, current_user=current_user)

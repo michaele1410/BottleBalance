@@ -61,17 +61,17 @@
                 </button>
               </form>
             </td>
-            <td class="text-nowrap">{{ u.created_at }}</td>
+            <td class="text-nowrap">{{ u.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
             <td class="text-end">
               <div class="d-flex gap-2 justify-content-end">
-                <form method="post" action="{{ url_for('users_reset_pw', uid=u.id) }}" class="d-inline d-flex gap-2">
+                <form method="post" action="{{ url_for('users_reset_pw', uid=u.id) }}" class="d-flex gap-2">
                   <input type="password" class="form-control form-control-sm" name="password" placeholder="{{ _('Neues Passwort') }}" required style="max-width: 180px;">
                   <button class="btn btn-sm btn-outline-warning">{{ _('Passwort setzen') }}</button>
                 </form>
-                <form method="post" action="{{ url_for('users_reset_link', uid=u.id) }}" class="d-inline">
+                <form method="post" action="{{ url_for('users_reset_link', uid=u.id) }}" class="d-flex gap-2">
                   <button class="btn btn-sm btn-outline-info" title="Reset-Link generieren">{{ _('Reset-Link') }}</button>
                 </form>
-                <form method="post" action="{{ url_for('users_delete', uid=u.id) }}" onsubmit="return confirm('Benutzer wirklich löschen?');">
+                <form method="post" action="{{ url_for('users_delete', uid=u.id) }}" onsubmit="return confirm('Benutzer wirklich löschen?');" class="d-flex gap-2">
                   <button type="submit" class="btn btn-danger btn-sm">{{ _('Löschen') }}</button>
                 </form>
               </div>

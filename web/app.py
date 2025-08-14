@@ -120,7 +120,7 @@ def get_timezone():
         return user.get('timezone') if isinstance(user, dict) else getattr(user, 'timezone', None)
     return None  # oder ein Default wie 'Europe/Berlin'
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='static')
 
 app.config['BABEL_DEFAULT_LOCALE'] = 'de'
 babel = Babel(app, locale_selector=get_locale, timezone_selector=get_timezone)
@@ -128,7 +128,7 @@ babel = Babel(app, locale_selector=get_locale, timezone_selector=get_timezone)
 app.secret_key = SECRET_KEY
 
 # ROLES und set() global für Jinja2 verfügbar machen
-app.jinja_env.globals.update(ROLES=ROLES, set=set)
+#app.jinja_env.globals.update(ROLES=ROLES, set=set, current_user=current_user)
 
 # -----------------------
 # DB Init & Migration
@@ -255,7 +255,7 @@ def current_user():
         return None
     with engine.begin() as conn:
         row = conn.execute(text("""
-            SELECT id, username, email, role, active, must_change_password, totp_enabled, backup_codes, locale, timezone
+            SELECT id, username, email, role, active, must_change_password, totp_enabled, backup_codes, locale, timezone, theme_preference
             FROM users WHERE id=:id
         """), {'id': uid}).mappings().first()
     return dict(row) if row else None
@@ -475,7 +475,10 @@ def logout():
 @app.get('/profile')
 @login_required
 def profile():
-    return render_template('profile.html', user=current_user(), ROLES=ROLES)
+    user = current_user()
+    theme = user.get('theme_preference') if user else 'system'
+    return render_template('profile.html', user=user, theme_preference=theme, ROLES=ROLES)
+
 
 @app.post('/profile')
 @login_required
@@ -571,7 +574,8 @@ def update_theme():
 def update_preferences():
     uid = session.get('user_id')
     language = request.form.get('language')
-    theme = request.form.get('theme')
+    theme = request.form.get('theme') or 'system'
+
 
     if language not in ['de', 'en']:
         flash(_('Ungültige Sprache.'))
@@ -589,11 +593,11 @@ def update_preferences():
     flash(_('Einstellungen gespeichert.'))
     return redirect(url_for('profile'))
 
-app.context_processor
+@app.context_processor
 def inject_theme():
     user = current_user()
     theme = user.get('theme_preference') if user else 'system'
-    return {'theme_preference': theme}
+    return {'theme_preference': theme, 'current_user': current_user, 'ROLES': ROLES, 'set': set, }
 
 # -----------------------
 # Password reset tokens
@@ -737,8 +741,8 @@ def users_add():
     try:
         with engine.begin() as conn:
             conn.execute(text("""
-                INSERT INTO users (username, email, password_hash, role, active, must_change_password)
-                VALUES (:u, :e, :ph, :r, TRUE, FALSE)
+                INSERT INTO users (username, email, password_hash, role, active, must_change_password, theme_preference)
+                VALUES (:u, :e, :ph, :r, TRUE, FALSE, 'system')
             """), {'u': username, 'e': email, 'ph': generate_password_hash(pwd), 'r': role})
         flash(_('Benutzer angelegt.'))
     except Exception as e:
@@ -1047,20 +1051,22 @@ def export_pdf():
     styles = getSampleStyleSheet()
     story = []
 
-    logo_path = os.path.join(app.root_path, 'static', 'logo.png')
+    logo_path = os.path.join(app.root_path, 'static', '/images/logo.png')
     if os.path.exists(logo_path):
         story.append(RLImage(logo_path, width=40*mm, height=12*mm))
         story.append(Spacer(1, 6))
-    story.append(Paragraph('<b>BottleBalance – Export</b>', styles['Title']))
+    story.append(Paragraph(f"<b>{_('BottleBalance – Export')}</b>", styles['Title']))
     story.append(Spacer(1, 6))
 
-    data = [['Datum','Vollgut','Leergut','Inventar','Einnahme','Ausgabe','Kassenbestand','Bemerkung']]
+    
+    data = [[_('Datum'), _('Vollgut'), _('Leergut'), _('Inventar'), _('Einnahme'), _('Ausgabe'), _('Kassenbestand'), _('Bemerkung')]]
     for e in entries:
         data.append([
             format_date_de(e['datum']), str(e['vollgut']), str(e['leergut']), str(e['inventar']),
-            str(e['einnahme']).replace('.', ',') + ' €', str(e['ausgabe']).replace('.', ',') + ' €', str(e['kassenbestand']).replace('.', ',') + ' €', e['bemerkung']
+            str(e['einnahme']).replace('.', ',') + ' €', str(e['ausgabe']).replace('.', ',') + ' €', str(e['kassenbestand']).replace('.', ',') + ' €', Paragraph(e['bemerkung'], styles['Normal'])
+
         ])
-    col_widths = [25*mm,20*mm,20*mm,25*mm,30*mm,30*mm,35*mm,110*mm]
+    col_widths = [25*mm,25*mm,25*mm,25*mm,30*mm,30*mm,30*mm,110*mm]
     table = Table(data, colWidths=col_widths, repeatRows=1)
     table.setStyle(TableStyle([
         ('BACKGROUND',(0,0),(-1,0),colors.HexColor('#f1f3f5')),

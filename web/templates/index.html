@@ -82,20 +82,30 @@
           <label class="form-label">{{ _('Bis') }}</label>
           <input type="date" name="to" class="form-control" value="{{ request.args.get('to','') }}">
         </div>
-        <div class="col-12 col-md-2 d-grid">
-          <button class="btn btn-outline-primary"><i class="bi-search me-1"></i> {{ _('Filtern') }}</button>
-        </div>
-        <div class="col-12 col-md-2 d-grid">
-          <a class="btn btn-outline-secondary" href="{{ url_for('index') }}">{{ _('Zurücksetzen') }}</a>
+        <div class="col-12 col-md-auto">
+          <div class="d-flex flex-row flex-wrap gap-2 align-items-center">
+            <button class="btn btn-outline-primary" type="submit">
+              <i class="bi-search me-1"></i> {{ _('Filtern') }}
+            </button>
+            <a class="btn btn-outline-secondary" href="{{ url_for('index') }}">
+              <i class="bi-x-circle me-1"></i> {{ _('Zurücksetzen') }}
+            </a>
+          </div>
         </div>
       </form>
-      <div class="d-flex gap-2 mt-2 mt-md-0">
-        {% if can_export_pdf %}
-        <a class="btn btn-outline-danger" href="{{ url_for('export_pdf', q=request.args.get('q'), from=request.args.get('from'), to=request.args.get('to')) }}"><i class="bi-file-earmark-pdf me-1"></i> {{ _('PDF') }}</a>
-        {% endif %}
-        {% if can_export_csv %}
-        <a class="btn btn-outline-primary" href="{{ url_for('export_csv', q=request.args.get('q'), from=request.args.get('from'), to=request.args.get('to')) }}"><i class="bi-download me-1"></i> {{ _('CSV') }}</a>
-        {% endif %}
+      <div class="col-12 col-md-auto">
+        <div class="d-flex flex-row flex-wrap gap-2 align-items-center">
+          {% if can_export_pdf %}
+            <a class="btn btn-outline-danger" href="{{ url_for('export_pdf', q=request.args.get('q'), from=request.args.get('from'), to=request.args.get('to')) }}">
+              <i class="bi-file-earmark-pdf me-1"></i> PDF
+            </a>
+            {% endif %}
+            {% if can_export_csv %}
+            <a class="btn btn-outline-primary" href="{{ url_for('export_csv', q=request.args.get('q'), from=request.args.get('from'), to=request.args.get('to')) }}">
+              <i class="bi-download me-1"></i> CSV
+            </a>
+            {% endif %}
+        </div>
       </div>
     </div>
 

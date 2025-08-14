@@ -1,35 +1,35 @@
+
 {% extends "base.html" %}
 {% block content %}
+
 <div class="row g-3 mb-4">
   <!-- Inventar -->
   <div class="col-12 col-lg-4">
-    <div class="p-3 bg-light rounded-3 h-100">
-      <div class="mb-1">
-        <strong>{{ _('Inventar (aktuell):') }}</strong>
-        <span class="fs-5 ms-1">{{ inv_aktuell }}</span> {{ _('Flaschen') }}
+    <div class="card shadow-sm h-100">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span>{{ _('Inventar (aktuell):') }}</span>
+        <span class="badge bg-primary">{{ inv_aktuell }} Flaschen</span>
       </div>
-      <div>
-        <canvas id="sparkInv" height="40"></canvas>
+      <div class="card-body">
+        <div class="ratio" style="--bs-aspect-ratio: 100%;">
+          <canvas id="sparklineInv"></canvas>
+        </div>
       </div>
-      {% if request.args.get('from') or request.args.get('to') %}
-      <div class="small text-muted mt-1">{{ _('Im Filter:') }} {{ filter_inv }} {{ _('Flaschen') }}</div>
-      {% endif %}
     </div>
   </div>
 
   <!-- Kassenbestand -->
   <div class="col-12 col-lg-4">
-    <div class="p-3 bg-light rounded-3 h-100">
-      <div class="mb-1">
-        <strong>{{ _('Kassenbestand (aktuell):') }}</strong>
-        <span class="fs-5 ms-1">{{ format_eur_de(kas_aktuell) }}</span>
+    <div class="card shadow-sm h-100">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span>{{ _('Kassenbestand (aktuell):') }}</span>
+        <span class="badge bg-success">{{ format_eur_de(kas_aktuell) }}</span>
       </div>
-      <div>
-        <canvas id="sparkKas" height="40"></canvas>
+      <div class="card-body">
+        <div class="ratio" style="--bs-aspect-ratio: 100%;">
+          <canvas id="sparklineKas"></canvas>
+        </div>
       </div>
-      {% if request.args.get('from') or request.args.get('to') %}
-      <div class="small text-muted mt-1">{{ _('Im Filter:') }} {{ format_eur_de(filter_kas) }}</div>
-      {% endif %}
     </div>
   </div>
 
@@ -55,19 +55,21 @@
           <div class="col-6">
             <label class="form-label">{{ _('Einnahme') }} {{ _('waehrung') }}</label>
             <input name="einnahme" type="number" step="0.01" inputmode="decimal"
-                  class="form-control" placeholder="{{ _('z.B. 12,34') }}" id="einnahme">
+                   class="form-control" placeholder="{{ _('z.B. 12,34') }}" id="einnahme">
           </div>
           <div class="col-6">
             <label class="form-label">{{ _('Ausgabe') }} {{ _('waehrung') }}</label>
             <input name="ausgabe" type="number" step="0.01" inputmode="decimal"
-                  class="form-control" placeholder="{{ _('z.B. -5,00') }}" id="ausgabe">
+                   class="form-control" placeholder="{{ _('z.B. -5,00') }}" id="ausgabe">
           </div>
           <div class="col-12">
             <label class="form-label">{{ _('Bemerkung') }}</label>
             <input name="bemerkung" class="form-control" maxlength="500" placeholder="{{ _('Notiz') }}">
           </div>
           <div class="col-12">
-            <button class="btn btn-success w-100"><i class="bi-plus-lg me-1"></i> {{ _('Hinzufügen') }}</button>
+            <button class="btn btn-success w-100">
+              <i class="bi-plus-lg me-1"></i> {{ _('Hinzufügen') }}
+            </button>
           </div>
         </form>
       </div>
@@ -81,6 +83,7 @@
   <div class="card-body">
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
       <h2 class="h5 m-0">{{ _('Einträge') }}</h2>
+
       <!-- Filter -->
       <form method="get" class="row g-2 align-items-end w-100 w-md-auto">
         <div class="col-12 col-md-3">
@@ -106,6 +109,7 @@
           </div>
         </div>
       </form>
+
       <!-- Export -->
       <div class="col-12 col-md-auto">
         <div class="d-flex flex-row flex-wrap gap-2 align-items-center">
@@ -151,9 +155,14 @@
             <td>{{ format_eur_de(e.kassenbestand) }}</td>
             <td>{{ e.bemerkung }}</td>
             <td class="text-end">
-              <a class="btn btn-sm btn-outline-primary" href="{{ url_for('edit', entry_id=e.id) }}" title="Bearbeiten"><i class="bi-pencil-square"></i></a>
-              <form method="post" action="{{ url_for('delete', entry_id=e.id) }}" class="d-inline" onsubmit="return confirm('{{ _('Datum') }}Eintrag wirklich löschen?');">
-                <button class="btn btn-sm btn-outline-danger" title="Löschen"><i class="bi-trash"></i></button>
+              <a class="btn btn-sm btn-outline-primary" href="{{ url_for('edit', entry_id=e.id) }}" title="{{ _('Bearbeiten') }}">
+                <i class="bi-pencil-square"></i>
+              </a>
+              <form method="post" action="{{ url_for('delete', entry_id=e.id) }}" class="d-inline"
+                    onsubmit="return confirm('{{ _('Eintrag wirklich löschen?') }}');">
+                <button class="btn btn-sm btn-outline-danger" title="{{ _('Löschen') }}">
+                  <i class="bi-trash"></i>
+                </button>
               </form>
             </td>
           </tr>
@@ -165,54 +174,117 @@
     </div>
   </div>
 </div>
+
 {% endblock %}
 
+
 {% block scripts %}
+<!-- Chart.js (vor Inline-Script laden) -->
+<script src.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js></script>
+
 <script>
-  function sparkline(canvasId, data, color){
-    const ctx = document.getElementById(canvasId);
-    if(!ctx) return;
+(function () {
+  // Daten aus Flask
+  const labelsRaw = {{ entries|map(attribute='datum')|list|tojson }};
+  const dataInv   = {{ series_inv|tojson }};
+  const dataKas   = {{ series_kas|tojson }};
 
-    if(!data || data.length === 0){
-      ctx.parentNode.innerHTML = '<div class="text-muted small">{{ _("Keine Daten für Chart") }}</div>';
-      return;
+  // Labels formatiert (de-DE)
+  const labels = labelsRaw.map(d => {
+    try { return new Date(d).toLocaleDateString('de-DE'); } catch { return String(d); }
+  });
+
+  // Bootstrap-Farben (Theme-aware)
+  const css          = getComputedStyle(document.documentElement);
+  const colorPrimary = (css.getPropertyValue('--bs-primary')       || '#0d6efd').trim();
+  const colorSuccess = (css.getPropertyValue('--bs-success')       || '#198754').trim();
+  const gridColor    = (css.getPropertyValue('--bs-border-color')  || '#dee2e6').trim();
+
+  const baseOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { intersect: false, mode: 'index' },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          title: (items) => items[0]?.label ?? '',
+          label: (ctx) => {
+            const val = ctx.parsed.y;
+            if (ctx.dataset.label === 'Kassenbestand') {
+              return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(val);
+            }
+            return `${val} {{ _('Flaschen') }}`;
+          }
+        }
+      }
+    },
+    scales: {
+      x: { display: false, grid: { display: false } },
+      y: { display: false, grid: { color: gridColor } }
     }
+  };
 
-    const gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 60);
-    gradient.addColorStop(0, color + '88');
-    gradient.addColorStop(1, color + '00');
+  function makeGradient(ctx, baseColor) {
+    const g = ctx.createLinearGradient(0, 0, 0, ctx.canvas.height || 80);
+    g.addColorStop(0, baseColor + '33');
+    g.addColorStop(1, baseColor + '00');
+    return g;
+  }
 
-    new Chart(ctx, {
+  // Inventar-Chart
+  const invCanvas = document.getElementById('sparklineInv');
+  if (invCanvas && window.Chart) {
+    const invCtx = invCanvas.getContext('2d');
+    new Chart(invCtx, {
       type: 'line',
       data: {
-        labels: data.map((_, i) => i + 1),
+        labels,
         datasets: [{
-          data,
-          borderColor: color,
-          backgroundColor: gradient,
-          pointRadius: 0,
+          label: 'Inventar',
+          data: dataInv,
+          borderColor: colorPrimary,
+          backgroundColor: makeGradient(invCtx, colorPrimary),
+          borderWidth: 2,
           fill: true,
-          tension: 0.4
+          tension: 0.35,
+          pointRadius: 3,
+          pointBackgroundColor: colorPrimary,
+          pointHoverRadius: 5,
+          pointHoverBackgroundColor: colorPrimary,
+          pointHoverBorderWidth: 3
         }]
       },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: { x: { display: false }, y: { display: false } },
-        plugins: { legend: { display: false } }
-      }
+      options: baseOptions
     });
   }
 
-  document.addEventListener('DOMContentLoaded', function() {
-    const invData = {{ series_inv|tojson }};
-    const kasData = {{ series_kas|tojson }};
-    const rootStyles = getComputedStyle(document.documentElement);
-    const colorInv = rootStyles.getPropertyValue('--bs-primary') || '#007bff';
-    const colorKas = rootStyles.getPropertyValue('--bs-success') || '#28a745';
-
-    sparkline('sparkInv', invData, colorInv.trim());
-    sparkline('sparkKas', kasData, colorKas.trim());
-  });
+  // Kassenbestand-Chart
+  const kasCanvas = document.getElementById('sparklineKas');
+  if (kasCanvas && window.Chart) {
+    const kasCtx = kasCanvas.getContext('2d');
+    new Chart(kasCtx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Kassenbestand',
+          data: dataKas,
+          borderColor: colorSuccess,
+          backgroundColor: makeGradient(kasCtx, colorSuccess),
+          borderWidth: 2,
+          fill: true,
+          tension: 0.35,
+          pointRadius: 3,
+          pointBackgroundColor: colorSuccess,
+          pointHoverRadius: 5,
+          pointHoverBackgroundColor: colorSuccess,
+          pointHoverBorderWidth: 3
+        }]
+      },
+      options: baseOptions
+    });
+  }
+})();
 </script>
 {% endblock %}

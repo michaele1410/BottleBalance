@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2025-08-15 01:17+0200\n"
+"POT-Creation-Date: 2025-08-15 09:27+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -35,7 +35,6 @@ msgid "Ungültiger 2FA-Code oder Backup-Code."
 msgstr "Invalid 2FA code or backup code."
 
 #: app.py:574
-#, fuzzy
 msgid "Neue Backup-Codes wurden generiert. Bitte sicher aufbewahren."
 msgstr "New backup codes have been generated. Please keep them safe."
 
@@ -72,18 +71,16 @@ msgid "2FA deaktiviert."
 msgstr "2FA disabled."
 
 #: app.py:676 app.py:698
-#, fuzzy
 msgid "Ungültige Theme-Auswahl."
-msgstr "Invalid role."
+msgstr "Invalid theme selection."
 
 #: app.py:682
 msgid "Theme-Einstellung gespeichert."
 msgstr "Theme settings saved."
 
 #: app.py:694
-#, fuzzy
 msgid "Ungültige Sprache."
-msgstr "Invalid role."
+msgstr "Invalid language."
 
 #: app.py:706
 msgid "Einstellungen gespeichert."
@@ -123,16 +120,15 @@ msgstr "New password must be at least 8 characters long."
 
 #: app.py:896
 msgid "Passwort gesetzt."
-msgstr "Reset password"
+msgstr "Password set."
 
 #: app.py:936
 msgid "Du kannst dich nicht selbst löschen."
 msgstr "You cannot delete yourself."
 
 #: app.py:942
-#, fuzzy
 msgid "Benutzer gelöscht."
-msgstr "User created."
+msgstr "User deleted."
 
 #: app.py:1015
 msgid "Eintrag nicht gefunden."
@@ -178,36 +174,43 @@ msgstr "Cash balance"
 #: app.py:1175 templates/edit.html:31 templates/index.html:83
 #: templates/index.html:157
 msgid "Bemerkung"
-msgstr "Comment"
+msgstr "Note"
 
 #: app.py:1215
 msgid "Sprache geändert."
 msgstr "Language changed."
 
-#: app.py:1254 app.py:1366
+#: app.py:1254
 msgid "Datenbank-Dump erfolgreich erzeugt."
 msgstr "Database dump successfully generated."
 
-#: app.py:1258 app.py:1369
+#: app.py:1258
 msgid "Fehler beim Datenbank-Dump: "
-msgstr "Error during database dump:"
+msgstr "Error during database dump: "
 
 #: app.py:1337 app.py:1373
-msgid "SMTP-Konfiguration unvollständig."
+msgid "SMTP configuration incomplete."
 msgstr "SMTP configuration incomplete."
 
 #: app.py:1349
-msgid "SMTP-Test erfolgreich – Test-E-Mail wurde versendet."
+msgid "SMTP test successful – test email sent."
 msgstr "SMTP test successful – test email sent."
 
 #: app.py:1351
-#, fuzzy
-msgid "SMTP-Test fehlgeschlagen: "
-msgstr "Login failed."
+msgid "SMTP test failed: "
+msgstr "SMTP test failed: "
+
+#: app.py:1366
+msgid "Database dump successfully generated."
+msgstr "Database dump successfully generated."
+
+#: app.py:1369
+msgid "Error during database dump: "
+msgstr "Error during database dump: "
 
 #: app.py:1375
 #, python-brace-format
-msgid "SMTP-Konfiguration erkannt für Host {}:{}."
+msgid "SMTP configuration detected for host {}:{}."
 msgstr "SMTP configuration detected for host {}:{}."
 
 #: templates/2fa.html:8 templates/profile.html:34
@@ -236,7 +239,6 @@ msgstr ""
 "Authenticator, Google Authenticator) and then enter the 6-digit code."
 
 #: templates/2fa_enroll.html:11
-#, fuzzy
 msgid "2FA geheimer Schlüssel:"
 msgstr "2FA secret key:"
 
@@ -247,11 +249,6 @@ msgstr "Admin tools"
 #: templates/admin_tools.html:9
 msgid "SMTP-Konfiguration prüfen"
 msgstr "Check SMTP configuration"
-
-#: templates/admin_tools.html:27
-#, fuzzy
-msgid "Test-E-Mail senden"
-msgstr "Reset link sent by email."
 
 #: templates/admin_tools.html:36
 msgid "PostgreSQL-Datenbankexport"
@@ -335,7 +332,7 @@ msgstr "Logout"
 
 #: templates/edit.html:8
 msgid "Datensatz bearbeiten"
-msgstr "Edit Entry"
+msgstr "Edit entry"
 
 #: templates/edit.html:23 templates/edit.html:27
 msgid "(waehrung)"
@@ -361,6 +358,10 @@ msgstr "Save"
 #: templates/index.html:10
 msgid "Inventar (aktuell):"
 msgstr "Inventory (current):"
+
+#: templates/index.html:11 templates/index.html:229
+msgid "Flaschen"
+msgstr "Bottles"
 
 #: templates/index.html:25
 msgid "Kassenbestand (aktuell):"
@@ -391,9 +392,8 @@ msgid "Aktionen"
 msgstr "Actions"
 
 #: templates/index.html:173
-#, fuzzy
 msgid "Bearbeiten"
-msgstr "Edit Entry"
+msgstr "Edit entry"
 
 #: templates/index.html:177
 msgid "Eintrag wirklich löschen?"
@@ -406,10 +406,6 @@ msgstr "Delete"
 #: templates/index.html:185
 msgid "Keine Einträge vorhanden."
 msgstr "No entries available."
-
-#: templates/index.html:229
-msgid "Flaschen"
-msgstr "Bottles"
 
 #: templates/login.html:7
 msgid "Anmeldung"
@@ -479,7 +475,7 @@ msgstr "These codes can be used once when logging in:"
 msgid "Neue Backup-Codes generieren"
 msgstr "Generate new backup codes"
 
-#: templates/profile.html:72
+#: templates/profile.html:72 templates/profile.html:90
 msgid "System"
 msgstr "System"
 
@@ -496,9 +492,16 @@ msgid "Englisch"
 msgstr "English"
 
 #: templates/profile.html:84
-#, fuzzy
 msgid "Darstellung"
-msgstr "Created"
+msgstr "Representation"
+
+#: templates/profile.html:93
+msgid "Hell"
+msgstr "Light"
+
+#: templates/profile.html:96
+msgid "Dunkel"
+msgstr "Dark"
 
 #: templates/reset.html:7
 msgid "Passwort zurücksetzen"
@@ -582,9 +585,8 @@ msgid "Zugriff verweigert"
 msgstr "Access denied"
 
 #: templates/errors/404.html:2 templates/errors/404.html:9
-#, fuzzy
 msgid "Seite nicht gefunden"
-msgstr "Entry not found."
+msgstr "Entry not found"
 
 #: templates/errors/500.html:2 templates/errors/500.html:9
 msgid "Unerwarteter Fehler"
@@ -610,3 +612,19 @@ msgstr "Unexpected error"
 
 #~ msgid "CSV"
 #~ msgstr "CSV"
+
+#~ msgid "Dies ist eine Testnachricht zur Überprüfung der SMTP-Konfiguration."
+#~ msgstr "This is a test message to check the SMTP configuration."
+
+#~ msgid "SMTP-Test von BottleBalance"
+#~ msgstr "Welcome to BottleBalance"
+
+#~ msgid "SMTP-Test fehlgeschlagen: "
+#~ msgstr "Login failed."
+
+#~ msgid "Test-E-Mail senden"
+#~ msgstr "Send test email"
+
+#~ msgid "Layout"
+#~ msgstr "Layout"
+

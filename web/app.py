@@ -1272,7 +1272,7 @@ def admin_smtp():
     if request.method == "POST":
         try:
             if not SMTP_HOST or not SMTP_PORT or not SMTP_USER or not SMTP_PASS:
-                flash("SMTP-Konfiguration unvollständig.", "error")
+                flash("SMTP configuration incomplete.", "error")
                 return redirect(url_for("admin_smtp"))
 
             # Verbindung aufbauen
@@ -1287,8 +1287,8 @@ def admin_smtp():
             server.login(SMTP_USER, SMTP_PASS)
 
             # UTF-8 sicheres Test-Mail-Objekt
-            subject = Header("SMTP-Test von BottleBalance", "utf-8")
-            body_text = "Dies ist eine Testnachricht zur Überprüfung der SMTP-Konfiguration."
+            subject = Header("SMTP test by BottleBalance", "utf-8")
+            body_text = "This is a test message to check the SMTP configuration."
             message = MIMEText(body_text, "plain", "utf-8")
             message["Subject"] = subject
             message["From"] = FROM_EMAIL
@@ -1297,15 +1297,15 @@ def admin_smtp():
             server.sendmail(FROM_EMAIL, SMTP_USER, message.as_string())
             server.quit()
 
-            flash("SMTP-Test erfolgreich – Test-E-Mail wurde versendet.", "success")
+            flash("SMTP test successful – test email sent.", "success")
         except Exception as e:
-            flash(f"SMTP-Test fehlgeschlagen: {e}", "error")
+            flash(f"SMTP test failed: {e}", "error")
         return redirect(url_for("admin_smtp"))
 
     if not SMTP_HOST or not SMTP_PORT or not SMTP_USER or not SMTP_PASS:
-        status = "SMTP-Konfiguration unvollständig."
+        status = "SMTP configuration incomplete."
     else:
-        status = f"SMTP-Konfiguration erkannt für Host {SMTP_HOST}:{SMTP_PORT}."
+        status = f"SMTP configuration detected for host {SMTP_HOST}:{SMTP_PORT}."
 
     return render_template("admin_smtp.html", status=status)
 
@@ -1334,21 +1334,21 @@ def admin_tools():
         if action == "smtp":
             try:
                 if not SMTP_HOST or not SMTP_PORT or not SMTP_USER or not SMTP_PASS:
-                    flash(_("SMTP-Konfiguration unvollständig."), "error")
+                    flash(_("SMTP configuration incomplete."), "error")
                 else:
                     server = SMTP_SSL(SMTP_HOST, SMTP_PORT, timeout=SMTP_TIMEOUT) if SMTP_SSL_ON else SMTP(SMTP_HOST, SMTP_PORT, timeout=SMTP_TIMEOUT)
                     if SMTP_TLS:
                         server.starttls(context=ssl.create_default_context())
                     server.login(SMTP_USER, SMTP_PASS)
-                    message = MIMEText("Dies ist eine Testnachricht zur Überprüfung der SMTP-Konfiguration.", "plain", "utf-8")
-                    message["Subject"] = Header("SMTP-Test von BottleBalance", "utf-8")
+                    message = MIMEText("This is a test message to check the SMTP configuration.", "plain", "utf-8")
+                    message["Subject"] = Header("SMTP test by BottleBalance", "utf-8")
                     message["From"] = FROM_EMAIL
                     message["To"] = SMTP_USER
                     server.sendmail(FROM_EMAIL, SMTP_USER, message.as_string())
                     server.quit()
-                    flash(_("SMTP-Test erfolgreich – Test-E-Mail wurde versendet."), "success")
+                    flash(_("SMTP test successful – test email sent."), "success")
             except Exception as e:
-                flash(_("SMTP-Test fehlgeschlagen: ") + str(e), "error")
+                flash(_("SMTP test failed: ") + str(e), "error")
 
         elif action == "dump":
             dump_file = "/tmp/bottlebalance_dump.sql"
@@ -1363,16 +1363,16 @@ def admin_tools():
                         DB_NAME
                     ], stdout=f, env=env, check=True)
                 log_action(session.get('user_id'), 'db:export', None, f'Dump von {DB_NAME} erzeugt')
-                flash(_('Datenbank-Dump erfolgreich erzeugt.'), "success")
+                flash(_('Database dump successfully generated.'), "success")
                 return send_file(dump_file, as_attachment=True, download_name="bottlebalance_dump.sql")
             except subprocess.CalledProcessError as e:
-                flash(_('Fehler beim Datenbank-Dump: ') + str(e), "error")
-                log_action(session.get('user_id'), 'db:export:error', None, f'Dump fehlgeschlagen: {e}')
+                flash(_('Error during database dump: ') + str(e), "error")
+                log_action(session.get('user_id'), 'db:export:error', None, f'Dump failed: {e}')
 
     if not SMTP_HOST or not SMTP_PORT or not SMTP_USER or not SMTP_PASS:
-        status = _("SMTP-Konfiguration unvollständig.")
+        status = _("SMTP configuration incomplete.")
     else:
-        status = _("SMTP-Konfiguration erkannt für Host {}:{}.".format(SMTP_HOST, SMTP_PORT))
+        status = _("SMTP configuration detected for host {}:{}.".format(SMTP_HOST, SMTP_PORT))
         
 
     return render_template("admin_tools.html", status=status)

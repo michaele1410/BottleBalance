@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2025-08-15 01:17+0200\n"
+"POT-Creation-Date: 2025-08-15 09:22+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: de\n"
@@ -180,29 +180,37 @@ msgstr ""
 msgid "Sprache geändert."
 msgstr ""
 
-#: app.py:1254 app.py:1366
+#: app.py:1254
 msgid "Datenbank-Dump erfolgreich erzeugt."
 msgstr ""
 
-#: app.py:1258 app.py:1369
+#: app.py:1258
 msgid "Fehler beim Datenbank-Dump: "
 msgstr ""
 
 #: app.py:1337 app.py:1373
-msgid "SMTP-Konfiguration unvollständig."
+msgid "SMTP configuration incomplete."
 msgstr ""
 
 #: app.py:1349
-msgid "SMTP-Test erfolgreich – Test-E-Mail wurde versendet."
+msgid "SMTP test successful – test email sent."
 msgstr ""
 
 #: app.py:1351
-msgid "SMTP-Test fehlgeschlagen: "
+msgid "SMTP test failed: "
+msgstr ""
+
+#: app.py:1366
+msgid "Database dump successfully generated."
+msgstr ""
+
+#: app.py:1369
+msgid "Error during database dump: "
 msgstr ""
 
 #: app.py:1375
 #, python-brace-format
-msgid "SMTP-Konfiguration erkannt für Host {}:{}."
+msgid "SMTP configuration detected for host {}:{}."
 msgstr ""
 
 #: templates/2fa.html:8 templates/profile.html:34
@@ -238,10 +246,6 @@ msgstr ""
 
 #: templates/admin_tools.html:9
 msgid "SMTP-Konfiguration prüfen"
-msgstr ""
-
-#: templates/admin_tools.html:27
-msgid "Test-E-Mail senden"
 msgstr ""
 
 #: templates/admin_tools.html:36
@@ -353,6 +357,10 @@ msgstr ""
 msgid "Inventar (aktuell):"
 msgstr ""
 
+#: templates/index.html:11 templates/index.html:229
+msgid "Flaschen"
+msgstr ""
+
 #: templates/index.html:25
 msgid "Kassenbestand (aktuell):"
 msgstr ""
@@ -395,10 +403,6 @@ msgstr ""
 
 #: templates/index.html:185
 msgid "Keine Einträge vorhanden."
-msgstr ""
-
-#: templates/index.html:229
-msgid "Flaschen"
 msgstr ""
 
 #: templates/login.html:7
@@ -601,3 +605,19 @@ msgstr ""
 
 #~ msgid "CSV"
 #~ msgstr ""
+
+#~ msgid "SMTP-Konfiguration unvollständig."
+#~ msgstr ""
+
+#~ msgid "SMTP-Test erfolgreich – Test-E-Mail wurde versendet."
+#~ msgstr ""
+
+#~ msgid "SMTP-Test fehlgeschlagen: "
+#~ msgstr ""
+
+#~ msgid "SMTP-Konfiguration erkannt für Host {}:{}."
+#~ msgstr ""
+
+#~ msgid "Test-E-Mail senden"
+#~ msgstr ""
+

@@ -1,0 +1,61 @@
+diff --git a/app.py b/app.py
+index 1111111..2222222 100644
+--- a/app.py
++++ b/app.py
+@@ -137,10 +137,10 @@
+ try:
+     # Python 3.8+: offizieller Weg
+     from importlib.metadata import version, PackageNotFoundError
+     try:
+         fb_ver = version("Flask-Babel")  # PyPI-Name
+-    except PackageNotFoundException:
++    except PackageNotFoundError:
+         fb_ver = "unknown"
+ except Exception:
+     fb_ver = "unknown"
+ 
+@@ -314,18 +314,14 @@ def login_post():
+     if user['username'] == 'admin' and user['must_change_password']:
+         flash(_('Standard-Login: Benutzername "admin" und Passwort "admin" – bitte sofort ändern!'), 'info')
+ 
+-    _finalize_login(user['id'], user['role'])
+-
+-    if user['totp_enabled']:
++    if user['totp_enabled']:
+         session['pending_2fa_user_id'] = user['id']
+         return redirect(url_for('login_2fa_get'))
+ 
+-    session['user_id'] = user['id']
+-    session['role'] = user['role']
++    _finalize_login(user['id'], user['role'])
+ 
+     if user['must_change_password']:
+         flash(_('Bitte Passwort ändern (erforderlich).'))
+         return redirect(url_for('profile'))
+ 
+     return redirect(url_for('index'))
+@@ -351,11 +347,8 @@ def login_2fa_post():
+     totp = pyotp.TOTP(user['totp_secret'])
+ 
+     # 1) TOTP
+-    if totp.verify(code, valid_window=1):
+-        session.pop('pending_2fa_user_id', None)
+-        session['user_id'] = user['id']
+-        session['role'] = user['role']
+-        return redirect(url_for('index'))
++    if totp.verify(code, valid_window=1):
++        _finalize_login(user['id'], user['role'])
++        return redirect(url_for('index'))
+ 
+     # 2) Backup-Code (Hash oder Legacy-Klartext)
+     bc_raw = user.get('backup_codes')
+@@ -377,10 +370,7 @@ def login_2fa_post():
+             with engine.begin() as conn2:
+                 conn2.execute(text("UPDATE users SET backup_codes=:bc WHERE id=:id"),
+                               {'bc': json.dumps(hashes), 'id': uid})
+-            session.pop('pending_2fa_user_id', None)
+-            session['user_id'] = user['id']
+-            session['role'] = user['role']
+             _finalize_login(user['id'], user['role'])
+             flash(_('Backup-Code verwendet. Bitte neue Codes generieren.'), 'info')
+             return redirect(url_for('index'))

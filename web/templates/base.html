@@ -1,4 +1,3 @@
-
 <!doctype html>
 <html lang="de" data-bs-theme="{{ theme_preference|default('system') }}">
 <head>
@@ -77,6 +76,12 @@
 
   <!-- Main -->
 <main class="container my-4">
+
+
+    {% if current_user() and current_user().get('username') == 'admin' and current_user().get('must_change_password') %}
+      <div class="alert alert-warning">{{ _('Admin-Passwort noch nicht geändert. Bitte im Profil aktualisieren.') }}</div>
+    {% endif %}
+
 
     <!-- ✅ Bootstrap-Alerts für Flash-Messages mit Kategorien -->
     {% with messages = get_flashed_messages(with_categories=true) %}

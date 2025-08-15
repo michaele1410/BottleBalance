@@ -8,7 +8,8 @@ from smtplib import SMTP, SMTP_SSL, SMTPException
 from email.message import EmailMessage
 from datetime import datetime, date, timedelta
 from decimal import Decimal, InvalidOperation
-from flask_babel import Babel, gettext as _
+from flask_babel import Babel, gettext as _, gettext as translate
+import flask_babel
 from flask import Flask, render_template, request, redirect, url_for, session, send_file, flash, abort, render_template_string
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import Engine
@@ -116,7 +117,6 @@ ROLES = {
     }
 }
 
-
 def get_locale():
     user = current_user()
     if user:
@@ -223,6 +223,8 @@ def migrate_columns(conn):
     conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS locale TEXT"))
     conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS timezone TEXT"))
     conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS theme_preference TEXT DEFAULT 'system'"))
+    conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login_at TIMESTAMP"))
+
 
 def init_db():
     with engine.begin() as conn:
@@ -299,6 +301,17 @@ def request_entity_too_large(e):
 def internal_error(e):
     return render_template('errors/500.html'), 500
 
+try:
+    # Python 3.8+: offizieller Weg
+    from importlib.metadata import version, PackageNotFoundError
+    try:
+        fb_ver = version("Flask-Babel")  # PyPI-Name
+    except PackageNotFoundException:
+        fb_ver = "unknown"
+except Exception:
+    fb_ver = "unknown"
+
+logger.info("Flask-Babel version: %s", fb_ver)
 
 # -----------------------
 # Helpers: Current user, RBAC
@@ -527,6 +540,15 @@ def log_action(user_id: int | None, action: str, entry_id: int | None, detail: s
 # -----------------------
 # Auth & 2FA
 # -----------------------
+def _finalize_login(user_id: int, role: str):
+    """Setzt Session, aktualisiert last_login_at und schreibt Audit-Log."""
+    session.pop('pending_2fa_user_id', None)
+    session['user_id'] = user_id
+    session['role'] = role
+    with engine.begin() as conn:
+        conn.execute(text("UPDATE users SET last_login_at=NOW(), updated_at=NOW() WHERE id=:id"), {'id': user_id})
+    log_action(user_id, 'login', None, None)
+
 @app.get('/login')
 def login():
     return render_template('login.html')
@@ -549,6 +571,8 @@ def login_post():
     # ✅ Hinweis nur beim allerersten Login des Default-Admins
     if user['username'] == 'admin' and user['must_change_password']:
         flash(_('Standard-Login: Benutzername "admin" und Passwort "admin" – bitte sofort ändern!'), 'info')
+
+    _finalize_login(user['id'], user['role'])
 
     if user['totp_enabled']:
         session['pending_2fa_user_id'] = user['id']
@@ -619,7 +643,8 @@ def login_2fa_post():
             session.pop('pending_2fa_user_id', None)
             session['user_id'] = user['id']
             session['role'] = user['role']
-            flash(_('Backup-Code verwendet. Bitte neue Codes generieren.'))
+            _finalize_login(user['id'], user['role'])
+            flash(_('Backup-Code verwendet. Bitte neue Codes generieren.'), 'info')
             return redirect(url_for('index'))
 
     flash(_('Ungültiger 2FA-Code oder Backup-Code.'))
@@ -699,7 +724,14 @@ def enable_2fa():
     secret = pyotp.random_base32()
     session['enroll_totp_secret'] = secret
     with engine.begin() as conn:
-        username = conn.execute(text("SELECT username FROM users WHERE id=:id"), {'id': uid}).scalar_one()
+        username = conn.execute(
+            text("SELECT username FROM users WHERE id=:id"), {'id': uid}
+        ).scalar_one_or_none()
+
+    if username is None:
+        flash(_('Benutzer nicht gefunden.'))
+        return redirect(url_for('profile'))
+
     issuer = 'BottleBalance'
     otpauth = pyotp.totp.TOTP(secret).provisioning_uri(name=username, issuer_name=issuer)
     img = qrcode.make(otpauth)
@@ -802,6 +834,7 @@ def inject_theme():
         'format_date_de': format_date_de,
         'format_eur_de': format_eur_de,
         'csrf_token': csrf_token,
+        '_': translate  # Babel-Funktion explizit bereitstellen
     }
 
 # -----------------------

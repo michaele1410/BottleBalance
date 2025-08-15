@@ -170,6 +170,7 @@
             <td>{{ format_eur_de(e.kassenbestand) }}</td>
             <td>{{ e.bemerkung }}</td>
             <td class="text-end">
+              {% if can_add %}
               <a class="btn btn-sm btn-outline-primary" href="{{ url_for('edit', entry_id=e.id) }}" title="{{ _('Bearbeiten') }}">
                 <i class="bi-pencil-square"></i>
               </a>
@@ -179,6 +180,7 @@
                   <i class="bi-trash"></i>
                 </button>
               </form>
+              {% endif %}
             </td>
           </tr>
         {% else %}

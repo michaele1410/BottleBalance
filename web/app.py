@@ -511,15 +511,15 @@ def login_post():
         session['user_id'] = user['id']
         session['role'] = user['role']
 
-        if user['must_change_password']:
-            flash(_('Bitte Passwort ändern (erforderlich).'))
-            return redirect(url_for('profile'))
+    if user['must_change_password']:
+        flash(_('Bitte Passwort ändern (erforderlich).'))
+        return redirect(url_for('profile'))
 
-        if user['role'] == 'Admin' and not user['totp_enabled']:
-            flash(_('Admins müssen 2FA aktivieren.'))
-            return redirect(url_for('enable_2fa'))
+    if user['role'] == 'Admin' and not user['totp_enabled']:
+        flash(_('Admins müssen 2FA aktivieren.'))
+        return redirect(url_for('enable_2fa'))
 
-        return redirect(url_for('index'))
+    return redirect(url_for('index'))
 
 @app.get('/2fa')
 def login_2fa():

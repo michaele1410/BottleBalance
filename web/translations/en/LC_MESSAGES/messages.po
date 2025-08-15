@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2025-08-15 09:27+0200\n"
+"POT-Creation-Date: 2025-08-15 11:39+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -14,204 +14,210 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.17.0\n"
 
-#: app.py:503
+#: app.py:504
 msgid "Login fehlgeschlagen."
 msgstr "Login failed."
 
-#: app.py:513
+#: app.py:514
 msgid "Bitte Passwort ändern (erforderlich)."
 msgstr "Please change your password (required)."
 
-#: app.py:538
+#: app.py:539
 msgid "2FA nicht aktiv."
 msgstr "2FA is currently"
 
-#: app.py:560
+#: app.py:561
 msgid "Backup-Code verwendet. Bitte neue Codes generieren."
 msgstr "Backup code used. Please generate new codes."
 
-#: app.py:563
+#: app.py:564
 msgid "Ungültiger 2FA-Code oder Backup-Code."
 msgstr "Invalid 2FA code or backup code."
 
-#: app.py:574
+#: app.py:575
 msgid "Neue Backup-Codes wurden generiert. Bitte sicher aufbewahren."
 msgstr "New backup codes have been generated. Please keep them safe."
 
-#: app.py:604 app.py:852
+#: app.py:605 app.py:853
 msgid "Passwort muss mindestens 8 Zeichen haben."
 msgstr "Password must be at least 8 characters long."
 
-#: app.py:607
+#: app.py:608
 msgid "Passwörter stimmen nicht überein."
 msgstr "Passwords do not match."
 
-#: app.py:617
+#: app.py:618
 msgid "Profil aktualisiert."
 msgstr "Profile updated."
 
-#: app.py:642
+#: app.py:643
 msgid "Kein 2FA-Setup aktiv."
 msgstr "Kein 2FA-Setup aktiv."
 
-#: app.py:647
+#: app.py:648
 msgid "Ungültiger 2FA-Code."
 msgstr "Invalid 2FA code."
 
-#: app.py:652
+#: app.py:653
 msgid "2FA aktiviert."
 msgstr "2FA enabled."
 
-#: app.py:664
+#: app.py:665
 msgid "Passwortprüfung fehlgeschlagen."
 msgstr "Password verification failed."
 
-#: app.py:668
+#: app.py:669
 msgid "2FA deaktiviert."
 msgstr "2FA disabled."
 
-#: app.py:676 app.py:698
+#: app.py:677 app.py:699
 msgid "Ungültige Theme-Auswahl."
 msgstr "Invalid theme selection."
 
-#: app.py:682
+#: app.py:683
 msgid "Theme-Einstellung gespeichert."
 msgstr "Theme settings saved."
 
-#: app.py:694
+#: app.py:695
 msgid "Ungültige Sprache."
 msgstr "Invalid language."
 
-#: app.py:706
+#: app.py:707
 msgid "Einstellungen gespeichert."
 msgstr "Settings saved."
 
-#: app.py:787
+#: app.py:788
 msgid "Reset-Link per E-Mail versendet."
 msgstr "Reset link sent by email."
 
-#: app.py:810
+#: app.py:811
 msgid "Passwortanforderungen nicht erfüllt oder stimmen nicht überein."
 msgstr "Password requirements not met or do not match."
 
-#: app.py:818
+#: app.py:819
 msgid "Link ungültig oder abgelaufen."
 msgstr "Link invalid or expired."
 
-#: app.py:823
+#: app.py:824
 msgid "Passwort aktualisiert. Bitte einloggen."
 msgstr "Password updated. Please log in."
 
-#: app.py:846
+#: app.py:847
 msgid "Benutzername darf nicht leer sein."
 msgstr "Username cannot be empty."
 
-#: app.py:849 app.py:879
+#: app.py:850 app.py:880
 msgid "Ungültige Rolle."
 msgstr "Invalid role."
 
-#: app.py:860
+#: app.py:861
 msgid "Benutzer angelegt."
 msgstr "User created."
 
-#: app.py:891
+#: app.py:892
 msgid "Neues Passwort muss mindestens 8 Zeichen haben."
 msgstr "New password must be at least 8 characters long."
 
-#: app.py:896
+#: app.py:897
 msgid "Passwort gesetzt."
 msgstr "Password set."
 
-#: app.py:936
+#: app.py:937
 msgid "Du kannst dich nicht selbst löschen."
 msgstr "You cannot delete yourself."
 
-#: app.py:942
+#: app.py:943
 msgid "Benutzer gelöscht."
 msgstr "User deleted."
 
-#: app.py:1015
+#: app.py:1016
 msgid "Eintrag nicht gefunden."
 msgstr "Entry not found."
 
-#: app.py:1111
+#: app.py:1112
 msgid "Bitte eine CSV-Datei auswählen."
 msgstr "Please select a CSV file."
 
-#: app.py:1175 templates/edit.html:11 templates/index.html:47
-#: templates/index.html:150
+#: app.py:1176 templates/edit.html:14 templates/edit.html:62
+#: templates/index.html:47 templates/index.html:150
 msgid "Datum"
 msgstr "Date"
 
-#: app.py:1175 templates/edit.html:15 templates/index.html:53
-#: templates/index.html:151
+#: app.py:1176 templates/edit.html:20 templates/edit.html:66
+#: templates/index.html:53 templates/index.html:151
 msgid "Vollgut"
 msgstr "Full bottles"
 
-#: app.py:1175 templates/edit.html:19 templates/index.html:59
-#: templates/index.html:152
+#: app.py:1176 templates/edit.html:26 templates/edit.html:70
+#: templates/index.html:59 templates/index.html:152
 msgid "Leergut"
 msgstr "Empty bottles"
 
-#: app.py:1175 templates/index.html:153
+#: app.py:1176 templates/index.html:153
 msgid "Inventar"
 msgstr "Inventory"
 
-#: app.py:1175 templates/edit.html:23 templates/index.html:67
-#: templates/index.html:154
+#: app.py:1176 templates/edit.html:34 templates/edit.html:74
+#: templates/index.html:67 templates/index.html:154
 msgid "Einnahme"
 msgstr "Revenue"
 
-#: app.py:1175 templates/edit.html:27 templates/index.html:76
-#: templates/index.html:155
+#: app.py:1176 templates/edit.html:43 templates/edit.html:78
+#: templates/index.html:76 templates/index.html:155
 msgid "Ausgabe"
 msgstr "Expenditure"
 
-#: app.py:1175 templates/index.html:156
+#: app.py:1176 templates/index.html:156
 msgid "Kassenbestand"
 msgstr "Cash balance"
 
-#: app.py:1175 templates/edit.html:31 templates/index.html:83
-#: templates/index.html:157
+#: app.py:1176 templates/edit.html:50 templates/edit.html:82
+#: templates/index.html:83 templates/index.html:157
 msgid "Bemerkung"
 msgstr "Note"
 
-#: app.py:1215
+#: app.py:1216
 msgid "Sprache geändert."
 msgstr "Language changed."
 
-#: app.py:1254
+#: app.py:1255
 msgid "Datenbank-Dump erfolgreich erzeugt."
 msgstr "Database dump successfully generated."
 
-#: app.py:1258
+#: app.py:1259
 msgid "Fehler beim Datenbank-Dump: "
 msgstr "Error during database dump: "
 
-#: app.py:1337 app.py:1373
+#: app.py:1338 app.py:1374
 msgid "SMTP configuration incomplete."
 msgstr "SMTP configuration incomplete."
 
-#: app.py:1349
+#: app.py:1350
 msgid "SMTP test successful – test email sent."
 msgstr "SMTP test successful – test email sent."
 
-#: app.py:1351
+#: app.py:1352
 msgid "SMTP test failed: "
 msgstr "SMTP test failed: "
 
-#: app.py:1366
+#: app.py:1367
 msgid "Database dump successfully generated."
 msgstr "Database dump successfully generated."
 
-#: app.py:1369
+#: app.py:1370
 msgid "Error during database dump: "
 msgstr "Error during database dump: "
 
-#: app.py:1375
+#: app.py:1376
 #, python-brace-format
 msgid "SMTP configuration detected for host {}:{}."
 msgstr "SMTP configuration detected for host {}:{}."
+
+#: modules/utils.py:13 templates/edit.html:31 templates/edit.html:40
+#: templates/edit.html:74 templates/edit.html:78 templates/index.html:64
+#: templates/index.html:73
+msgid "waehrung"
+msgstr "€"
 
 #: templates/2fa.html:8 templates/profile.html:34
 msgid "2-Faktor-Authentifizierung"
@@ -330,30 +336,27 @@ msgstr "Profil"
 msgid "Logout"
 msgstr "Logout"
 
-#: templates/edit.html:8
+#: templates/edit.html:8 templates/edit.html:59
 msgid "Datensatz bearbeiten"
 msgstr "Edit entry"
 
-#: templates/edit.html:23 templates/edit.html:27
-msgid "(waehrung)"
-msgstr "($)"
-
-#: templates/edit.html:24 templates/edit.html:28
-msgid "z.B."
-msgstr "e.g."
-
-#: templates/edit.html:32 templates/index.html:82
+#: templates/edit.html:49 templates/edit.html:83 templates/index.html:82
 msgid "Notiz"
 msgstr "Note"
 
-#: templates/edit.html:35 templates/profile.html:25 templates/reset.html:22
+#: templates/edit.html:54 templates/edit.html:86 templates/profile.html:25
+#: templates/reset.html:22
 msgid "Abbrechen"
 msgstr "Cancel"
 
-#: templates/edit.html:36 templates/profile.html:26 templates/profile.html:101
-#: templates/reset.html:23 templates/users.html:54
+#: templates/edit.html:55 templates/edit.html:87 templates/profile.html:26
+#: templates/profile.html:101 templates/reset.html:23 templates/users.html:54
 msgid "Speichern"
 msgstr "Save"
+
+#: templates/edit.html:75 templates/edit.html:79
+msgid "z.B."
+msgstr "e.g."
 
 #: templates/index.html:10
 msgid "Inventar (aktuell):"

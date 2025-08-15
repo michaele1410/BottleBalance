@@ -1,4 +1,3 @@
-
 {% extends "base.html" %}
 {% block content %}
 <div class="row justify-content-center">
@@ -6,38 +5,153 @@
     <div class="card shadow-sm">
       <div class="card-body">
         <h1 class="h5 mb-3">{{ _('Datensatz bearbeiten') }}</h1>
-        <form method="post" action="{{ url_for('edit_post', entry_id=data.id) }}" class="row g-3">
-          <div class="col-6 col-md-4">
-            <label class="form-label">{{ _('Datum') }}</label>
-            <input name="datum" id="datum" class="form-control" value="{{ data.datum }}">
+
+        <form method="post"
+              action="{{ url_for('edit_post', entry_id=data.id) }}"
+              class="row g-3"
+              id="transaction-form"
+              novalidate>
+
+          <!-- Datum (wie in index.html: Textfeld + Flatpickr) -->
+          <div class="form-floating mb-3">
+            <input type="text"
+                   name="datum"
+                   id="datum"
+                   class="form-control"
+                   placeholder="Datum"
+                   value="{{ (data.datum if data.datum is string else (data.datum.strftime('%d.%m.%Y') if data.datum else '')) or (default_date or '') }}"
+                   required
+                   autofocus>
+            <label for="datum">{{ _('Datum') }}</label>
           </div>
-          <div class="col-6 col-md-4">
-            <label class="form-label">{{ _('Vollgut') }}</label>
-            <input name="vollgut" type="number" step="1" class="form-control" value="{{ data.vollgut }}" placeholder="0">
+
+          <!-- Vollgut -->
+          <div class="form-floating mb-3">
+            <input id="vollgut"
+                   name="vollgut"
+                   type="number"
+                   inputmode="numeric"
+                   min="0"
+                   step="1"
+                   class="form-control"
+                   placeholder="0"
+                   autocomplete="off"
+                   value="{{ data.vollgut if data.vollgut is not none else '' }}">
+            <label for="vollgut">{{ _('Vollgut') }}</label>
           </div>
-          <div class="col-6 col-md-4">
-            <label class="form-label">{{ _('Leergut') }}</label>
-            <input name="leergut" type="number" step="1" class="form-control" value="{{ data.leergut }}" placeholder="0">
+
+          <!-- Leergut -->
+          <div class="form-floating mb-3">
+            <input id="leergut"
+                   name="leergut"
+                   type="number"
+                   inputmode="numeric"
+                   min="0"
+                   step="1"
+                   class="form-control"
+                   placeholder="0"
+                   autocomplete="off"
+                   value="{{ data.leergut if data.leergut is not none else '' }}">
+            <label for="leergut">{{ _('Leergut') }}</label>
           </div>
-          <div class="col-6 col-md-4">
-            <label class="form-label">{{ _('Einnahme') }} {{ _('(waehrung)') }}</label>
-            <input name="einnahme" class="form-control" value="{{ data.einnahme }}" placeholder="{{ _('z.B.') }} 12,34">
+
+          <!-- Einnahme (wie in index.html: input-group + form-floating) -->
+          <div class="input-group mb-3">
+            <span class="input-group-text">{{ _('waehrung') }}</span>
+            <div class="form-floating flex-grow-1">
+              <input name="einnahme"
+                     id="einnahme"
+                     type="number"
+                     step="0.01"
+                     inputmode="decimal"
+                     class="form-control"
+                     placeholder="0.00"
+                     autocomplete="off"
+                     value="{{ (data.einnahme|replace(',', '.') if data.einnahme is string else ('%.2f'|format(data.einnahme))) if data.einnahme is not none else '' }}">
+              <label for="einnahme">{{ _('Einnahme') }}</label>
+            </div>
           </div>
-          <div class="col-6 col-md-4">
-            <label class="form-label">{{ _('Ausgabe') }} {{ _('(waehrung)') }}</label>
-            <input name="ausgabe" class="form-control" value="{{ data.ausgabe }}" placeholder="{{ _('z.B.') }} 5,00">
+
+          <!-- Ausgabe (wie in index.html) -->
+          <div class="input-group mb-3">
+            <span class="input-group-text">{{ _('waehrung') }}</span>
+            <div class="form-floating flex-grow-1">
+              <input name="ausgabe"
+                     id="ausgabe"
+                     type="number"
+                     step="0.01"
+                     inputmode="decimal"
+                     class="form-control"
+                     placeholder="0.00"
+                     autocomplete="off"
+                     value="{{ (data.ausgabe|replace(',', '.') if data.ausgabe is string else ('%.2f'|format(data.ausgabe))) if data.ausgabe is not none else '' }}">
+              <label for="ausgabe">{{ _('Ausgabe') }}</label>
+            </div>
           </div>
-          <div class="col-12">
-            <label class="form-label">{{ _('Bemerkung') }}</label>
-            <input name="bemerkung" class="form-control" value="{{ data.bemerkung }}" placeholder="{{ _('Notiz') }}">
+
+          <!-- Bemerkung -->
+          <div class="form-floating mb-3">
+            <input id="bemerkung"
+                   name="bemerkung"
+                   class="form-control"
+                   maxlength="500"
+                   placeholder="{{ _('Notiz') }}"
+                   value="{{ data.bemerkung or '' }}">
+            <label for="bemerkung">{{ _('Bemerkung') }}</label>
           </div>
+
           <div class="col-12 d-flex gap-2">
             <a class="btn btn-outline-secondary" href="{{ url_for('index') }}">{{ _('Abbrechen') }}</a>
             <button class="btn btn-primary">{{ _('Speichern') }}</button>
           </div>
         </form>
+
       </div>
     </div>
   </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  // Flatpickr wie in index.html
+  function isDark() {
+    return document.documentElement.getAttribute('data-bs-theme') === 'dark';
+  }
+  function toggleCalendarDark(calEl, dark) {
+    if (!calEl) return;
+    calEl.classList.toggle('flatpickr-dark', !!dark);
+  }
+  if (window.flatpickr) {
+    if (flatpickr.l10ns?.de) flatpickr.localize(flatpickr.l10ns.de);
+    const fp = flatpickr('#datum', {
+      allowInput: true,
+      dateFormat: 'd.m.Y',
+      clickOpens: true,
+      disableMobile: false,
+      onOpen: (selectedDates, dateStr, instance) => {
+        toggleCalendarDark(instance.calendarContainer, isDark());
+      }
+    });
+    const themeObserver = new MutationObserver(() => {
+      const dark = isDark();
+      document.querySelectorAll('.flatpickr-calendar').forEach(c => toggleCalendarDark(c, dark));
+    });
+    themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-bs-theme'] });
+  }
+
+  // Optional: einfache Client-Validation analog index.html
+  const form = document.getElementById('transaction-form');
+  if (form) {
+    form.addEventListener('submit', (event) => {
+      if (!form.checkValidity()) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      form.classList.add('was-validated');
+    }, false);
+  }
+});
+</script>
 {% endblock %}

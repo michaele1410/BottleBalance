@@ -343,7 +343,8 @@ def format_eur_de(value: Decimal | float | int) -> str:
     d = abs(d)
     whole, frac = divmod(int(d * 100), 100)
     whole_str = f"{whole:,}".replace(',', '.')
-    return f"{sign}{whole_str},{frac:02d} €"
+    return f"{sign}{whole_str},{frac:02d} {_('waehrung')}"
+
 
 # Money parsing utility
 
@@ -362,7 +363,7 @@ def parse_money(value: str | None) -> Decimal:
         return Decimal('0')
 
     # Währung/Spaces entfernen (inkl. NBSP/NNBSP/Narrow NBSP)
-    s = s.replace('€', '').replace('EUR', '')
+    s = s.replace("{{ _('(waehrung)') }}", "").replace("{{ _('(waehrungEURUSD)') }}", "")
     s = re.sub(r'[\s\u00A0\u202F]', '', s)
 
     # Optionales führendes '+'
@@ -1176,7 +1177,7 @@ def export_pdf():
     for e in entries:
         data.append([
             format_date_de(e['datum']), str(e['vollgut']), str(e['leergut']), str(e['inventar']),
-            str(e['einnahme']).replace('.', ',') + ' €', str(e['ausgabe']).replace('.', ',') + ' €', str(e['kassenbestand']).replace('.', ',') + ' €', Paragraph(e['bemerkung'], styles['Normal'])
+            str(e['einnahme']).replace('.', ',') + " {{ _('(waehrung)') }}", str(e['ausgabe']).replace('.', ',') + " {{ _('(waehrung)') }}", str(e['kassenbestand']).replace('.', ',') + " {{ _('(waehrung)') }}", Paragraph(e['bemerkung'], styles['Normal'])
 
         ])
     col_widths = [25*mm,25*mm,25*mm,25*mm,30*mm,30*mm,30*mm,110*mm]

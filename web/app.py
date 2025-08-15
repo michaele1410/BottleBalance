@@ -624,7 +624,7 @@ def profile_post():
     flash(_('Profil aktualisiert.'))
     return redirect(url_for('index'))
 
-@app.post('/profile/2fa/enable')
+@app.route('/profile/2fa/enable', methods=['GET', 'POST'])
 @login_required
 def enable_2fa():
     uid = session['user_id']

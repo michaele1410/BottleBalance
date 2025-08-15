@@ -495,24 +495,35 @@ def login():
     return render_template('login.html')
 
 @app.post('/login')
+@require_csrf
 def login_post():
     username = (request.form.get('username') or '').strip()
     password = (request.form.get('password') or '').strip()
     with engine.begin() as conn:
-        user = conn.execute(text("SELECT id, username, password_hash, role, active, must_change_password, totp_enabled FROM users WHERE username=:u"), {'u': username}).mappings().first()
+        user = conn.execute(text("""
+            SELECT id, username, password_hash, role, active, must_change_password, totp_enabled
+            FROM users WHERE username=:u
+        """), {'u': username}).mappings().first()
+
     if not user or not check_password_hash(user['password_hash'], password) or not user['active']:
         flash(_('Login fehlgeschlagen.'))
         return redirect(url_for('login'))
 
+    # ✅ Hinweis nur beim allerersten Login des Default-Admins
+    if user['username'] == 'admin' and user['must_change_password']:
+        flash(_('Standard-Login: Benutzername "admin" und Passwort "admin" – bitte sofort ändern!'), 'info')
+
     if user['totp_enabled']:
         session['pending_2fa_user_id'] = user['id']
-        return redirect(url_for('login_2fa'))
+        return redirect(url_for('login_2fa_get'))
 
     session['user_id'] = user['id']
     session['role'] = user['role']
+
     if user['must_change_password']:
         flash(_('Bitte Passwort ändern (erforderlich).'))
         return redirect(url_for('profile'))
+
     return redirect(url_for('index'))
 
 @app.get('/2fa')

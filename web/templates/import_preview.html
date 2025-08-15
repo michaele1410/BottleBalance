@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 style="margin:.25rem 0 1rem 0;">{{ _('CSV-Import – Vorschau') }}</h2>
+
+<p style="margin:.25rem 0 1rem 0; color:#495057;">
+  {{ _('Gesamt:') }} <strong>{{ total }}</strong> ·
+  {{ _('potentielle Duplikate:') }} <strong>{{ dup_count }}</strong> ·
+  {% if replace_all %}
+    <span style="color:#dc3545; font-weight:600;">{{ _('Modus: Alle bestehenden Einträge werden ersetzt') }}</span>
+  {% else %}
+    <span>{{ _('Modus: Anhängen (bestehende Einträge bleiben erhalten)') }}</span>
+  {% endif %}
+</p>
+
+<div style="display:flex; gap:1rem; align-items:center; margin-bottom:.5rem;">
+  <span style="display:inline-block; background:#fff3cd; border:1px solid #ffe69c; padding:.125rem .5rem; border-radius:.25rem;">{{ _('Duplikat') }}</span>
+  <span style="display:inline-block; background:#f8d7da; border:1px solid #f1aeb5; padding:.125rem .5rem; border-radius:.25rem;">{{ _('Fehler in Zeile') }}</span>
+</div>
+
+{% if allow_mapping %}
+<form action="{{ url_for('import_preview') }}" method="post" style="margin:.75rem 0; padding:.75rem; border:1px solid #dee2e6; border-radius:.5rem;">
+  <input type="hidden" name="token" value="{{ token }}">
+  <input type="hidden" name="remap" value="1">
+  <input type="hidden" name="replace_all" value="{{ 'on' if replace_all else '' }}">
+  <div style="display:grid; grid-template-columns: repeat(3, minmax(220px, 1fr)); gap:.5rem;">
+    <div>
+      <label><strong>{{ _('Datum') }}</strong></label>
+      <select name="map_datum" style="width:100%; padding:.375rem; border:1px solid #ced4da; border-radius:.25rem;" required>
+        {% for h in headers %}
+          <option value="{{ loop.index0 }}"
+            {% if mapping and mapping['Datum'] == loop.index0 %}selected{% endif %}>
+            {{ h }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div>
+      <label><strong>{{ _('Vollgut') }}</strong></label>
+      <select name="map_vollgut" style="width:100%; padding:.375rem; border:1px solid #ced4da; border-radius:.25rem;" required>
+        {% for h in headers %}
+          <option value="{{ loop.index0 }}"
+            {% if mapping and mapping['Vollgut'] == loop.index0 %}selected{% endif %}>
+            {{ h }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div>
+      <label><strong>{{ _('Leergut') }}</strong></label>
+      <select name="map_leergut" style="width:100%; padding:.375rem; border:1px solid #ced4da; border-radius:.25rem;" required>
+        {% for h in headers %}
+          <option value="{{ loop.index0 }}"
+            {% if mapping and mapping['Leergut'] == loop.index0 %}selected{% endif %}>
+            {{ h }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div>
+      <label><strong>{{ _('Einnahme') }}</strong> <small style="color:#6c757d;">{{ _('optional') }}</small></label>
+      <select name="map_einnahme" style="width:100%; padding:.375rem; border:1px solid #ced4da; border-radius:.25rem;">
+        <option value="__none__">{{ _('– keine –') }}</option>
+        {% for h in headers %}
+          <option value="{{ loop.index0 }}"
+            {% if mapping and mapping['Einnahme'] == loop.index0 %}selected{% endif %}>
+            {{ h }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div>
+      <label><strong>{{ _('Ausgabe') }}</strong> <small style="color:#6c757d;">{{ _('optional') }}</small></label>
+      <select name="map_ausgabe" style="width:100%; padding:.375rem; border:1px solid #ced4da; border-radius:.25rem;">
+        <option value="__none__">{{ _('– keine –') }}</option>
+        {% for h in headers %}
+          <option value="{{ loop.index0 }}"
+            {% if mapping and mapping['Ausgabe'] == loop.index0 %}selected{% endif %}>
+            {{ h }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div>
+      <label><strong>{{ _('Bemerkung') }}</strong> <small style="color:#6c757d;">{{ _('optional') }}</small></label>
+      <select name="map_bemerkung" style="width:100%; padding:.375rem; border:1px solid #ced4da; border-radius:.25rem;">
+        <option value="__none__">{{ _('– keine –') }}</option>
+        {% for h in headers %}
+          <option value="{{ loop.index0 }}"
+            {% if mapping and mapping['Bemerkung'] == loop.index0 %}selected{% endif %}>
+            {{ h }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+  <div style="margin-top:.75rem;">
+    <button type="submit" style="padding:.5rem .75rem; border:1px solid #0d6efd; background:#0d6efd; color:#fff; border-radius:.25rem; cursor:pointer;">
+      {{ _('Mapping anwenden & Vorschau aktualisieren') }}
+    </button>
+  </div>
+</form>
+{% endif %}
+
+<div style="overflow:auto; border:1px solid #dee2e6; border-radius:.5rem;">
+  <table style="width:100%; border-collapse:collapse;">
+    <thead style="background:#f1f3f5;">
+      <tr>
+        <th style="text-align:left; padding:.5rem; border-bottom:1px solid #dee2e6;">#</th>
+        <th style="text-align:left; padding:.5rem; border-bottom:1px solid #dee2e6;">{{ _('Datum') }}</th>
+        <th style="text-align:right; padding:.5rem; border-bottom:1px solid #dee2e6;">{{ _('Vollgut') }}</th>
+        <th style="text-align:right; padding:.5rem; border-bottom:1px solid #dee2e6;">{{ _('Leergut') }}</th>
+        <th style="text-align:right; padding:.5rem; border-bottom:1px solid #dee2e6;">{{ _('Einnahme') }}</th>
+        <th style="text-align:right; padding:.5rem; border-bottom:1px solid #dee2e6;">{{ _('Ausgabe') }}</th>
+        <th style="text-align:left;  padding:.5rem; border-bottom:1px solid #dee2e6;">{{ _('Bemerkung') }}</th>
+        <th style="text-align:left;  padding:.5rem; border-bottom:1px solid #dee2e6;">{{ _('Status') }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in preview_rows %}
+      {% set bg = '#fff' %}
+      {% if r.errors|length > 0 %}{% set bg = '#f8d7da' %}{% elif r.is_duplicate and not replace_all %}{% set bg = '#fff3cd' %}{% endif %}
+      <tr style="background:{{ bg }}">
+        <td style="padding:.5rem; border-bottom:1px solid #f1f3f5;">{{ r.line_no }}</td>
+        <td style="padding:.5rem; border-bottom:1px solid #f1f3f5;">{{ r.datum and format_date_de(r.datum) or '–' }}</td>
+        <td style="padding:.5rem; text-align:right; border-bottom:1px solid #f1f3f5;">{{ r.vollgut }}</td>
+        <td style="padding:.5rem; text-align:right; border-bottom:1px solid #f1f3f5;">{{ r.leergut }}</td>
+        <td style="padding:.5rem; text-align:right; border-bottom:1px solid #f1f3f5;">{{ r.einnahme }}</td>
+        <td style="padding:.5rem; text-align:right; border-bottom:1px solid #f1f3f5;">{{ r.ausgabe }}</td>
+        <td style="padding:.5rem; border-bottom:1px solid #f1f3f5;">{{ r.bemerkung }}</td>
+        <td style="padding:.5rem; border-bottom:1px solid #f1f3f5;">
+          {% if r.errors|length > 0 %}
+            <div><strong>{{ _('Fehler:') }}</strong></div>
+            <ul style="margin:.25rem 0 .25rem 1rem;">
+              {% for e in r.errors %}<li>{{ e }}</li>{% endfor %}
+            </ul>
+          {% else %}
+            {% if replace_all %}
+              {{ _('wird importiert') }}
+            {% else %}
+              {% if r.is_duplicate %}{{ _('Duplikat – wird übersprungen (Standard)') }}{% else %}{{ _('neu – wird importiert') }}{% endif %}
+            {% endif %}
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<form action="{{ url_for('import_commit') }}" method="post" style="margin-top:1rem; display:flex; gap:.75rem; align-items:center; flex-wrap:wrap;">
+  <input type="hidden" name="token" value="{{ token }}">
+
+  {% if not replace_all %}
+  <div>
+    <label style="display:flex; align-items:center; gap:.5rem;">
+      <input type="radio" name="mode" value="skip_dups" checked>
+      <span>{{ _('Duplikate überspringen (empfohlen)') }}</span>
+    </label>
+    <label style="display:flex; align-items:center; gap:.5rem;">
+      <input type="radio" name="mode" value="insert_all">
+      <span>{{ _('Alle einfügen (auch Duplikate)') }}</span>
+    </label>
+  </div>
+  {% else %}
+  <input type="hidden" name="mode" value="insert_all">
+  {% endif %}
+
+  <label style="display:flex; align-items:center; gap:.5rem;">
+    <input type="checkbox" name="import_invalid">
+    <span>{{ _('Auch Zeilen mit Fehlern importieren (nicht empfohlen)') }}</span>
+  </label>
+
+  <button type="submit"
+          style="padding:.5rem .75rem; border:1px solid #198754; background:#198754; color:#fff; border-radius:.25rem; cursor:pointer;">
+    {{ _('Import jetzt durchführen') }}
+  </button>
+  <a href="{{ url_for('index') }}"
+     style="padding:.5rem .75rem; border:1px solid #6c757d; background:#6c757d; color:#fff; border-radius:.25rem; text-decoration:none;">
+    {{ _('Abbrechen') }}
+  </a>
+</form>
+{% endblock %}

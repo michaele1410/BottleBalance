@@ -129,15 +129,53 @@
       <div class="col-12 col-md-auto">
         <div class="d-flex flex-row flex-wrap gap-2 align-items-center">
           {% if can_export_pdf %}
-            <a class="btn btn-outline-danger" href="{{ url_for('export_pdf', q=request.args.get('q'), from=request.args.get('from'), to=request.args.get('to')) }}">
+            <a class="btn btn-outline-danger" href="{{ url_for('export_pdf', q=request.args.get('q'), **{'from': request.args.get('from'), 'to': request.args.get('to')}) }}">
               <i class="bi-file-earmark-pdf me-1"></i> PDF
             </a>
           {% endif %}
           {% if can_export_csv %}
-            <a class="btn btn-outline-primary" href="{{ url_for('export_csv', q=request.args.get('q'), from=request.args.get('from'), to=request.args.get('to')) }}">
+            <a class="btn btn-outline-primary" href="{{ url_for('export_csv', q=request.args.get('q'), **{'from': request.args.get('from'), 'to': request.args.get('to')}) }}">
               <i class="bi-download me-1"></i> CSV
             </a>
           {% endif %}
+          {% if can_import %}
+            <div style="margin: 1rem 0; padding: .75rem; border: 1px solid #dee2e6; border-radius: .5rem; background: #fcfcfd;">
+              <details>
+                <summary style="cursor:pointer; font-weight:600;">
+                  {{ _('CSV Import') }}
+                </summary>
+                <div style="margin-top: .75rem;">
+                  <form action="{{ url_for('import_preview') if IMPORT_USE_PREVIEW else url_for('import_csv') }}" method="post" enctype="multipart/form-data" style="display:grid; gap:.5rem; grid-template-columns: 1fr auto;">
+                    <div>
+                      <label for="csvFile" style="display:block; font-weight:600; margin-bottom:.25rem;">{{ _('CSV-Datei auswählen') }}</label>
+                      <input id="csvFile" name="file" type="file" accept=".csv,text/csv" required
+                            style="width:100%; padding:.375rem .5rem; border:1px solid #ced4da; border-radius:.25rem;">
+                      <small style="color:#6c757d;">
+                        {{ _("Erwartete Header:") }} <code>Datum;Vollgut;Leergut;Inventar;Einnahme;Ausgabe;Kassenbestand;Bemerkung</code>
+                        {{ _("oder Kurzform ohne Inventar/Kassenbestand.") }}
+                      </small>
+                    </div>
+
+                    <div style="display:flex; flex-direction:column; justify-content:flex-end; gap:.25rem; min-width: 240px;">
+                      <label style="display:flex; align-items:center; gap:.5rem; white-space:nowrap;">
+                        <input type="checkbox" name="replace_all">
+                        <span>{{ _('Bestehende Einträge komplett ersetzen') }}</span>
+                      </label>
+
+                      <button type="submit"
+                              style="padding:.5rem .75rem; border:1px solid #0d6efd; background:#0d6efd; color:#fff; border-radius:.25rem; cursor:pointer;">
+                        {{ _('Vorschau anzeigen') }}
+                      </button>
+
+                      <a href="{{ url_for('import_sample') }}" style="text-align:center; font-size:.9rem; color:#0d6efd; text-decoration:none;">
+                        {{ _('Beispiel-CSV herunterladen') }}
+                      </a>
+                    </div>
+                  </form>
+                </div>
+              </details>
+            </div>
+            {% endif %}
         </div>
       </div>
     </div>

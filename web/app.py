@@ -60,6 +60,17 @@ DATABASE_URL = f"postgresql+psycopg2://{DB_USER}:{DB_PASS}@{DB_HOST}:5432/{DB_NA
 engine: Engine = create_engine(DATABASE_URL, future=True, pool_pre_ping=True)
 
 # -----------------------
+# Feature Switches (ENV)
+# -----------------------
+IMPORT_USE_PREVIEW   = os.getenv("IMPORT_USE_PREVIEW", "true").lower() in ("1","true","yes","on")
+IMPORT_ALLOW_MAPPING = os.getenv("IMPORT_ALLOW_MAPPING", "true").lower() in ("1","true","yes","on")
+IMPORT_ALLOW_DRYRUN  = os.getenv("IMPORT_ALLOW_DRYRUN", "true").lower() in ("1","true","yes","on")
+
+# Optionaler API-Token für CI/Headless-Dry-Runs (Header: X-Import-Token)
+IMPORT_API_TOKEN     = os.getenv("IMPORT_API_TOKEN")  # leer = kein Token erlaubt
+
+
+# -----------------------
 # Logging
 # -----------------------
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
@@ -135,6 +146,10 @@ app.secret_key = SECRET_KEY
 # For Error Pages
 app.config["SUPPORT_EMAIL"] = os.getenv("SUPPORT_EMAIL", "support@example.com")
 app.config["SUPPORT_URL"]   = os.getenv("SUPPORT_URL", "https://support.example.com")
+
+# CSV Upload Limit
+app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024  # 10 MB
+
 
 # ROLES und set() global für Jinja2 verfügbar machen
 #app.jinja_env.globals.update(ROLES=ROLES, set=set, current_user=current_user)
@@ -281,6 +296,11 @@ def page_not_found(e):
 def internal_error(e):
     return render_template('errors/404.html'), 404
 
+@app.errorhandler(413)
+def request_entity_too_large(e):
+    flash(_('Upload zu groß. Bitte kleinere CSV-Datei hochladen.'))
+    return redirect(url_for('index'))
+
 @app.errorhandler(500)
 def internal_error(e):
     return render_template('errors/500.html'), 500
@@ -363,7 +383,7 @@ def parse_money(value: str | None) -> Decimal:
         return Decimal('0')
 
     # Währung/Spaces entfernen (inkl. NBSP/NNBSP/Narrow NBSP)
-    s = s.replace("{{ _('(waehrung)') }}", "").replace("{{ _('(waehrungEURUSD)') }}", "")
+    s = s.replace("{{ _('waehrung') }}", "").replace("{{ _('(waehrungEURUSD)') }}", "")
     s = re.sub(r'[\s\u00A0\u202F]', '', s)
 
     # Optionales führendes '+'
@@ -711,7 +731,17 @@ def update_preferences():
 def inject_theme():
     user = current_user()
     theme = user.get('theme_preference') if user else 'system'
-    return {'theme_preference': theme, 'current_user': current_user, 'ROLES': ROLES, 'set': set, }
+    return {
+        'theme_preference': theme,
+        'current_user': current_user,
+        'ROLES': ROLES,
+        'set': set,
+        'IMPORT_USE_PREVIEW': IMPORT_USE_PREVIEW,
+        'IMPORT_ALLOW_MAPPING': IMPORT_ALLOW_MAPPING,
+        # NEU:
+        'format_date_de': format_date_de,
+        'format_eur_de': format_eur_de,
+    }
 
 # -----------------------
 # Password reset tokens
@@ -1147,6 +1177,661 @@ def import_csv():
     return redirect(url_for('index'))
 
 # -----------------------
+# CSV Import – Vorschau & Commit (NEU)
+# -----------------------
+from uuid import uuid4
+from typing import List, Tuple
+
+def _parse_csv_file_storage(file_storage):
+    content = file_storage.read().decode('utf-8-sig')
+    reader = csv.reader(io.StringIO(content), delimiter=';')
+    headers = next(reader, None)
+    expected = ['Datum','Vollgut','Leergut','Inventar','Einnahme','Ausgabe','Kassenbestand','Bemerkung']
+    alt_expected = ['Datum','Vollgut','Leergut','Einnahme','Ausgabe','Bemerkung']
+    if headers is None or [h.strip() for h in headers] not in (expected, alt_expected):
+        raise ValueError(_('CSV-Header entspricht nicht dem erwarteten Format.'))
+
+    rows = []
+    for row in reader:
+        if not row or all(not (c or '').strip() for c in row):
+            continue  # leere Zeilen überspringen
+        if len(row) == 8:
+            datum_s, voll_s, leer_s, _inv, ein_s, aus_s, _kas, bem = row
+        else:
+            datum_s, voll_s, leer_s, ein_s, aus_s, bem = row
+        datum = parse_date_de_or_today(datum_s)
+        vollgut = int((voll_s or '0').strip() or 0)
+        leergut = int((leer_s or '0').strip() or 0)
+        einnahme = parse_money(ein_s or '0')
+        ausgabe = parse_money(aus_s or '0')
+        bemerkung = (bem or '').strip()
+        rows.append({
+            'datum': datum,
+            'vollgut': vollgut,
+            'leergut': leergut,
+            'einnahme': str(einnahme),
+            'ausgabe': str(ausgabe),
+            'bemerkung': bemerkung
+        })
+    return rows
+
+def _fetch_existing_signature_set(conn) -> set[Tuple]:
+    """
+    Liefert eine Signaturmenge aller existierenden Datensätze
+    für schnelle Duplikat-Erkennung (exakt über alle importrelevanten Felder).
+    """
+    existing = conn.execute(text("""
+        SELECT datum, COALESCE(vollgut,0), COALESCE(leergut,0),
+               COALESCE(einnahme,0), COALESCE(ausgabe,0), COALESCE(bemerkung,'')
+        FROM entries
+    """)).fetchall()
+    return set((r[0], int(r[1]), int(r[2]), str(Decimal(r[3])), str(Decimal(r[4])), r[5] or '') for r in existing)
+
+def _signature(row: dict) -> Tuple:
+    return (
+        row['datum'],
+        int(row['vollgut']),
+        int(row['leergut']),
+        str(Decimal(row['einnahme'] or 0)),
+        str(Decimal(row['ausgabe'] or 0)),
+        row['bemerkung'] or ''
+    )
+
+#@app.post('/import/preview')
+#@login_required
+#@require_perms('import:csv')
+#def import_preview():
+#    file = request.files.get('file')
+#    replace_all = request.form.get('replace_all') == 'on'
+#    if not file or file.filename == '':
+#        flash(_('Bitte eine CSV-Datei auswählen.'))
+#        return redirect(url_for('index'))
+#
+#    try:
+#        rows_to_insert = _parse_csv_file_storage(file)
+#        with engine.begin() as conn:
+#            existing = _fetch_existing_signature_set(conn)
+#
+#        preview = []
+#        dup_count = 0
+#        for r in rows_to_insert:
+#            sig = _signature(r)
+#            is_dup = (sig in existing) and not replace_all
+#            preview.append({**r, 'is_duplicate': is_dup})
+#            if is_dup:
+#                dup_count += 1
+#
+#       token = str(uuid4())
+#        # im Session-Speicher für Commit vorhalten
+#        session.setdefault('import_previews', {})
+#        session['import_previews'][token] = {
+#            'rows': rows_to_insert,
+#            'replace_all': replace_all,
+#            'created_at': time.time()
+#        }
+#        session.modified = True
+#
+#        return render_template(
+#            'import_preview.html',
+#            preview_rows=preview,
+#            token=token,
+#            replace_all=replace_all,
+#            dup_count=dup_count,
+#            total=len(preview),
+#        )
+#    except Exception as e:
+#        logger.exception("Import-Preview fehlgeschlagen: %s", e)
+#        flash(f"{_('Vorschau fehlgeschlagen:')} {e}")
+#        return redirect(url_for('index'))
+
+#@app.post('/import/commit')
+#@login_required
+#@require_perms('import:csv')
+#def import_commit():
+#    token = (request.form.get('token') or '').strip()
+#    mode = (request.form.get('mode') or 'skip_dups').strip()  # 'skip_dups' | 'insert_all'
+#    if not token or 'import_previews' not in session or token not in session['import_previews']:
+#        flash(_('Vorschau abgelaufen oder nicht gefunden.'))
+#        return redirect(url_for('index'))
+
+ #   stash = session['import_previews'].pop(token, None)
+ #   session.modified = True
+ #   if not stash:
+ #       flash(_('Vorschau abgelaufen oder bereits verwendet.'))
+ #       return redirect(url_for('index'))
+
+  #  rows_to_insert = stash['rows']
+  #  replace_all = bool(stash.get('replace_all'))
+
+#    try:
+#        inserted = 0
+#        with engine.begin() as conn:
+#            if replace_all:
+#                conn.execute(text('DELETE FROM entries'))
+
+#            if mode == 'skip_dups' and not replace_all:
+#                existing = _fetch_existing_signature_set(conn)
+#            else:
+#                existing = set()
+
+#            for r in rows_to_insert:
+#                if not replace_all and mode == 'skip_dups' and _signature(r) in existing:
+#                    continue
+#                conn.execute(text("""
+#                    INSERT INTO entries (datum, vollgut, leergut, einnahme, ausgabe, bemerkung)
+#                    VALUES (:datum,:vollgut,:leergut,:einnahme,:ausgabe,:bemerkung)
+#                """), r)
+#                inserted += 1
+
+#        log_action(session.get('user_id'), 'import:csv', None,
+#                   f"commit: inserted={inserted}, replace_all={replace_all}, mode={mode}")
+#        flash(_(f'Import erfolgreich: {inserted} Zeilen übernommen.'))
+#        return redirect(url_for('index'))
+#    except Exception as e:
+#        logger.exception("Import-Commit fehlgeschlagen: %s", e)
+#        flash(f"{_('Import fehlgeschlagen:')} {e}")
+#        return redirect(url_for('index'))
+
+@app.get('/import/sample')
+@login_required
+@require_perms('import:csv')
+def import_sample():
+    """
+    Liefert eine Beispiel-CSV im langen Format mit allen Spalten.
+    """
+    output = io.StringIO()
+    writer = csv.writer(output, delimiter=';', lineterminator='\n')
+    writer.writerow(['Datum','Vollgut','Leergut','Inventar','Einnahme','Ausgabe','Kassenbestand','Bemerkung'])
+    today = date.today()
+    samples = [
+        (today - timedelta(days=4), 10, 0, 'Getränkeeinkauf'),
+        (today - timedelta(days=3), 0, 2, 'Leergutabgabe'),
+        (today - timedelta(days=2), 0, 0, 'Kasse Start'),
+        (today - timedelta(days=1), 5, 0, 'Nachkauf'),
+        (today, 0, 1, 'Entnahme'),
+    ]
+    inv = 0
+    kas = Decimal('0.00')
+    for d, voll, leer, note in samples:
+        inv += (voll - leer)
+        einnahme = Decimal('12.50') if voll else Decimal('0')
+        ausgabe = Decimal('1.20') if leer else Decimal('0')
+        kas = (kas + einnahme - ausgabe).quantize(Decimal('0.01'))
+        writer.writerow([
+            d.strftime('%d.%m.%Y'), voll, leer, inv,
+            str(einnahme).replace('.', ','), str(ausgabe).replace('.', ','), str(kas).replace('.', ','),
+            note
+        ])
+    mem = io.BytesIO()
+    mem.write(output.getvalue().encode('utf-8-sig'))
+    mem.seek(0)
+    return send_file(mem, as_attachment=True, download_name='bottlebalance_beispiel.csv', mimetype='text/csv')
+
+# -----------------------
+# CSV Import – Vorschau, Mapping, Commit (Erweitert)
+# -----------------------
+from uuid import uuid4
+from typing import Tuple
+
+def _parse_csv_with_mapping(content: str, replace_all: bool, mapping: dict | None) -> tuple[list, list, int]:
+    """
+    Liefert (preview_rows, headers, dup_count)
+    - preview_rows: Liste von Dicts mit Feldern + Flags: is_duplicate, errors (list[str])
+    - headers: Original-Header für UI/Mapping
+    - dup_count: Anzahl potentieller Duplikate
+    """
+    reader = csv.reader(io.StringIO(content), delimiter=';')
+    headers = next(reader, None)
+    if not headers:
+        raise ValueError(_('Leere CSV oder fehlender Header.'))
+
+    # Mapping bestimmen
+    if mapping is None:
+        auto_map = compute_auto_mapping(headers) if IMPORT_ALLOW_MAPPING else {}
+        if not auto_map and IMPORT_ALLOW_MAPPING:
+            # Kein Auto-Mapping möglich → Benutzer muss manuell mappen
+            mapping = {}
+        else:
+            mapping = auto_map
+
+    # Felderzuordnung (Index oder None)
+    idx_datum     = mapping.get('Datum')
+    idx_vollgut   = mapping.get('Vollgut')
+    idx_leergut   = mapping.get('Leergut')
+    idx_einnahme  = mapping.get('Einnahme')
+    idx_ausgabe   = mapping.get('Ausgabe')
+    idx_bemerkung = mapping.get('Bemerkung')
+
+    # Falls Mapping leer -> nur Header/Mapping anzeigen, keine Zeilen parsen
+    preview_rows = []
+    dup_count = 0
+
+    # Duplikate in DB
+    with engine.begin() as conn:
+        existing = set()
+        if not replace_all:
+            existing = _fetch_existing_signature_set(conn)
+
+    line_no = 1  # Header = 1
+    for raw in reader:
+        line_no += 1
+        if not raw or all(not (c or '').strip() for c in raw):
+            continue
+        errors = []
+
+        # Rohwerte nach Mapping
+        v_datum     = raw[idx_datum]     if idx_datum     is not None and idx_datum     < len(raw) else ''
+        v_vollgut   = raw[idx_vollgut]   if idx_vollgut   is not None and idx_vollgut   < len(raw) else ''
+        v_leergut   = raw[idx_leergut]   if idx_leergut   is not None and idx_leergut   < len(raw) else ''
+        v_einnahme  = raw[idx_einnahme]  if idx_einnahme  is not None and idx_einnahme  < len(raw) else ''
+        v_ausgabe   = raw[idx_ausgabe]   if idx_ausgabe   is not None and idx_ausgabe   < len(raw) else ''
+        v_bemerkung = raw[idx_bemerkung] if idx_bemerkung is not None and idx_bemerkung < len(raw) else ''
+
+        # Validierung/Parsing
+        try:
+            datum = parse_date_de_strict(v_datum)
+        except ValueError as e:
+            errors.append(str(e))
+            datum = None
+
+        try:
+            vollgut = try_int_strict(v_vollgut, 'Vollgut')
+        except ValueError as e:
+            errors.append(str(e))
+            vollgut = 0
+
+        try:
+            leergut = try_int_strict(v_leergut, 'Leergut')
+        except ValueError as e:
+            errors.append(str(e))
+            leergut = 0
+
+        if not is_valid_money_str(v_einnahme):
+            errors.append(_('Ungültiges Geldformat für Einnahme: ') + (v_einnahme or ''))
+        if not is_valid_money_str(v_ausgabe):
+            errors.append(_('Ungültiges Geldformat für Ausgabe: ') + (v_ausgabe or ''))
+
+        einnahme = parse_money(v_einnahme or '0')
+        ausgabe  = parse_money(v_ausgabe or '0')
+        bemerkung = (v_bemerkung or '').strip()
+
+        row_obj = {
+            'datum': datum,
+            'vollgut': vollgut,
+            'leergut': leergut,
+            'einnahme': str(einnahme),
+            'ausgabe': str(ausgabe),
+            'bemerkung': bemerkung,
+            'line_no': line_no,
+            'errors': errors,
+            'is_duplicate': False
+        }
+
+        # Duplikatprüfung nur, wenn keine Fehler vorliegen & nicht replace_all
+        if not errors and not replace_all:
+            sig = _signature(row_obj)
+            if sig in existing:
+                row_obj['is_duplicate'] = True
+                dup_count += 1
+
+        preview_rows.append(row_obj)
+
+    return preview_rows, headers, dup_count
+
+
+@app.post('/import/preview')
+@login_required
+@require_perms('import:csv')
+def import_preview():
+    """
+    Zeigt die Vorschau für den CSV-Import mit Auto-Mapping und manuellem Remapping.
+    - Erster Aufruf: Datei wird gelesen, Auto-Mapping ermittelt, CSV in /tmp abgelegt.
+    - Remap: Mapping-Indices aus dem Formular übernehmen, CSV aus /tmp erneut parsen.
+    """
+    # Falls Vorschau via Feature-Switch deaktiviert ist -> Legacy-Import verwenden
+    if not IMPORT_USE_PREVIEW:
+        return import_csv()
+
+    replace_all = request.form.get('replace_all') == 'on'
+    token = (request.form.get('token') or '').strip()
+    is_remap = request.form.get('remap') == '1'
+
+    # ---------- REMAP-PFAD (CSV erneut parsen mit manuellem Mapping) ----------
+    if is_remap and token:
+        stash = session.get('import_previews', {}).get(token)
+        if not stash:
+            flash(_('Vorschau abgelaufen oder nicht gefunden.'))
+            return redirect(url_for('index'))
+
+        tmp_path = stash.get('csv_path')
+        if not tmp_path or not os.path.exists(tmp_path):
+            flash(_('CSV-Datei nicht gefunden.'))
+            return redirect(url_for('index'))
+
+        # CSV laden
+        try:
+            with open(tmp_path, 'r', encoding='utf-8-sig') as f:
+                content = f.read()
+        except Exception as e:
+            logger.exception("CSV lesen fehlgeschlagen: %s", e)
+            flash(_('CSV konnte nicht gelesen werden.'))
+            return redirect(url_for('index'))
+
+        # Mapping aus Formular übernehmen (oder None)
+        if IMPORT_ALLOW_MAPPING:
+            def _opt_int(v):
+                return int(v) if (v not in (None, '', '__none__')) else None
+            mapping = {
+                'Datum':     _opt_int(request.form.get('map_datum')),
+                'Vollgut':   _opt_int(request.form.get('map_vollgut')),
+                'Leergut':   _opt_int(request.form.get('map_leergut')),
+                'Einnahme':  _opt_int(request.form.get('map_einnahme')),
+                'Ausgabe':   _opt_int(request.form.get('map_ausgabe')),
+                'Bemerkung': _opt_int(request.form.get('map_bemerkung')),
+            }
+        else:
+            mapping = None
+
+        try:
+            preview_rows, headers, dup_count = _parse_csv_with_mapping(content, replace_all, mapping)
+        except Exception as e:
+            logger.exception("Import-Preview (remap) fehlgeschlagen: %s", e)
+            flash(f"{_('Vorschau fehlgeschlagen:')} {e}")
+            return redirect(url_for('index'))
+
+        # Stash aktualisieren
+        session['import_previews'][token]['mapping'] = mapping
+        session['import_previews'][token]['replace_all'] = replace_all
+        session.modified = True
+
+        return render_template(
+            'import_preview.html',
+            preview_rows=preview_rows,
+            token=token,
+            replace_all=replace_all,
+            dup_count=dup_count,
+            total=len(preview_rows),
+            headers=headers,
+            allow_mapping=IMPORT_ALLOW_MAPPING,
+            mapping=mapping  # <- für Auto-Vorauswahl in den Dropdowns
+        )
+
+    # ---------- ERSTER UPLOAD (Datei kommt vom Client) ----------
+    file = request.files.get('file')
+    if not file or file.filename == '':
+        flash(_('Bitte eine CSV-Datei auswählen.'))
+        return redirect(url_for('index'))
+
+    try:
+        # Inhalt einlesen
+        content = file.read().decode('utf-8-sig')
+
+        # Vorschau ohne explizites Mapping -> Auto-Mapping im Parser
+        preview_rows, headers, dup_count = _parse_csv_with_mapping(content, replace_all, mapping=None)
+
+        # Token erzeugen
+        token = str(uuid4())
+
+        # CSV serverseitig in /tmp ablegen (keine großen Sessions)
+        tmp_dir = '/tmp'
+        os.makedirs(tmp_dir, exist_ok=True)
+        tmp_path = os.path.join(tmp_dir, f"bb_import_{token}.csv")
+        with open(tmp_path, 'w', encoding='utf-8-sig') as f:
+            f.write(content)
+
+        # Auto-Mapping separat berechnen und für die UI im Stash speichern
+        auto_map = compute_auto_mapping(headers) if IMPORT_ALLOW_MAPPING else {}
+        session.setdefault('import_previews', {})
+        session['import_previews'][token] = {
+            'csv_path': tmp_path,
+            'replace_all': replace_all,
+            'created_at': time.time(),
+            'mapping': auto_map if auto_map else None
+        }
+        session.modified = True
+
+        return render_template(
+            'import_preview.html',
+            preview_rows=preview_rows,
+            token=token,
+            replace_all=replace_all,
+            dup_count=dup_count,
+            total=len(preview_rows),
+            headers=headers,
+            allow_mapping=IMPORT_ALLOW_MAPPING,
+            mapping=session['import_previews'][token].get('mapping')  # <- Auto-Vorauswahl
+        )
+    except Exception as e:
+        logger.exception("Import-Preview fehlgeschlagen: %s", e)
+        flash(f"{_('Vorschau fehlgeschlagen:')} {e}")
+        return redirect(url_for('index'))
+
+
+@app.post('/import/commit')
+@login_required
+@require_perms('import:csv')
+def import_commit():
+    token = (request.form.get('token') or '').strip()
+    mode = (request.form.get('mode') or 'skip_dups').strip()  # 'skip_dups' | 'insert_all'
+    import_invalid = request.form.get('import_invalid') == 'on'
+
+    if not token or 'import_previews' not in session or token not in session['import_previews']:
+        flash(_('Vorschau abgelaufen oder nicht gefunden.'))
+        return redirect(url_for('index'))
+
+    stash = session['import_previews'].pop(token, None)
+    session.modified = True
+    if not stash:
+        flash(_('Vorschau abgelaufen oder bereits verwendet.'))
+        return redirect(url_for('index'))
+
+    tmp_path = stash.get('csv_path')
+    replace_all = bool(stash.get('replace_all'))
+    mapping = stash.get('mapping')
+
+    if not tmp_path or not os.path.exists(tmp_path):
+        flash(_('CSV-Datei nicht gefunden.'))
+        return redirect(url_for('index'))
+
+    try:
+        with open(tmp_path, 'r', encoding='utf-8-sig') as f:
+            content = f.read()
+
+        preview_rows, _headers, _dup = _parse_csv_with_mapping(content, replace_all, mapping)
+
+        inserted = 0
+        with engine.begin() as conn:
+            if replace_all:
+                conn.execute(text('DELETE FROM entries'))
+
+            existing = set()
+            if not replace_all and mode == 'skip_dups':
+                existing = _fetch_existing_signature_set(conn)
+
+            for r in preview_rows:
+                if (r['errors'] and not import_invalid):
+                    continue
+                if not replace_all and mode == 'skip_dups' and not r['errors']:
+                    if _signature(r) in existing:
+                        continue
+                conn.execute(text("""
+                    INSERT INTO entries (datum, vollgut, leergut, einnahme, ausgabe, bemerkung)
+                    VALUES (:datum,:vollgut,:leergut,:einnahme,:ausgabe,:bemerkung)
+                """), {k: r[k] for k in ('datum','vollgut','leergut','einnahme','ausgabe','bemerkung')})
+                inserted += 1
+
+        # Temporäre Datei löschen
+        try:
+            os.remove(tmp_path)
+        except Exception:
+            pass
+
+        log_action(session.get('user_id'), 'import:csv', None,
+                   f"commit: inserted={inserted}, replace_all={replace_all}, mode={mode}, import_invalid={import_invalid}")
+        flash(_(f'Import erfolgreich: {inserted} Zeilen übernommen.'))
+        return redirect(url_for('index'))
+    except Exception as e:
+        logger.exception("Import-Commit fehlgeschlagen: %s", e)
+        flash(f"{_('Import fehlgeschlagen:')} {e}")
+        return redirect(url_for('index'))
+
+# -----------------------
+# Hilfsfunktionen CSV Import
+# -----------------------
+# --- Strikte Parser/Validatoren für die Vorschau ---
+def parse_date_de_strict(s: str) -> date:
+    s = (s or '').strip()
+    if not s:
+        raise ValueError(_('Datum fehlt'))
+    try:
+        return datetime.strptime(s, '%d.%m.%Y').date()
+    except Exception:
+        raise ValueError(_('Ungültiges Datum (erwartet TT.MM.JJJJ): ') + s)
+
+_money_re = re.compile(r'^\s*[+-]?\d{1,3}([.,]\d{3})*([.,]\d{1,2})?\s*(€)?\s*$')
+def is_valid_money_str(s: str) -> bool:
+    if s is None:
+        return True  # leer = 0 ist ok
+    if s.strip() == '':
+        return True
+    return bool(_money_re.match(s.strip()))
+
+def try_int_strict(s: str, field: str) -> int:
+    ss = (s or '').strip()
+    if ss == '':
+        return 0
+    if not re.fullmatch(r'[+-]?\d+', ss):
+        raise ValueError(_(f'Ungültige Ganzzahl für {field}: ') + ss)
+    return int(ss)
+
+# --- CSV Header Normalisierung & Auto-Mapping ---
+def _norm(h: str) -> str:
+    return re.sub(r'[^a-z0-9]', '', (h or '').strip().lower())
+
+# Kanonische Zielfelder
+CANONICAL_FIELDS = ['Datum','Vollgut','Leergut','Einnahme','Ausgabe','Bemerkung']
+
+# Synonyme (frei erweiterbar)
+HEADER_SYNONYMS = {
+    'Datum':     {'datum','date','ttmmjjjj','tt.mm.jjjj','day','tag'},
+    'Vollgut':   {'vollgut','voll','in','eingang','bestandszugang','bottlesin'},
+    'Leergut':   {'leergut','leer','out','ausgang','bestandsabgang','bottlesout','pfand'},
+    'Einnahme':  {'einnahme','einzahlung','revenue','income','cashin'},
+    'Ausgabe':   {'ausgabe','auszahlung','expense','cost','cashout'},
+    'Bemerkung': {'bemerkung','notiz','kommentar','comment','note','description','desc'},
+    # Optional ignorierbare Spalten:
+    # 'Inventar', 'Kassenbestand'
+}
+
+def compute_auto_mapping(headers: list[str]) -> dict:
+    """Gibt Mapping {Kanonisch -> Index} zurück oder {} wenn nicht möglich."""
+    mapping = {}
+    norm_headers = [_norm(h) for h in headers]
+    for canon in CANONICAL_FIELDS:
+        candidates = { _norm(c) for c in HEADER_SYNONYMS.get(canon, set()) } | {_norm(canon)}
+        idx = next((i for i, nh in enumerate(norm_headers) if nh in candidates), None)
+        if idx is None:
+            # Feld optional: Einnahme/Ausgabe/Bemerkung dürfen fehlen -> None heißt: als leer behandeln
+            if canon in ('Einnahme','Ausgabe','Bemerkung'):
+                mapping[canon] = None
+                continue
+            # Pflichtfelder Datum/Vollgut/Leergut fehlen -> Auto-Mapping scheitert
+            return {}
+        mapping[canon] = idx
+    return mapping
+
+
+@app.post('/api/import/dry-run')
+def api_import_dry_run():
+    if not IMPORT_ALLOW_DRYRUN:
+        return {'error': 'dry-run disabled'}, 403
+
+    # Auth …
+    token = request.headers.get('X-Import-Token')
+    authed = False
+    if IMPORT_API_TOKEN and token == IMPORT_API_TOKEN:
+        authed = True
+    else:
+        if session.get('user_id'):
+            allowed = ROLES.get(session.get('role'), set())
+            authed = 'import:csv' in allowed
+    if not authed:
+        return {'error': 'unauthorized'}, 401
+
+    replace_all = (request.args.get('replace_all') == '1') or (request.form.get('replace_all') == 'on')
+
+    # NEU: mapping vorinitialisieren
+    content = None
+    mapping = None
+    # Datenquellen …
+    if 'file' in request.files and request.files['file'].filename:
+        content = request.files['file'].read().decode('utf-8-sig')
+    elif request.is_json:
+        body = request.get_json(force=True, silent=True) or {}
+        if 'csv' in body and isinstance(body['csv'], str):
+            import base64 as _b64
+            c = body['csv']
+            try:
+                try:
+                    content = _b64.b64decode(c).decode('utf-8-sig')
+                except Exception:
+                    content = c
+            except Exception:
+                return {'error':'invalid csv payload'}, 400
+        elif 'rows' in body and isinstance(body['rows'], list):
+            si = io.StringIO()
+            w = csv.writer(si, delimiter=';', lineterminator='\n')
+            w.writerow(['Datum','Vollgut','Leergut','Einnahme','Ausgabe','Bemerkung'])
+            for r in body['rows']:
+                w.writerow([
+                    r.get('Datum',''),
+                    r.get('Vollgut',''),
+                    r.get('Leergut',''),
+                    r.get('Einnahme',''),
+                    r.get('Ausgabe',''),
+                    r.get('Bemerkung',''),
+                ])
+            content = si.getvalue()
+        mapping = body.get('mapping')
+    else:
+        return {'error':'no input'}, 400
+
+    try:
+        preview_rows, headers, dup_count = _parse_csv_with_mapping(content, replace_all, mapping if IMPORT_ALLOW_MAPPING else None)
+        total = len(preview_rows)
+        invalid = sum(1 for r in preview_rows if r['errors'])
+        valid   = total - invalid
+        duplicates = dup_count
+
+        # Response
+        return {
+            'summary': {
+                'total': total,
+                'valid': valid,
+                'invalid': invalid,
+                'duplicates': duplicates,
+                'replace_all': replace_all,
+            },
+            'headers': headers,
+            'rows': [
+                {
+                    'line_no': r['line_no'],
+                    'datum': r['datum'].strftime('%Y-%m-%d') if r['datum'] else None,
+                    'vollgut': r['vollgut'],
+                    'leergut': r['leergut'],
+                    'einnahme': r['einnahme'],
+                    'ausgabe': r['ausgabe'],
+                    'bemerkung': r['bemerkung'],
+                    'is_duplicate': r['is_duplicate'],
+                    'errors': r['errors'],
+                } for r in preview_rows
+            ]
+        }, 200
+    except Exception as e:
+        logger.exception("Dry-Run failed: %s", e)
+        return {'error': str(e)}, 400
+
+# -----------------------
 # PDF Export with optional logo
 # -----------------------
 @app.get('/export/pdf')
@@ -1161,7 +1846,10 @@ def export_pdf():
     entries = fetch_entries(q or None, date_from, date_to)
 
     buffer = io.BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=landscape(A4), leftMargin=15, rightMargin=15, topMargin=15, bottomMargin=15)
+    doc = SimpleDocTemplate(
+        buffer, pagesize=landscape(A4),
+        leftMargin=15, rightMargin=15, topMargin=15, bottomMargin=15
+    )
     styles = getSampleStyleSheet()
     story = []
 
@@ -1169,33 +1857,47 @@ def export_pdf():
     if os.path.exists(logo_path):
         story.append(RLImage(logo_path, width=40*mm, height=12*mm))
         story.append(Spacer(1, 6))
+
+    # Titel in echtem HTML (ReportLab-Paragraph versteht <b>…</b>)
     story.append(Paragraph(f"<b>{_('BottleBalance – Export')}</b>", styles['Title']))
     story.append(Spacer(1, 6))
 
-    
-    data = [[_('Datum'), _('Vollgut'), _('Leergut'), _('Inventar'), _('Einnahme'), _('Ausgabe'), _('Kassenbestand'), _('Bemerkung')]]
+    # Tabelle
+    data = [[
+        _('Datum'), _('Vollgut'), _('Leergut'), _('Inventar'),
+        _('Einnahme'), _('Ausgabe'), _('Kassenbestand'), _('Bemerkung')
+    ]]
     for e in entries:
         data.append([
-            format_date_de(e['datum']), str(e['vollgut']), str(e['leergut']), str(e['inventar']),
-            str(e['einnahme']).replace('.', ',') + " {{ _('(waehrung)') }}", str(e['ausgabe']).replace('.', ',') + " {{ _('(waehrung)') }}", str(e['kassenbestand']).replace('.', ',') + " {{ _('(waehrung)') }}", Paragraph(e['bemerkung'], styles['Normal'])
-
+            format_date_de(e['datum']),
+            str(e['vollgut']),
+            str(e['leergut']),
+            str(e['inventar']),
+            str(e['einnahme']).replace('.', ',') + " " + _('waehrung'),
+            str(e['ausgabe']).replace('.', ',') + " " + _('waehrung'),
+            str(e['kassenbestand']).replace('.', ',') + " " + _('waehrung'),
+            Paragraph(e['bemerkung'] or '', styles['Normal'])
         ])
-    col_widths = [25*mm,25*mm,25*mm,25*mm,30*mm,30*mm,30*mm,110*mm]
+
+    col_widths = [25*mm, 25*mm, 25*mm, 25*mm, 30*mm, 30*mm, 30*mm, 110*mm]
     table = Table(data, colWidths=col_widths, repeatRows=1)
     table.setStyle(TableStyle([
-        ('BACKGROUND',(0,0),(-1,0),colors.HexColor('#f1f3f5')),
-        ('TEXTCOLOR',(0,0),(-1,0),colors.HexColor('#212529')),
-        ('FONTNAME',(0,0),(-1,0),'Helvetica-Bold'),
-        ('FONTSIZE',(0,0),(-1,0),10),
-        ('ALIGN',(1,1),(3,-1),'RIGHT'),
-        ('ALIGN',(4,1),(6,-1),'RIGHT'),
-        ('VALIGN',(0,0),(-1,-1),'MIDDLE'),
-        ('ROWBACKGROUNDS',(0,1),(-1,-1),[colors.white, colors.HexColor('#fcfcfd')]),
-        ('GRID',(0,0),(-1,-1),0.25,colors.HexColor('#dee2e6')),
-        ('LEFTPADDING',(0,0),(-1,-1),6),('RIGHTPADDING',(0,0),(-1,-1),6),
-        ('TOPPADDING',(0,0),(-1,-1),4),('BOTTOMPADDING',(0,0),(-1,-1),4),
+        ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#f1f3f5')),
+        ('TEXTCOLOR', (0,0), (-1,0), colors.HexColor('#212529')),
+        ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0,0), (-1,0), 10),
+        ('ALIGN', (1,1), (3,-1), 'RIGHT'),
+        ('ALIGN', (4,1), (6,-1), 'RIGHT'),
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.white, colors.HexColor('#fcfcfd')]),
+        ('GRID', (0,0), (-1,-1), 0.25, colors.HexColor('#dee2e6')),
+        ('LEFTPADDING', (0,0), (-1,-1), 6),
+        ('RIGHTPADDING', (0,0), (-1,-1), 6),
+        ('TOPPADDING', (0,0), (-1,-1), 4),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 4),
     ]))
     story.append(table)
+
     doc.build(story)
     buffer.seek(0)
     filename = f"bottlebalance_{date.today().strftime('%Y%m%d')}.pdf"
@@ -1316,10 +2018,6 @@ def admin_smtp():
     logger.info("ENV SEND_TEST_MAIL in .env  is set to %s", SEND_TEST_MAIL)
     if SEND_TEST_MAIL:
         check_smtp_configuration()
-
-
-
-
 
 # -----------------------
 # SMTP Test Mail if paraam SEND_TEST_MAIL is set to true

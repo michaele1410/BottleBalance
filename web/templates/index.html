@@ -138,9 +138,10 @@
               <i class="bi-download me-1"></i> CSV
             </a>
           {% endif %}
+          <!-- Import -->
           {% if can_import %}
             <div style="margin: 1rem 0; padding: .75rem; border: 1px solid #dee2e6; border-radius: .5rem; background: #fcfcfd;">
-              <details>
+              <!--details>
                 <summary style="cursor:pointer; font-weight:600;">
                   {{ _('CSV Import') }}
                 </summary>
@@ -173,7 +174,11 @@
                     </div>
                   </form>
                 </div>
-              </details>
+              </details-->
+              <!-- CSV Import Button (öffnet Modal) -->
+              <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#csvImportModal">
+                <i class="bi-upload me-1"></i> CSV Import
+              </button>
             </div>
             {% endif %}
         </div>
@@ -228,6 +233,39 @@
   </div>
 </div>
 
+<!-- CSV Import Modal -->
+<div class="modal fade" id="csvImportModal" tabindex="-1" aria-labelledby="csvImportModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <form action="{{ url_for('import_preview') if IMPORT_USE_PREVIEW else url_for('import_csv') }}" method="post" enctype="multipart/form-data">
+        <div class="modal-header">
+          <h5 class="modal-title" id="csvImportModalLabel">{{ _('CSV-Datei importieren') }}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Schließen') }}"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="csvFile" class="form-label">{{ _('CSV-Datei auswählen') }}</label>
+            <input id="csvFile" name="file" type="file" accept=".csv,text/csv" required class="form-control">
+            <small class="form-text text-muted">
+              {{ _("Erwartete Header:") }} <code>Datum;Vollgut;Leergut;Inventar;Einnahme;Ausgabe;Kassenbestand;Bemerkung</code>
+              {{ _("oder Kurzform ohne Inventar/Kassenbestand.") }}
+            </small>
+          </div>
+          <div class="form-check mb-3">
+            <input class="form-check-input" type="checkbox" name="replace_all" id="replaceAll">
+            <label class="form-check-label" for="replaceAll">
+              {{ _('Bestehende Einträge komplett ersetzen') }}
+            </label>
+          </div>
+        </div>
+        <div class="modal-footer d-flex justify-content-between">
+          <a href="{{ url_for('import_sample') }}" class="btn btn-link">{{ _('Beispiel-CSV herunterladen') }}</a>
+          <button type="submit" class="btn btn-primary">{{ _('Vorschau anzeigen') }}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
 {% endblock %}
 
 

@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2025-08-15 11:39+0200\n"
+"POT-Creation-Date: 2025-08-15 12:02+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -138,18 +138,18 @@ msgstr "Entry not found."
 msgid "Bitte eine CSV-Datei auswählen."
 msgstr "Please select a CSV file."
 
-#: app.py:1176 templates/edit.html:14 templates/edit.html:62
-#: templates/index.html:47 templates/index.html:150
+#: app.py:1176 templates/edit.html:25 templates/index.html:47
+#: templates/index.html:150
 msgid "Datum"
 msgstr "Date"
 
-#: app.py:1176 templates/edit.html:20 templates/edit.html:66
-#: templates/index.html:53 templates/index.html:151
+#: app.py:1176 templates/edit.html:40 templates/index.html:53
+#: templates/index.html:151
 msgid "Vollgut"
 msgstr "Full bottles"
 
-#: app.py:1176 templates/edit.html:26 templates/edit.html:70
-#: templates/index.html:59 templates/index.html:152
+#: app.py:1176 templates/edit.html:55 templates/index.html:59
+#: templates/index.html:152
 msgid "Leergut"
 msgstr "Empty bottles"
 
@@ -157,13 +157,13 @@ msgstr "Empty bottles"
 msgid "Inventar"
 msgstr "Inventory"
 
-#: app.py:1176 templates/edit.html:34 templates/edit.html:74
-#: templates/index.html:67 templates/index.html:154
+#: app.py:1176 templates/edit.html:71 templates/index.html:67
+#: templates/index.html:154
 msgid "Einnahme"
 msgstr "Revenue"
 
-#: app.py:1176 templates/edit.html:43 templates/edit.html:78
-#: templates/index.html:76 templates/index.html:155
+#: app.py:1176 templates/edit.html:88 templates/index.html:76
+#: templates/index.html:155
 msgid "Ausgabe"
 msgstr "Expenditure"
 
@@ -171,8 +171,8 @@ msgstr "Expenditure"
 msgid "Kassenbestand"
 msgstr "Cash balance"
 
-#: app.py:1176 templates/edit.html:50 templates/edit.html:82
-#: templates/index.html:83 templates/index.html:157
+#: app.py:1176 templates/edit.html:100 templates/index.html:83
+#: templates/index.html:157
 msgid "Bemerkung"
 msgstr "Note"
 
@@ -213,9 +213,8 @@ msgstr "Error during database dump: "
 msgid "SMTP configuration detected for host {}:{}."
 msgstr "SMTP configuration detected for host {}:{}."
 
-#: modules/utils.py:13 templates/edit.html:31 templates/edit.html:40
-#: templates/edit.html:74 templates/edit.html:78 templates/index.html:64
-#: templates/index.html:73
+#: modules/utils.py:13 templates/edit.html:60 templates/edit.html:77
+#: templates/index.html:64 templates/index.html:73
 msgid "waehrung"
 msgstr "€"
 
@@ -336,27 +335,22 @@ msgstr "Profil"
 msgid "Logout"
 msgstr "Logout"
 
-#: templates/edit.html:8 templates/edit.html:59
+#: templates/edit.html:7
 msgid "Datensatz bearbeiten"
 msgstr "Edit entry"
 
-#: templates/edit.html:49 templates/edit.html:83 templates/index.html:82
+#: templates/edit.html:98 templates/index.html:82
 msgid "Notiz"
 msgstr "Note"
 
-#: templates/edit.html:54 templates/edit.html:86 templates/profile.html:25
-#: templates/reset.html:22
+#: templates/edit.html:104 templates/profile.html:25 templates/reset.html:22
 msgid "Abbrechen"
 msgstr "Cancel"
 
-#: templates/edit.html:55 templates/edit.html:87 templates/profile.html:26
-#: templates/profile.html:101 templates/reset.html:23 templates/users.html:54
+#: templates/edit.html:105 templates/profile.html:26 templates/profile.html:101
+#: templates/reset.html:23 templates/users.html:54
 msgid "Speichern"
 msgstr "Save"
-
-#: templates/edit.html:75 templates/edit.html:79
-msgid "z.B."
-msgstr "e.g."
 
 #: templates/index.html:10
 msgid "Inventar (aktuell):"
@@ -630,4 +624,7 @@ msgstr "Unexpected error"
 
 #~ msgid "Layout"
 #~ msgstr "Layout"
+
+#~ msgid "z.B."
+#~ msgstr "e.g."
 

@@ -508,8 +508,8 @@ def login_post():
         session['pending_2fa_user_id'] = user['id']
         return redirect(url_for('login_2fa'))
 
-        session['user_id'] = user['id']
-        session['role'] = user['role']
+    session['user_id'] = user['id']
+    session['role'] = user['role']
 
     if user['must_change_password']:
         flash(_('Bitte Passwort ändern (erforderlich).'))

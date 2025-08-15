@@ -17,16 +17,17 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from smtp_check import check_smtp_configuration
 from email.mime.text import MIMEText
 from email.header import Header
+from functools import wraps
 import csv
 import io
 import time
 import pyotp
 import qrcode
 import base64
-from PIL import Image
 
 import subprocess
 
+import json
 
 # PDF (ReportLab)
 from reportlab.lib.pagesizes import A4, landscape
@@ -276,24 +277,17 @@ def _ensure_init_once():
 #401 – Unauthorized: Für fehlende Authentifizierung.
 # -----------------------
 
-def _error_common_context():
-    return {
-        "home_url": url_for("main.index") if app.url_map.is_endpoint_expecting("main.index") or "main.index" in app.view_functions else url_for("index"),
-        "support_email": current_app.config.get("SUPPORT_EMAIL"),
-        "support_url": current_app.config.get("SUPPORT_URL"),
-        # "request_id": getattr(g, "request_id", None),  # wenn du so etwas nutzt
-    }
-
 @app.errorhandler(401)
-def page_not_found(e):
-    return render_template('errors/404.html'), 401
+def unauthorized(e):
+    # Optional eigenes Template errors/401.html, sonst 404er Template weiterverwenden
+    return render_template('errors/401.html'), 401
 
 @app.errorhandler(403)
-def page_not_found(e):
+def forbidden(e):
     return render_template('errors/403.html'), 403
 
 @app.errorhandler(404)
-def internal_error(e):
+def not_found(e):
     return render_template('errors/404.html'), 404
 
 @app.errorhandler(413)
@@ -305,11 +299,10 @@ def request_entity_too_large(e):
 def internal_error(e):
     return render_template('errors/500.html'), 500
 
+
 # -----------------------
 # Helpers: Current user, RBAC
 # -----------------------
-from functools import wraps
-
 def current_user():
     uid = session.get('user_id')
     if not uid:
@@ -342,6 +335,30 @@ def require_perms(*perms):
             return fn(*args, **kwargs)
         return wrapper
     return decorator
+
+# --- CSRF Utils ---
+def _ensure_csrf_token():
+    tok = session.get('_csrf_token')
+    if not tok:
+        tok = secrets.token_urlsafe(32)
+        session['_csrf_token'] = tok
+    return tok
+
+def csrf_token():
+    # für Jinja: {{ csrf_token() }}
+    return _ensure_csrf_token()
+
+def require_csrf(fn):
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        # Nur für state-changing requests
+        if request.method in ('POST', 'PUT', 'PATCH', 'DELETE'):
+            session_tok = session.get('_csrf_token') or ''
+            sent_tok = request.form.get('csrf_token') or request.headers.get('X-CSRF-Token') or ''
+            if not (session_tok and sent_tok) or not secrets.compare_digest(session_tok, sent_tok):
+                abort(403)
+        return fn(*args, **kwargs)
+    return wrapper
 
 # -----------------------
 # Utils: Formatting
@@ -515,6 +532,7 @@ def login():
     return render_template('login.html')
 
 @app.post('/login')
+@require_csrf
 def login_post():
     username = (request.form.get('username') or '').strip()
     password = (request.form.get('password') or '').strip()
@@ -526,7 +544,7 @@ def login_post():
 
     if user['totp_enabled']:
         session['pending_2fa_user_id'] = user['id']
-        return redirect(url_for('login_2fa'))
+        return redirect(url_for('login_2fa_get'))
 
     session['user_id'] = user['id']
     session['role'] = user['role']
@@ -536,12 +554,13 @@ def login_post():
     return redirect(url_for('index'))
 
 @app.get('/2fa')
-def login_2fa():
+def login_2fa_get():
     if not session.get('pending_2fa_user_id'):
         return redirect(url_for('login'))
     return render_template('2fa.html')
 
 @app.post('/2fa')
+@require_csrf
 def login_2fa_post():
     uid = session.get('pending_2fa_user_id')
     if not uid:
@@ -555,53 +574,76 @@ def login_2fa_post():
             FROM users WHERE id=:id
         """), {'id': uid}).mappings().first()
 
-        if not user or not user['totp_secret']:
-            flash(_('2FA nicht aktiv.'))
-            return redirect(url_for('login'))
+    if not user or not user['totp_secret']:
+        flash(_('2FA nicht aktiv.'))
+        return redirect(url_for('login'))
 
-        totp = pyotp.TOTP(user['totp_secret'])
+    totp = pyotp.TOTP(user['totp_secret'])
 
-        # ✅ TOTP-Code gültig
-        if totp.verify(code, valid_window=1):
+    # 1) TOTP
+    if totp.verify(code, valid_window=1):
+        session.pop('pending_2fa_user_id', None)
+        session['user_id'] = user['id']
+        session['role'] = user['role']
+        return redirect(url_for('index'))
+
+    # 2) Backup-Code (Hash oder Legacy-Klartext)
+    bc_raw = user.get('backup_codes')
+    if bc_raw:
+        try:
+            hashes = json.loads(bc_raw) if bc_raw.strip().startswith('[') else bc_raw.split(',')
+        except Exception:
+            hashes = bc_raw.split(',')
+
+        matched_idx = None
+        for i, h in enumerate(hashes):
+            if (h and h.startswith('pbkdf2:') and check_password_hash(h, code)) or (h == code):
+                matched_idx = i
+                break
+
+        if matched_idx is not None:
+            del hashes[matched_idx]
+            with engine.begin() as conn2:
+                conn2.execute(text("UPDATE users SET backup_codes=:bc WHERE id=:id"),
+                              {'bc': json.dumps(hashes), 'id': uid})
             session.pop('pending_2fa_user_id', None)
             session['user_id'] = user['id']
             session['role'] = user['role']
+            flash(_('Backup-Code verwendet. Bitte neue Codes generieren.'))
             return redirect(url_for('index'))
 
-        # ✅ Backup-Code gültig
-        if user.get('backup_codes'):
-            codes = user['backup_codes'].split(',')
-            if code in codes:
-                codes.remove(code)
-                conn.execute(text("UPDATE users SET backup_codes=:bc WHERE id=:id"),
-                             {'bc': ",".join(codes), 'id': uid})
-                session.pop('pending_2fa_user_id', None)
-                session['user_id'] = user['id']
-                session['role'] = user['role']
-                flash(_('Backup-Code verwendet. Bitte neue Codes generieren.'))
-                return redirect(url_for('index'))
-
     flash(_('Ungültiger 2FA-Code oder Backup-Code.'))
-    return redirect(url_for('login_2fa'))
+    return redirect(url_for('login_2fa_get'))
+
+def generate_and_store_backup_codes(uid: int) -> list[str]:
+    """Erzeugt 10 Backup-Codes, speichert nur Hashes in DB und liefert die Klartext-Codes zurück (einmalige Anzeige)."""
+    codes = [secrets.token_hex(4) for _ in range(10)]
+    hashes = [generate_password_hash(c) for c in codes]
+    with engine.begin() as conn:
+        conn.execute(text("UPDATE users SET backup_codes=:bc WHERE id=:id"),
+                     {'bc': json.dumps(hashes), 'id': uid})
+    return codes
 
 @app.post('/profile/2fa/regen')
 @login_required
+@require_csrf
 def regen_backup_codes():
     uid = session['user_id']
-    codes = [secrets.token_hex(4) for _ in range(10)]
-    codes_str = ",".join(codes)
-    with engine.begin() as conn:
-        conn.execute(text("UPDATE users SET backup_codes=:bc WHERE id=:id"), {'bc': codes_str, 'id': uid})
+    codes = generate_and_store_backup_codes(uid)
+    # Einmalige Anzeige im Profil
+    session['new_backup_codes'] = codes
     flash(_('Neue Backup-Codes wurden generiert. Bitte sicher aufbewahren.'))
     return redirect(url_for('profile'))
 
-@app.get('/logout')
+@app.post('/logout')
 @login_required
+@require_csrf
 def logout():
     uid = session.get('user_id')
     log_action(uid, 'logout', None, None)
     session.clear()
     return redirect(url_for('login'))
+
 
 # -----------------------
 # Profile & 2FA management
@@ -616,6 +658,7 @@ def profile():
 
 @app.post('/profile')
 @login_required
+@require_csrf
 def profile_post():
     pwd = (request.form.get('password') or '').strip()
     pwd2 = (request.form.get('password2') or '').strip()
@@ -640,6 +683,7 @@ def profile_post():
 
 @app.post('/profile/2fa/enable')
 @login_required
+@require_csrf
 def enable_2fa():
     uid = session['user_id']
     secret = pyotp.random_base32()
@@ -656,6 +700,7 @@ def enable_2fa():
 
 @app.post('/profile/2fa/confirm')
 @login_required
+@require_csrf
 def confirm_2fa():
     uid = session['user_id']
     secret = session.get('enroll_totp_secret')
@@ -668,14 +713,18 @@ def confirm_2fa():
         flash(_('Ungültiger 2FA-Code.'))
         return redirect(url_for('enable_2fa'))
     with engine.begin() as conn:
-        conn.execute(text("UPDATE users SET totp_secret=:s, totp_enabled=TRUE, updated_at=NOW() WHERE id=:id"), {'s': secret, 'id': uid})
+        conn.execute(text("UPDATE users SET totp_secret=:s, totp_enabled=TRUE, updated_at=NOW() WHERE id=:id"),
+                     {'s': secret, 'id': uid})
     session.pop('enroll_totp_secret', None)
+    # neue Codes generieren und im Profil einmalig anzeigen
+    codes = generate_and_store_backup_codes(uid)
+    session['new_backup_codes'] = codes
     flash(_('2FA aktiviert.'))
-    regen_backup_codes()
     return redirect(url_for('profile'))
 
 @app.post('/profile/2fa/disable')
 @login_required
+@require_csrf
 def disable_2fa():
     uid = session['user_id']
     pwd = (request.form.get('password') or '').strip()
@@ -691,6 +740,7 @@ def disable_2fa():
 
 @app.post('/profile/theme')
 @login_required
+@require_csrf
 def update_theme():
     theme = request.form.get('theme')
     if theme not in ['light', 'dark', 'system']:
@@ -705,6 +755,7 @@ def update_theme():
 
 @app.post('/profile/preferences')
 @login_required
+@require_csrf
 def update_preferences():
     uid = session.get('user_id')
     language = request.form.get('language')
@@ -738,9 +789,9 @@ def inject_theme():
         'set': set,
         'IMPORT_USE_PREVIEW': IMPORT_USE_PREVIEW,
         'IMPORT_ALLOW_MAPPING': IMPORT_ALLOW_MAPPING,
-        # NEU:
         'format_date_de': format_date_de,
         'format_eur_de': format_eur_de,
+        'csrf_token': csrf_token,
     }
 
 # -----------------------
@@ -795,6 +846,7 @@ def send_mail(to_email: str, subject: str, body: str) -> bool:
 @app.post('/admin/users/<int:uid>/resetlink')
 @login_required
 @require_perms('users:manage')
+@require_csrf
 def users_reset_link(uid: int):
     token = secrets.token_urlsafe(32)
     expires = datetime.utcnow() + timedelta(minutes=30)
@@ -830,6 +882,7 @@ def reset_form():
     return render_template('reset.html')
 
 @app.post('/reset')
+@require_csrf
 def reset_post():
     token = (request.form.get('token') or '').strip()
     pwd   = (request.form.get('password')  or '').strip()
@@ -868,6 +921,7 @@ def users_list():
 @app.post('/admin/users/add')
 @login_required
 @require_perms('users:manage')
+@require_csrf
 def users_add():
     username = (request.form.get('username') or '').strip()
     email = (request.form.get('email') or '').strip() or None
@@ -896,6 +950,7 @@ def users_add():
 @app.post('/admin/users/<int:uid>/toggle')
 @login_required
 @require_perms('users:manage')
+@require_csrf
 def users_toggle(uid: int):
     with engine.begin() as conn:
         conn.execute(text("UPDATE users SET active = NOT active, updated_at=NOW() WHERE id=:id"), {'id': uid})
@@ -904,6 +959,7 @@ def users_toggle(uid: int):
 @app.post('/admin/users/<int:uid>/role')
 @login_required
 @require_perms('users:manage')
+@require_csrf
 def users_change_role(uid: int):
     role = (request.form.get('role') or 'Viewer').strip()
     if role not in ROLES:
@@ -916,6 +972,7 @@ def users_change_role(uid: int):
 @app.post('/admin/users/<int:uid>/resetpw')
 @login_required
 @require_perms('users:manage')
+@require_csrf
 def users_reset_pw(uid: int):
     newpw = (request.form.get('password') or '').strip()
     if len(newpw) < 8:
@@ -961,6 +1018,7 @@ def audit_list():
 @app.post('/admin/users/<int:uid>/delete')
 @login_required
 @require_perms('users:manage')
+@require_csrf
 def users_delete(uid: int):
     current_uid = session.get('user_id')
     if uid == current_uid:
@@ -1015,6 +1073,7 @@ def index():
 @app.post('/add')
 @login_required
 @require_perms('entries:add')
+@require_csrf
 def add():
     user = current_user()
     try:
@@ -1060,6 +1119,7 @@ def edit(entry_id: int):
 
 @app.post('/edit/<int:entry_id>')
 @login_required
+@require_csrf
 def edit_post(entry_id: int):
     with engine.begin() as conn:
         row = conn.execute(text('SELECT created_by FROM entries WHERE id=:id'), {'id': entry_id}).mappings().first()
@@ -1090,6 +1150,7 @@ def edit_post(entry_id: int):
 
 @app.post('/delete/<int:entry_id>')
 @login_required
+@require_csrf
 def delete(entry_id: int):
     with engine.begin() as conn:
         row = conn.execute(text('SELECT created_by FROM entries WHERE id=:id'), {'id': entry_id}).mappings().first()
@@ -1135,6 +1196,7 @@ def export_csv():
 @app.post('/import')
 @login_required
 @require_perms('import:csv')
+@require_csrf
 def import_csv():
     file = request.files.get('file')
     replace_all = request.form.get('replace_all') == 'on'
@@ -1145,6 +1207,26 @@ def import_csv():
         content = file.read().decode('utf-8-sig')
         reader = csv.reader(io.StringIO(content), delimiter=';')
         headers = next(reader, None)
+        # Robustheit: Header-Zeile prüfen und ggf. splitten
+        if headers and len(headers) == 1 and ';' in headers[0]:
+            headers = headers[0].split(';')
+        # Validierung
+        validation_errors = []
+
+        if len(set(headers)) != len(headers):
+            validation_errors.append("Doppelte Spaltennamen in CSV.")
+
+        if any(h.strip() == "" for h in headers):
+            validation_errors.append("Leere Spaltennamen in CSV.")
+
+        required_fields = {"Datum", "Vollgut", "Leergut"}
+        if not required_fields.issubset(set(headers)):
+            validation_errors.append("Pflichtfelder fehlen: Datum, Vollgut, Leergut.")
+
+        if validation_errors:
+            for err in validation_errors:
+                flash(err)
+            return redirect(url_for('index'))
         expected = ['Datum','Vollgut','Leergut','Inventar','Einnahme','Ausgabe','Kassenbestand','Bemerkung']
         alt_expected = ['Datum','Vollgut','Leergut','Einnahme','Ausgabe','Bemerkung']
         if headers is None or [h.strip() for h in headers] not in (expected, alt_expected):
@@ -1486,6 +1568,7 @@ def _parse_csv_with_mapping(content: str, replace_all: bool, mapping: dict | Non
 @app.post('/import/preview')
 @login_required
 @require_perms('import:csv')
+@require_csrf
 def import_preview():
     """
     Zeigt die Vorschau für den CSV-Import mit Auto-Mapping und manuellem Remapping.
@@ -1521,17 +1604,19 @@ def import_preview():
             flash(_('CSV konnte nicht gelesen werden.'))
             return redirect(url_for('index'))
 
-        # Mapping aus Formular übernehmen (oder None)
+        # Mapping aus Formular übernehmen
         if IMPORT_ALLOW_MAPPING:
             def _opt_int(v):
                 return int(v) if (v not in (None, '', '__none__')) else None
+            def _get(name):
+                return request.form.get(f'map_{name.lower()}')
             mapping = {
-                'Datum':     _opt_int(request.form.get('map_datum')),
-                'Vollgut':   _opt_int(request.form.get('map_vollgut')),
-                'Leergut':   _opt_int(request.form.get('map_leergut')),
-                'Einnahme':  _opt_int(request.form.get('map_einnahme')),
-                'Ausgabe':   _opt_int(request.form.get('map_ausgabe')),
-                'Bemerkung': _opt_int(request.form.get('map_bemerkung')),
+                'Datum':     _opt_int(_get('Datum')),
+                'Vollgut':   _opt_int(_get('Vollgut')),
+                'Leergut':   _opt_int(_get('Leergut')),
+                'Einnahme':  _opt_int(_get('Einnahme')),
+                'Ausgabe':   _opt_int(_get('Ausgabe')),
+                'Bemerkung': _opt_int(_get('Bemerkung')),
             }
         else:
             mapping = None
@@ -1614,6 +1699,7 @@ def import_preview():
 @app.post('/import/commit')
 @login_required
 @require_perms('import:csv')
+@require_csrf
 def import_commit():
     token = (request.form.get('token') or '').strip()
     mode = (request.form.get('mode') or 'skip_dups').strip()  # 'skip_dups' | 'insert_all'
@@ -1909,6 +1995,7 @@ def export_pdf():
 
 @app.post('/profile/lang')
 @login_required
+@require_csrf
 def set_language():
     lang = request.form.get('language')
     if lang in ['de', 'en']:
@@ -1935,6 +2022,7 @@ def admin_export_page():
 @app.post('/admin/export-db')
 @login_required
 @require_perms('users:manage')
+@require_csrf
 def admin_export_dump():
     dump_file = "/tmp/bottlebalance_dump.sql"
     db_user = DB_USER
@@ -1974,6 +2062,7 @@ def admin_export_dump():
 @app.route("/admin/smtp", methods=["GET", "POST"])
 @login_required
 @require_perms('users:manage')
+@require_csrf
 def admin_smtp():
     status = None
     if request.method == "POST":
@@ -2016,12 +2105,12 @@ def admin_smtp():
 
     return render_template("admin_smtp.html", status=status)
 
-    # -----------------------
-    # SMTP Test Mail if paraam SEND_TEST_MAIL is set to true
-    # -----------------------
-    logger.info("ENV SEND_TEST_MAIL in .env  is set to %s", SEND_TEST_MAIL)
-    if SEND_TEST_MAIL:
-        check_smtp_configuration()
+# -----------------------
+# SMTP Test Mail if paraam SEND_TEST_MAIL is set to true
+# -----------------------
+logger.info("ENV SEND_TEST_MAIL in .env  is set to %s", SEND_TEST_MAIL)
+if SEND_TEST_MAIL:
+    check_smtp_configuration()
 
 # -----------------------
 # SMTP Test Mail if paraam SEND_TEST_MAIL is set to true
@@ -2030,6 +2119,7 @@ def admin_smtp():
 @app.route("/admin/tools", methods=["GET", "POST"])
 @login_required
 @require_perms('users:manage')
+@require_csrf
 def admin_tools():
     status = None
     if request.method == "POST":

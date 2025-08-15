@@ -6,6 +6,7 @@
       <div class="card-body">
         <h2 class="h6 mb-3">{{ _('Profil') }}</h2>
         <form action="{{ url_for('profile_post') }}" class="row g-3" method="post">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <div class="col-12">
             <label class="form-label">{{ _('E-Mail (für Passwort-Reset)') }}</label>
             <input class="form-control" name="email" type="email" value="{{ user.email or '' }}" />
@@ -35,6 +36,7 @@
         {% if user.totp_enabled %}
         <p class="text-success">{{ _('2FA ist') }} <strong>{{ _('aktiviert') }}</strong>.</p>
         <form action="{{ url_for('disable_2fa') }}" class="row g-2 align-items-end" method="post">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <div class="col-12 col-md-6">
             <label class="form-label">{{ _('Bestätige mit Passwort') }}</label>
             <input class="form-control" name="password" required="" type="password" />
@@ -46,23 +48,17 @@
         {% else %}
         <p class="text-muted">{{ _('2FA ist aktuell') }} <strong>{{ _('deaktiviert') }}</strong>.</p>
         <form action="{{ url_for('enable_2fa') }}" method="post">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <button class="btn btn-outline-primary">{{ _('2FA einrichten') }}</button>
         </form>
         {% endif %}
 
-        {% if user.backup_codes %}
-        <hr />
-        <h5>{{ _('Backup-Codes') }}</h5>
-        <p>{{ _('Diese Codes können einmalig beim Login verwendet werden:') }}</p>
-        <ul>
-          {% for code in user.backup_codes.split(',') %}
-          <li><code>{{ code }}</code></li>
-          {% endfor %}
-        </ul>
-        {% elif user.totp_enabled %}
-        <form action="{{ url_for('regen_backup_codes') }}" method="post">
-          <button class="btn btn-sm btn-outline-secondary" type="submit">{{ _('Neue Backup-Codes generieren') }}</button>
-        </form>
+        {% if session.get('new_backup_codes') %}
+        <div class="alert alert-warning">
+          <h5 class="mb-2">{{ _('Ihre neuen Backup-Codes (einmalig sichtbar):') }}</h5>
+          <pre class="mb-0">{{ '\n'.join(session.get('new_backup_codes')) }}</pre>
+        </div>
+        {% set _ = session.pop('new_backup_codes') %}
         {% endif %}
       </div>
     </div>
@@ -71,6 +67,7 @@
       <div class="card-body">
         <h2 class="h6 mb-3">{{ _('System') }}</h2>
         <form method="post" action="{{ url_for('update_preferences') }}" class="row g-3">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <!-- Sprache -->
           <div class="col-12 col-md-6">
             <label for="language" class="form-label">{{ _('Sprache:') }}</label>

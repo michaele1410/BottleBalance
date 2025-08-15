@@ -5,6 +5,7 @@
   <div class="card-body">
     <h1 class="h5 mb-3">{{ _('Audit-Log') }}</h1>
     <form method="get" class="row g-2 align-items-end mb-3">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div class="col-12 col-md-4">
         <label class="form-label">{{ _('Suche') }}</label>
         <input type="text" name="q" class="form-control" placeholder="{{ _('Aktion/Entry-ID') }}" value="{{ request.args.get('q','') }}">

@@ -40,7 +40,7 @@
     <div class="card-body">
       <h2 class="h6 mb-3">{{ _('Neuen Datensatz hinzufügen') }}</h2>
       <form method="post" action="{{ url_for('add') }}" id="transaction-form" novalidate>
-        
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">  
         <!-- Datum -->
         <div class="form-floating mb-3">
           <input type="text" name="datum" id="datum" class="form-control" placeholder="Datum" value="{{ default_date }}" required autofocus>
@@ -101,6 +101,7 @@
 
       <!-- Filter -->
       <form method="get" class="row g-2 align-items-end w-100 w-md-auto">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="col-12 col-md-3">
           <label class="form-label">{{ _('Suche') }}</label>
           <input type="text" name="q" class="form-control" placeholder="{{ _('Datum/Bemerkung') }}" value="{{ request.args.get('q','') }}">
@@ -147,6 +148,7 @@
                 </summary>
                 <div style="margin-top: .75rem;">
                   <form action="{{ url_for('import_preview') if IMPORT_USE_PREVIEW else url_for('import_csv') }}" method="post" enctype="multipart/form-data" style="display:grid; gap:.5rem; grid-template-columns: 1fr auto;">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div>
                       <label for="csvFile" style="display:block; font-weight:600; margin-bottom:.25rem;">{{ _('CSV-Datei auswählen') }}</label>
                       <input id="csvFile" name="file" type="file" accept=".csv,text/csv" required
@@ -218,6 +220,7 @@
               </a>
               <form method="post" action="{{ url_for('delete', entry_id=e.id) }}" class="d-inline"
                     onsubmit="return confirm('{{ _('Eintrag wirklich löschen?') }}');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button class="btn btn-sm btn-outline-danger" title="{{ _('Löschen') }}">
                   <i class="bi-trash"></i>
                 </button>
@@ -238,6 +241,7 @@
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <form action="{{ url_for('import_preview') if IMPORT_USE_PREVIEW else url_for('import_csv') }}" method="post" enctype="multipart/form-data">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="modal-header">
           <h5 class="modal-title" id="csvImportModalLabel">{{ _('CSV-Datei importieren') }}</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Schließen') }}"></button>

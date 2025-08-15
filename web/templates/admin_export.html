@@ -8,6 +8,7 @@
 <body>
     <h1>PostgreSQL-Datenbankexport</h1>
     <form action="{{ url_for('admin_export_dump') }}" method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button type="submit">Datenbank-Dump erzeugen und herunterladen</button>
     </form>
 </body>

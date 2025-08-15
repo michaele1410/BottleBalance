@@ -1186,6 +1186,10 @@ def _parse_csv_file_storage(file_storage):
     content = file_storage.read().decode('utf-8-sig')
     reader = csv.reader(io.StringIO(content), delimiter=';')
     headers = next(reader, None)
+    # Robustheit: Header-Zeile prüfen und ggf. splitten
+    if headers and len(headers) == 1 and ';' in headers[0]:
+        headers = headers[0].split(';')
+
     expected = ['Datum','Vollgut','Leergut','Inventar','Einnahme','Ausgabe','Kassenbestand','Bemerkung']
     alt_expected = ['Datum','Vollgut','Leergut','Einnahme','Ausgabe','Bemerkung']
     if headers is None or [h.strip() for h in headers] not in (expected, alt_expected):

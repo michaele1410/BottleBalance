@@ -87,13 +87,13 @@
             <div class="btn-group" role="group">
               <input type="radio" class="btn-check" name="theme" id="theme-system" value="system" autocomplete="off"
                     {% if theme_preference == 'system' %}checked{% endif %}>
-              <label class="btn btn-outline-secondary" for="theme-system">System</label>
+              <label class="btn btn-outline-secondary" for="theme-system">{{ _('System') }}</label>
               <input type="radio" class="btn-check" name="theme" id="theme-light" value="light" autocomplete="off"
                     {% if theme_preference == 'light' %}checked{% endif %}>
-              <label class="btn btn-outline-secondary" for="theme-light">Hell</label>
+              <label class="btn btn-outline-secondary" for="theme-light">{{ _('Hell') }}</label>
               <input type="radio" class="btn-check" name="theme" id="theme-dark" value="dark" autocomplete="off"
                     {% if theme_preference == 'dark' %}checked{% endif %}>
-              <label class="btn btn-outline-secondary" for="theme-dark">Dunkel</label>
+              <label class="btn btn-outline-secondary" for="theme-dark">{{ _('Dunkel') }}</label>
             </div>
           </div>
           <!-- Speichern -->

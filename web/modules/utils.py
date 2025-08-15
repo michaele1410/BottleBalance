@@ -1,16 +1,6 @@
-from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
-
-def today_ddmmyyyy():
-    return date.today().strftime('%d.%m.%Y')
-
-def parse_date_de_or_today(s: str | None) -> date:
-    if not s or not s.strip():
-        return date.today()
-    return datetime.strptime(s.strip(), '%d.%m.%Y').date()
-
-def format_date_de(d: date) -> str:
-    return d.strftime('%d.%m.%Y')
+import re
+from flask_babel import gettext as _
 
 def parse_money(s: str | None) -> Decimal:
     if s is None:
@@ -18,16 +8,44 @@ def parse_money(s: str | None) -> Decimal:
     s = s.strip()
     if not s:
         return Decimal('0')
-    s = s.replace('.', '').replace(',', '.')
+
+    # Dynamisch übersetztes Währungssymbol entfernen
+    currency_symbol = _('waehrung')
+    s = s.replace(currency_symbol, '')
+
+    # Weitere bekannte Symbole entfernen (optional)
+    s = s.replace('€', '').replace('EUR', '')
+
+    # Whitespace entfernen (inkl. NBSP, NNBSP, Narrow NBSP)
+    s = re.sub(r'[\s\u00A0\u202F]', '', s)
+
+    # Optionales führendes '+'
+    if s.startswith('+'):
+        s = s[1:]
+
+    has_comma = ',' in s
+    has_dot = '.' in s
+
+    if has_comma and has_dot:
+        dec_pos = max(s.rfind(','), s.rfind('.'))
+        int_part = s[:dec_pos].replace(',', '').replace('.', '')
+        frac_part = s[dec_pos+1:]
+        s = f"{int_part}.{frac_part}"
+    elif has_comma:
+        if s.count(',') > 1:
+            dec_pos = s.rfind(',')
+            int_part = s[:dec_pos].replace(',', '').replace('.', '')
+            frac_part = s[dec_pos+1:]
+            s = f"{int_part}.{frac_part}"
+        else:
+            s = s.replace('.', '').replace(',', '.')
+    elif has_dot and s.count('.') > 1:
+        dec_pos = s.rfind('.')
+        int_part = s[:dec_pos].replace('.', '').replace(',', '')
+        frac_part = s[dec_pos+1:]
+        s = f"{int_part}.{frac_part}"
+
     try:
         return Decimal(s)
     except InvalidOperation:
         raise ValueError(f'Ungültige Zahl: {s}')
-
-def format_eur_de(value: Decimal | float | int) -> str:
-    d = Decimal(value).quantize(Decimal('0.01'))
-    sign = '-' if d < 0 else ''
-    d = abs(d)
-    whole, frac = divmod(int(d * 100), 100)
-    whole_str = f"{whole:,}".replace(',', '.')
-    return f"{sign}{whole_str},{frac:02d} €"

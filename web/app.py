@@ -856,7 +856,7 @@ def users_add():
         with engine.begin() as conn:
             conn.execute(text("""
                 INSERT INTO users (username, email, password_hash, role, active, must_change_password, theme_preference)
-                VALUES (:u, :e, :ph, :r, TRUE, FALSE, 'system')
+                VALUES (:u, :e, :ph, :r, TRUE, TRUE, 'system')
             """), {'u': username, 'e': email, 'ph': generate_password_hash(pwd), 'r': role})
         flash(_('Benutzer angelegt.'))
     except Exception as e:

@@ -16,88 +16,27 @@
   <span style="display:inline-block; background:#fff3cd; border:1px solid #ffe69c; padding:.125rem .5rem; border-radius:.25rem;">{{ _('Duplikat') }}</span>
   <span style="display:inline-block; background:#f8d7da; border:1px solid #f1aeb5; padding:.125rem .5rem; border-radius:.25rem;">{{ _('Fehler in Zeile') }}</span>
 </div>
-
+  
 {% if allow_mapping %}
 <form action="{{ url_for('import_preview') }}" method="post" style="margin:.75rem 0; padding:.75rem; border:1px solid #dee2e6; border-radius:.5rem;">
   <input type="hidden" name="token" value="{{ token }}">
   <input type="hidden" name="remap" value="1">
   <input type="hidden" name="replace_all" value="{{ 'on' if replace_all else '' }}">
   <div style="display:grid; grid-template-columns: repeat(3, minmax(220px, 1fr)); gap:.5rem;">
-    <div>
-      <label><strong>{{ _('Datum') }}</strong></label>
-      <select name="map_datum" style="width:100%; padding:.375rem; border:1px solid #ced4da; border-radius:.25rem;" required>
+  {% for field in ['Datum', 'Vollgut', 'Leergut', 'Einnahme', 'Ausgabe', 'Bemerkung'] %}
+    <div class="mb-3">
+      <label for="map_{{ field }}" class="form-label"><strong>{{ field }}</strong></label>
+      <select class="form-select" name="map_{{ field }}" id="map_{{ field }}">
+        <option value="__none__">– keine –</option>
         {% for h in headers %}
           <option value="{{ loop.index0 }}"
-            {% if mapping and mapping['Datum'] == loop.index0 %}selected{% endif %}>
+            {% if mapping and mapping[field] == loop.index0 %}selected{% endif %}>
             {{ h }}
           </option>
         {% endfor %}
       </select>
     </div>
-
-    <div>
-      <label><strong>{{ _('Vollgut') }}</strong></label>
-      <select name="map_vollgut" style="width:100%; padding:.375rem; border:1px solid #ced4da; border-radius:.25rem;" required>
-        {% for h in headers %}
-          <option value="{{ loop.index0 }}"
-            {% if mapping and mapping['Vollgut'] == loop.index0 %}selected{% endif %}>
-            {{ h }}
-          </option>
-        {% endfor %}
-      </select>
-    </div>
-
-    <div>
-      <label><strong>{{ _('Leergut') }}</strong></label>
-      <select name="map_leergut" style="width:100%; padding:.375rem; border:1px solid #ced4da; border-radius:.25rem;" required>
-        {% for h in headers %}
-          <option value="{{ loop.index0 }}"
-            {% if mapping and mapping['Leergut'] == loop.index0 %}selected{% endif %}>
-            {{ h }}
-          </option>
-        {% endfor %}
-      </select>
-    </div>
-
-    <div>
-      <label><strong>{{ _('Einnahme') }}</strong> <small style="color:#6c757d;">{{ _('optional') }}</small></label>
-      <select name="map_einnahme" style="width:100%; padding:.375rem; border:1px solid #ced4da; border-radius:.25rem;">
-        <option value="__none__">{{ _('– keine –') }}</option>
-        {% for h in headers %}
-          <option value="{{ loop.index0 }}"
-            {% if mapping and mapping['Einnahme'] == loop.index0 %}selected{% endif %}>
-            {{ h }}
-          </option>
-        {% endfor %}
-      </select>
-    </div>
-
-    <div>
-      <label><strong>{{ _('Ausgabe') }}</strong> <small style="color:#6c757d;">{{ _('optional') }}</small></label>
-      <select name="map_ausgabe" style="width:100%; padding:.375rem; border:1px solid #ced4da; border-radius:.25rem;">
-        <option value="__none__">{{ _('– keine –') }}</option>
-        {% for h in headers %}
-          <option value="{{ loop.index0 }}"
-            {% if mapping and mapping['Ausgabe'] == loop.index0 %}selected{% endif %}>
-            {{ h }}
-          </option>
-        {% endfor %}
-      </select>
-    </div>
-
-    <div>
-      <label><strong>{{ _('Bemerkung') }}</strong> <small style="color:#6c757d;">{{ _('optional') }}</small></label>
-      <select name="map_bemerkung" style="width:100%; padding:.375rem; border:1px solid #ced4da; border-radius:.25rem;">
-        <option value="__none__">{{ _('– keine –') }}</option>
-        {% for h in headers %}
-          <option value="{{ loop.index0 }}"
-            {% if mapping and mapping['Bemerkung'] == loop.index0 %}selected{% endif %}>
-            {{ h }}
-          </option>
-        {% endfor %}
-      </select>
-    </div>
-  </div>
+  {% endfor %}
   <div style="margin-top:.75rem;">
     <button type="submit" style="padding:.5rem .75rem; border:1px solid #0d6efd; background:#0d6efd; color:#fff; border-radius:.25rem; cursor:pointer;">
       {{ _('Mapping anwenden & Vorschau aktualisieren') }}

@@ -10,6 +10,7 @@
         <img src="{{ qr_data_url }}" alt="2FA QR" class="img-fluid mb-3" style="max-width: 240px;"/>
         <div class="alert alert-light">{{ _('2FA geheimer Schlüssel:') }} <code>{{ secret }}</code></div>
         <form method="post" action="{{ url_for('confirm_2fa') }}" class="row g-2 justify-content-center">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <div class="col-8">
             <input name="code" class="form-control" inputmode="numeric" pattern="[0-9]*" placeholder="{{ _('6-stelliger Code') }}" required>
           </div>

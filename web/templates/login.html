@@ -6,6 +6,7 @@
       <div class="card-body">
         <h1 class="h4 mb-3">{{ _('Anmeldung') }}</h1>
         <form method="post" action="{{ url_for('login_post') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <div class="mb-3">
             <label class="form-label">{{ _('Benutzername') }}</label>
             <input name="username" class="form-control" autocomplete="username" required>

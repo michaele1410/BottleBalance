@@ -23,6 +23,7 @@
           {% endif %}
         {% endwith %}
         <form method="post" action="{{ url_for('admin_tools') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <input type="hidden" name="action" value="smtp">
           <button type="submit" class="btn btn-primary">Send test E-Mail</button>
         </form>
@@ -37,6 +38,7 @@
       </div>
       <div class="card-body">
         <form method="post" action="{{ url_for('admin_tools') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <input type="hidden" name="action" value="dump">
           <button type="submit" class="btn btn-primary">{{ _('Datenbank-Dump erzeugen und herunterladen') }}</button>
         </form>

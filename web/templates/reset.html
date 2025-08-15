@@ -6,6 +6,7 @@
       <div class="card-body">
         <h1 class="h5 mb-3">{{ _('Passwort zurücksetzen') }}</h1>
         <form method="post" action="{{ url_for('reset_post', token=token) }}" class="row g-3">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <div class="col-12">
             <label class="form-label">Reset-Token</label>
             <input type="text" name="token" placeholder="Reset-Token" required>

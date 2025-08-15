@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 style="margin:.25rem 0 1rem 0;">{{ _('CSV-Import – Vorschau') }}</h2>
+
+<p style="margin:.25rem 0 1rem 0; color:#495057;">
+  {{ _('Gesamt:') }} <strong>{{ total }}</strong> ·
+  {{ _('potentielle Duplikate:') }} <strong>{{ dup_count }}</strong> ·
+  {% if replace_all %}
+    <span style="color:#dc3545; font-weight:600;">{{ _('Modus: Alle bestehenden Einträge werden ersetzt') }}</span>
+  {% else %}
+    <span>{{ _('Modus: Anhängen (bestehende Einträge bleiben erhalten)') }}</span>
+  {% endif %}
+</p>
+
+<div style="display:flex; gap:1rem; align-items:center; margin-bottom:.5rem;">
+  <span style="display:inline-block; background:#fff3cd; border:1px solid #ffe69c; padding:.125rem .5rem; border-radius:.25rem;">{{ _('Duplikat') }}</span>
+  <span style="display:inline-block; background:#f8d7da; border:1px solid #f1aeb5; padding:.125rem .5rem; border-radius:.25rem;">{{ _('Fehler in Zeile') }}</span>
+</div>
+
+<!-- Button öffnet die Modal-Vorschau -->
+<button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#csvPreviewModal">
+  {{ _('Vorschau anzeigen') }}
+</button>
+
+<!-- Commit-Formular unterhalb (bleibt außerhalb des Modals) -->
+<form action="{{ url_for('import_commit') }}" method="post" style="margin-top:1rem; display:flex; gap:.75rem; align-items:center; flex-wrap:wrap;">
+  <input type="hidden" name="token" value="{{ token }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+  {% if not replace_all %}
+  <div>
+    <label style="display:flex; align-items:center; gap:.5rem;">
+      <input type="radio" name="mode" value="skip_dups" checked>
+      <span>{{ _('Duplikate überspringen (empfohlen)') }}</span>
+    </label>
+    <label style="display:flex; align-items:center; gap:.5rem;">
+      <input type="radio" name="mode" value="insert_all">
+      <span>{{ _('Alle einfügen (auch Duplikate)') }}</span>
+    </label>
+  </div>
+  {% else %}
+  <input type="hidden" name="mode" value="insert_all">
+  {% endif %}
+
+  <label style="display:flex; align-items:center; gap:.5rem;">
+    <input type="checkbox" name="import_invalid">
+    <span>{{ _('Auch Zeilen mit Fehlern importieren (nicht empfohlen)') }}</span>
+  </label>
+
+  <button type="submit" class="btn btn-success">
+    {{ _('Import jetzt durchführen') }}
+  </button>
+  <a href="{{ url_for('index') }}" class="btn btn-secondary">
+    {{ _('Abbrechen') }}
+  </a>
+</form>
+
+<!-- Modal -->
+<div class="modal fade" id="csvPreviewModal" tabindex="-1" aria-labelledby="csvPreviewModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="csvPreviewModalLabel">{{ _('CSV-Vorschau & Mapping') }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Schließen') }}"></button>
+      </div>
+      <div class="modal-body">
+
+        {% if allow_mapping %}
+        <form method="post" action="{{ url_for('import_preview') }}" class="mb-3">
+          <input type="hidden" name="token" value="{{ token }}">
+          <input type="hidden" name="remap" value="1">
+          <input type="hidden" name="replace_all" value="{{ 'on' if replace_all else '' }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+          <div class="row">
+            {% for field in ['Datum', 'Vollgut', 'Leergut', 'Einnahme', 'Ausgabe', 'Bemerkung'] %}
+              {% set field_id = field|lower %}
+              <div class="col-md-4 mb-3">
+                <label for="map_{{ field_id }}" class="form-label"><strong>{{ field }}</strong></label>
+                <select class="form-select" name="map_{{ field_id }}" id="map_{{ field_id }}">
+                  <option value="__none__">– {{ _('keine') }} –</option>
+                  {% for h in headers %}
+                    <option value="{{ loop.index0 }}"
+                            {% if mapping and mapping[field] is not none and mapping[field] == loop.index0 %}selected{% endif %}>
+                      {{ h }}
+                    </option>
+                  {% endfor %}
+                </select>
+              </div>
+            {% endfor %}
+          </div>
+
+          <div class="text-end">
+            <button type="submit" class="btn btn-primary">{{ _('Mapping anwenden & Vorschau aktualisieren') }}</button>
+          </div>
+        </form>
+        {% endif %}
+
+        <!-- Vorschau-Tabelle im Modal -->
+        <div style="overflow:auto; border:1px solid #dee2e6; border-radius:.5rem;">
+          <table class="table table-sm mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>#</th>
+                <th>{{ _('Datum') }}</th>
+                <th class="text-end">{{ _('Vollgut') }}</th>
+                <th class="text-end">{{ _('Leergut') }}</th>
+                <th class="text-end">{{ _('Einnahme') }}</th>
+                <th class="text-end">{{ _('Ausgabe') }}</th>
+                <th>{{ _('Bemerkung') }}</th>
+                <th>{{ _('Status') }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for r in preview_rows %}
+                {% set bg = '' %}
+                {% if r.errors|length > 0 %}
+                  {% set row_class = 'table-danger' %}
+                {% elif r.is_duplicate and not replace_all %}
+                  {% set row_class = 'table-warning' %}
+                {% else %}
+                  {% set row_class = '' %}
+                {% endif %}
+                <tr class="{{ row_class }}">
+                  <td>{{ r.line_no }}</td>
+                  <td>{{ r.datum and format_date_de(r.datum) or '–' }}</td>
+                  <td class="text-end">{{ r.vollgut }}</td>
+                  <td class="text-end">{{ r.leergut }}</td>
+                  <td class="text-end">{{ r.einnahme }}</td>
+                  <td class="text-end">{{ r.ausgabe }}</td>
+                  <td>{{ r.bemerkung }}</td>
+                  <td>
+                    {% if r.errors|length > 0 %}
+                      <div><strong>{{ _('Fehler:') }}</strong></div>
+                      <ul class="mb-0 ps-3">
+                        {% for e in r.errors %}<li>{{ e }}</li>{% endfor %}
+                      </ul>
+                    {% else %}
+                      {% if replace_all %}
+                        {{ _('wird importiert') }}
+                      {% else %}
+                        {% if r.is_duplicate %}
+                          {{ _('Duplikat – wird übersprungen (Standard)') }}
+                        {% else %}
+                          {{ _('neu – wird importiert') }}
+                        {% endif %}
+                      {% endif %}
+                    {% endif %}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Schließen') }}</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

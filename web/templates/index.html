@@ -137,24 +137,51 @@
         <!-- Toggle für Anhänge -->
         <div class="col-12 mt-2">
           <div class="btn-group" role="group" aria-label="Filter Anhänge">
-            
-              <a href="{{ url_for('index') }}?{% if request.args.get('q') %}q={{ request.args.get('q')|urlencode }}{% endif %}{% if request.args.get('from') %}{% if request.args.get('q') %}&{% endif %}from={{ request.args.get('from')|urlencode }}{% endif %}{% if request.args.get('to') %}{% if request.args.get('q') or request.args.get('from') %}&{% endif %}to={{ request.args.get('to')|urlencode }}{% endif %}"
-                class="btn btn-outline-secondary {% if not request.args.get('attachments') %}active{% endif %}">
-                Alle
-              </a>
+            <!-- Alle -->
+            <input type="radio"
+                  class="btn-check"
+                  name="attachments"
+                  id="att-all"
+                  value=""
+                  autocomplete="off"
+                  {% if not request.args.get('attachments') %}checked{% endif %}>
+            <label class="btn btn-outline-secondary position-relative"
+                  for="att-all"
+                  title="{{ _('Alle') }}"
+                  aria-label="{{ _('Alle') }}">
+              <i class="bi-list"></i>
+            </label>
 
-             
-              <a href="{{ url_for('index') }}?attachments=only{% if request.args.get('q') %}&q={{ request.args.get('q')|urlencode }}{% endif %}{% if request.args.get('from') %}&from={{ request.args.get('from')|urlencode }}{% endif %}{% if request.args.get('to') %}&to={{ request.args.get('to')|urlencode }}{% endif %}"
-                class="btn btn-outline-primary {% if request.args.get('attachments') == 'only' %}active{% endif %}">
-                Nur mit Anhang
-              </a>
+            <!-- Nur mit Anhang -->
+            <input type="radio"
+                  class="btn-check"
+                  name="attachments"
+                  id="att-only"
+                  value="only"
+                  autocomplete="off"
+                  {% if request.args.get('attachments') == 'only' %}checked{% endif %}>
+            <label class="btn btn-outline-secondary position-relative"
+                  for="att-only"
+                  title="{{ _('Nur mit Anhang') }}"
+                  aria-label="{{ _('Nur mit Anhang') }}">
+              <i class="bi-paperclip"></i>
+            </label>
 
-             
-              <a href="{{ url_for('index') }}?attachments=none{% if request.args.get('q') %}&q={{ request.args.get('q')|urlencode }}{% endif %}{% if request.args.get('from') %}&from={{ request.args.get('from')|urlencode }}{% endif %}{% if request.args.get('to') %}&to={{ request.args.get('to')|urlencode }}{% endif %}"
-                class="btn btn-outline-primary {% if request.args.get('attachments') == 'none' %}active{% endif %}">
-                Ohne Anhang
-              </a>
-
+            <!-- Ohne Anhang -->
+            <input type="radio"
+                  class="btn-check"
+                  name="attachments"
+                  id="att-none"
+                  value="none"
+                  autocomplete="off"
+                  {% if request.args.get('attachments') == 'none' %}checked{% endif %}>
+            <label class="btn btn-outline-secondary position-relative"
+                  for="att-none"
+                  title="{{ _('Ohne Anhang') }}"
+                  aria-label="{{ _('Ohne Anhang') }}">
+              <i class="bi-paperclip"></i>
+              <i class="bi-slash"></i>
+            </label>
           </div>
         </div>
 
@@ -610,8 +637,17 @@ document.addEventListener('DOMContentLoaded', () => {
       form.classList.add('was-validated');
     }, false);
   }
-});
-</script>
+
+  // Auto-Submit beim Wechsel der Anhänge-Toggles
+    document.querySelectorAll('input[name="attachments"]').forEach(el => {
+      el.addEventListener('change', () => {
+        // Falls "Alle" (value="") gewählt ist, bleibt attachments="" – dein Server-Code
+        // wertet nur 'only'/'none' aus; leeres value führt zu keiner Einschränkung.
+        el.form?.submit();
+      });
+    });
+  });
+  </script>
 
 <script>
 function sortTableByDate() {
@@ -760,4 +796,20 @@ document.addEventListener('DOMContentLoaded', () => {
   refreshTempList();
 });
 </script>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  // ... dein bestehender Code ...
+
+  // Auto-Submit beim Wechsel der Anhänge-Toggles
+  document.querySelectorAll('input[name="attachments"]').forEach(el => {
+    el.addEventListener('change', () => {
+      // Falls "Alle" (value="") gewählt ist, bleibt attachments="" – dein Server-Code
+      // wertet nur 'only'/'none' aus; leeres value führt zu keiner Einschränkung.
+      el.form?.submit();
+    });
+  });
+});
+</script>
+
 {% endblock %}

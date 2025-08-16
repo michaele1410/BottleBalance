@@ -1,40 +1,81 @@
-/* Tabellen */
-.table td, .table th { vertical-align: middle; }
+/* =========================================================
+   Tabellen
+   ========================================================= */
+.table td,
+.table th {
+  vertical-align: middle;
+}
 
-/* Chart-Canvas */
+/* =========================================================
+   Chart-Canvas
+   ========================================================= */
 canvas {
   width: 100%;
-  height: auto;
-  max-height: 100%;
+  /* Höhe wird über Container gesteuert (z. B. .ratio) */
 }
 
-/* Farbvariablen (Light/Dark) */
+/* =========================================================
+   Farbvariablen (Light/Dark via Bootstrap)
+   ========================================================= */
 :root {
-  --bg-color: #ffffff;
-  --text-color: #000000;
+  --bs-body-bg: #ffffff;
+  --bs-body-color: #000000;
 }
 [data-bs-theme="dark"] {
-  --bg-color: #121212;
-  --text-color: #e0e0e0;
+  --bs-body-bg: #121212;
+  --bs-body-color: #e0e0e0;
 }
+
 body {
-  background-color: var(--bg-color);
-  color: var(--text-color);
+  background-color: var(--bs-body-bg);
+  color: var(--bs-body-color);
 }
 
-/* Logos */
-.logo-img { height: 80px; width: auto; vertical-align: middle; }
-.logo-wrapper svg { height: 28px !important; width: auto !important; vertical-align: middle; }
-.navbar-brand { font-size: 1.5rem; }
+/* =========================================================
+   Logos
+   ========================================================= */
+.logo-img {
+  height: 80px;
+  width: auto;
+  vertical-align: middle;
+}
+.logo-wrapper svg {
+  height: 28px !important;
+  width: auto !important;
+  vertical-align: middle;
+}
+.navbar-brand {
+  font-size: 1.5rem;
+}
 
-/* Animationen */
-.error-card { animation: fadeIn 0.6s ease-in-out; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+/* =========================================================
+   Animationen
+   ========================================================= */
+.error-card {
+  animation: fadeIn 0.6s ease-in-out;
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
-/* Dark-Mode Cards */
-[data-bs-theme="dark"] .card { background-color: #2c2f33; color: #f8f9fa; }
+/* =========================================================
+   Dark-Mode Cards
+   ========================================================= */
+[data-bs-theme="dark"] .card {
+  background-color: #2c2f33;
+  color: #f8f9fa;
+}
 
-/* Flatpickr Dark Mode */
+/* =========================================================
+   Flatpickr Dark Mode
+   ========================================================= */
 :root[data-bs-theme="dark"] .flatpickr-calendar {
   background-color: var(--bs-body-bg);
   color: var(--bs-body-color);
@@ -44,79 +85,116 @@ body {
 /* =========================================================
    Responsive Layout
    ========================================================= */
-
-/* Sicherstellen, dass Bootstrap-Grid greift */
 .row.g-3 > [class*="col-"] {
   flex: 0 0 auto;
 }
 
 /* Sparkline-Höhensteuerung über Bootstrap .ratio */
-.sparkline-ratio { --bs-aspect-ratio: 100%; }
+.sparkline-ratio {
+  --bs-aspect-ratio: 100%;
+}
 
 /* Mobile: Charts flacher */
 @media (max-width: 768px) {
-  .sparkline-ratio { --bs-aspect-ratio: 40%; }
-  #sparklineInv, #sparklineKas { height: 80px !important; }
+  .sparkline-ratio {
+    --bs-aspect-ratio: 40%;
+  }
+  #sparklineInv,
+  #sparklineKas {
+    height: 80px !important;
+  }
 }
 
-/* ---------- BottleBalance: Formular-Submit-Button (global) ---------- */
+/* =========================================================
+   BottleBalance: Formular-Submit-Button (global)
+   ========================================================= */
 
-    /* Sanfte Übergänge; wird bei reduced-motion abgeschaltet */
-    #transaction-form .btn.btn-success.flex-grow-1 {
-      transition: opacity .15s ease-in-out, filter .15s ease-in-out;
-    }
+/* Sanfte Übergänge; wird bei reduced-motion abgeschaltet */
+#transaction-form .btn.btn-success.flex-grow-1 {
+  transition: opacity 0.15s ease-in-out, filter 0.15s ease-in-out;
+}
 
-    /* Deutlich erkennbarer "deaktiviert"-Zustand */
-    #transaction-form .btn.btn-success.flex-grow-1:disabled,
-    #transaction-form .btn.btn-success.flex-grow-1[aria-disabled="true"] {
-      opacity: .55;                /* sichtbarer als Bootstrap-Default */
-      cursor: not-allowed;         /* klarer Hinweis */
-      box-shadow: none !important; /* keine Fokus-Schattierung im disabled */
-      filter: grayscale(25%);      /* dezente Entsättigung */
-    }
+/* Deutlich erkennbarer "deaktiviert"-Zustand */
+#transaction-form .btn.btn-success.flex-grow-1:disabled,
+#transaction-form .btn.btn-success.flex-grow-1[aria-disabled="true"] {
+  opacity: 0.55;
+  cursor: not-allowed;
+  box-shadow: none !important;
+  filter: grayscale(25%);
+}
 
-    /* Aktiver Zustand: kleine Hover-/Focus-Affordanzen */
-    #transaction-form .btn.btn-success.flex-grow-1:not(:disabled):hover {
-      filter: brightness(1.03);
-    }
-    #transaction-form .btn.btn-success.flex-grow-1:not(:disabled):focus-visible {
-      /* Fallback-Farbe für Outline (Bootstrap Success ~ #198754) */
-      outline: 2px solid rgba(25, 135, 84, .5);
-      outline-offset: 2px;
-    }
-    /* Theme-aware via CSS-Variablen, falls verfügbar */
-    @supports (color: color-mix(in srgb, #000, #fff)) {
-      #transaction-form .btn.btn-success.flex-grow-1:not(:disabled):focus-visible {
-        outline: 2px solid color-mix(in srgb, var(--bs-success), transparent 50%);
-      }
-    }
+/* Aktiver Zustand: kleine Hover-/Focus-Affordanzen */
+#transaction-form .btn.btn-success.flex-grow-1:not(:disabled):hover {
+  filter: brightness(1.03);
+}
+#transaction-form .btn.btn-success.flex-grow-1:not(:disabled):focus-visible {
+  outline: 2px solid rgba(25, 135, 84, 0.5);
+  outline-offset: 2px;
+}
+@supports (color: color-mix(in srgb, #000, #fff)) {
+  #transaction-form .btn.btn-success.flex-grow-1:not(:disabled):focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--bs-success), transparent 50%);
+  }
+}
 
-    /* Bewegungseinstellungen respektieren */
-    @media (prefers-reduced-motion: reduce) {
-      #transaction-form .btn.btn-success.flex-grow-1 {
-        transition: none;
-      }
-    }
+/* Bewegungseinstellungen respektieren */
+@media (prefers-reduced-motion: reduce) {
+  #transaction-form .btn.btn-success.flex-grow-1 {
+    transition: none;
+  }
+}
 
-    /* ---------- Optionaler Spinner beim Absenden ---------- */
-    #transaction-form.is-submitting .btn.btn-success.flex-grow-1 {
-      position: relative;
-      pointer-events: none;   /* Keine doppelten Klicks */
-    }
-    #transaction-form.is-submitting .btn.btn-success.flex-grow-1 i.bi-plus-lg {
-      visibility: hidden;     /* Plus-Icon ausblenden, Text bleibt sichtbar */
-    }
-    #transaction-form.is-submitting .btn.btn-success.flex-grow-1::after {
-      content: "";
-      position: absolute;
-      inset-inline-start: .75rem; /* links vom Text (rtl/ltl-aware mit logical property) */
-      top: 50%;
-      width: 1rem; height: 1rem;
-      margin-top: -.5rem;
-      border: .15em solid currentColor;
-      border-right-color: transparent;
-      border-radius: 50%;
-      animation: bb-spin .6s linear infinite;
-    }
+/* Optionaler Spinner beim Absenden */
+#transaction-form.is-submitting .btn.btn-success.flex-grow-1 {
+  position: relative;
+  pointer-events: none;
+}
+#transaction-form.is-submitting .btn.btn-success.flex-grow-1 i.bi-plus-lg {
+  visibility: hidden;
+}
+#transaction-form.is-submitting .btn.btn-success.flex-grow-1::after {
+  content: "";
+  position: absolute;
+  inset-inline-start: 0.75rem;
+  top: 50%;
+  width: 1rem;
+  height: 1rem;
+  margin-top: -0.5rem;
+  border: 0.15em solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: bb-spin 0.6s linear infinite;
+}
 
-    @keyframes bb-spin { to { transform: rotate(360deg); } }
+/* Slash-Icon sauber über dem Paperclip positionieren */
+.btn .bi-slash {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.7em;
+  color: #dc3545;
+}
+
+/* Aktive Farbe für ausgewählten Toggle */
+.btn-check:checked + .btn {
+  background-color: var(--bs-primary);
+  color: #fff;
+  border-color: var(--bs-primary);
+}
+
+/* Hover-Verbesserung für Outline-Buttons */
+.btn-outline-secondary:hover {
+  background-color: var(--bs-secondary-bg);
+}
+
+/* Dark-Mode-Optimierung: helleres Rot für das Slash-Icon */
+[data-bs-theme="dark"] .btn .bi-slash {
+  color: #f87171;
+}
+
+@keyframes bb-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

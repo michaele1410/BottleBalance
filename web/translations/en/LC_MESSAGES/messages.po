@@ -369,7 +369,7 @@ msgstr "No Entries."
 
 #: templates/base.html:6 templates/base.html:33
 msgid "BottleBalance"
-msgstr "Welcome to BottleBalance"
+msgstr "Welcome"
 
 #: templates/base.html:37
 msgid "Dashboard"

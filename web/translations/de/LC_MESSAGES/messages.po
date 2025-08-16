@@ -362,7 +362,7 @@ msgstr ""
 
 #: templates/base.html:6 templates/base.html:33
 msgid "BottleBalance"
-msgstr "Willkommen bei BottleBalance"
+msgstr "Willkommen"
 
 #: templates/base.html:37
 msgid "Dashboard"

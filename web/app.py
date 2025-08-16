@@ -549,6 +549,13 @@ def _finalize_login(user_id: int, role: str):
 
 @app.get('/login')
 def login():
+    #Prüfe, ob sich noch niemand eingeloggt hat
+    with engine.begin() as conn:
+        first_login_admin = conn.execute(text("SELECT COUNT(*) FROM users WHERE last_login_at IS NOT NULL")).scalar_one() == 0
+
+    if first_login_admin:
+        flash(_('Standard-Login: Benutzername <strong>admin</strong> und Passwort <strong>admin</strong> – bitte sofort ändern!'), 'warning')
+
     return render_template('login.html')
 
 @app.post('/login')
@@ -558,7 +565,7 @@ def login_post():
     password = (request.form.get('password') or '').strip()
     with engine.begin() as conn:
         user = conn.execute(text("""
-            SELECT id, username, password_hash, role, active, must_change_password, totp_enabled
+            SELECT id, username, password_hash, role, active, must_change_password, totp_enabled, last_login_at
             FROM users WHERE username=:u
         """), {'u': username}).mappings().first()
 
@@ -566,18 +573,18 @@ def login_post():
         flash(_('Login fehlgeschlagen.'))
         return redirect(url_for('login'))
 
-    if user['username'] == 'admin' and user['must_change_password']:
-        flash(_('Standard-Login: Benutzername "admin" und Passwort "admin" – bitte sofort ändern!'), 'info')
+    if user['must_change_password'] and user['role'] != 'admin':
+        flash(_('Bitte das Passwort <a href="{0}" class="alert-link">im Profil</a> ändern.').format(url_for('profile')), 'warning')
+    
+    if user['must_change_password'] and user['role'] != 'admin' and user.get('last_login_at') is not None:
+        session['user_id'] = user['id']  # Session setzen, damit Profil erreichbar ist
+        return redirect(url_for('profile'))
 
     if user['totp_enabled']:
         session['pending_2fa_user_id'] = user['id']
         return redirect(url_for('login_2fa_get'))
 
     _finalize_login(user['id'], user['role'])
-
-    if user['must_change_password']:
-        flash(_('Bitte Passwort ändern (erforderlich).'))
-        return redirect(url_for('profile'))
 
     return redirect(url_for('index'))
 
@@ -630,14 +637,16 @@ def login_2fa_post():
             break
 
     if matched_idx is not None:
-        del hashes[matched_idx]
-        with engine.begin() as conn2:
-            conn2.execute(text("UPDATE users SET backup_codes=:bc WHERE id=:id"),
-                          {'bc': json.dumps(hashes), 'id': uid})
+        # Neuen Satz Backup-Codes generieren
+        new_codes = generate_and_store_backup_codes(uid)
+
+        # Einmalige Anzeige im Profil
+        session['new_backup_codes'] = new_codes
+
         _finalize_login(user['id'], user['role'])
-        flash(_('Backup-Code verwendet. Bitte neue Codes generieren.'), 'info')
-        log_action(user['id'], '2fa:backup_used', None, None)
-        return redirect(url_for('index'))
+        flash(_('Backup-Code verwendet. Es wurden automatisch neue Codes generiert. Bitte sicher aufbewahren.'), 'info')
+        log_action(user['id'], '2fa:backup_used_regenerated', None, None)
+        return redirect(url_for('profile'))
 
     flash(_('Ungültiger 2FA-Code oder Backup-Code.'))
     return redirect(url_for('login_2fa_get'))
@@ -699,6 +708,8 @@ def profile_post():
     pwd = (request.form.get('password') or '').strip()
     pwd2 = (request.form.get('password2') or '').strip()
     email = (request.form.get('email') or '').strip()
+    uid = session['user_id']
+
     if pwd or pwd2:
         if len(pwd) < 8:
             flash(_('Passwort muss mindestens 8 Zeichen haben.'))
@@ -706,16 +717,52 @@ def profile_post():
         if pwd != pwd2:
             flash(_('Passwörter stimmen nicht überein.'))
             return redirect(url_for('profile'))
-    uid = session['user_id']
+
     with engine.begin() as conn:
         if pwd:
-            conn.execute(text("UPDATE users SET password_hash=:ph, must_change_password=FALSE, email=:em, updated_at=NOW() WHERE id=:id"),
-                         {'ph': generate_password_hash(pwd), 'em': email or None, 'id': uid})
+            conn.execute(text("""
+                UPDATE users SET password_hash=:ph, must_change_password=FALSE, email=:em, updated_at=NOW()
+                WHERE id=:id
+            """), {'ph': generate_password_hash(pwd), 'em': email or None, 'id': uid})
+
+            # Nach Passwortänderung: 2FA aktivieren, falls noch nicht aktiv
+            user = conn.execute(text("SELECT totp_enabled FROM users WHERE id=:id"), {'id': uid}).mappings().first()
+            if user and not user['totp_enabled']:
+                flash(_('Bitte aktiviere die Zwei-Faktor-Authentifizierung (2FA), um dein Konto zusätzlich zu schützen.'))
+                return redirect(url_for('enable_2fa'))  # <-- Sofortige Rückgabe
         else:
-            conn.execute(text("UPDATE users SET email=:em, updated_at=NOW() WHERE id=:id"),
-                         {'em': email or None, 'id': uid})
+            conn.execute(text("""
+                UPDATE users SET email=:em, updated_at=NOW()
+                WHERE id=:id
+            """), {'em': email or None, 'id': uid})
+
     flash(_('Profil aktualisiert.'))
     return redirect(url_for('index'))
+
+@app.get('/profile/2fa/enable')
+@login_required
+def enable_2fa_get():
+    uid = session['user_id']
+    secret = pyotp.random_base32()
+    session['enroll_totp_secret'] = secret
+
+    with engine.begin() as conn:
+        username = conn.execute(
+            text("SELECT username FROM users WHERE id=:id"), {'id': uid}
+        ).scalar_one_or_none()
+
+    if username is None:
+        flash(_('Benutzer nicht gefunden.'))
+        return redirect(url_for('profile'))
+
+    issuer = 'BottleBalance'
+    otpauth = pyotp.totp.TOTP(secret).provisioning_uri(name=username, issuer_name=issuer)
+    img = qrcode.make(otpauth)
+    buf = io.BytesIO()
+    img.save(buf, format='PNG')
+    data_url = 'data:image/png;base64,' + base64.b64encode(buf.getvalue()).decode('ascii')
+
+    return render_template('2fa_enroll.html', qr_data_url=data_url, secret=secret)
 
 @app.post('/profile/2fa/enable')
 @login_required
@@ -1002,7 +1049,7 @@ def users_add():
         with engine.begin() as conn:
             conn.execute(text("""
                 INSERT INTO users (username, email, password_hash, role, active, must_change_password, theme_preference)
-                VALUES (:u, :e, :ph, :r, TRUE, FALSE, 'system')
+                VALUES (:u, :e, :ph, :r, TRUE, TRUE, 'system')
             """), {'u': username, 'e': email, 'ph': generate_password_hash(pwd), 'r': role})
         flash(_('Benutzer angelegt.'))
     except Exception as e:

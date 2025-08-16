@@ -141,7 +141,6 @@
           {% endif %}
           <!-- Import -->
           {% if can_import %}
-            <div style="margin: 1rem 0; padding: .75rem; border: 1px solid #dee2e6; border-radius: .5rem; background: #fcfcfd;">
               <!--details>
                 <summary style="cursor:pointer; font-weight:600;">
                   {{ _('CSV Import') }}
@@ -178,10 +177,9 @@
                 </div>
               </details-->
               <!-- CSV Import Button (öffnet Modal) -->
-              <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#csvImportModal">
+              <a class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#csvImportModal">
                 <i class="bi-upload me-1"></i> CSV Import
-              </button>
-            </div>
+              </a>
             {% endif %}
         </div>
       </div>
@@ -241,15 +239,15 @@
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <form action="{{ url_for('import_preview') if IMPORT_USE_PREVIEW else url_for('import_csv') }}" method="post" enctype="multipart/form-data">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="modal-header">
           <h5 class="modal-title" id="csvImportModalLabel">{{ _('CSV-Datei importieren') }}</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Schließen') }}"></button>
         </div>
-        <div class="modal-body">
+        <div class="modal-body bg-light p-3 rounded shadow-sm">
           <div class="mb-3">
             <label for="csvFile" class="form-label">{{ _('CSV-Datei auswählen') }}</label>
-            <input id="csvFile" name="file" type="file" accept=".csv,text/csv" required class="form-control">
+            <input id="csvFile" name="file" type="file" accept=".csv,text/csv" required class="form-control" placeholder="CSV-Datei auswählen">
             <small class="form-text text-muted">
               {{ _("Erwartete Header:") }} <code>Datum;Vollgut;Leergut;Inventar;Einnahme;Ausgabe;Kassenbestand;Bemerkung</code>
               {{ _("oder Kurzform ohne Inventar/Kassenbestand.") }}

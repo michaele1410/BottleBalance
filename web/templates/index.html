@@ -190,7 +190,7 @@
       <table class="table table-sm align-middle table-striped">
         <thead class="table-light">
           <tr>
-            <th>{{ _('Datum') }}</th>
+            <th style="cursor:pointer;" onclick="sortTableByDate()">{{ _('Datum') }}<i class="bi bi-arrow-down-up"></i></th>
             <th>{{ _('Vollgut') }}</th>
             <th>{{ _('Leergut') }}</th>
             <th>{{ _('Inventar') }}</th>
@@ -465,4 +465,24 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 </script>
+
+<script>
+function sortTableByDate() {
+  const table = document.querySelector("table");
+  const tbody = table.querySelector("tbody");
+  const rows = Array.from(tbody.querySelectorAll("tr"));
+
+  const isAsc = table.dataset.sortOrder !== "asc";
+  table.dataset.sortOrder = isAsc ? "asc" : "desc";
+
+  rows.sort((a, b) => {
+    const dateA = new Date(a.cells[0].innerText.split(".").reverse().join("-"));
+    const dateB = new Date(b.cells[0].innerText.split(".").reverse().join("-"));
+    return isAsc ? dateA - dateB : dateB - dateA;
+  });
+
+  rows.forEach(row => tbody.appendChild(row));
+}
+</script>
+
 {% endblock %}

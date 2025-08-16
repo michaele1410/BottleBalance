@@ -19,6 +19,9 @@ from email.mime.text import MIMEText
 from email.header import Header
 from functools import wraps
 from typing import Tuple
+from flask_login import login_required
+
+
 import csv
 import io
 import time
@@ -478,6 +481,51 @@ def require_csrf(fn):
                 abort(403)
         return fn(*args, **kwargs)
     return wrapper
+
+def _build_index_context(default_date: str | None = None, temp_token: str | None = None):
+    """Bereitet alle Variablen für index.html auf – mit stabilem temp_token."""
+    # Filter aus Query (wie in index())
+    q = (request.args.get('q') or '').strip()
+    date_from_s = request.args.get('from')
+    date_to_s = request.args.get('to')
+    df = datetime.strptime(date_from_s, '%Y-%m-%d').date() if date_from_s else None
+    dt = datetime.strptime(date_to_s, '%Y-%m-%d').date() if date_to_s else None
+
+    # Daten aufbereiten
+    entries = fetch_entries(q or None, df, dt)
+    inv, kas = current_totals()
+
+    series_inv = [e['inventar'] for e in entries]
+    series_kas = [float(e['kassenbestand']) for e in entries]
+
+    finv = entries[-1]['inventar'] if entries else 0
+    fkas = entries[-1]['kassenbestand'] if entries else Decimal('0')
+
+    role = session.get('role')
+    allowed = ROLES.get(role, set())
+
+    # temp_token beibehalten oder anlegen (NICHT überschreiben, wenn übergeben)
+    if temp_token:
+        token = temp_token
+    else:
+        token = session.get('add_temp_token')
+        if not token:
+            token = uuid4().hex
+    session['add_temp_token'] = token  # sicherstellen, dass Session denselben Token kennt
+
+    return {
+        'entries': entries,
+        'inv_aktuell': inv, 'kas_aktuell': kas,
+        'filter_inv': finv, 'filter_kas': fkas,
+        'default_date': default_date or today_ddmmyyyy(),
+        'format_eur_de': format_eur_de, 'format_date_de': format_date_de,
+        'can_add': ('entries:add' in allowed),
+        'can_export_csv': ('export:csv' in allowed),
+        'can_export_pdf': ('export:pdf' in allowed),
+        'can_import': ('import:csv' in allowed),
+        'role': role, 'series_inv': series_inv, 'series_kas': series_kas,
+        'temp_token': token
+    }
 
 # -----------------------
 # Utils: Formatting
@@ -1281,46 +1329,12 @@ def users_delete(uid: int):
 # -----------------------
 # CRUD & Index with filters
 # -----------------------
+
 @app.get('/')
 @login_required
 def index():
-    q = (request.args.get('q') or '').strip()
-    date_from_s = request.args.get('from')
-    date_to_s = request.args.get('to')
-    df = datetime.strptime(date_from_s, '%Y-%m-%d').date() if date_from_s else None
-    dt = datetime.strptime(date_to_s, '%Y-%m-%d').date() if date_to_s else None
-
-    entries = fetch_entries(q or None, df, dt)
-    inv, kas = current_totals()
-
-    # Serien
-    series_inv = [e['inventar'] for e in entries]
-    series_kas = [float(e['kassenbestand']) for e in entries]
-
-    # Summen im Filterbereich
-    finv = entries[-1]['inventar'] if entries else 0
-    fkas = entries[-1]['kassenbestand'] if entries else Decimal('0')
-
-    role = session.get('role')
-    allowed = ROLES.get(role, set())
-
-    # NEU: temp_token für "Hinzufügen"
-    token = uuid4().hex
-    session['add_temp_token'] = token
-
-    return render_template('index.html',
-        entries=entries,
-        inv_aktuell=inv, kas_aktuell=kas,
-        filter_inv=finv, filter_kas=fkas,
-        default_date=today_ddmmyyyy(),
-        format_eur_de=format_eur_de, format_date_de=format_date_de,
-        can_add=('entries:add' in allowed),
-        can_export_csv=('export:csv' in allowed),
-        can_export_pdf=('export:pdf' in allowed),
-        can_import=('import:csv' in allowed),
-        role=role, series_inv=series_inv, series_kas=series_kas,
-        temp_token=token
-    )
+    ctx = _build_index_context(default_date=today_ddmmyyyy())
+    return render_template('index.html', **ctx)
 
 @app.post('/add')
 @login_required
@@ -1328,30 +1342,49 @@ def index():
 @require_perms('entries:add')
 def add():
     user = current_user()
+
+    # Rohwerte für sauberes Re-Render bei Fehlern merken
+    datum_s   = (request.form.get('datum') or '').strip()
+    temp_token = (request.form.get('temp_token') or '').strip()
+
     try:
-        datum = parse_date_de_or_today(request.form.get('datum'))
-        vollgut = int((request.form.get('vollgut') or '0').strip() or '0')
-        leergut = int((request.form.get('leergut') or '0').strip() or '0')
+        datum    = parse_date_de_or_today(datum_s)
+        # Alternativ stricte Parser: parse_int_strict(...) or 0
+        vollgut  = int((request.form.get('vollgut') or '0').strip() or '0')
+        leergut  = int((request.form.get('leergut') or '0').strip() or '0')
         einnahme = parse_money(request.form.get('einnahme') or '0')
-        ausgabe = parse_money(request.form.get('ausgabe') or '0')
+        ausgabe  = parse_money(request.form.get('ausgabe') or '0')
         bemerkung = (request.form.get('bemerkung') or '').strip()
     except Exception as e:
-        flash(f"{_('Eingabefehler:')} {e}")
-        return redirect(url_for('index'))
+        flash(f"{_('Eingabefehler:')} {e}", "danger")
+        # ⬇️ bei Fehler: gleiche Seite rendern, temp_token beibehalten
+        ctx = _build_index_context(default_date=(datum_s or today_ddmmyyyy()),
+                                   temp_token=temp_token)
+        return render_template('index.html', **ctx), 400
 
-    # NEU: Serverseitige Bedingung – mindestens ein Wert
+    # 🔐 Optional: Härtung gegen DevTools-Manipulation (Front-End min=0 serverseitig durchsetzen)
+    vollgut  = max(0, vollgut)
+    leergut  = max(0, leergut)
+    if einnahme < 0:
+        einnahme = Decimal('0')
+    if ausgabe < 0:
+        ausgabe = Decimal('0')
+
+    # Mindestbedingung: mind. eines der Felder > 0
     any_filled = any([
         (einnahme is not None and einnahme != 0),
         (ausgabe  is not None and ausgabe  != 0),
-        (vollgut or 0) > 0,
-        (leergut or 0) > 0
+        vollgut > 0,
+        leergut > 0
     ])
     if not any_filled:
-        flash(_('Bitte mindestens einen Wert bei Einnahme, Ausgabe, Vollgut oder Leergut angeben.'), 'warning')
-        return redirect(url_for('index'))
+        flash(_('Bitte mindestens einen Wert bei Einnahme, Ausgabe, Vollgut oder Leergut angeben.'), 'danger')
+        # ⬇️ KEIN redirect – render mit identischem temp_token, sonst gehen Tempfiles verloren
+        ctx = _build_index_context(default_date=(datum_s or today_ddmmyyyy()),
+                                   temp_token=temp_token)
+        return render_template('index.html', **ctx), 400
 
-    temp_token = (request.form.get('temp_token') or '').strip()
-
+    # Datensatz speichern
     with engine.begin() as conn:
         res = conn.execute(text("""
             INSERT INTO entries (datum, vollgut, leergut, einnahme, ausgabe, bemerkung, created_by)
@@ -1368,7 +1401,7 @@ def add():
         })
         new_id = res.scalar_one()
 
-    # NEU: temporäre Anhänge übernehmen
+    # Temporäre Anhänge übernehmen (nur wenn Session-Token passt)
     moved = 0
     if temp_token and session.get('add_temp_token') == temp_token:
         target_dir = _entry_dir(new_id)
@@ -1418,7 +1451,7 @@ def add():
     else:
         flash(_('Datensatz wurde gespeichert.'), 'success')
 
-    # Token ungültig machen, damit es pro Seite nur einmal gilt
+    # Token für diese Seite invalidieren (One-shot)
     session.pop('add_temp_token', None)
 
     return redirect(url_for('index'))
@@ -1427,25 +1460,50 @@ def add():
 @login_required
 def edit(entry_id: int):
     with engine.begin() as conn:
-        row = conn.execute(text("SELECT id, datum, vollgut, leergut, einnahme, ausgabe, bemerkung, created_by FROM entries WHERE id=:id"), {'id': entry_id}).mappings().first()
+        # Lade den Eintrag
+        row = conn.execute(text("""
+            SELECT id, datum, vollgut, leergut, einnahme, ausgabe, bemerkung, created_by
+            FROM entries
+            WHERE id = :id
+        """), {'id': entry_id}).mappings().first()
+
+        # Lade die Anhänge
+        attachments = conn.execute(text("""
+            SELECT id, original_name, content_type, size_bytes, created_at
+            FROM attachments
+            WHERE entry_id = :id
+            ORDER BY created_at DESC
+        """), {'id': entry_id}).mappings().all()
+
     if not row:
         flash(_('Eintrag nicht gefunden.'))
         return redirect(url_for('index'))
-    # RBAC
-    allowed = ROLES.get(session.get('role'), set())
-    if 'entries:edit:any' not in allowed:
-        user = current_user()
-        if not user or row['created_by'] != user['id'] or 'entries:edit:own' not in allowed:
-            abort(403)
+
+    # Eintragsdaten für das Formular
     data = {
-        'id': row['id'], 'datum': format_date_de(row['datum']), 'vollgut': row['vollgut'], 'leergut': row['leergut'],
-        'einnahme': str(Decimal(row['einnahme'] or 0)).replace('.', ','), 'ausgabe': str(Decimal(row['ausgabe'] or 0)).replace('.', ','),
-        'bemerkung': row['bemerkung'] or ''
+        'id': row['id'],
+        'datum': row['datum'],
+        'vollgut': row['vollgut'],
+        'leergut': row['leergut'],
+        'einnahme': row['einnahme'],
+        'ausgabe': row['ausgabe'],
+        'bemerkung': row['bemerkung']
     }
-    return render_template('edit.html', data=data)
+
+    # Anhänge für die Anzeige
+    att_data = [{
+        'id': r['id'],
+        'name': r['original_name'],
+        'size': r['size_bytes'],
+        'content_type': r['content_type'],
+        'url': url_for('attachments_download', att_id=r['id'])
+    } for r in attachments]
+
+    return render_template('edit.html', data=data, attachments=att_data)
 
 @app.post('/edit/<int:entry_id>')
 @login_required
+@require_perms('entries:edit:any')
 @require_csrf
 def edit_post(entry_id: int):
     with engine.begin() as conn:
@@ -2482,6 +2540,7 @@ def attachments_download(att_id: int):
 # app.py
 @app.post('/attachments/<int:att_id>/delete')
 @login_required
+@require_perms('entries:edit:any')
 @require_csrf
 def attachments_delete(att_id: int):
     with engine.begin() as conn:

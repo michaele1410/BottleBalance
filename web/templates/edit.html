@@ -124,9 +124,26 @@
           </div>
         </form>       
         <!-- Liste bestehender Anhänge -->
-        <div class="list-group">
-          {% set files = [] %}
-          {% set _files = [] %}
+       <div class="list-group mb-3">
+          {% if attachments %}
+            {% for att in attachments %}
+              <div class="list-group-item d-flex justify-content-between align-items-center">
+                <div class="text-truncate" style="max-width: 70%;">
+                  <i class="bi bi-paperclip me-1"></i>
+                  <a href="{{ att.url }}" target="_blank">{{ att.name }}</a>
+                  <small class="text-muted">({{ att.size }} Bytes)</small>
+                </div>
+                <form method="post"
+                      action="{{ url_for('attachments_delete', att_id=att.id) }}"
+                      onsubmit="return confirm('{{ _('Anhang wirklich löschen?') }}');">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button class="btn btn-sm btn-outline-danger">{{ _('Löschen') }}</button>
+                </form>
+              </div>
+            {% endfor %}
+          {% else %}
+            <div class="list-group-item text-muted">{{ _('Keine Anhänge vorhanden.') }}</div>
+          {% endif %}
         </div>
       </div>
     </div>
@@ -176,8 +193,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 </script>
-
-<ul id="editAttachmentsList" class="list-group mb-3"></ul>
 
 <script>
 document.addEventListener('DOMContentLoaded', async () => {

@@ -107,34 +107,27 @@
           </div>
         </form>
 
-<hr class="my-4">
-<h3 class="h6 mb-3">{{ _('Anhänge') }}</h3>
+        <hr class="my-4">
+        <h3 class="h6 mb-3">{{ _('Anhänge') }}</h3>
 
-<form action="{{ url_for('attachments_upload', entry_id=data.id) }}" method="post" enctype="multipart/form-data" class="mb-3">
-  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-  <div class="input-group">
-    <input class="form-control" type="file" name="files" multiple
-           accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.heic,.heif,.svg,.txt,.csv,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.xml,.json">
-    <button class="btn btn-outline-primary" type="submit">
-      <i class="bi-upload me-1"></i> {{ _('Hochladen') }}
-    </button>
-  </div>
-  <div class="form-text">
-    {{ _('Zulässige Formate:') }} PDF, Bilder, Office, Text. {{ _('Mehrere Dateien möglich.') }}
-  </div>
-</form>
-
-<!-- Liste bestehender Anhänge -->
-<div class="list-group">
-  {% set files = [] %}
-  {% with %}
-    {% set _ = [] %}
-    {% set _files = [] %}
-    {% endwith %}
-  {% endwith %}
-  {% set _ = [] %}
-</div>
-
+        <form action="{{ url_for('attachments_upload', entry_id=data.id) }}" method="post" enctype="multipart/form-data" class="mb-3">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="input-group">
+            <input class="form-control" type="file" name="files" multiple
+                  accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.heic,.heif,.svg,.txt,.csv,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.xml,.json">
+            <button class="btn btn-outline-primary" type="submit">
+              <i class="bi-upload me-1"></i> {{ _('Hochladen') }}
+            </button>
+          </div>
+          <div class="form-text">
+            {{ _('Zulässige Formate:') }} PDF, Bilder, Office, Text. {{ _('Mehrere Dateien möglich.') }}
+          </div>
+        </form>       
+        <!-- Liste bestehender Anhänge -->
+        <div class="list-group">
+          {% set files = [] %}
+          {% set _files = [] %}
+        </div>
       </div>
     </div>
   </div>

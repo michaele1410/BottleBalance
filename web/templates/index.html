@@ -217,16 +217,7 @@
               <a class="btn btn-sm btn-outline-primary" href="{{ url_for('edit', entry_id=e.id) }}" title="{{ _('Bearbeiten') }}">
                 <i class="bi-pencil-square"></i>
               </a>
-
-              <!-- Löschen -->
-              <form method="post" action="{{ url_for('delete', entry_id=e.id) }}" class="d-inline"
-                    onsubmit="return confirm('{{ _('Eintrag wirklich löschen?') }}');">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button class="btn btn-sm btn-outline-danger" title="{{ _('Löschen') }}">
-                  <i class="bi-trash"></i>
-                </button>
-              </form>
-
+              
               <!-- Dokumente öffnen (mit Badge) -->
               <button class="btn btn-sm btn-outline-secondary position-relative" type="button"
                       onclick="openAttachments({{ e.id }})" title="{{ _('Dokumente öffnen') }}">
@@ -237,6 +228,15 @@
                   </span>
                 {% endif %}
               </button>
+              
+              <!-- Löschen -->
+              <form method="post" action="{{ url_for('delete', entry_id=e.id) }}" class="d-inline"
+                    onsubmit="return confirm('{{ _('Eintrag wirklich löschen?') }}');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="btn btn-sm btn-outline-danger" title="{{ _('Löschen') }}">
+                  <i class="bi-trash"></i>
+                </button>
+              </form>
             </td>
           </tr>
         {% else %}

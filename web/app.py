@@ -703,6 +703,8 @@ def profile_post():
     pwd = (request.form.get('password') or '').strip()
     pwd2 = (request.form.get('password2') or '').strip()
     email = (request.form.get('email') or '').strip()
+    uid = session['user_id']
+
     if pwd or pwd2:
         if len(pwd) < 8:
             flash(_('Passwort muss mindestens 8 Zeichen haben.'))
@@ -710,16 +712,52 @@ def profile_post():
         if pwd != pwd2:
             flash(_('Passwörter stimmen nicht überein.'))
             return redirect(url_for('profile'))
-    uid = session['user_id']
+
     with engine.begin() as conn:
         if pwd:
-            conn.execute(text("UPDATE users SET password_hash=:ph, must_change_password=FALSE, email=:em, updated_at=NOW() WHERE id=:id"),
-                         {'ph': generate_password_hash(pwd), 'em': email or None, 'id': uid})
+            conn.execute(text("""
+                UPDATE users SET password_hash=:ph, must_change_password=FALSE, email=:em, updated_at=NOW()
+                WHERE id=:id
+            """), {'ph': generate_password_hash(pwd), 'em': email or None, 'id': uid})
+
+            # Nach Passwortänderung: 2FA aktivieren, falls noch nicht aktiv
+            user = conn.execute(text("SELECT totp_enabled FROM users WHERE id=:id"), {'id': uid}).mappings().first()
+            if user and not user['totp_enabled']:
+                flash(_('Bitte aktiviere die Zwei-Faktor-Authentifizierung (2FA), um dein Konto zusätzlich zu schützen.'))
+                return redirect(url_for('enable_2fa'))  # <-- Sofortige Rückgabe
         else:
-            conn.execute(text("UPDATE users SET email=:em, updated_at=NOW() WHERE id=:id"),
-                         {'em': email or None, 'id': uid})
+            conn.execute(text("""
+                UPDATE users SET email=:em, updated_at=NOW()
+                WHERE id=:id
+            """), {'em': email or None, 'id': uid})
+
     flash(_('Profil aktualisiert.'))
     return redirect(url_for('index'))
+
+@app.get('/profile/2fa/enable')
+@login_required
+def enable_2fa_get():
+    uid = session['user_id']
+    secret = pyotp.random_base32()
+    session['enroll_totp_secret'] = secret
+
+    with engine.begin() as conn:
+        username = conn.execute(
+            text("SELECT username FROM users WHERE id=:id"), {'id': uid}
+        ).scalar_one_or_none()
+
+    if username is None:
+        flash(_('Benutzer nicht gefunden.'))
+        return redirect(url_for('profile'))
+
+    issuer = 'BottleBalance'
+    otpauth = pyotp.totp.TOTP(secret).provisioning_uri(name=username, issuer_name=issuer)
+    img = qrcode.make(otpauth)
+    buf = io.BytesIO()
+    img.save(buf, format='PNG')
+    data_url = 'data:image/png;base64,' + base64.b64encode(buf.getvalue()).decode('ascii')
+
+    return render_template('2fa_enroll.html', qr_data_url=data_url, secret=secret)
 
 @app.post('/profile/2fa/enable')
 @login_required

@@ -573,9 +573,12 @@ def login_post():
         flash(_('Login fehlgeschlagen.'))
         return redirect(url_for('login'))
 
-    if user['must_change_password']:
-        if user['role'] != 'admin' and user.get('last_login_at') is not None:
-            flash(_('Bitte das Passwort <a href="{0}" class="alert-link">im Profil</a> ändern.').format(url_for('profile')), 'warning')
+    if user['must_change_password'] and user['role'] != 'admin':
+        flash(_('Bitte das Passwort <a href="{0}" class="alert-link">im Profil</a> ändern.').format(url_for('profile')), 'warning')
+    
+    if user['must_change_password'] and user['role'] != 'admin' and user.get('last_login_at') is not None:
+        session['user_id'] = user['id']  # Session setzen, damit Profil erreichbar ist
+        return redirect(url_for('profile'))
 
     if user['totp_enabled']:
         session['pending_2fa_user_id'] = user['id']

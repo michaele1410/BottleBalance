@@ -133,7 +133,32 @@
           <label class="form-label">{{ _('Bis') }}</label>
           <input type="date" name="to" class="form-control" value="{{ request.args.get('to','') }}">
         </div>
-        <div class="col-12 col-md-auto">
+
+        <!-- Toggle für Anhänge -->
+        <div class="col-12 mt-2">
+          <div class="btn-group" role="group" aria-label="Filter Anhänge">
+            
+              <a href="{{ url_for('index') }}?{% if request.args.get('q') %}q={{ request.args.get('q')|urlencode }}{% endif %}{% if request.args.get('from') %}{% if request.args.get('q') %}&{% endif %}from={{ request.args.get('from')|urlencode }}{% endif %}{% if request.args.get('to') %}{% if request.args.get('q') or request.args.get('from') %}&{% endif %}to={{ request.args.get('to')|urlencode }}{% endif %}"
+                class="btn btn-outline-secondary {% if not request.args.get('attachments') %}active{% endif %}">
+                Alle
+              </a>
+
+             
+              <a href="{{ url_for('index') }}?attachments=only{% if request.args.get('q') %}&q={{ request.args.get('q')|urlencode }}{% endif %}{% if request.args.get('from') %}&from={{ request.args.get('from')|urlencode }}{% endif %}{% if request.args.get('to') %}&to={{ request.args.get('to')|urlencode }}{% endif %}"
+                class="btn btn-outline-primary {% if request.args.get('attachments') == 'only' %}active{% endif %}">
+                Nur mit Anhang
+              </a>
+
+             
+              <a href="{{ url_for('index') }}?attachments=none{% if request.args.get('q') %}&q={{ request.args.get('q')|urlencode }}{% endif %}{% if request.args.get('from') %}&from={{ request.args.get('from')|urlencode }}{% endif %}{% if request.args.get('to') %}&to={{ request.args.get('to')|urlencode }}{% endif %}"
+                class="btn btn-outline-primary {% if request.args.get('attachments') == 'none' %}active{% endif %}">
+                Ohne Anhang
+              </a>
+
+          </div>
+        </div>
+
+        <div class="col-12 col-md-auto mt-2 mt-md-0">
           <div class="d-flex flex-row flex-wrap gap-2 align-items-center">
             <button class="btn btn-outline-primary" type="submit">
               <i class="bi-search me-1"></i> {{ _('Filtern') }}
@@ -149,14 +174,16 @@
       <div class="col-12 col-md-auto">
         <div class="d-flex flex-row flex-wrap gap-2 align-items-center">
           {% if can_export_pdf %}
-            <a class="btn btn-outline-danger" href="{{ url_for('export_pdf', q=request.args.get('q'), **{'from': request.args.get('from'), 'to': request.args.get('to')}) }}">
+            <a class="btn btn-outline-danger"
+              href="{{ url_for('export_pdf') }}?{% if request.args.get('q') %}q={{ request.args.get('q')|urlencode }}{% endif %}{% if request.args.get('from') %}{% if request.args.get('q') %}&{% endif %}from={{ request.args.get('from')|urlencode }}{% endif %}{% if request.args.get('to') %}{% if request.args.get('q') or request.args.get('from') %}&{% endif %}to={{ request.args.get('to')|urlencode }}{% endif %}{% if request.args.get('attachments') %}{% if request.args.get('q') or request.args.get('from') or request.args.get('to') %}&{% endif %}attachments={{ request.args.get('attachments')|urlencode }}{% endif %}">
               <i class="bi-file-earmark-pdf me-1"></i> PDF
             </a>
           {% endif %}
           {% if can_export_csv %}
-            <a class="btn btn-outline-primary" href="{{ url_for('export_csv', q=request.args.get('q'), **{'from': request.args.get('from'), 'to': request.args.get('to')}) }}">
-              <i class="bi-download me-1"></i> CSV
-            </a>
+          <a class="btn btn-outline-primary"
+            href="{{ url_for('export_csv') }}?{% if request.args.get('q') %}q={{ request.args.get('q')|urlencode }}{% endif %}{% if request.args.get('from') %}{% if request.args.get('q') %}&{% endif %}from={{ request.args.get('from')|urlencode }}{% endif %}{% if request.args.get('to') %}{% if request.args.get('q') or request.args.get('from') %}&{% endif %}to={{ request.args.get('to')|urlencode }}{% endif %}{% if request.args.get('attachments') %}{% if request.args.get('q') or request.args.get('from') or request.args.get('to') %}&{% endif %}attachments={{ request.args.get('attachments')|urlencode }}{% endif %}">
+            <i class="bi-download me-1"></i> CSV
+          </a>
           {% endif %}
           <!-- Import -->
           {% if can_import %}

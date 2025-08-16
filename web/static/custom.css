@@ -1,109 +1,60 @@
+/* Tabellen */
 .table td, .table th { vertical-align: middle; }
 
+/* Chart-Canvas */
 canvas {
   width: 100%;
   height: auto;
   max-height: 100%;
 }
 
+/* Farbvariablen (Light/Dark) */
 :root {
   --bg-color: #ffffff;
   --text-color: #000000;
 }
-
-[data-theme="dark"] {
+[data-bs-theme="dark"] {
   --bg-color: #121212;
   --text-color: #e0e0e0;
 }
-
-[data-theme="light"] {
-  --bg-color: #ffffff;
-  --text-color: #000000;
-}
-
 body {
   background-color: var(--bg-color);
   color: var(--text-color);
 }
 
-.logo-img {
-  height: 80px;
-  width: auto;
-  vertical-align: middle;
-}
+/* Logos */
+.logo-img { height: 80px; width: auto; vertical-align: middle; }
+.logo-wrapper svg { height: 28px !important; width: auto !important; vertical-align: middle; }
+.navbar-brand { font-size: 1.5rem; }
 
-.logo-wrapper svg {
-  height: 28px !important;
-  width: auto !important;
-  vertical-align: middle;
-}
+/* Animationen */
+.error-card { animation: fadeIn 0.6s ease-in-out; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
-.navbar-brand {
-  font-size: 1.5rem; /* Beispielgröße für den Text */
-}
+/* Dark-Mode Cards */
+[data-bs-theme="dark"] .card { background-color: #2c2f33; color: #f8f9fa; }
 
-.error-card {
-  animation: fadeIn 0.6s ease-in-out;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* Dark-Mode-Anpassung für Card-Hintergrund */
-[data-bs-theme="dark"] .card {
-  background-color: #2c2f33;
-  color: #f8f9fa;
-}
-
-/* Flatpickr – Dark Mode Bridge für Bootstrap */
+/* Flatpickr Dark Mode */
 :root[data-bs-theme="dark"] .flatpickr-calendar {
   background-color: var(--bs-body-bg);
   color: var(--bs-body-color);
   border: 1px solid var(--bs-border-color);
-  box-shadow: 0 .5rem 1rem rgba(0,0,0,.15);
 }
 
-:root[data-bs-theme="dark"] .flatpickr-months,
-:root[data-bs-theme="dark"] .flatpickr-weekdays {
-  background-color: var(--bs-body-bg);
-  border-bottom: 1px solid var(--bs-border-color);
+/* =========================================================
+   Responsive Layout
+   ========================================================= */
+
+/* Sicherstellen, dass Bootstrap-Grid greift */
+.row.g-3 > [class*="col-"] {
+  flex: 0 0 auto;
 }
 
-:root[data-bs-theme="dark"] .flatpickr-day {
-  color: var(--bs-body-color);
+/* Sparkline-Höhensteuerung über Bootstrap .ratio */
+.sparkline-ratio { --bs-aspect-ratio: 100%; }
+
+/* Mobile: Charts flacher */
+@media (max-width: 768px) {
+  .sparkline-ratio { --bs-aspect-ratio: 40%; }
+  #sparklineInv, #sparklineKas { height: 80px !important; }
 }
-
-:root[data-bs-theme="dark"] .flatpickr-day:hover {
-  background: rgba(255,255,255,.08);
-}
-
-:root[data-bs-theme="dark"] .flatpickr-day.today {
-  border-color: var(--bs-primary);
-}
-
-:root[data-bs-theme="dark"] .flatpickr-day.selected,
-:root[data-bs-theme="dark"] .flatpickr-day.startRange,
-:root[data-bs-theme="dark"] .flatpickr-day.endRange {
-  background: var(--bs-primary);
-  border-color: var(--bs-primary);
-  color: #fff;
-}
-
-
-:root[data-bs-theme="light"] {
-  --bg-color: #ffffff;
-  --text-color: #000000;
-}
-
-:root[data-bs-theme="dark"] {
-  --bg-color: #121212;
-  --text-color: #e0e0e0;
-}
-
-body {
-  background-color: var(--bg-color);
-  color: var(--text-color);
-}
-

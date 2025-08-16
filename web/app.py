@@ -9,8 +9,7 @@ from email.message import EmailMessage
 from datetime import datetime, date, timedelta
 from decimal import Decimal, InvalidOperation
 from flask_babel import Babel, gettext as _, gettext as translate
-import flask_babel
-from flask import Flask, render_template, request, redirect, url_for, session, send_file, flash, abort, render_template_string
+from flask import Flask, render_template, request, redirect, url_for, session, send_file, flash, abort
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import OperationalError
@@ -302,11 +301,10 @@ def internal_error(e):
     return render_template('errors/500.html'), 500
 
 try:
-    # Python 3.8+: offizieller Weg
     from importlib.metadata import version, PackageNotFoundError
     try:
-        fb_ver = version("Flask-Babel")  # PyPI-Name
-    except PackageNotFoundException:
+        fb_ver = version("Flask-Babel")
+    except PackageNotFoundError:
         fb_ver = "unknown"
 except Exception:
     fb_ver = "unknown"
@@ -568,18 +566,14 @@ def login_post():
         flash(_('Login fehlgeschlagen.'))
         return redirect(url_for('login'))
 
-    # ✅ Hinweis nur beim allerersten Login des Default-Admins
     if user['username'] == 'admin' and user['must_change_password']:
         flash(_('Standard-Login: Benutzername "admin" und Passwort "admin" – bitte sofort ändern!'), 'info')
-
-    _finalize_login(user['id'], user['role'])
 
     if user['totp_enabled']:
         session['pending_2fa_user_id'] = user['id']
         return redirect(url_for('login_2fa_get'))
 
-    session['user_id'] = user['id']
-    session['role'] = user['role']
+    _finalize_login(user['id'], user['role'])
 
     if user['must_change_password']:
         flash(_('Bitte Passwort ändern (erforderlich).'))
@@ -600,7 +594,8 @@ def login_2fa_post():
     if not uid:
         return redirect(url_for('login'))
 
-    code = (request.form.get('code') or '').strip()
+    raw = request.form.get('code') or ''
+    code = re.sub(r'[\s\-]', '', raw).lower()
 
     with engine.begin() as conn:
         user = conn.execute(text("""
@@ -614,45 +609,42 @@ def login_2fa_post():
 
     totp = pyotp.TOTP(user['totp_secret'])
 
-    # 1) TOTP
+    # Prüfe TOTP
     if totp.verify(code, valid_window=1):
-        session.pop('pending_2fa_user_id', None)
-        session['user_id'] = user['id']
-        session['role'] = user['role']
+        _finalize_login(user['id'], user['role'])
         return redirect(url_for('index'))
 
-    # 2) Backup-Code (Hash oder Legacy-Klartext)
-    bc_raw = user.get('backup_codes')
-    if bc_raw:
-        try:
-            hashes = json.loads(bc_raw) if bc_raw.strip().startswith('[') else bc_raw.split(',')
-        except Exception:
-            hashes = bc_raw.split(',')
+    # Prüfe Backup-Codes
+    bc_raw = user.get('backup_codes') or '[]'
+    try:
+        hashes = json.loads(bc_raw)
+        if not isinstance(hashes, list):
+            hashes = []
+    except Exception:
+        hashes = []
 
-        matched_idx = None
-        for i, h in enumerate(hashes):
-            if (h and h.startswith('pbkdf2:') and check_password_hash(h, code)) or (h == code):
-                matched_idx = i
-                break
+    matched_idx = None
+    for i, h in enumerate(hashes):
+        if h and check_password_hash(h, code):
+            matched_idx = i
+            break
 
-        if matched_idx is not None:
-            del hashes[matched_idx]
-            with engine.begin() as conn2:
-                conn2.execute(text("UPDATE users SET backup_codes=:bc WHERE id=:id"),
-                              {'bc': json.dumps(hashes), 'id': uid})
-            session.pop('pending_2fa_user_id', None)
-            session['user_id'] = user['id']
-            session['role'] = user['role']
-            _finalize_login(user['id'], user['role'])
-            flash(_('Backup-Code verwendet. Bitte neue Codes generieren.'), 'info')
-            return redirect(url_for('index'))
+    if matched_idx is not None:
+        del hashes[matched_idx]
+        with engine.begin() as conn2:
+            conn2.execute(text("UPDATE users SET backup_codes=:bc WHERE id=:id"),
+                          {'bc': json.dumps(hashes), 'id': uid})
+        _finalize_login(user['id'], user['role'])
+        flash(_('Backup-Code verwendet. Bitte neue Codes generieren.'), 'info')
+        log_action(user['id'], '2fa:backup_used', None, None)
+        return redirect(url_for('index'))
 
     flash(_('Ungültiger 2FA-Code oder Backup-Code.'))
     return redirect(url_for('login_2fa_get'))
 
 def generate_and_store_backup_codes(uid: int) -> list[str]:
     """Erzeugt 10 Backup-Codes, speichert nur Hashes in DB und liefert die Klartext-Codes zurück (einmalige Anzeige)."""
-    codes = [secrets.token_hex(4) for _ in range(10)]
+    codes = [secrets.token_hex(4).lower() for _ in range(10)]
     hashes = [generate_password_hash(c) for c in codes]
     with engine.begin() as conn:
         conn.execute(text("UPDATE users SET backup_codes=:bc WHERE id=:id"),
@@ -688,8 +680,17 @@ def logout():
 def profile():
     user = current_user()
     theme = user.get('theme_preference') if user else 'system'
-    return render_template('profile.html', user=user, theme_preference=theme, ROLES=ROLES)
-
+    themes = ['system', 'light', 'dark']
+    # Backup-Codes EINMALIG aus Session holen
+    new_codes = session.pop('new_backup_codes', None)
+    return render_template(
+        'profile.html',
+        user=user,
+        theme_preference=theme,
+        ROLES=ROLES,
+        themes=themes,
+        new_backup_codes=new_codes,  # <-- hier übergeben
+    )
 
 @app.post('/profile')
 @login_required
@@ -762,6 +763,7 @@ def confirm_2fa():
     codes = generate_and_store_backup_codes(uid)
     session['new_backup_codes'] = codes
     flash(_('2FA aktiviert.'))
+    log_action(uid, '2fa:enabled', None, None)
     return redirect(url_for('profile'))
 
 @app.post('/profile/2fa/disable')
@@ -770,14 +772,31 @@ def confirm_2fa():
 def disable_2fa():
     uid = session['user_id']
     pwd = (request.form.get('password') or '').strip()
+
+    # Passwort prüfen
     with engine.begin() as conn:
-        user = conn.execute(text("SELECT password_hash FROM users WHERE id=:id"), {'id': uid}).mappings().first()
+        user = conn.execute(
+            text("SELECT password_hash FROM users WHERE id=:id"),
+            {'id': uid}
+        ).mappings().first()
+
     if not user or not check_password_hash(user['password_hash'], pwd):
         flash(_('Passwortprüfung fehlgeschlagen.'))
         return redirect(url_for('profile'))
+
+    # 2FA deaktivieren + Backup-Codes löschen
     with engine.begin() as conn:
-        conn.execute(text("UPDATE users SET totp_secret=NULL, totp_enabled=FALSE, updated_at=NOW() WHERE id=:id"), {'id': uid})
+        conn.execute(text("""
+            UPDATE users
+            SET totp_secret=NULL,
+                totp_enabled=FALSE,
+                backup_codes='[]',
+                updated_at=NOW()
+            WHERE id=:id
+        """), {'id': uid})
+
     flash(_('2FA deaktiviert.'))
+    log_action(uid, '2fa:disabled', None, None)
     return redirect(url_for('profile'))
 
 @app.post('/profile/theme')
@@ -1304,7 +1323,6 @@ def import_csv():
 # -----------------------
 # CSV Import – Vorschau & Commit (NEU)
 # -----------------------
-from uuid import uuid4
 from typing import List, Tuple
 
 def _parse_csv_file_storage(file_storage):

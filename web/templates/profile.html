@@ -52,13 +52,12 @@
           <button class="btn btn-outline-primary">{{ _('2FA einrichten') }}</button>
         </form>
         {% endif %}
-
-        {% if session.get('new_backup_codes') %}
+        
+        {% if new_backup_codes %}
         <div class="alert alert-warning">
           <h5 class="mb-2">{{ _('Ihre neuen Backup-Codes (einmalig sichtbar):') }}</h5>
-          <pre class="mb-0">{{ '\n'.join(session.get('new_backup_codes')) }}</pre>
+          <pre class="mb-0">{{ '\n'.join(new_backup_codes) }}</pre>
         </div>
-        {% set _ = session.pop('new_backup_codes') %}
         {% endif %}
       </div>
     </div>

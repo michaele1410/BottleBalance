@@ -634,14 +634,16 @@ def login_2fa_post():
             break
 
     if matched_idx is not None:
-        del hashes[matched_idx]
-        with engine.begin() as conn2:
-            conn2.execute(text("UPDATE users SET backup_codes=:bc WHERE id=:id"),
-                          {'bc': json.dumps(hashes), 'id': uid})
+        # Neuen Satz Backup-Codes generieren
+        new_codes = generate_and_store_backup_codes(uid)
+
+        # Einmalige Anzeige im Profil
+        session['new_backup_codes'] = new_codes
+
         _finalize_login(user['id'], user['role'])
-        flash(_('Backup-Code verwendet. Bitte neue Codes generieren.'), 'info')
-        log_action(user['id'], '2fa:backup_used', None, None)
-        return redirect(url_for('index'))
+        flash(_('Backup-Code verwendet. Es wurden automatisch neue Codes generiert. Bitte sicher aufbewahren.'), 'info')
+        log_action(user['id'], '2fa:backup_used_regenerated', None, None)
+        return redirect(url_for('profile'))
 
     flash(_('Ungültiger 2FA-Code oder Backup-Code.'))
     return redirect(url_for('login_2fa_get'))

@@ -549,6 +549,13 @@ def _finalize_login(user_id: int, role: str):
 
 @app.get('/login')
 def login():
+    #Prüfe, ob sich noch niemand eingeloggt hat
+    with engine.begin() as conn:
+        first_login_admin = conn.execute(text("SELECT COUNT(*) FROM users WHERE last_login_at IS NOT NULL")).scalar_one() == 0
+
+    if first_login_admin:
+        flash(_('Standard-Login: Benutzername <strong>admin</strong> und Passwort <strong>admin</strong> – bitte sofort ändern!'), 'warning')
+
     return render_template('login.html')
 
 @app.post('/login')
@@ -558,7 +565,7 @@ def login_post():
     password = (request.form.get('password') or '').strip()
     with engine.begin() as conn:
         user = conn.execute(text("""
-            SELECT id, username, password_hash, role, active, must_change_password, totp_enabled
+            SELECT id, username, password_hash, role, active, must_change_password, totp_enabled, last_login_at
             FROM users WHERE username=:u
         """), {'u': username}).mappings().first()
 
@@ -566,18 +573,15 @@ def login_post():
         flash(_('Login fehlgeschlagen.'))
         return redirect(url_for('login'))
 
-    if user['username'] == 'admin' and user['must_change_password']:
-        flash(_('Standard-Login: Benutzername "admin" und Passwort "admin" – bitte sofort ändern!'), 'info')
+    if user['must_change_password']:
+        if user['role'] != 'admin' and user.get('last_login_at') is not None:
+            flash(_('Bitte das Passwort <a href="{0}" class="alert-link">im Profil</a> ändern.').format(url_for('profile')), 'warning')
 
     if user['totp_enabled']:
         session['pending_2fa_user_id'] = user['id']
         return redirect(url_for('login_2fa_get'))
 
     _finalize_login(user['id'], user['role'])
-
-    if user['must_change_password']:
-        flash(_('Bitte Passwort ändern (erforderlich).'))
-        return redirect(url_for('profile'))
 
     return redirect(url_for('index'))
 
@@ -1002,7 +1006,7 @@ def users_add():
         with engine.begin() as conn:
             conn.execute(text("""
                 INSERT INTO users (username, email, password_hash, role, active, must_change_password, theme_preference)
-                VALUES (:u, :e, :ph, :r, TRUE, FALSE, 'system')
+                VALUES (:u, :e, :ph, :r, TRUE, TRUE, 'system')
             """), {'u': username, 'e': email, 'ph': generate_password_hash(pwd), 'r': role})
         flash(_('Benutzer angelegt.'))
     except Exception as e:

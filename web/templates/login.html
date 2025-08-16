@@ -8,17 +8,26 @@
         <h1 class="h4 mb-3">{{ _('Anmeldung') }}</h1>
 
         <!-- Flash-Messages -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
+        <!--{% with messages = get_flashed_messages(with_categories=true) %}
           {% if messages %}
             {% for category, message in messages %}
-              <div class="alert alert-{{ 'info' if category == 'info' else 'danger' }} alert-dismissible fade show" role="alert">
-                {{ message }}
+              <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ message|safe }}
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
               </div>
             {% endfor %}
           {% endif %}
         {% endwith %}
-
+        
+       {% if current_user() and current_user().get('username') == 'admin' and current_user().get('must_change_password') and not current_user().get('last_login_at') %}
+        <div class="alert alert-warning d-flex align-items-center" role="alert">
+          <i class="bi-exclamation-triangle-fill me-2"></i>
+          <div>
+            Standard-Login: Benutzername <strong>"admin"</strong> und Passwort <strong>"admin"</strong> – bitte sofort ändern!
+          </div>
+        </div>
+        {% endif %}-->
+ 
         <form method="post" action="{{ url_for('login_post') }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <div class="mb-3">

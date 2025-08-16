@@ -85,30 +85,24 @@
   <!-- Main -->
 <main class="container my-4">
 
+  {% if current_user() and current_user().get('role') == 'admin' and current_user().get('must_change_password') %}
+    <div class="alert alert-warning">
+      {{ _('Admin-Passwort noch nicht geändert.') }}
+      <a href="{{ url_for('profile') }}" class="alert-link">{{ _('Bitte im Profil aktualisieren.') }}</a>
+    </div>
+  {% endif %}
 
-    {% if current_user() and current_user().get('username') == 'admin' and current_user().get('must_change_password') %}
-      <div class="alert alert-warning">{{ _('Admin-Passwort noch nicht geändert. Bitte im Profil aktualisieren.') }}</div>
-    {% endif %}
-
-
-    <!-- ✅ Bootstrap-Alerts für Flash-Messages mit Kategorien -->
     {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
+      {% if messages %}
         {% for category, message in messages %}
-          {# Mappe übliche Kategorien auf Bootstrap #}
-          {% set bs = 'warning' %}
-          {% if category in ['success', 'info', 'warning', 'danger'] %}
-            {% set bs = category %}
-          {% elif category in ['error'] %}
-            {% set bs = 'danger' %}
-          {% endif %}
-          <div class="alert alert-{{ bs }} alert-dismissible fade show" role="alert">
-            {{ message }}
+          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ message|safe }}
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
           </div>
         {% endfor %}
-    {% endif %}
-  {% endwith %}
+      {% endif %}
+    {% endwith %}
+
 
   {% block content %}{% endblock %}
 </main>

@@ -83,9 +83,27 @@
           <input id="bemerkung" name="bemerkung" class="form-control" maxlength="500" placeholder="{{ _('Notiz') }}">
           <label for="bemerkung">{{ _('Bemerkung') }}</label>
         </div>
-          <button class="btn btn-success w-100">
-            <i class="bi-plus-lg me-1"></i> {{ _('Hinzufügen') }}
+
+        <input type="hidden" name="temp_token" id="temp_token" value="{{ temp_token }}">
+
+        <hr class="my-3">
+        <h3 class="h6 mb-2">{{ _('Anhänge') }}</h3>
+        <div class="input-group mb-2">
+          <input class="form-control" type="file" id="add_temp_files" multiple
+                 accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.heic,.heif,.svg,.txt,.csv,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.xml,.json">
+          <button class="btn btn-outline-primary" type="button" id="btnTempUpload">
+            <i class="bi-upload me-1"></i> {{ _('Hochladen') }}
           </button>
+        </div>
+        <div class="form-text">
+          {{ _('Zulässige Formate:') }} PDF, Bilder, Office, Text. {{ _('Mehrere Dateien möglich.') }}
+        </div>
+
+        <ul id="addTempAttachmentsList" class="list-group mb-3"></ul>
+
+        <button class="btn btn-success w-100">
+          <i class="bi-plus-lg me-1"></i> {{ _('Hinzufügen') }}
+        </button>
         </form>
       </div>
     </div>
@@ -228,7 +246,7 @@
                   </span>
                 {% endif %}
               </button>
-              
+
               <!-- Löschen -->
               <form method="post" action="{{ url_for('delete', entry_id=e.id) }}" class="d-inline"
                     onsubmit="return confirm('{{ _('Eintrag wirklich löschen?') }}');">
@@ -568,4 +586,106 @@ async function openAttachments(entryId) {
 }
 </script>
 
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const csrf = "{{ csrf_token() }}";
+  const token = document.getElementById('temp_token')?.value || '';
+  const listEl = document.getElementById('addTempAttachmentsList');
+
+  async function refreshTempList() {
+    if (!token) return;
+    const url = "{{ url_for('attachments_temp_list', token='__T__') }}".replace('__T__', token);
+    const resp = await fetch(url, { credentials: 'same-origin' });
+    if (!resp.ok) { console.error('List failed', resp.status); return; }
+    const items = await resp.json();
+    listEl.innerHTML = '';
+    if (!items || items.length === 0) {
+      listEl.innerHTML = `<li class="list-group-item text-muted">{{ _('Keine Anhänge vorhanden.') }}</li>`;
+      return;
+    }
+    items.forEach(it => {
+      const li = document.createElement('li');
+      li.className = 'list-group-item d-flex justify-content-between align-items-center';
+      li.innerHTML = `
+        <div class="text-truncate" style="max-width:70%;">
+          <i class="bi-paperclip me-1"></i> ${it.name}
+        </div>
+        <div class="d-flex gap-2">
+          <a class="btn btn-sm btn-outline-primary" href="${it.url}" target="_blank">{{ _('Öffnen') }}</a>
+          <button class="btn btn-sm btn-outline-danger" data-id="${it.id}">{{ _('Löschen') }}</button>
+        </div>
+      `;
+      li.querySelector('button').addEventListener('click', async (ev) => {
+        ev.preventDefault();
+        if (!confirm('{{ _("Anhang wirklich löschen?") }}')) return;
+        const attId = ev.currentTarget.getAttribute('data-id');
+        await fetch(`{{ url_for('attachments_temp_delete', att_id=0) }}`.replace('0', attId), {
+          method: 'POST',
+          headers: { 'X-CSRF-Token': csrf },
+          credentials: 'same-origin'
+        });
+        refreshTempList();
+      });
+      listEl.appendChild(li);
+    });
+  }
+
+  // Initial laden
+  refreshTempList();
+
+  // Upload-Button
+  document.getElementById('btnTempUpload')?.addEventListener('click', async () => {
+    const files = document.getElementById('add_temp_files').files;
+    if (!files || files.length === 0 || !token) return;
+
+    for (const f of files) {
+      const fd = new FormData();
+      fd.append('files', f);
+      fd.append('csrf_token', csrf); // dein require_csrf akzeptiert Formfeld ODER Header
+      const url = "{{ url_for('attachments_temp_upload', token='__T__') }}".replace('__T__', token);
+      const resp = await fetch(url, { method: 'POST', body: fd, credentials: 'same-origin' });
+      if (!resp.ok) {
+        const msg = await resp.text();
+        alert(msg || 'Upload fehlgeschlagen');
+        break;
+      }
+    }
+    document.getElementById('add_temp_files').value = '';
+    refreshTempList();
+  });
+
+  // Client-Validation: mindestens ein Feld muss gesetzt sein
+  const form = document.getElementById('transaction-form');
+  const fldEinnahme = document.getElementById('einnahme');
+  const fldAusgabe  = document.getElementById('ausgabe');
+  const fldVollgut  = document.getElementById('vollgut');
+  const fldLeergut  = document.getElementById('leergut');
+
+  function valuePresent(inp) {
+    if (!inp) return false;
+    const v = (inp.value || '').trim().replace(',', '.');
+    if (v === '') return false;
+    const n = Number(v);
+    return !isNaN(n) && Math.abs(n) > 0;
+  }
+  function intPresent(inp) {
+    if (!inp) return false;
+    const v = (inp.value || '').trim();
+    if (v === '') return false;
+    const n = parseInt(v, 10);
+    return !isNaN(n) && n > 0;
+  }
+
+  form?.addEventListener('submit', (ev) => {
+    const ok = valuePresent(fldEinnahme) || valuePresent(fldAusgabe) || intPresent(fldVollgut) || intPresent(fldLeergut);
+    if (!ok) {
+      ev.preventDefault();
+      ev.stopPropagation();
+      alert('{{ _("Bitte mindestens einen Wert bei Einnahme, Ausgabe, Vollgut oder Leergut angeben.") }}');
+      return false;
+    }
+    return true;
+  }, false);
+});
+</script>
 {% endblock %}

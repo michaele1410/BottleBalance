@@ -18,6 +18,7 @@ from smtp_check import check_smtp_configuration
 from email.mime.text import MIMEText
 from email.header import Header
 from functools import wraps
+from typing import Tuple
 import csv
 import io
 import time
@@ -258,12 +259,30 @@ CREATE TABLE IF NOT EXISTS attachments (
     id SERIAL PRIMARY KEY,
     entry_id INTEGER NOT NULL REFERENCES entries(id) ON DELETE CASCADE,
     stored_name TEXT NOT NULL,           -- serverseitiger Dateiname (uuid.ext)
-    original_name TEXT NOT NULL,         -- Originalname für Download
+    original_name TEXT NOT NULL,         -- Originalname
     content_type TEXT,
     size_bytes BIGINT,
     uploaded_by INTEGER,
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
+"""
+
+CREATE_TABLE_ATTACHMENTS_TEMP = """
+CREATE TABLE IF NOT EXISTS attachments_temp (
+    id SERIAL PRIMARY KEY,
+    temp_token TEXT NOT NULL,            -- clientseitiges Token für die Add-Session
+    stored_name TEXT NOT NULL,           -- serverseitiger Dateiname (uuid.ext)
+    original_name TEXT NOT NULL,         -- Originalname
+    content_type TEXT,
+    size_bytes BIGINT,
+    uploaded_by INTEGER,                 -- User-ID
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+"""
+
+CREATE_INDEX_ATTACHMENTS_TEMP = """
+CREATE INDEX IF NOT EXISTS idx_attachments_temp_token
+ON attachments_temp (temp_token, uploaded_by, created_at);
 """
 
 def migrate_columns(conn):
@@ -279,7 +298,9 @@ def migrate_columns(conn):
     conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS timezone TEXT"))
     conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS theme_preference TEXT DEFAULT 'system'"))
     conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login_at TIMESTAMP"))
-    conn.execute(text(CREATE_TABLE_ATTACHMENTS))   
+    conn.execute(text(CREATE_TABLE_ATTACHMENTS))
+    conn.execute(text(CREATE_TABLE_ATTACHMENTS_TEMP))
+    conn.execute(text(CREATE_INDEX_ATTACHMENTS_TEMP))
 
 def init_db():
     with engine.begin() as conn:
@@ -325,6 +346,36 @@ def _ensure_init_once():
                 APP_BASE_URL,
             )
         _initialized = True
+
+@app.cli.command('cleanup-temp')
+def cleanup_temp():
+    """Temp-Uploads z.B. älter als 24h löschen."""
+    cutoff = datetime.utcnow() - timedelta(hours=24)
+    with engine.begin() as conn:
+        rows = conn.execute(text("""
+            SELECT id, temp_token, stored_name FROM attachments_temp
+            WHERE created_at < :cut
+        """), {'cut': cutoff}).mappings().all()
+
+    removed = 0
+    for r in rows:
+        tdir = _temp_dir(r['temp_token'])
+        path = os.path.join(tdir, r['stored_name'])
+        try:
+            if os.path.exists(path):
+                os.remove(path)
+            removed += 1
+        except Exception:
+            pass
+        with engine.begin() as conn:
+            conn.execute(text("DELETE FROM attachments_temp WHERE id=:id"), {'id': r['id']})
+        try:
+            if os.path.isdir(tdir) and not os.listdir(tdir):
+                os.rmdir(tdir)
+        except Exception:
+            pass
+    print(f"Temp cleanup done. Files removed: {removed}")
+
 
 # -----------------------
 # Error Handling
@@ -1253,6 +1304,10 @@ def index():
     role = session.get('role')
     allowed = ROLES.get(role, set())
 
+    # NEU: temp_token für "Hinzufügen"
+    token = uuid4().hex
+    session['add_temp_token'] = token
+
     return render_template('index.html',
         entries=entries,
         inv_aktuell=inv, kas_aktuell=kas,
@@ -1263,13 +1318,14 @@ def index():
         can_export_csv=('export:csv' in allowed),
         can_export_pdf=('export:pdf' in allowed),
         can_import=('import:csv' in allowed),
-        role=role, series_inv=series_inv, series_kas=series_kas
+        role=role, series_inv=series_inv, series_kas=series_kas,
+        temp_token=token
     )
 
 @app.post('/add')
 @login_required
-@require_perms('entries:add')
 @require_csrf
+@require_perms('entries:add')
 def add():
     user = current_user()
     try:
@@ -1282,14 +1338,89 @@ def add():
     except Exception as e:
         flash(f"{_('Eingabefehler:')} {e}")
         return redirect(url_for('index'))
+
+    # NEU: Serverseitige Bedingung – mindestens ein Wert
+    any_filled = any([
+        (einnahme is not None and einnahme != 0),
+        (ausgabe  is not None and ausgabe  != 0),
+        (vollgut or 0) > 0,
+        (leergut or 0) > 0
+    ])
+    if not any_filled:
+        flash(_('Bitte mindestens einen Wert bei Einnahme, Ausgabe, Vollgut oder Leergut angeben.'), 'warning')
+        return redirect(url_for('index'))
+
+    temp_token = (request.form.get('temp_token') or '').strip()
+
     with engine.begin() as conn:
         res = conn.execute(text("""
             INSERT INTO entries (datum, vollgut, leergut, einnahme, ausgabe, bemerkung, created_by)
             VALUES (:datum,:vollgut,:leergut,:einnahme,:ausgabe,:bemerkung,:cb)
             RETURNING id
-        """), {'datum': datum, 'vollgut': vollgut, 'leergut': leergut, 'einnahme': str(einnahme), 'ausgabe': str(ausgabe), 'bemerkung': bemerkung, 'cb': user['id']})
+        """), {
+            'datum': datum,
+            'vollgut': vollgut,
+            'leergut': leergut,
+            'einnahme': str(einnahme),
+            'ausgabe': str(ausgabe),
+            'bemerkung': bemerkung,
+            'cb': user['id']
+        })
         new_id = res.scalar_one()
-    log_action(user['id'], 'entries:add', new_id, None)
+
+    # NEU: temporäre Anhänge übernehmen
+    moved = 0
+    if temp_token and session.get('add_temp_token') == temp_token:
+        target_dir = _entry_dir(new_id)
+        tdir = _temp_dir(temp_token)
+        with engine.begin() as conn:
+            rows = conn.execute(text("""
+                SELECT id, stored_name, original_name, content_type, size_bytes
+                FROM attachments_temp
+                WHERE temp_token=:t AND uploaded_by=:u
+                ORDER BY created_at ASC, id ASC
+            """), {'t': temp_token, 'u': session.get('user_id')}).mappings().all()
+
+        for r in rows:
+            src = os.path.join(tdir, r['stored_name'])
+            dst = os.path.join(target_dir, r['stored_name'])
+            try:
+                os.replace(src, dst)  # atomar
+                moved += 1
+            except Exception:
+                # Falls move fehlschlägt → diesen Datensatz überspringen
+                continue
+
+            with engine.begin() as conn:
+                conn.execute(text("""
+                    INSERT INTO attachments (entry_id, stored_name, original_name, content_type, size_bytes, uploaded_by)
+                    VALUES (:e,:sn,:on,:ct,:sz,:ub)
+                """), {
+                    'e': new_id,
+                    'sn': r['stored_name'],
+                    'on': r['original_name'],
+                    'ct': r['content_type'],
+                    'sz': r['size_bytes'],
+                    'ub': session.get('user_id')
+                })
+                conn.execute(text("DELETE FROM attachments_temp WHERE id=:id"), {'id': r['id']})
+
+        # Temp-Ordner evtl. aufräumen
+        try:
+            if os.path.isdir(tdir) and not os.listdir(tdir):
+                os.rmdir(tdir)
+        except Exception:
+            pass
+
+    log_action(user['id'], 'entries:add', new_id, f'attachments_moved={moved}')
+    if moved:
+        flash(_(f'Datensatz gespeichert, {moved} Datei(en) übernommen.'), 'success')
+    else:
+        flash(_('Datensatz wurde gespeichert.'), 'success')
+
+    # Token ungültig machen, damit es pro Seite nur einmal gilt
+    session.pop('add_temp_token', None)
+
     return redirect(url_for('index'))
 
 @app.get('/edit/<int:entry_id>')
@@ -1657,9 +1788,6 @@ def import_sample():
 # -----------------------
 # CSV Import – Vorschau, Mapping, Commit (Erweitert)
 # -----------------------
-from uuid import uuid4
-from typing import Tuple
-
 def _parse_csv_with_mapping(content: str, replace_all: bool, mapping: dict | None) -> tuple[list, list, int]:
     """
     Liefert (preview_rows, headers, dup_count)
@@ -1969,6 +2097,7 @@ def import_commit():
 # -----------------------
 # Hilfsfunktionen CSV Import
 # -----------------------
+
 # --- Strikte Parser/Validatoren für die Vorschau ---
 def parse_date_de_strict(s: str) -> date:
     s = (s or '').strip()
@@ -2125,6 +2254,7 @@ def api_import_dry_run():
 # -----------------------
 # PDF Export with optional logo
 # -----------------------
+
 @app.get('/export/pdf')
 @login_required
 @require_perms('export:pdf')
@@ -2376,6 +2506,15 @@ def attachments_delete(att_id: int):
     flash(_('Anhang gelöscht.'))
     return redirect(request.referrer or url_for('edit', entry_id=r['entry_id']))
 
+def _temp_dir(token: str) -> str:
+    p = os.path.join(UPLOAD_FOLDER, "temp", token)
+    os.makedirs(p, exist_ok=True)
+    return p
+
+def _require_temp_token(token: str):
+    """Sichert, dass der Temp-Upload-Token zur aktuellen Add-Session gehört."""
+    if not token or session.get('add_temp_token') != token:
+        abort(403)
 # -----------------------
 # SMTP Test Mail via url/admin/smtp
 # -----------------------
@@ -2425,6 +2564,118 @@ def admin_smtp():
         status = f"SMTP configuration detected for host {SMTP_HOST}:{SMTP_PORT}."
 
     return render_template("admin_smtp.html", status=status)
+
+# -----------------------
+# Temporäre Attachments für "Datensatz hinzufügen"
+# -----------------------
+
+@app.post('/attachments/temp/<token>/upload')
+@login_required
+@require_csrf
+def attachments_temp_upload(token: str):
+    _require_temp_token(token)
+
+    files = request.files.getlist('files') or []
+    if not files:
+        return ('Keine Datei übermittelt', 400)
+
+    saved = 0
+    tdir = _temp_dir(token)
+
+    with engine.begin() as conn:
+        for f in files:
+            if not f or not f.filename:
+                continue
+            if not allowed_file(f.filename):
+                continue
+
+            ext = f.filename.rsplit('.', 1)[-1].lower() if '.' in f.filename else 'bin'
+            stored_name = f"{uuid4().hex}.{ext}"
+            original_name = secure_filename(f.filename) or f"file.{ext}"
+
+            path = os.path.join(tdir, stored_name)
+            f.save(path)
+            size = os.path.getsize(path)
+            ctype = mimetypes.guess_type(original_name)[0] or 'application/octet-stream'
+
+            conn.execute(text("""
+                INSERT INTO attachments_temp (temp_token, stored_name, original_name, content_type, size_bytes, uploaded_by)
+                VALUES (:t,:sn,:on,:ct,:sz,:ub)
+            """), {'t': token, 'sn': stored_name, 'on': original_name, 'ct': ctype, 'sz': size, 'ub': session.get('user_id')})
+            saved += 1
+
+    if saved == 0:
+        return ('Keine Dateien akzeptiert.', 400)
+    return jsonify({'ok': True, 'saved': saved}), 200
+
+
+@app.get('/attachments/temp/<token>/list')
+@login_required
+def attachments_temp_list(token: str):
+    _require_temp_token(token)
+    with engine.begin() as conn:
+        rows = conn.execute(text("""
+            SELECT id, stored_name, original_name, size_bytes, content_type, created_at
+            FROM attachments_temp
+            WHERE temp_token=:t AND uploaded_by=:u
+            ORDER BY created_at ASC, id ASC
+        """), {'t': token, 'u': session.get('user_id')}).mappings().all()
+
+    data = [{
+        'id': r['id'],
+        'name': r['original_name'],
+        'size': r['size_bytes'],
+        'content_type': r['content_type'],
+        'url': url_for('attachments_temp_open', token=token, stored_name=r['stored_name'])
+    } for r in rows]
+    return jsonify(data), 200
+
+
+@app.get('/attachments/temp/<token>/open/<path:stored_name>')
+@login_required
+def attachments_temp_open(token: str, stored_name: str):
+    _require_temp_token(token)
+    tdir = _temp_dir(token)
+    path = os.path.join(tdir, stored_name)
+    if not os.path.exists(path):
+        abort(404)
+    # Hinweis: Hier kein "as_attachment", um direkt anzusehen
+    guessed = mimetypes.guess_type(stored_name)[0] or 'application/octet-stream'
+    return send_file(path, as_attachment=False, mimetype=guessed)
+
+
+@app.post('/attachments/temp/<int:att_id>/delete')
+@login_required
+@require_csrf
+def attachments_temp_delete(att_id: int):
+    # Hole Datensatz + prüfe Besitzer
+    with engine.begin() as conn:
+        r = conn.execute(text("""
+            SELECT id, temp_token, stored_name, uploaded_by
+            FROM attachments_temp WHERE id=:id
+        """), {'id': att_id}).mappings().first()
+    if not r or r['uploaded_by'] != session.get('user_id'):
+        abort(404)
+
+    tdir = _temp_dir(r['temp_token'])
+    path = os.path.join(tdir, r['stored_name'])
+    try:
+        if os.path.exists(path):
+            os.remove(path)
+    except Exception:
+        pass
+
+    with engine.begin() as conn:
+        conn.execute(text("DELETE FROM attachments_temp WHERE id=:id"), {'id': att_id})
+
+    # Versuche evtl. leeren Ordner zu löschen
+    try:
+        if os.path.isdir(tdir) and not os.listdir(tdir):
+            os.rmdir(tdir)
+    except Exception:
+        pass
+
+    return ('', 204)
 
 # -----------------------
 # SMTP Test Mail if paraam SEND_TEST_MAIL is set to true

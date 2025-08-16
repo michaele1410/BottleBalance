@@ -1,15 +1,13 @@
 #!/bin/bash
 
-# Verzeichnisse anpassen (falls nötig)
-APP_DIR="/var/lib/docker/volumes/bottlebalance"
+# Name des Volumes
+VOLUME_NAME="bottlebalance_bottlebalance-app"
 
-echo ">>> Wechsel in das App-Verzeichnis: $APP_DIR"
-cd "$APP_DIR" || { echo "Verzeichnis nicht gefunden!"; exit 1; }
-
-echo ">>> Container stoppen und alte Images & volumes entfernen..."
-#docker-compose down -v --rmi all
+echo ">>> Container stoppen (aber Volumes behalten)..."
 docker compose down
-docker volume rm bottlebalance_bottlebalance-app
+
+echo ">>> Lösche nur das Volume: $VOLUME_NAME"
+docker volume rm "$VOLUME_NAME" || echo "Volume $VOLUME_NAME nicht gefunden."
 
 echo ">>> Neu bauen und starten..."
 docker compose up --build -d

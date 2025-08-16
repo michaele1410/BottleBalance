@@ -15,9 +15,8 @@ msgstr ""
 "Generated-By: Babel 2.17.0\n"
 
 #: app.py:296
-#, fuzzy
 msgid "Upload zu groß. Bitte kleinere CSV-Datei hochladen."
-msgstr "Please select a CSV file."
+msgstr "Upload too large. Please upload a smaller CSV file."
 
 #: app.py:558
 msgid ""
@@ -45,11 +44,12 @@ msgid "2FA nicht aktiv."
 msgstr "2FA is currently"
 
 #: app.py:659
-#, fuzzy
 msgid ""
 "Backup-Code verwendet. Es wurden automatisch neue Codes generiert. Bitte "
 "sicher aufbewahren."
-msgstr "New backup codes have been generated. Please keep them safe."
+msgstr ""
+"Backup code used. New codes were generated automatically. Please keep them safe.
+"
 
 #: app.py:668
 msgid "Ungültiger 2FA-Code oder Backup-Code."
@@ -80,9 +80,8 @@ msgid "Profil aktualisiert."
 msgstr "Profile updated."
 
 #: app.py:772 app.py:797
-#, fuzzy
 msgid "Benutzer nicht gefunden."
-msgstr "Entry not found."
+msgstr "User not found."
 
 #: app.py:815
 msgid "Kein 2FA-Setup aktiv."
@@ -189,17 +188,14 @@ msgid "Ungültiges Geldformat für Ausgabe: "
 msgstr "Invalid money format for output:"
 
 #: app.py:1721 app.py:1840
-#, fuzzy
 msgid "Vorschau abgelaufen oder nicht gefunden."
 msgstr "Preview expired or not found."
 
 #: app.py:1726 app.py:1854
-#, fuzzy
 msgid "CSV-Datei nicht gefunden."
 msgstr "CSV file not found."
 
 #: app.py:1735
-#, fuzzy
 msgid "CSV konnte nicht gelesen werden."
 msgstr "CSV could not be read."
 
@@ -208,9 +204,8 @@ msgid "Vorschau abgelaufen oder bereits verwendet."
 msgstr "Preview expired or already used."
 
 #: app.py:1906
-#, fuzzy
 msgid "Datum fehlt"
-msgstr "Date"
+msgstr "Date missing"
 
 #: app.py:1910
 msgid "Ungültiges Datum (erwartet TT.MM.JJJJ): "
@@ -302,9 +297,8 @@ msgid "2-Faktor-Authentifizierung"
 msgstr "2-Factor Authentication"
 
 #: templates/2fa.html:12
-#, fuzzy
 msgid "2FA-Code oder Backup-Code"
-msgstr "Invalid 2FA code or backup code."
+msgstr "2FA code or backup code"
 
 #: templates/2fa.html:15 templates/2fa_enroll.html:18
 msgid "Bestätigen"
@@ -424,9 +418,8 @@ msgid "Admin-Passwort noch nicht geändert."
 msgstr "Admin password not yet changed."
 
 #: templates/base.html:91
-#, fuzzy
 msgid "Bitte im Profil aktualisieren."
-msgstr "Profile updated."
+msgstr "Please update your profile."
 
 #: templates/edit.html:7
 msgid "Datensatz bearbeiten"
@@ -479,18 +472,16 @@ msgid "Feldzuordnung (Mapping)"
 msgstr "Feldzuordnung (Mapping)"
 
 #: templates/import_preview.html:40
-#, fuzzy
 msgid "keine"
-msgstr "– none –"
+msgstr "none"
 
 #: templates/import_preview.html:53
 msgid "Mapping anwenden & Vorschau aktualisieren"
 msgstr "Apply mapping & refresh preview"
 
 #: templates/import_preview.html:63
-#, fuzzy
 msgid "Vorschau"
-msgstr "Show preview"
+msgstr "Preview"
 
 #: templates/import_preview.html:77
 msgid "Status"
@@ -529,9 +520,8 @@ msgid "Import jetzt durchführen"
 msgstr "Import now"
 
 #: templates/index.html:11
-#, fuzzy
 msgid "Inventar:"
-msgstr "Inventory"
+msgstr "Inventory:"
 
 #: templates/index.html:12
 msgid "Fl."
@@ -566,14 +556,12 @@ msgid "CSV Import"
 msgstr "CSV Import"
 
 #: templates/index.html:153 templates/index.html:250
-#, fuzzy
 msgid "CSV-Datei auswählen"
 msgstr "Please select a CSV file."
 
 #: templates/index.html:157 templates/index.html:253
-#, fuzzy
 msgid "Erwartete Header:"
-msgstr "Unexpected error"
+msgstr "Expected headers:"
 
 #: templates/index.html:158 templates/index.html:254
 msgid "oder Kurzform ohne Inventar/Kassenbestand."
@@ -616,9 +604,8 @@ msgid "CSV-Datei importieren"
 msgstr "CSV-Datei importieren"
 
 #: templates/index.html:246
-#, fuzzy
 msgid "Schließen"
-msgstr "Delete"
+msgstr "Close"
 
 #: templates/index.html:308
 msgid "Flaschen"

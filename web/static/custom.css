@@ -58,3 +58,65 @@ body {
   .sparkline-ratio { --bs-aspect-ratio: 40%; }
   #sparklineInv, #sparklineKas { height: 80px !important; }
 }
+
+/* ---------- BottleBalance: Formular-Submit-Button (global) ---------- */
+
+    /* Sanfte Übergänge; wird bei reduced-motion abgeschaltet */
+    #transaction-form .btn.btn-success.flex-grow-1 {
+      transition: opacity .15s ease-in-out, filter .15s ease-in-out;
+    }
+
+    /* Deutlich erkennbarer "deaktiviert"-Zustand */
+    #transaction-form .btn.btn-success.flex-grow-1:disabled,
+    #transaction-form .btn.btn-success.flex-grow-1[aria-disabled="true"] {
+      opacity: .55;                /* sichtbarer als Bootstrap-Default */
+      cursor: not-allowed;         /* klarer Hinweis */
+      box-shadow: none !important; /* keine Fokus-Schattierung im disabled */
+      filter: grayscale(25%);      /* dezente Entsättigung */
+    }
+
+    /* Aktiver Zustand: kleine Hover-/Focus-Affordanzen */
+    #transaction-form .btn.btn-success.flex-grow-1:not(:disabled):hover {
+      filter: brightness(1.03);
+    }
+    #transaction-form .btn.btn-success.flex-grow-1:not(:disabled):focus-visible {
+      /* Fallback-Farbe für Outline (Bootstrap Success ~ #198754) */
+      outline: 2px solid rgba(25, 135, 84, .5);
+      outline-offset: 2px;
+    }
+    /* Theme-aware via CSS-Variablen, falls verfügbar */
+    @supports (color: color-mix(in srgb, #000, #fff)) {
+      #transaction-form .btn.btn-success.flex-grow-1:not(:disabled):focus-visible {
+        outline: 2px solid color-mix(in srgb, var(--bs-success), transparent 50%);
+      }
+    }
+
+    /* Bewegungseinstellungen respektieren */
+    @media (prefers-reduced-motion: reduce) {
+      #transaction-form .btn.btn-success.flex-grow-1 {
+        transition: none;
+      }
+    }
+
+    /* ---------- Optionaler Spinner beim Absenden ---------- */
+    #transaction-form.is-submitting .btn.btn-success.flex-grow-1 {
+      position: relative;
+      pointer-events: none;   /* Keine doppelten Klicks */
+    }
+    #transaction-form.is-submitting .btn.btn-success.flex-grow-1 i.bi-plus-lg {
+      visibility: hidden;     /* Plus-Icon ausblenden, Text bleibt sichtbar */
+    }
+    #transaction-form.is-submitting .btn.btn-success.flex-grow-1::after {
+      content: "";
+      position: absolute;
+      inset-inline-start: .75rem; /* links vom Text (rtl/ltl-aware mit logical property) */
+      top: 50%;
+      width: 1rem; height: 1rem;
+      margin-top: -.5rem;
+      border: .15em solid currentColor;
+      border-right-color: transparent;
+      border-radius: 50%;
+      animation: bb-spin .6s linear infinite;
+    }
+
+    @keyframes bb-spin { to { transform: rotate(360deg); } }

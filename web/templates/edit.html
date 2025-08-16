@@ -107,6 +107,44 @@
           </div>
         </form>
 
+        <hr class="my-4">
+        <h3 class="h6 mb-3">{{ _('Anhänge') }}</h3>
+
+        <form action="{{ url_for('attachments_upload', entry_id=data.id) }}" method="post" enctype="multipart/form-data" class="mb-3">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="input-group">
+            <input class="form-control" type="file" name="files" multiple
+                  accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.heic,.heif,.svg,.txt,.csv,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.xml,.json">
+            <button class="btn btn-outline-primary" type="submit">
+              <i class="bi-upload me-1"></i> {{ _('Hochladen') }}
+            </button>
+          </div>
+          <div class="form-text">
+            {{ _('Zulässige Formate:') }} PDF, Bilder, Office, Text. {{ _('Mehrere Dateien möglich.') }}
+          </div>
+        </form>       
+        <!-- Liste bestehender Anhänge -->
+       <div class="list-group mb-3">
+          {% if attachments %}
+            {% for att in attachments %}
+              <div class="list-group-item d-flex justify-content-between align-items-center">
+                <div class="text-truncate" style="max-width: 70%;">
+                  <i class="bi bi-paperclip me-1"></i>
+                  <a href="{{ att.url }}" target="_blank">{{ att.name }}</a>
+                  <small class="text-muted">({{ att.size }} Bytes)</small>
+                </div>
+                <form method="post"
+                      action="{{ url_for('attachments_delete', att_id=att.id) }}"
+                      onsubmit="return confirm('{{ _('Anhang wirklich löschen?') }}');">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button class="btn btn-sm btn-outline-danger">{{ _('Löschen') }}</button>
+                </form>
+              </div>
+            {% endfor %}
+          {% else %}
+            <div class="list-group-item text-muted">{{ _('Keine Anhänge vorhanden.') }}</div>
+          {% endif %}
+        </div>
       </div>
     </div>
   </div>
@@ -155,4 +193,40 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 </script>
+
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  const entryId = {{ data.id }};
+  try {
+    const resp = await fetch(`{{ url_for('attachments_list', entry_id=0) }}`.replace('0', entryId));
+    const list = await resp.json();
+    const ul = document.getElementById('editAttachmentsList');
+    ul.innerHTML = '';
+    if (!list || list.length === 0) {
+      ul.innerHTML = `<li class="list-group-item text-muted">{{ _('Keine Anhänge vorhanden.') }}</li>`;
+      return;
+    }
+    list.forEach(it => {
+      const li = document.createElement('li');
+      li.className = 'list-group-item d-flex justify-content-between align-items-center';
+      li.innerHTML = `
+        <div class="text-truncate" style="max-width: 70%;">
+          <i class="bi-paperclip me-1"></i> ${it.name}
+        </div>
+        <div class="d-flex gap-2">
+          <a class="btn btn-sm btn-outline-primary" href="${it.url}" target="_blank">{{ _('Öffnen') }}</a>
+          <form method="post" action="{{ url_for('attachments_delete', att_id=0) }}".replace('0', it.id) onsubmit="return confirm('{{ _('Anhang wirklich löschen?') }}');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn btn-sm btn-outline-danger">{{ _('Löschen') }}</button>
+          </form>
+        </div>
+      `;
+      ul.appendChild(li);
+    });
+  } catch (e) {
+    console.error(e);
+  }
+});
+</script>
+
 {% endblock %}

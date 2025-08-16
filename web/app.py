@@ -9,7 +9,7 @@ from email.message import EmailMessage
 from datetime import datetime, date, timedelta
 from decimal import Decimal, InvalidOperation
 from flask_babel import Babel, gettext as _, gettext as translate
-from flask import Flask, render_template, request, redirect, url_for, session, send_file, flash, abort
+from flask import Flask, render_template, request, redirect, url_for, session, send_file, flash, abort, jsonify
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import OperationalError
@@ -18,6 +18,10 @@ from smtp_check import check_smtp_configuration
 from email.mime.text import MIMEText
 from email.header import Header
 from functools import wraps
+from typing import Tuple
+from flask_login import login_required
+
+
 import csv
 import io
 import time
@@ -35,6 +39,13 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, 
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import mm
+
+# Document Upload
+from werkzeug.utils import secure_filename
+from uuid import uuid4
+from pathlib import Path
+import mimetypes
+
 
 # -----------------------
 # Konfiguration
@@ -70,6 +81,39 @@ IMPORT_ALLOW_DRYRUN  = os.getenv("IMPORT_ALLOW_DRYRUN", "true").lower() in ("1",
 # Optionaler API-Token für CI/Headless-Dry-Runs (Header: X-Import-Token)
 IMPORT_API_TOKEN     = os.getenv("IMPORT_API_TOKEN")  # leer = kein Token erlaubt
 
+# Document Upload
+ALLOWED_EXTENSIONS = {
+    'pdf','png','jpg','jpeg','gif','webp','heic','heif','svg',
+    'txt','csv','doc','docx','xls','xlsx','ppt','pptx','xml','json'
+}
+
+def allowed_file(filename: str) -> bool:
+    if not filename or '.' not in filename:
+        return False
+    ext = filename.rsplit('.', 1)[1].lower()
+    return ext in ALLOWED_EXTENSIONS
+
+def _entry_dir(entry_id: int) -> str:
+    p = os.path.join(UPLOAD_FOLDER, str(entry_id))
+    os.makedirs(p, exist_ok=True)
+    return p
+
+def _user_can_edit_entry(entry_id: int) -> bool:
+    """RBAC-Check: edit:any oder edit:own wenn created_by = current_user."""
+    allowed = ROLES.get(session.get('role'), set())
+    if 'entries:edit:any' in allowed:
+        return True
+    if 'entries:edit:own' in allowed:
+        user = current_user()
+        if not user: return False
+        with engine.begin() as conn:
+            owner = conn.execute(text("SELECT created_by FROM entries WHERE id=:id"), {'id': entry_id}).scalar_one_or_none()
+        return owner == user['id']
+    return False
+
+def _user_can_view_entry(entry_id: int) -> bool:
+    allowed = ROLES.get(session.get('role'), set())
+    return 'entries:view' in allowed
 
 # -----------------------
 # Logging
@@ -136,6 +180,9 @@ def get_timezone():
     return None  # oder ein Default wie 'Europe/Berlin'
 
 app = Flask(__name__, static_folder='static')
+
+UPLOAD_FOLDER = os.getenv("UPLOAD_FOLDER") or os.path.join(app.root_path, "uploads")
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 app.config['BABEL_DEFAULT_LOCALE'] = 'de'
 babel = Babel(app, locale_selector=get_locale, timezone_selector=get_timezone)
@@ -210,6 +257,37 @@ CREATE TABLE IF NOT EXISTS password_reset_tokens (
 );
 """
 
+CREATE_TABLE_ATTACHMENTS = """
+CREATE TABLE IF NOT EXISTS attachments (
+    id SERIAL PRIMARY KEY,
+    entry_id INTEGER NOT NULL REFERENCES entries(id) ON DELETE CASCADE,
+    stored_name TEXT NOT NULL,           -- serverseitiger Dateiname (uuid.ext)
+    original_name TEXT NOT NULL,         -- Originalname
+    content_type TEXT,
+    size_bytes BIGINT,
+    uploaded_by INTEGER,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+"""
+
+CREATE_TABLE_ATTACHMENTS_TEMP = """
+CREATE TABLE IF NOT EXISTS attachments_temp (
+    id SERIAL PRIMARY KEY,
+    temp_token TEXT NOT NULL,            -- clientseitiges Token für die Add-Session
+    stored_name TEXT NOT NULL,           -- serverseitiger Dateiname (uuid.ext)
+    original_name TEXT NOT NULL,         -- Originalname
+    content_type TEXT,
+    size_bytes BIGINT,
+    uploaded_by INTEGER,                 -- User-ID
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+"""
+
+CREATE_INDEX_ATTACHMENTS_TEMP = """
+CREATE INDEX IF NOT EXISTS idx_attachments_temp_token
+ON attachments_temp (temp_token, uploaded_by, created_at);
+"""
+
 def migrate_columns(conn):
     # Best-effort migrations for added columns
     conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS email TEXT"))
@@ -223,7 +301,9 @@ def migrate_columns(conn):
     conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS timezone TEXT"))
     conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS theme_preference TEXT DEFAULT 'system'"))
     conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login_at TIMESTAMP"))
-
+    conn.execute(text(CREATE_TABLE_ATTACHMENTS))
+    conn.execute(text(CREATE_TABLE_ATTACHMENTS_TEMP))
+    conn.execute(text(CREATE_INDEX_ATTACHMENTS_TEMP))
 
 def init_db():
     with engine.begin() as conn:
@@ -270,6 +350,36 @@ def _ensure_init_once():
             )
         _initialized = True
 
+@app.cli.command('cleanup-temp')
+def cleanup_temp():
+    """Temp-Uploads z.B. älter als 24h löschen."""
+    cutoff = datetime.utcnow() - timedelta(hours=24)
+    with engine.begin() as conn:
+        rows = conn.execute(text("""
+            SELECT id, temp_token, stored_name FROM attachments_temp
+            WHERE created_at < :cut
+        """), {'cut': cutoff}).mappings().all()
+
+    removed = 0
+    for r in rows:
+        tdir = _temp_dir(r['temp_token'])
+        path = os.path.join(tdir, r['stored_name'])
+        try:
+            if os.path.exists(path):
+                os.remove(path)
+            removed += 1
+        except Exception:
+            pass
+        with engine.begin() as conn:
+            conn.execute(text("DELETE FROM attachments_temp WHERE id=:id"), {'id': r['id']})
+        try:
+            if os.path.isdir(tdir) and not os.listdir(tdir):
+                os.rmdir(tdir)
+        except Exception:
+            pass
+    print(f"Temp cleanup done. Files removed: {removed}")
+
+
 # -----------------------
 # Error Handling
 #404 – Not Found: Für nicht existierende Routen.
@@ -293,8 +403,9 @@ def not_found(e):
 
 @app.errorhandler(413)
 def request_entity_too_large(e):
-    flash(_('Upload zu groß. Bitte kleinere CSV-Datei hochladen.'))
-    return redirect(url_for('index'))
+    flash(_('Datei zu groß. Bitte kleinere Datei hochladen.'))
+    return redirect(request.referrer or url_for('index'))
+
 
 @app.errorhandler(500)
 def internal_error(e):
@@ -370,6 +481,51 @@ def require_csrf(fn):
                 abort(403)
         return fn(*args, **kwargs)
     return wrapper
+
+def _build_index_context(default_date: str | None = None, temp_token: str | None = None):
+    """Bereitet alle Variablen für index.html auf – mit stabilem temp_token."""
+    # Filter aus Query (wie in index())
+    q = (request.args.get('q') or '').strip()
+    date_from_s = request.args.get('from')
+    date_to_s = request.args.get('to')
+    df = datetime.strptime(date_from_s, '%Y-%m-%d').date() if date_from_s else None
+    dt = datetime.strptime(date_to_s, '%Y-%m-%d').date() if date_to_s else None
+
+    # Daten aufbereiten
+    entries = fetch_entries(q or None, df, dt)
+    inv, kas = current_totals()
+
+    series_inv = [e['inventar'] for e in entries]
+    series_kas = [float(e['kassenbestand']) for e in entries]
+
+    finv = entries[-1]['inventar'] if entries else 0
+    fkas = entries[-1]['kassenbestand'] if entries else Decimal('0')
+
+    role = session.get('role')
+    allowed = ROLES.get(role, set())
+
+    # temp_token beibehalten oder anlegen (NICHT überschreiben, wenn übergeben)
+    if temp_token:
+        token = temp_token
+    else:
+        token = session.get('add_temp_token')
+        if not token:
+            token = uuid4().hex
+    session['add_temp_token'] = token  # sicherstellen, dass Session denselben Token kennt
+
+    return {
+        'entries': entries,
+        'inv_aktuell': inv, 'kas_aktuell': kas,
+        'filter_inv': finv, 'filter_kas': fkas,
+        'default_date': default_date or today_ddmmyyyy(),
+        'format_eur_de': format_eur_de, 'format_date_de': format_date_de,
+        'can_add': ('entries:add' in allowed),
+        'can_export_csv': ('export:csv' in allowed),
+        'can_export_pdf': ('export:pdf' in allowed),
+        'can_import': ('import:csv' in allowed),
+        'role': role, 'series_inv': series_inv, 'series_kas': series_kas,
+        'temp_token': token
+    }
 
 # -----------------------
 # Utils: Formatting
@@ -481,6 +637,7 @@ def parse_int_strict(value: str):
 # -----------------------
 # Data Access
 # -----------------------
+
 def fetch_entries(search: str | None = None, date_from: date | None = None, date_to: date | None = None):
     where = []
     params = {}
@@ -497,10 +654,21 @@ def fetch_entries(search: str | None = None, date_from: date | None = None, date
 
     with engine.begin() as conn:
         rows = conn.execute(text(f"""
-            SELECT id, datum, vollgut, leergut, einnahme, ausgabe, bemerkung, created_by
-            FROM entries
+            SELECT 
+                e.id,
+                e.datum,
+                e.vollgut,
+                e.leergut,
+                e.einnahme,
+                e.ausgabe,
+                e.bemerkung,
+                e.created_by,
+                COALESCE((
+                    SELECT COUNT(*) FROM attachments a WHERE a.entry_id = e.id
+                ), 0) AS attachment_count
+            FROM entries e
             {where_sql}
-            ORDER BY datum ASC, id ASC
+            ORDER BY e.datum ASC, e.id ASC
         """), params).mappings().all()
 
     inventar = 0
@@ -516,7 +684,8 @@ def fetch_entries(search: str | None = None, date_from: date | None = None, date
         result.append({
             'id': r['id'], 'datum': r['datum'], 'vollgut': voll, 'leergut': leer,
             'einnahme': ein, 'ausgabe': aus, 'bemerkung': r['bemerkung'] or '',
-            'inventar': inventar, 'kassenbestand': kassenbestand, 'created_by': r['created_by']
+            'inventar': inventar, 'kassenbestand': kassenbestand, 'created_by': r['created_by'],
+            'attachment_count': r.get('attachment_count', 0)  # <— NEU
         })
     return result
 
@@ -1160,91 +1329,181 @@ def users_delete(uid: int):
 # -----------------------
 # CRUD & Index with filters
 # -----------------------
+
 @app.get('/')
 @login_required
 def index():
-    q = (request.args.get('q') or '').strip()
-    date_from_s = request.args.get('from')
-    date_to_s = request.args.get('to')
-    df = datetime.strptime(date_from_s, '%Y-%m-%d').date() if date_from_s else None
-    dt = datetime.strptime(date_to_s, '%Y-%m-%d').date() if date_to_s else None
-
-    entries = fetch_entries(q or None, df, dt)
-    inv, kas = current_totals()
-
-    # Serien
-    series_inv = [e['inventar'] for e in entries]
-    series_kas = [float(e['kassenbestand']) for e in entries]
-
-    # Summen im Filterbereich
-    finv = entries[-1]['inventar'] if entries else 0
-    fkas = entries[-1]['kassenbestand'] if entries else Decimal('0')
-
-    role = session.get('role')
-    allowed = ROLES.get(role, set())
-
-    return render_template('index.html',
-        entries=entries,
-        inv_aktuell=inv, kas_aktuell=kas,
-        filter_inv=finv, filter_kas=fkas,
-        default_date=today_ddmmyyyy(),
-        format_eur_de=format_eur_de, format_date_de=format_date_de,
-        can_add=('entries:add' in allowed),
-        can_export_csv=('export:csv' in allowed),
-        can_export_pdf=('export:pdf' in allowed),
-        can_import=('import:csv' in allowed),
-        role=role, series_inv=series_inv, series_kas=series_kas
-    )
+    ctx = _build_index_context(default_date=today_ddmmyyyy())
+    return render_template('index.html', **ctx)
 
 @app.post('/add')
 @login_required
-@require_perms('entries:add')
 @require_csrf
+@require_perms('entries:add')
 def add():
     user = current_user()
+
+    # Rohwerte für sauberes Re-Render bei Fehlern merken
+    datum_s   = (request.form.get('datum') or '').strip()
+    temp_token = (request.form.get('temp_token') or '').strip()
+
     try:
-        datum = parse_date_de_or_today(request.form.get('datum'))
-        vollgut = int((request.form.get('vollgut') or '0').strip() or '0')
-        leergut = int((request.form.get('leergut') or '0').strip() or '0')
+        datum    = parse_date_de_or_today(datum_s)
+        # Alternativ stricte Parser: parse_int_strict(...) or 0
+        vollgut  = int((request.form.get('vollgut') or '0').strip() or '0')
+        leergut  = int((request.form.get('leergut') or '0').strip() or '0')
         einnahme = parse_money(request.form.get('einnahme') or '0')
-        ausgabe = parse_money(request.form.get('ausgabe') or '0')
+        ausgabe  = parse_money(request.form.get('ausgabe') or '0')
         bemerkung = (request.form.get('bemerkung') or '').strip()
     except Exception as e:
-        flash(f"{_('Eingabefehler:')} {e}")
-        return redirect(url_for('index'))
+        flash(f"{_('Eingabefehler:')} {e}", "danger")
+        # ⬇️ bei Fehler: gleiche Seite rendern, temp_token beibehalten
+        ctx = _build_index_context(default_date=(datum_s or today_ddmmyyyy()),
+                                   temp_token=temp_token)
+        return render_template('index.html', **ctx), 400
+
+    # 🔐 Optional: Härtung gegen DevTools-Manipulation (Front-End min=0 serverseitig durchsetzen)
+    vollgut  = max(0, vollgut)
+    leergut  = max(0, leergut)
+    if einnahme < 0:
+        einnahme = Decimal('0')
+    if ausgabe < 0:
+        ausgabe = Decimal('0')
+
+    # Mindestbedingung: mind. eines der Felder > 0
+    any_filled = any([
+        (einnahme is not None and einnahme != 0),
+        (ausgabe  is not None and ausgabe  != 0),
+        vollgut > 0,
+        leergut > 0
+    ])
+    if not any_filled:
+        flash(_('Bitte mindestens einen Wert bei Einnahme, Ausgabe, Vollgut oder Leergut angeben.'), 'danger')
+        # ⬇️ KEIN redirect – render mit identischem temp_token, sonst gehen Tempfiles verloren
+        ctx = _build_index_context(default_date=(datum_s or today_ddmmyyyy()),
+                                   temp_token=temp_token)
+        return render_template('index.html', **ctx), 400
+
+    # Datensatz speichern
     with engine.begin() as conn:
         res = conn.execute(text("""
             INSERT INTO entries (datum, vollgut, leergut, einnahme, ausgabe, bemerkung, created_by)
             VALUES (:datum,:vollgut,:leergut,:einnahme,:ausgabe,:bemerkung,:cb)
             RETURNING id
-        """), {'datum': datum, 'vollgut': vollgut, 'leergut': leergut, 'einnahme': str(einnahme), 'ausgabe': str(ausgabe), 'bemerkung': bemerkung, 'cb': user['id']})
+        """), {
+            'datum': datum,
+            'vollgut': vollgut,
+            'leergut': leergut,
+            'einnahme': str(einnahme),
+            'ausgabe': str(ausgabe),
+            'bemerkung': bemerkung,
+            'cb': user['id']
+        })
         new_id = res.scalar_one()
-    log_action(user['id'], 'entries:add', new_id, None)
+
+    # Temporäre Anhänge übernehmen (nur wenn Session-Token passt)
+    moved = 0
+    if temp_token and session.get('add_temp_token') == temp_token:
+        target_dir = _entry_dir(new_id)
+        tdir = _temp_dir(temp_token)
+        with engine.begin() as conn:
+            rows = conn.execute(text("""
+                SELECT id, stored_name, original_name, content_type, size_bytes
+                FROM attachments_temp
+                WHERE temp_token=:t AND uploaded_by=:u
+                ORDER BY created_at ASC, id ASC
+            """), {'t': temp_token, 'u': session.get('user_id')}).mappings().all()
+
+        for r in rows:
+            src = os.path.join(tdir, r['stored_name'])
+            dst = os.path.join(target_dir, r['stored_name'])
+            try:
+                os.replace(src, dst)  # atomar
+                moved += 1
+            except Exception:
+                # Falls move fehlschlägt → diesen Datensatz überspringen
+                continue
+
+            with engine.begin() as conn:
+                conn.execute(text("""
+                    INSERT INTO attachments (entry_id, stored_name, original_name, content_type, size_bytes, uploaded_by)
+                    VALUES (:e,:sn,:on,:ct,:sz,:ub)
+                """), {
+                    'e': new_id,
+                    'sn': r['stored_name'],
+                    'on': r['original_name'],
+                    'ct': r['content_type'],
+                    'sz': r['size_bytes'],
+                    'ub': session.get('user_id')
+                })
+                conn.execute(text("DELETE FROM attachments_temp WHERE id=:id"), {'id': r['id']})
+
+        # Temp-Ordner evtl. aufräumen
+        try:
+            if os.path.isdir(tdir) and not os.listdir(tdir):
+                os.rmdir(tdir)
+        except Exception:
+            pass
+
+    log_action(user['id'], 'entries:add', new_id, f'attachments_moved={moved}')
+    if moved:
+        flash(_(f'Datensatz gespeichert, {moved} Datei(en) übernommen.'), 'success')
+    else:
+        flash(_('Datensatz wurde gespeichert.'), 'success')
+
+    # Token für diese Seite invalidieren (One-shot)
+    session.pop('add_temp_token', None)
+
     return redirect(url_for('index'))
 
 @app.get('/edit/<int:entry_id>')
 @login_required
 def edit(entry_id: int):
     with engine.begin() as conn:
-        row = conn.execute(text("SELECT id, datum, vollgut, leergut, einnahme, ausgabe, bemerkung, created_by FROM entries WHERE id=:id"), {'id': entry_id}).mappings().first()
+        # Lade den Eintrag
+        row = conn.execute(text("""
+            SELECT id, datum, vollgut, leergut, einnahme, ausgabe, bemerkung, created_by
+            FROM entries
+            WHERE id = :id
+        """), {'id': entry_id}).mappings().first()
+
+        # Lade die Anhänge
+        attachments = conn.execute(text("""
+            SELECT id, original_name, content_type, size_bytes, created_at
+            FROM attachments
+            WHERE entry_id = :id
+            ORDER BY created_at DESC
+        """), {'id': entry_id}).mappings().all()
+
     if not row:
         flash(_('Eintrag nicht gefunden.'))
         return redirect(url_for('index'))
-    # RBAC
-    allowed = ROLES.get(session.get('role'), set())
-    if 'entries:edit:any' not in allowed:
-        user = current_user()
-        if not user or row['created_by'] != user['id'] or 'entries:edit:own' not in allowed:
-            abort(403)
+
+    # Eintragsdaten für das Formular
     data = {
-        'id': row['id'], 'datum': format_date_de(row['datum']), 'vollgut': row['vollgut'], 'leergut': row['leergut'],
-        'einnahme': str(Decimal(row['einnahme'] or 0)).replace('.', ','), 'ausgabe': str(Decimal(row['ausgabe'] or 0)).replace('.', ','),
-        'bemerkung': row['bemerkung'] or ''
+        'id': row['id'],
+        'datum': row['datum'],
+        'vollgut': row['vollgut'],
+        'leergut': row['leergut'],
+        'einnahme': row['einnahme'],
+        'ausgabe': row['ausgabe'],
+        'bemerkung': row['bemerkung']
     }
-    return render_template('edit.html', data=data)
+
+    # Anhänge für die Anzeige
+    att_data = [{
+        'id': r['id'],
+        'name': r['original_name'],
+        'size': r['size_bytes'],
+        'content_type': r['content_type'],
+        'url': url_for('attachments_download', att_id=r['id'])
+    } for r in attachments]
+
+    return render_template('edit.html', data=data, attachments=att_data)
 
 @app.post('/edit/<int:entry_id>')
 @login_required
+@require_perms('entries:edit:any')
 @require_csrf
 def edit_post(entry_id: int):
     with engine.begin() as conn:
@@ -1587,9 +1846,6 @@ def import_sample():
 # -----------------------
 # CSV Import – Vorschau, Mapping, Commit (Erweitert)
 # -----------------------
-from uuid import uuid4
-from typing import Tuple
-
 def _parse_csv_with_mapping(content: str, replace_all: bool, mapping: dict | None) -> tuple[list, list, int]:
     """
     Liefert (preview_rows, headers, dup_count)
@@ -1899,6 +2155,7 @@ def import_commit():
 # -----------------------
 # Hilfsfunktionen CSV Import
 # -----------------------
+
 # --- Strikte Parser/Validatoren für die Vorschau ---
 def parse_date_de_strict(s: str) -> date:
     s = (s or '').strip()
@@ -2055,6 +2312,7 @@ def api_import_dry_run():
 # -----------------------
 # PDF Export with optional logo
 # -----------------------
+
 @app.get('/export/pdf')
 @login_required
 @require_perms('export:pdf')
@@ -2185,7 +2443,137 @@ def admin_export_dump():
         log_action(session.get('user_id'), 'db:export:error', None, f'Dump fehlgeschlagen: {e}')
         return redirect(url_for('admin_export_page'))
 
+# -----------------------
+# Document uploads for entries
+# -----------------------
 
+#Upload
+@app.post('/attachments/<int:entry_id>/upload')
+@login_required
+@require_csrf
+def attachments_upload(entry_id: int):
+    if not _user_can_edit_entry(entry_id):
+        abort(403)
+
+    files = request.files.getlist('files')  # name="files" (multiple)
+    if not files:
+        flash(_('Bitte Datei(en) auswählen.'))
+        return redirect(request.referrer or url_for('edit', entry_id=entry_id))
+
+    saved = 0
+    target_dir = _entry_dir(entry_id)
+
+    with engine.begin() as conn:
+        for f in files:
+            if not f or not f.filename:
+                continue
+            if not allowed_file(f.filename):
+                flash(_(f'Ungültiger Dateityp: {f.filename}'))
+                continue
+
+            ext = f.filename.rsplit('.', 1)[1].lower()
+            stored_name = f"{uuid4().hex}.{ext}"
+            original_name = secure_filename(f.filename) or f"file.{ext}"
+            path = os.path.join(target_dir, stored_name)
+
+            f.save(path)
+            size = os.path.getsize(path)
+            ctype = mimetypes.guess_type(original_name)[0] or 'application/octet-stream'
+
+            conn.execute(text("""
+                INSERT INTO attachments (entry_id, stored_name, original_name, content_type, size_bytes, uploaded_by)
+                VALUES (:e,:sn,:on,:ct,:sz,:ub)
+            """), {'e': entry_id, 'sn': stored_name, 'on': original_name, 'ct': ctype, 'sz': size, 'ub': session.get('user_id')})
+            saved += 1
+
+    if saved:
+        log_action(session.get('user_id'), 'attachments:upload', entry_id, f'files={saved}')
+        flash(_(f'{saved} Datei(en) hochgeladen.'))
+    else:
+        flash(_('Keine Dateien hochgeladen.'))
+
+    return redirect(request.referrer or url_for('edit', entry_id=entry_id))
+
+@app.get('/attachments/<int:entry_id>/list')
+@login_required
+def attachments_list(entry_id: int):
+    if not _user_can_view_entry(entry_id):
+        abort(403)
+    with engine.begin() as conn:
+        rows = conn.execute(text("""
+            SELECT id, original_name, content_type, size_bytes, created_at
+            FROM attachments WHERE entry_id=:e ORDER BY created_at DESC, id DESC
+        """), {'e': entry_id}).mappings().all()
+
+    data = [{
+        'id': r['id'],
+        'name': r['original_name'],
+        'size': r['size_bytes'],
+        'content_type': r['content_type'],
+        'url': url_for('attachments_download', att_id=r['id'])
+    } for r in rows]
+    return jsonify(data), 200
+
+#Download
+@app.get('/attachments/<int:att_id>/download')
+@login_required
+def attachments_download(att_id: int):
+    with engine.begin() as conn:
+        r = conn.execute(text("""
+            SELECT a.id, a.entry_id, a.stored_name, a.original_name, a.content_type
+            FROM attachments a WHERE a.id=:id
+        """), {'id': att_id}).mappings().first()
+    if not r:
+        abort(404)
+    if not _user_can_view_entry(r['entry_id']):
+        abort(403)
+
+    path = os.path.join(_entry_dir(r['entry_id']), r['stored_name'])
+    if not os.path.exists(path):
+        abort(404)
+
+    log_action(session.get('user_id'), 'attachments:download', r['entry_id'], f"att_id={att_id}")
+    return send_file(path, as_attachment=True, download_name=r['original_name'],
+                     mimetype=r.get('content_type') or 'application/octet-stream')
+
+#Delete
+# app.py
+@app.post('/attachments/<int:att_id>/delete')
+@login_required
+@require_perms('entries:edit:any')
+@require_csrf
+def attachments_delete(att_id: int):
+    with engine.begin() as conn:
+        r = conn.execute(text("""
+            SELECT id, entry_id, stored_name, original_name FROM attachments WHERE id=:id
+        """), {'id': att_id}).mappings().first()
+    if not r:
+        abort(404)
+    if not _user_can_edit_entry(r['entry_id']):
+        abort(403)
+
+    path = os.path.join(_entry_dir(r['entry_id']), r['stored_name'])
+    try:
+        if os.path.exists(path):
+            os.remove(path)
+    except Exception:
+        pass
+
+    with engine.begin() as conn:
+        conn.execute(text("DELETE FROM attachments WHERE id=:id"), {'id': att_id})
+    log_action(session.get('user_id'), 'attachments:delete', r['entry_id'], f"att_id={att_id}")
+    flash(_('Anhang gelöscht.'))
+    return redirect(request.referrer or url_for('edit', entry_id=r['entry_id']))
+
+def _temp_dir(token: str) -> str:
+    p = os.path.join(UPLOAD_FOLDER, "temp", token)
+    os.makedirs(p, exist_ok=True)
+    return p
+
+def _require_temp_token(token: str):
+    """Sichert, dass der Temp-Upload-Token zur aktuellen Add-Session gehört."""
+    if not token or session.get('add_temp_token') != token:
+        abort(403)
 # -----------------------
 # SMTP Test Mail via url/admin/smtp
 # -----------------------
@@ -2235,6 +2623,118 @@ def admin_smtp():
         status = f"SMTP configuration detected for host {SMTP_HOST}:{SMTP_PORT}."
 
     return render_template("admin_smtp.html", status=status)
+
+# -----------------------
+# Temporäre Attachments für "Datensatz hinzufügen"
+# -----------------------
+
+@app.post('/attachments/temp/<token>/upload')
+@login_required
+@require_csrf
+def attachments_temp_upload(token: str):
+    _require_temp_token(token)
+
+    files = request.files.getlist('files') or []
+    if not files:
+        return ('Keine Datei übermittelt', 400)
+
+    saved = 0
+    tdir = _temp_dir(token)
+
+    with engine.begin() as conn:
+        for f in files:
+            if not f or not f.filename:
+                continue
+            if not allowed_file(f.filename):
+                continue
+
+            ext = f.filename.rsplit('.', 1)[-1].lower() if '.' in f.filename else 'bin'
+            stored_name = f"{uuid4().hex}.{ext}"
+            original_name = secure_filename(f.filename) or f"file.{ext}"
+
+            path = os.path.join(tdir, stored_name)
+            f.save(path)
+            size = os.path.getsize(path)
+            ctype = mimetypes.guess_type(original_name)[0] or 'application/octet-stream'
+
+            conn.execute(text("""
+                INSERT INTO attachments_temp (temp_token, stored_name, original_name, content_type, size_bytes, uploaded_by)
+                VALUES (:t,:sn,:on,:ct,:sz,:ub)
+            """), {'t': token, 'sn': stored_name, 'on': original_name, 'ct': ctype, 'sz': size, 'ub': session.get('user_id')})
+            saved += 1
+
+    if saved == 0:
+        return ('Keine Dateien akzeptiert.', 400)
+    return jsonify({'ok': True, 'saved': saved}), 200
+
+
+@app.get('/attachments/temp/<token>/list')
+@login_required
+def attachments_temp_list(token: str):
+    _require_temp_token(token)
+    with engine.begin() as conn:
+        rows = conn.execute(text("""
+            SELECT id, stored_name, original_name, size_bytes, content_type, created_at
+            FROM attachments_temp
+            WHERE temp_token=:t AND uploaded_by=:u
+            ORDER BY created_at ASC, id ASC
+        """), {'t': token, 'u': session.get('user_id')}).mappings().all()
+
+    data = [{
+        'id': r['id'],
+        'name': r['original_name'],
+        'size': r['size_bytes'],
+        'content_type': r['content_type'],
+        'url': url_for('attachments_temp_open', token=token, stored_name=r['stored_name'])
+    } for r in rows]
+    return jsonify(data), 200
+
+
+@app.get('/attachments/temp/<token>/open/<path:stored_name>')
+@login_required
+def attachments_temp_open(token: str, stored_name: str):
+    _require_temp_token(token)
+    tdir = _temp_dir(token)
+    path = os.path.join(tdir, stored_name)
+    if not os.path.exists(path):
+        abort(404)
+    # Hinweis: Hier kein "as_attachment", um direkt anzusehen
+    guessed = mimetypes.guess_type(stored_name)[0] or 'application/octet-stream'
+    return send_file(path, as_attachment=False, mimetype=guessed)
+
+
+@app.post('/attachments/temp/<int:att_id>/delete')
+@login_required
+@require_csrf
+def attachments_temp_delete(att_id: int):
+    # Hole Datensatz + prüfe Besitzer
+    with engine.begin() as conn:
+        r = conn.execute(text("""
+            SELECT id, temp_token, stored_name, uploaded_by
+            FROM attachments_temp WHERE id=:id
+        """), {'id': att_id}).mappings().first()
+    if not r or r['uploaded_by'] != session.get('user_id'):
+        abort(404)
+
+    tdir = _temp_dir(r['temp_token'])
+    path = os.path.join(tdir, r['stored_name'])
+    try:
+        if os.path.exists(path):
+            os.remove(path)
+    except Exception:
+        pass
+
+    with engine.begin() as conn:
+        conn.execute(text("DELETE FROM attachments_temp WHERE id=:id"), {'id': att_id})
+
+    # Versuche evtl. leeren Ordner zu löschen
+    try:
+        if os.path.isdir(tdir) and not os.listdir(tdir):
+            os.rmdir(tdir)
+    except Exception:
+        pass
+
+    return ('', 204)
 
 # -----------------------
 # SMTP Test Mail if paraam SEND_TEST_MAIL is set to true

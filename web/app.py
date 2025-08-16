@@ -539,7 +539,8 @@ def log_action(user_id: int | None, action: str, entry_id: int | None, detail: s
 # Auth & 2FA
 # -----------------------
 def _finalize_login(user_id: int, role: str):
-    """Setzt Session, aktualisiert last_login_at und schreibt Audit-Log."""
+    """Setzt Session, aktualisiert last_login_at und schreibt Audit-Log.
+       Leitet NICHT um – nur Status setzen."""
     session.pop('pending_2fa_user_id', None)
     session['user_id'] = user_id
     session['role'] = role
@@ -573,18 +574,26 @@ def login_post():
         flash(_('Login fehlgeschlagen.'))
         return redirect(url_for('login'))
 
+    # Falls Passwort geändert werden muss: Info + Flag für spätere Weiterleitung setzen
+    force_profile = False
     if user['must_change_password'] and user['role'] != 'admin':
-        flash(_('Bitte das Passwort <a href="{0}" class="alert-link">im Profil</a> ändern.').format(url_for('profile')), 'warning')
-    
-    if user['must_change_password'] and user['role'] != 'admin' and user.get('last_login_at') is not None:
-        session['user_id'] = user['id']  # Session setzen, damit Profil erreichbar ist
-        return redirect(url_for('profile'))
+        flash(_('Bitte das Passwort <a href="{0}" class="alert-link">im Profil</a> ändern.')
+              .format(url_for('profile')), 'warning')
+        force_profile = True
+        session['force_profile_after_login'] = True  # <<--- nur Flag, keine Session-Authentifizierung!
 
     if user['totp_enabled']:
+        # 2FA-Flow starten; force_profile wird nach erfolgreicher 2FA ausgewertet
         session['pending_2fa_user_id'] = user['id']
         return redirect(url_for('login_2fa_get'))
 
+    # Kein 2FA: direkt finalisieren
     _finalize_login(user['id'], user['role'])
+
+    # Nach erfolgreichem Login ggf. erzwungen zum Profil umleiten
+    if force_profile:
+        session.pop('force_profile_after_login', None)
+        return redirect(url_for('profile'))
 
     return redirect(url_for('index'))
 
@@ -619,6 +628,9 @@ def login_2fa_post():
     # Prüfe TOTP
     if totp.verify(code, valid_window=1):
         _finalize_login(user['id'], user['role'])
+        # Flag auswerten
+        if session.pop('force_profile_after_login', None):
+            return redirect(url_for('profile'))
         return redirect(url_for('index'))
 
     # Prüfe Backup-Codes
@@ -646,7 +658,12 @@ def login_2fa_post():
         _finalize_login(user['id'], user['role'])
         flash(_('Backup-Code verwendet. Es wurden automatisch neue Codes generiert. Bitte sicher aufbewahren.'), 'info')
         log_action(user['id'], '2fa:backup_used_regenerated', None, None)
-        return redirect(url_for('profile'))
+
+        # Nach Backup-Code ggf. ebenfalls Flag auswerten
+        if session.pop('force_profile_after_login', None):
+            return redirect(url_for('profile'))
+        return redirect(url_for('profile'))  # Hier willst du ohnehin ins Profil
+                                             # (zeigt die neuen Codes einmalig an)
 
     flash(_('Ungültiger 2FA-Code oder Backup-Code.'))
     return redirect(url_for('login_2fa_get'))
@@ -1409,26 +1426,32 @@ def _parse_csv_file_storage(file_storage):
         })
     return rows
 
-def _fetch_existing_signature_set(conn) -> set[Tuple]:
-    """
-    Liefert eine Signaturmenge aller existierenden Datensätze
-    für schnelle Duplikat-Erkennung (exakt über alle importrelevanten Felder).
-    """
+def _fetch_existing_signature_set(conn) -> set[tuple]:
     existing = conn.execute(text("""
         SELECT datum, COALESCE(vollgut,0), COALESCE(leergut,0),
                COALESCE(einnahme,0), COALESCE(ausgabe,0), COALESCE(bemerkung,'')
         FROM entries
     """)).fetchall()
-    return set((r[0], int(r[1]), int(r[2]), str(Decimal(r[3])), str(Decimal(r[4])), r[5] or '') for r in existing)
 
-def _signature(row: dict) -> Tuple:
+    result = set()
+    for d, voll, leer, ein, aus, bem in existing:
+        result.add((
+            d,
+            int(voll),
+            int(leer),
+            str(Decimal(ein or 0).quantize(Decimal('0.01'))),
+            str(Decimal(aus or 0).quantize(Decimal('0.01'))),
+            (bem or '').strip().lower()
+        ))
+    return result
+def _signature(row: dict) -> tuple:
     return (
-        row['datum'],
+        row['datum'],  # date-Objekt
         int(row['vollgut']),
         int(row['leergut']),
-        str(Decimal(row['einnahme'] or 0)),
-        str(Decimal(row['ausgabe'] or 0)),
-        row['bemerkung'] or ''
+        str(Decimal(row['einnahme'] or 0).quantize(Decimal('0.01'))),
+        str(Decimal(row['ausgabe'] or 0).quantize(Decimal('0.01'))),
+        (row['bemerkung'] or '').strip().lower()
     )
 
 #@app.post('/import/preview')

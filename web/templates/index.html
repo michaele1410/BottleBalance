@@ -1,46 +1,48 @@
-
 {% extends "base.html" %}
 {% block content %}
 
 <div class="row g-3 mb-4">
   <!-- Inventar -->
-  <div class="col-12 col-lg-4">
+  <div class="row g-3 mb-4">
+  <!-- Inventar -->
+  <div class="col-6 col-md-4">
     <div class="card shadow-sm h-100">
       <div class="card-header d-flex justify-content-between align-items-center">
-        <span>{{ _('Inventar (aktuell):') }}</span>
-        <span class="badge bg-primary">{{ inv_aktuell }} {{ _('Flaschen') }}</span>
+        <span>{{ _('Inventar:') }}</span>
+        <span class="badge bg-primary">{{ inv_aktuell }} {{ _('Fl.') }}</span>
       </div>
-      <div class="card-body">
-        <div class="ratio" style="--bs-aspect-ratio: 100%;">
+      <div class="card-body sparkline-container">
+        <div class="ratio sparkline-ratio">
           <canvas id="sparklineInv"></canvas>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Kassenbestand -->
-  <div class="col-12 col-lg-4">
+<!-- Kassenbestand -->
+  <div class="col-6 col-md-4">
     <div class="card shadow-sm h-100">
       <div class="card-header d-flex justify-content-between align-items-center">
-        <span>{{ _('Kassenbestand (aktuell):') }}</span>
+        <span>{{ _('Kasse:') }}</span>
         <span class="badge bg-success">{{ format_eur_de(kas_aktuell) }}</span>
       </div>
-      <div class="card-body">
-        <div class="ratio" style="--bs-aspect-ratio: 100%;">
+      <div class="card-body sparkline-container">
+        <div class="ratio sparkline-ratio">
           <canvas id="sparklineKas"></canvas>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Formular für neuen Datensatz -->
+<!-- Formular für neuen Datensatz -->
+
 {% if can_add %}
-<div class="col-12 col-lg-4">
-  <div class="card shadow-sm h-100">
-    <div class="card-body">
-      <h2 class="h6 mb-3">{{ _('Neuen Datensatz hinzufügen') }}</h2>
-      <form method="post" action="{{ url_for('add') }}" id="transaction-form" novalidate>
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">  
+  <div class="col-12 col-md-4">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <h2 class="h6 mb-3">{{ _('Neuen Datensatz hinzufügen') }}</h2>
+        <form method="post" action="{{ url_for('add') }}" id="transaction-form" novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <!-- Datum -->
         <div class="form-floating mb-3">
           <input type="text" name="datum" id="datum" class="form-control" placeholder="Datum" value="{{ default_date }}" required autofocus>
@@ -82,15 +84,14 @@
           <input id="bemerkung" name="bemerkung" class="form-control" maxlength="500" placeholder="{{ _('Notiz') }}">
           <label for="bemerkung">{{ _('Bemerkung') }}</label>
         </div>
-
-        <button class="btn btn-success w-100">
-          <i class="bi-plus-lg me-1"></i> {{ _('Hinzufügen') }}
-        </button>
-      </form>
+          <button class="btn btn-success w-100">
+            <i class="bi-plus-lg me-1"></i> {{ _('Hinzufügen') }}
+          </button>
+        </form>
+      </div>
     </div>
   </div>
-</div>
-{% endif %}
+  {% endif %}
 </div>
 
 <!-- Tabelle -->

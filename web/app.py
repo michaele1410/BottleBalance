@@ -9,7 +9,7 @@ from email.message import EmailMessage
 from datetime import datetime, date, timedelta
 from decimal import Decimal, InvalidOperation
 from flask_babel import Babel, gettext as _, gettext as translate
-from flask import Flask, render_template, request, redirect, url_for, session, send_file, flash, abort
+from flask import Flask, render_template, request, redirect, url_for, session, send_file, flash, abort, jsonify
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import OperationalError
@@ -35,6 +35,13 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, 
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import mm
+
+# Document Upload
+from werkzeug.utils import secure_filename
+from uuid import uuid4
+from pathlib import Path
+import mimetypes
+
 
 # -----------------------
 # Konfiguration
@@ -70,6 +77,39 @@ IMPORT_ALLOW_DRYRUN  = os.getenv("IMPORT_ALLOW_DRYRUN", "true").lower() in ("1",
 # Optionaler API-Token für CI/Headless-Dry-Runs (Header: X-Import-Token)
 IMPORT_API_TOKEN     = os.getenv("IMPORT_API_TOKEN")  # leer = kein Token erlaubt
 
+# Document Upload
+ALLOWED_EXTENSIONS = {
+    'pdf','png','jpg','jpeg','gif','webp','heic','heif','svg',
+    'txt','csv','doc','docx','xls','xlsx','ppt','pptx','xml','json'
+}
+
+def allowed_file(filename: str) -> bool:
+    if not filename or '.' not in filename:
+        return False
+    ext = filename.rsplit('.', 1)[1].lower()
+    return ext in ALLOWED_EXTENSIONS
+
+def _entry_dir(entry_id: int) -> str:
+    p = os.path.join(UPLOAD_FOLDER, str(entry_id))
+    os.makedirs(p, exist_ok=True)
+    return p
+
+def _user_can_edit_entry(entry_id: int) -> bool:
+    """RBAC-Check: edit:any oder edit:own wenn created_by = current_user."""
+    allowed = ROLES.get(session.get('role'), set())
+    if 'entries:edit:any' in allowed:
+        return True
+    if 'entries:edit:own' in allowed:
+        user = current_user()
+        if not user: return False
+        with engine.begin() as conn:
+            owner = conn.execute(text("SELECT created_by FROM entries WHERE id=:id"), {'id': entry_id}).scalar_one_or_none()
+        return owner == user['id']
+    return False
+
+def _user_can_view_entry(entry_id: int) -> bool:
+    allowed = ROLES.get(session.get('role'), set())
+    return 'entries:view' in allowed
 
 # -----------------------
 # Logging
@@ -136,6 +176,9 @@ def get_timezone():
     return None  # oder ein Default wie 'Europe/Berlin'
 
 app = Flask(__name__, static_folder='static')
+
+UPLOAD_FOLDER = os.getenv("UPLOAD_FOLDER") or os.path.join(app.root_path, "uploads")
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 app.config['BABEL_DEFAULT_LOCALE'] = 'de'
 babel = Babel(app, locale_selector=get_locale, timezone_selector=get_timezone)
@@ -210,6 +253,19 @@ CREATE TABLE IF NOT EXISTS password_reset_tokens (
 );
 """
 
+CREATE_TABLE_ATTACHMENTS = """
+CREATE TABLE IF NOT EXISTS attachments (
+    id SERIAL PRIMARY KEY,
+    entry_id INTEGER NOT NULL REFERENCES entries(id) ON DELETE CASCADE,
+    stored_name TEXT NOT NULL,           -- serverseitiger Dateiname (uuid.ext)
+    original_name TEXT NOT NULL,         -- Originalname für Download
+    content_type TEXT,
+    size_bytes BIGINT,
+    uploaded_by INTEGER,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+"""
+
 def migrate_columns(conn):
     # Best-effort migrations for added columns
     conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS email TEXT"))
@@ -223,7 +279,7 @@ def migrate_columns(conn):
     conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS timezone TEXT"))
     conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS theme_preference TEXT DEFAULT 'system'"))
     conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login_at TIMESTAMP"))
-
+    conn.execute(text(CREATE_TABLE_ATTACHMENTS))   
 
 def init_db():
     with engine.begin() as conn:
@@ -293,8 +349,9 @@ def not_found(e):
 
 @app.errorhandler(413)
 def request_entity_too_large(e):
-    flash(_('Upload zu groß. Bitte kleinere CSV-Datei hochladen.'))
-    return redirect(url_for('index'))
+    flash(_('Datei zu groß. Bitte kleinere Datei hochladen.'))
+    return redirect(request.referrer or url_for('index'))
+
 
 @app.errorhandler(500)
 def internal_error(e):
@@ -481,6 +538,7 @@ def parse_int_strict(value: str):
 # -----------------------
 # Data Access
 # -----------------------
+
 def fetch_entries(search: str | None = None, date_from: date | None = None, date_to: date | None = None):
     where = []
     params = {}
@@ -497,10 +555,21 @@ def fetch_entries(search: str | None = None, date_from: date | None = None, date
 
     with engine.begin() as conn:
         rows = conn.execute(text(f"""
-            SELECT id, datum, vollgut, leergut, einnahme, ausgabe, bemerkung, created_by
-            FROM entries
+            SELECT 
+                e.id,
+                e.datum,
+                e.vollgut,
+                e.leergut,
+                e.einnahme,
+                e.ausgabe,
+                e.bemerkung,
+                e.created_by,
+                COALESCE((
+                    SELECT COUNT(*) FROM attachments a WHERE a.entry_id = e.id
+                ), 0) AS attachment_count
+            FROM entries e
             {where_sql}
-            ORDER BY datum ASC, id ASC
+            ORDER BY e.datum ASC, e.id ASC
         """), params).mappings().all()
 
     inventar = 0
@@ -516,7 +585,8 @@ def fetch_entries(search: str | None = None, date_from: date | None = None, date
         result.append({
             'id': r['id'], 'datum': r['datum'], 'vollgut': voll, 'leergut': leer,
             'einnahme': ein, 'ausgabe': aus, 'bemerkung': r['bemerkung'] or '',
-            'inventar': inventar, 'kassenbestand': kassenbestand, 'created_by': r['created_by']
+            'inventar': inventar, 'kassenbestand': kassenbestand, 'created_by': r['created_by'],
+            'attachment_count': r.get('attachment_count', 0)  # <— NEU
         })
     return result
 
@@ -2185,6 +2255,126 @@ def admin_export_dump():
         log_action(session.get('user_id'), 'db:export:error', None, f'Dump fehlgeschlagen: {e}')
         return redirect(url_for('admin_export_page'))
 
+# -----------------------
+# Document uploads for entries
+# -----------------------
+
+#Upload
+@app.post('/attachments/<int:entry_id>/upload')
+@login_required
+@require_csrf
+def attachments_upload(entry_id: int):
+    if not _user_can_edit_entry(entry_id):
+        abort(403)
+
+    files = request.files.getlist('files')  # name="files" (multiple)
+    if not files:
+        flash(_('Bitte Datei(en) auswählen.'))
+        return redirect(request.referrer or url_for('edit', entry_id=entry_id))
+
+    saved = 0
+    target_dir = _entry_dir(entry_id)
+
+    with engine.begin() as conn:
+        for f in files:
+            if not f or not f.filename:
+                continue
+            if not allowed_file(f.filename):
+                flash(_(f'Ungültiger Dateityp: {f.filename}'))
+                continue
+
+            ext = f.filename.rsplit('.', 1)[1].lower()
+            stored_name = f"{uuid4().hex}.{ext}"
+            original_name = secure_filename(f.filename) or f"file.{ext}"
+            path = os.path.join(target_dir, stored_name)
+
+            f.save(path)
+            size = os.path.getsize(path)
+            ctype = mimetypes.guess_type(original_name)[0] or 'application/octet-stream'
+
+            conn.execute(text("""
+                INSERT INTO attachments (entry_id, stored_name, original_name, content_type, size_bytes, uploaded_by)
+                VALUES (:e,:sn,:on,:ct,:sz,:ub)
+            """), {'e': entry_id, 'sn': stored_name, 'on': original_name, 'ct': ctype, 'sz': size, 'ub': session.get('user_id')})
+            saved += 1
+
+    if saved:
+        log_action(session.get('user_id'), 'attachments:upload', entry_id, f'files={saved}')
+        flash(_(f'{saved} Datei(en) hochgeladen.'))
+    else:
+        flash(_('Keine Dateien hochgeladen.'))
+
+    return redirect(request.referrer or url_for('edit', entry_id=entry_id))
+
+@app.get('/attachments/<int:entry_id>/list')
+@login_required
+def attachments_list(entry_id: int):
+    if not _user_can_view_entry(entry_id):
+        abort(403)
+    with engine.begin() as conn:
+        rows = conn.execute(text("""
+            SELECT id, original_name, content_type, size_bytes, created_at
+            FROM attachments WHERE entry_id=:e ORDER BY created_at DESC, id DESC
+        """), {'e': entry_id}).mappings().all()
+
+    data = [{
+        'id': r['id'],
+        'name': r['original_name'],
+        'size': r['size_bytes'],
+        'content_type': r['content_type'],
+        'url': url_for('attachments_download', att_id=r['id'])
+    } for r in rows]
+    return jsonify(data), 200
+
+#Download
+@app.get('/attachments/<int:att_id>/download')
+@login_required
+def attachments_download(att_id: int):
+    with engine.begin() as conn:
+        r = conn.execute(text("""
+            SELECT a.id, a.entry_id, a.stored_name, a.original_name, a.content_type
+            FROM attachments a WHERE a.id=:id
+        """), {'id': att_id}).mappings().first()
+    if not r:
+        abort(404)
+    if not _user_can_view_entry(r['entry_id']):
+        abort(403)
+
+    path = os.path.join(_entry_dir(r['entry_id']), r['stored_name'])
+    if not os.path.exists(path):
+        abort(404)
+
+    log_action(session.get('user_id'), 'attachments:download', r['entry_id'], f"att_id={att_id}")
+    return send_file(path, as_attachment=True, download_name=r['original_name'],
+                     mimetype=r.get('content_type') or 'application/octet-stream')
+
+#Delete
+# app.py
+@app.post('/attachments/<int:att_id>/delete')
+@login_required
+@require_csrf
+def attachments_delete(att_id: int):
+    with engine.begin() as conn:
+        r = conn.execute(text("""
+            SELECT id, entry_id, stored_name, original_name FROM attachments WHERE id=:id
+        """), {'id': att_id}).mappings().first()
+    if not r:
+        abort(404)
+    if not _user_can_edit_entry(r['entry_id']):
+        abort(403)
+
+    path = os.path.join(_entry_dir(r['entry_id']), r['stored_name'])
+    try:
+        if os.path.exists(path):
+            os.remove(path)
+    except Exception:
+        pass
+
+    with engine.begin() as conn:
+        conn.execute(text("DELETE FROM attachments WHERE id=:id"), {'id': att_id})
+    log_action(session.get('user_id'), 'attachments:delete', r['entry_id'], f"att_id={att_id}")
+    flash(_('Anhang gelöscht.'))
+    return redirect(request.referrer or url_for('edit', entry_id=r['entry_id']))
 
 # -----------------------
 # SMTP Test Mail via url/admin/smtp

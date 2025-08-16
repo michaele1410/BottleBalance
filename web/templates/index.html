@@ -1,9 +1,8 @@
 {% extends "base.html" %}
 {% block content %}
 
+
 <div class="row g-3 mb-4">
-  <!-- Inventar -->
-  <div class="row g-3 mb-4">
   <!-- Inventar -->
   <div class="col-6 col-md-4">
     <div class="card shadow-sm h-100">
@@ -214,9 +213,12 @@
             <td>{{ format_eur_de(e.kassenbestand) }}</td>
             <td>{{ e.bemerkung }}</td>
             <td class="text-end">
+              <!-- Bearbeiten -->
               <a class="btn btn-sm btn-outline-primary" href="{{ url_for('edit', entry_id=e.id) }}" title="{{ _('Bearbeiten') }}">
                 <i class="bi-pencil-square"></i>
               </a>
+
+              <!-- Löschen -->
               <form method="post" action="{{ url_for('delete', entry_id=e.id) }}" class="d-inline"
                     onsubmit="return confirm('{{ _('Eintrag wirklich löschen?') }}');">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -224,6 +226,17 @@
                   <i class="bi-trash"></i>
                 </button>
               </form>
+
+              <!-- Dokumente öffnen (mit Badge) -->
+              <button class="btn btn-sm btn-outline-secondary position-relative" type="button"
+                      onclick="openAttachments({{ e.id }})" title="{{ _('Dokumente öffnen') }}">
+                <i class="bi-paperclip"></i>
+                {% if e.attachment_count and e.attachment_count > 0 %}
+                  <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-secondary">
+                    {{ e.attachment_count }}
+                  </span>
+                {% endif %}
+              </button>
             </td>
           </tr>
         {% else %}
@@ -269,6 +282,25 @@
     </div>
   </div>
 </div>
+
+<!-- NEU: Attachments Modal -->
+<div class="modal fade" id="attachmentsModal" tabindex="-1" aria-labelledby="attachmentsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-md">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="attachmentsModalLabel">{{ _('Anhänge') }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Schließen') }}"></button>
+      </div>
+      <div class="modal-body">
+        <ul id="attachmentsList" class="list-group"></ul>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Schließen') }}</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 {% endblock %}
 
 
@@ -483,6 +515,56 @@ function sortTableByDate() {
   });
 
   rows.forEach(row => tbody.appendChild(row));
+}
+</script>
+
+<script>
+async function openAttachments(entryId) {
+  try {
+    const resp = await fetch(`{{ url_for('attachments_list', entry_id=0) }}`.replace('0', entryId));
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const list = await resp.json();
+
+    if (!list || list.length === 0) {
+      // Kein Anhang
+      const msg = "{{ _('Keine Anhänge vorhanden.') }}";
+      if (window.bootstrap?.Toast) {
+        alert(msg); // ggf. durch Toast ersetzen
+      } else {
+        alert(msg);
+      }
+      return;
+    }
+
+    if (list.length === 1) {
+      // Direkt öffnen
+      window.open(list[0].url, '_blank');
+      return;
+    }
+
+    // Mehrere -> Modal anzeigen
+    const ul = document.getElementById('attachmentsList');
+    ul.innerHTML = '';
+    list.forEach(it => {
+      const li = document.createElement('li');
+      li.className = 'list-group-item d-flex justify-content-between align-items-center';
+      li.innerHTML = `
+        <div class="text-truncate" style="max-width: 70%;">
+          <i class="bi-paperclip me-1"></i> ${it.name}
+        </div>
+        <a class="btn btn-sm btn-outline-primary" href="${it.url}" target="_blank">
+          {{ _('Öffnen') }}
+        </a>
+      `;
+      ul.appendChild(li);
+    });
+    const modal = new bootstrap.Modal(document.getElementById('attachmentsModal'));
+    modal.show();
+
+  } catch (e) {
+    console.error(e);
+    alert('Fehler beim Laden der Anhänge.');
+  }
 }
 </script>
 

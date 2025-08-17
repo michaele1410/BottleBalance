@@ -1,97 +1,165 @@
-<!DOCTYPE html>
-<html lang="{{ g.get('lang', 'de') }}">
-
+<!doctype html>
+<html lang="de" data-bs-theme="{{ theme_preference|default('system') }}">
 <head>
   <meta charset="utf-8">
+  <title>{{ _('BottleBalance') }}</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}BottleBalance{% endblock %}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/airbnb.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='custom.css') }}">
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='images/favicon.svg') }}">
+  <link rel="alternate icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
 
-  <!-- Bootstrap CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
-    integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossoriginhead>
+  <meta name="color-scheme" content="light dark">
+  <script>
+  (() => {
+    const stored = localStorage.getItem('theme') || '{{ theme_preference|default("system") }}';
+    const systemDark = window.matchMedia('(prefers-color-scheme: dark)');
+    const effective = stored === 'system' ? (systemDark.matches ? 'dark' : 'light') : stored;
+    document.documentElement.setAttribute('data-bs-theme', effective);
+  })();
+  </script>
+</head>
+<body>
 
-  <body{% if current_user and current_user.theme %} data-bs-theme="{{ current_user.theme }}" {% endif %}>
+  <!-- Navbar -->
+<nav class="navbar navbar-expand-lg bg-body-tertiary border-bottom">
+  <div class="container">
+    <a class="navbar-brand fw-semibold d-flex align-items-center gap-2" href="{{ url_for('index') }}">
+      <span class="logo-wrapper">
+        <img src="{{ url_for('static', filename='images/logo.svg') }}" alt="Logo" class="logo-img">
+      </span>
+      <span>{{ _('BottleBalance') }}{% if session.get('user_id') %}, {{ current_user().username|capitalize }}{% endif %}</span>
+    </a>
 
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg bg-body-tertiary border-bottom">
-      <div class="container">
-        <a class="navbar-brand d-flex align-items-center" href="{{ url_for('index') }}">
-          <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" height="36" class="me-2">
-          <span class="fw-semibold">BottleBalance</span>
+    {% if session.get('user_id') %}
+    <!-- Burger Toggle -->
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent"
+            aria-controls="navbarContent" aria-expanded="false" aria-label="Menü öffnen">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <!-- Collapsible Content -->
+    <div class="collapse navbar-collapse" id="navbarContent">
+      <div class="ms-auto d-flex flex-column flex-lg-row gap-2 mt-3 mt-lg-0">
+        <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('index') }}">
+          <i class="bi-house me-1"></i> {{ _('Dashboard') }}
         </a>
 
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav"
-          aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
-        </button>
+        {% if 'users:manage' in (ROLES.get(session.get('role'), [])) %}
+        <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('users_list') }}">
+          <i class="bi-people me-1"></i> {{ _('Benutzer') }}
+        </a>
+        {% endif %}
 
-        <div id="mainNav" class="collapse navbar-collapse">
-          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-            {# Start #}
-            <a class="nav-link" href="{{ url_for('index') }}">
-              <i class="bi bi-house me-1"></i>{{ _('Start') }}
-            </a>
+        {% if 'audit:view' in (ROLES.get(session.get('role'), set())) %}
+        <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('audit_list') }}">
+          <i class="bi-shield-check me-1"></i> {{ _('Audit') }}
+        </a>
+        {% endif %}
 
-            {# Zahlungsfreigaben – nutze jetzt deinen Endpoint 'zahlungsfreigabe' #}
-            <a class="nav-link" href="{{ safe_url_for('zahlungsfreigabe') }}">
-              <i class="bi bi-cash-coin me-1"></i>{{ _('Zahlungsfreigaben') }}
-            </a>
+        <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('profile') }}">
+          <i class="bi-person-gear me-1"></i> {{ _('Profil') }}
+        </a>
 
-            {# Benutzer – bis der Endpoint existiert, verhindern wir 500 mit safe_url_for #}
-            <a class="nav-link" href="{{ safe_url_for('users') }}">
-              <i class="bi bi-people me-1"></i>{{ _('Benutzer') }}
-            </a>
+        {% if 'users:manage' in (ROLES.get(session.get('role'), [])) %}
+        <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('admin_tools') }}">
+          <i class="bi-tools me-1"></i> {{ _('Admin-Werkzeuge') }}
+        </a>
+        {% endif %}
 
-          </ul>
-
-          <ul class="navbar-nav ms-auto">
-            {% if current_user.is_authenticated %}
-            <li class="nav-item"><span class="nav-link text-muted">{{ current_user.username }}</span></li>
-            <li class="nav-item"><a class="nav-link" href="{{ url_for('profile') }}"><i
-                  class="bi bi-person-circle me-1"></i>{{ _('Profil') }}</a></li>
-            <li class="nav-item"><a class="nav-link" href="{{ url_for('logout') }}"><i
-                  class="bi bi-box-arrow-right me-1"></i>{{ _('Logout') }}</a></li>
-            {% else %}
-            <li class="nav-item"><a class="nav-link" href="{{ url_for('login') }}"><i
-                  class="bi bi-box-arrow-in-right me-1"></i>{{ _('Login') }}</a></li>
-            {% endif %}
-          </ul>
-        </div>
+        <form method="post" action="{{ url_for('logout') }}" class="d-inline">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn btn-outline-secondary btn-sm">
+            <i class="bi-box-arrow-right me-1"></i> {{ _('Logout') }}
+          </button>
+        </form>
       </div>
-    </nav>
-
-    <!-- Flash-Messages -->
-    <div class="container mt-3">
-      {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-      <div class="alert-area">
-        {% for category, message in messages %}
-        <div class="alert alert-{{ 'warning' if category=='message' else category }} alert-dismissible fade show"
-          role="alert">
-          {{ message }}
-          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-        {% endfor %}
-      </div>
-      {% endif %}
-      {% endwith %}
     </div>
+    {% endif %}
+  </div>
+</nav>
 
-    <!-- Seiteninhalt -->
-    <main class="container my-4">
-      {% block content %}{% endblock %}
-    </main>
+  <!-- Main -->
+<main class="container my-4">
 
-    <!-- Footer -->
-    <footer class="border-top py-3">
-      <div class="container small text-muted">
-        © {{ now().year if now else '' }} BottleBalance
-      </div>
-    </footer>
+  {% if current_user() and current_user().get('role') == 'admin' and current_user().get('must_change_password') %}
+    <div class="alert alert-warning">
+      {{ _('Admin-Passwort noch nicht geändert.') }}
+      <a href="{{ url_for('profile') }}" class="alert-link">{{ _('Bitte im Profil aktualisieren.') }}</a>
+    </div>
+  {% endif %}
 
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
-      integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
-      crossorigin="anonymous"></script>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ message|safe }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
 
-    {% block extra_scripts %}{% endblock %}
+
+  {% block content %}{% endblock %}
+</main>
+
+  
+<!-- Footer -->
+<footer class="border-top py-3">
+  <div class="container text-muted small">
+    © <a href="mailto:webmaster@michaeleitdorf.de" class="link-secondary text-decoration-none">Michael Eitdorf</a>
+  </div>
+</footer>
+
+<!-- JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/de.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const mq = window.matchMedia('(prefers-color-scheme: dark)');
+  function applyTheme(mode) {
+    const effective = mode === 'system' ? (mq.matches ? 'dark' : 'light') : mode;
+    localStorage.setItem('theme', mode);
+    document.documentElement.setAttribute('data-bs-theme', effective);
+  }
+  document.querySelectorAll('input[name="theme"]').forEach(radio => {
+    radio.addEventListener('change', e => applyTheme(e.target.value));
+  });
+  mq.addEventListener('change', () => {
+    if ((localStorage.getItem('theme') || '{{ theme_preference|default("system") }}') === 'system') {
+      applyTheme('system');
+    }
+  });
+});
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  // Flatpickr für Datum
+    if (document.querySelector('#datum')) {
+  flatpickr("#datum", {
+    dateFormat: "d.m.Y",
+    locale: "de"
+  });
+    }
+
+  // Haptisches Feedback für iOS
+  function hapticFeedback() {
+    if (navigator.vibrate) navigator.vibrate(10);
+  }
+  document.querySelectorAll('#transaction-form input').forEach(el => {
+    el.addEventListener('focus', hapticFeedback);
+  });
+});
+</script>
+{% endblock %}
+</body>
+</html>

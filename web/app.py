@@ -21,6 +21,7 @@ from functools import wraps
 from typing import Tuple
 from urllib.parse import urlencode
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image as RLImage, PageBreak, KeepTogether
+from types import SimpleNamespace
 #from flask_login import login_required
 import csv
 import io
@@ -491,10 +492,10 @@ def current_user():
         return None
     with engine.begin() as conn:
         row = conn.execute(text("""
-            SELECT id, username, email, role, active, must_change_password, totp_enabled,
-                   backup_codes, locale, timezone, theme_preference, can_approve
-            FROM users WHERE id=:id
-        """), {'id': uid}).mappings().first()
+                    SELECT id, username, email, role, active, must_change_password, totp_enabled,
+                        backup_codes, locale, timezone, theme_preference, can_approve, last_login_at
+                    FROM users WHERE id=:id
+                """), {'id': uid}).mappings().first()
     return dict(row) if row else None
 
 def login_required(fn):
@@ -1217,12 +1218,35 @@ def utility_processor():
             return False
     return dict(safe_url_for=safe_url_for, has_endpoint=has_endpoint)
 
+
+# ---- Jinja current_user Proxy (callable + dict-like) ----
+class _CurrentUserProxy(SimpleNamespace):
+    def __call__(self):
+        # erlaubt legacy {{ current_user() }} - gibt sich selbst zurück
+        return self
+    def get(self, key, default=None):
+        # erlaubt legacy {{ current_user().get('feld') }}
+        return getattr(self, key, default)
+
+@app.context_processor
 def inject_theme():
-    user = current_user()
-    theme = user.get('theme_preference') if user else 'system'
+    """
+    Stellt globale Template-Variablen bereit.
+    Backwards-compat:
+      - {{ current_user.is_authenticated }}
+      - {{ current_user().get('username') }}
+    """
+    user_dict = current_user()  # nutzt deine bestehende DB-Funktion
+    theme = 'system'
+    if user_dict:
+        cu = _CurrentUserProxy(**user_dict, is_authenticated=True)
+        theme = user_dict.get('theme_preference') or 'system'
+    else:
+        cu = _CurrentUserProxy(is_authenticated=False)
+
     return {
         'theme_preference': theme,
-        'current_user': current_user,
+        'current_user': cu,               # Objekt, aber auch aufrufbar
         'ROLES': ROLES,
         'set': set,
         'IMPORT_USE_PREVIEW': IMPORT_USE_PREVIEW,
@@ -1230,8 +1254,9 @@ def inject_theme():
         'format_date_de': format_date_de,
         'format_eur_de': format_eur_de,
         'csrf_token': csrf_token,
-        '_': translate  # Babel-Funktion explizit bereitstellen
+        '_': translate                   # Babel-Funktion für Templates
     }
+
 @app.context_processor
 def inject_helpers():
     def qs(_remove=None, **overrides):
@@ -2931,6 +2956,7 @@ def zahlungsfreigabe_antrag():
 
     paragraph = (request.form.get('paragraph') or '').strip()
     verwendungszweck = (request.form.get('zweck') or '').strip()
+    datum = parse_date_de_or_today(request.form.get('datum'))
     datum_str = (request.form.get('datum') or '').strip()
     betrag_str = (request.form.get('betrag') or '').strip()
     lieferant = (request.form.get('lieferant') or '').strip()

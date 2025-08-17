@@ -10,7 +10,7 @@
 
       <div class="d-flex gap-2">
         <!-- Filter: Status (GET) -->
-        <form class="d-flex align-items-end gap-2" method="get" action="{{ url_for('payment_authorization') }}">
+        <form class="d-flex align-items-end gap-2" method="get" action="{{ url_for('zahlungsfreigabe') }}">
           {% set selected = request.args.getlist('status') %}
           {% set status_choices = status_choices or ['offen', 'freigegeben', 'on hold', 'abgeschlossen', 'zurückgezogen'] %}
           <div>
@@ -29,7 +29,7 @@
             <i class="bi bi-funnel me-1"></i>{{ _('Anwenden') }}
           </button>
           {% if selected %}
-            <a class="btn btn-outline-secondary" href="{{ url_for('payment_authorization') }}">
+            <a class="btn btn-outline-secondary" href="{{ url_for('zahlungsfreigabe') }}">
               <i class="bi bi-x-circle me-1"></i>{{ _('Zurücksetzen') }}
             </a>
           {% endif %}
@@ -83,7 +83,7 @@
               <div class="d-flex justify-content-end gap-2 flex-wrap">
 
                 <!-- Freigeben -->
-                <form method="post" action="{{ url_for('pa_approve', aid=antrag.id) }}">
+                <form method="post" action="url_for('freigeben_antrag', antrag_id=id)">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                   <button class="btn btn-sm btn-success" {% if not current_user.can_approve %}disabled{% endif %}>
                     <i class="bi bi-check2-circle me-1"></i>{{ _('Freigeben') }}
@@ -91,7 +91,7 @@
                 </form>
 
                 <!-- Zurückziehen -->
-                <form method="post" action="{{ url_for('pa_withdraw', aid=antrag.id) }}">
+                <form method="post" action="{{ url_for('zurueckziehen_antrag', antrag_id=id) }}">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                   <button class="btn btn-sm btn-outline-secondary">
                     <i class="bi bi-arrow-counterclockwise me-1"></i>{{ _('Zurückziehen') }}
@@ -99,7 +99,7 @@
                 </form>
 
                 <!-- On hold -->
-                <form method="post" action="{{ url_for('pa_hold', aid=antrag.id) }}">
+                <form method="post" action="{{ url_for('on_hold_antrag', antrag_id=id) }}">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                   <button class="btn btn-sm btn-outline-info">
                     <i class="bi bi-pause-circle me-1"></i>{{ _('On hold') }}
@@ -107,7 +107,7 @@
                 </form>
 
                 <!-- Abschließen -->
-                <form method="post" action="{{ url_for('pa_complete', aid=antrag.id) }}">
+                <form method="post" action="{{ url_for('abschliessen_antrag', antrag_id=id) }}">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                   <button class="btn btn-sm btn-outline-dark">
                     <i class="bi bi-flag me-1"></i>{{ _('Abschließen') }}
@@ -115,7 +115,7 @@
                 </form>
 
                 <!-- Löschen -->
-                <form method="post" action="{{ url_for('pa_delete', aid=antrag.id) }}"
+                <form method="post" action="{{ url_for('loeschen_antrag', antrag_id=id) }}"
                       onsubmit="return confirm('{{ _('Antrag wirklich löschen? Dies kann nicht rückgängig gemacht werden.') }}');">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                   <button class="btn btn-sm btn-outline-danger">
@@ -149,7 +149,7 @@
 <div class="modal fade" id="modalNewRequest" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
-      <form method="post" action="{{ url_for('pa_add') }}">
+      <form method="post" action="{{ url_for('zahlungsfreigabe_antrag') }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="modal-header">
           <h5 class="modal-title">{{ _('Neuer Zahlungsantrag') }}</h5>

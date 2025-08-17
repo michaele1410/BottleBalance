@@ -32,255 +32,263 @@
   </div>
   <!-- Formular für neuen Datensatz -->
   {% if can_add %}
-  <div class="col-12 col-md-4">
-    <div class="card shadow-sm h-100">
-      <div class="card-body">
-        <h2 class="h6 mb-3">{{ _('Neuen Datensatz hinzufügen') }}</h2>
-        <form action="{{ url_for('add') }}" id="transaction-form" method="post" novalidate="">
-          <input name="csrf_token" type="hidden" value="{{ csrf_token() }}" />
-          <!-- Datum -->
-          <div class="form-floating mb-3">
-            <input autofocus="" class="form-control" id="datum" name="datum" placeholder="Datum" required="" type="text"
-              value="{{ default_date }}" />
-            <label for="datum">{{ _('Datum') }}</label>
-          </div>
-          <!-- Vollgut -->
-          <div class="form-floating mb-3">
-            <input autocomplete="off" class="form-control" id="vollgut" inputmode="numeric" min="0" name="vollgut"
-              placeholder="0" step="1" type="number" />
-            <label for="vollgut">{{ _('Vollgut') }}</label>
-          </div>
-          <!-- Leergut -->
-          <div class="form-floating mb-3">
-            <input autocomplete="off" class="form-control" id="leergut" inputmode="numeric" min="0" name="leergut"
-              placeholder="0" step="1" type="number" />
-            <label for="leergut">{{ _('Leergut') }}</label>
-          </div>
-          <!-- Einnahme -->
-          <div class="input-group mb-3">
-            <span class="input-group-text">{{ _('waehrung') }}</span>
-            <div class="form-floating flex-grow-1">
-              <input autocomplete="off" class="form-control" id="einnahme" inputmode="decimal" name="einnahme"
-                placeholder="0.00" step="0.01" type="number" />
-              <label for="einnahme">{{ _('Einnahme') }}</label>
+
+  <form id="filtersForm" ...>
+    <div class="col-12 col-md-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <h2 class="h6 mb-3">{{ _('Neuen Datensatz hinzufügen') }}</h2>
+          <form action="{{ url_for('add') }}" id="transaction-form" method="post" novalidate="">
+            <input name="csrf_token" type="hidden" value="{{ csrf_token() }}" />
+            <!-- Datum -->
+            <div class="form-floating mb-3">
+              <input autofocus="" class="form-control" id="datum" name="datum" placeholder="Datum" required=""
+                type="text" value="{{ default_date }}" />
+              <label for="datum">{{ _('Datum') }}</label>
             </div>
-          </div>
-          <!-- Ausgabe -->
-          <div class="input-group mb-3">
-            <span class="input-group-text">{{ _('waehrung') }}</span>
-            <div class="form-floating flex-grow-1">
-              <input autocomplete="off" class="form-control" id="ausgabe" inputmode="decimal" name="ausgabe"
-                placeholder="0.00" step="0.01" type="number" />
-              <label for="ausgabe">{{ _('Ausgabe') }}</label>
+            <!-- Vollgut -->
+            <div class="form-floating mb-3">
+              <input autocomplete="off" class="form-control" id="vollgut" inputmode="numeric" min="0" name="vollgut"
+                placeholder="0" step="1" type="number" />
+              <label for="vollgut">{{ _('Vollgut') }}</label>
             </div>
-          </div>
-          <!-- Bemerkung -->
-          <div class="form-floating mb-3">
-            <input class="form-control" id="bemerkung" maxlength="500" name="bemerkung"
-              placeholder="{{ _('Notiz') }}" />
-            <label for="bemerkung">{{ _('Bemerkung') }}</label>
-          </div>
-          <!-- Upload -->
-          <input id="temp_token" name="temp_token" type="hidden" value="{{ temp_token }}" />
-          <div class="d-flex gap-2">
-            <!-- Hinzufügen -->
-            <button class="btn btn-success flex-grow-1" disabled="" type="submit">
-              <i class="bi-plus-lg me-1"></i> {{ _('Hinzufügen') }}
-            </button>
-            <!-- Upload-Button mit Badge -->
-            <button aria-label="{{ _('Temporäre Anhänge hochladen') }}"
-              class="btn btn-outline-primary position-relative" data-bs-target="#uploadModal" data-bs-toggle="modal"
-              id="uploadBtn" title="{{ _('Temporäre Anhänge hochladen') }}" type="button">
-              <i class="bi-upload me-1"></i> {{ _('Upload') }}
-            </button>
+            <!-- Leergut -->
+            <div class="form-floating mb-3">
+              <input autocomplete="off" class="form-control" id="leergut" inputmode="numeric" min="0" name="leergut"
+                placeholder="0" step="1" type="number" />
+              <label for="leergut">{{ _('Leergut') }}</label>
+            </div>
+            <!-- Einnahme -->
+            <div class="input-group mb-3">
+              <span class="input-group-text">{{ _('waehrung') }}</span>
+              <div class="form-floating flex-grow-1">
+                <input autocomplete="off" class="form-control" id="einnahme" inputmode="decimal" name="einnahme"
+                  placeholder="0.00" step="0.01" type="number" />
+                <label for="einnahme">{{ _('Einnahme') }}</label>
+              </div>
+            </div>
+            <!-- Ausgabe -->
+            <div class="input-group mb-3">
+              <span class="input-group-text">{{ _('waehrung') }}</span>
+              <div class="form-floating flex-grow-1">
+                <input autocomplete="off" class="form-control" id="ausgabe" inputmode="decimal" name="ausgabe"
+                  placeholder="0.00" step="0.01" type="number" />
+                <label for="ausgabe">{{ _('Ausgabe') }}</label>
+              </div>
+            </div>
+            <!-- Bemerkung -->
+            <div class="form-floating mb-3">
+              <input class="form-control" id="bemerkung" maxlength="500" name="bemerkung"
+                placeholder="{{ _('Notiz') }}" />
+              <label for="bemerkung">{{ _('Bemerkung') }}</label>
+            </div>
+            <!-- Upload -->
+            <input id="temp_token" name="temp_token" type="hidden" value="{{ temp_token }}" />
+            <div class="d-flex gap-2">
+              <!-- Hinzufügen -->
+              <button class="btn btn-success flex-grow-1" disabled="" type="submit">
+                <i class="bi-plus-lg me-1"></i> {{ _('Hinzufügen') }}
+              </button>
+              <!-- Upload-Button mit Badge -->
+              <button aria-label="{{ _('Temporäre Anhänge hochladen') }}"
+                class="btn btn-outline-primary position-relative" data-bs-target="#uploadModal" data-bs-toggle="modal"
+                id="uploadBtn" title="{{ _('Temporäre Anhänge hochladen') }}" type="button">
+                <i class="bi-upload me-1"></i> {{ _('Upload') }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+</div>
+</form>
+
+
+<!-- Tabelle -->
+<div class="table-responsive">
+  <div class="card shadow-sm h-100">
+    <div class="card-body">
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
+        <h2 class="h5 m-0">
+          {{ _('Einträge') }}
+          <small class="text-muted ms-1">({{ entries|length }})</small>
+          {% if filters_active %}
+          <span class="badge rounded-pill bg-warning-subtle text-warning-emphasis ms-2">
+            {{ _('Filter aktiv') }}
+          </span>
+          {% endif %}
+        </h2>
+        <form action="{{ url_for('index') }}" class="w-100" data-autosubmit="true" id="filtersForm" method="get"
+          role="search">
+          <div class="table-tools card-subsection px-3 py-3 rounded-3 mb-3">
+            <div class="d-flex flex-wrap align-items-end justify-content-between gap-3">
+              <!-- LEFT: Filterfelder -->
+              <div class="filters flex-grow-1">
+                <div class="row g-2 align-items-end">
+                  <div class="col-12 col-md-4">
+                    <label class="form-label mb-1" for="q">Suche</label>
+                    <div class="input-group">
+                      <span class="input-group-text"><i class="bi bi-search"></i></span>
+                      <input class="form-control" id="q" name="q" placeholder="Datum/Bemerkung" type="text"
+                        value="{{ request.args.get('q', '') }}" />
+                      <button aria-label="Suche löschen" class="btn btn-outline-secondary" id="clear-q"
+                        title="Suche löschen" type="button">
+                        <i class="bi bi-x-lg"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="col-6 col-md-3">
+                    <label class="form-label mb-1" for="from">Von</label>
+                    <div class="input-group">
+                      <span class="input-group-text"><i class="bi bi-calendar-event"></i></span>
+                      <input class="form-control bb-date" id="from" name="from" placeholder="TT.MM.JJJJ" type="text"
+                        value="{{ request.args.get('from', '') }}" />
+                    </div>
+                  </div>
+                  <div class="col-6 col-md-3">
+                    <label class="form-label mb-1" for="to">Bis</label>
+                    <div class="input-group">
+                      <span class="input-group-text"><i class="bi bi-calendar-event"></i></span>
+                      <input class="form-control bb-date" id="to" name="to" placeholder="TT.MM.JJJJ" type="text"
+                        value="{{ request.args.get('to', '') }}" />
+                    </div>
+                  </div>
+                  <!-- QUICK RANGES -->
+                  <div class="col-12 col-md-2">
+                    <label class="form-label mb-1 d-none d-md-block">Zeitraum</label>
+                    <div aria-label="Schnell-Zeiträume" class="btn-group w-100" role="group">
+                      <button
+                        class="btn btn-outline-secondary btn-quickrange {{ 'active' if range_active == 'today' else '' }}"
+                        data-range="today" type="button">Heute</button>
+                      <button
+                        class="btn btn-outline-secondary btn-quickrange {{ 'active' if range_active == 'week' else '' }}"
+                        data-range="week" type="button">Woche</button>
+                      <button
+                        class="btn btn-outline-secondary btn-quickrange {{ 'active' if range_active == 'month' else '' }}"
+                        data-range="month" type="button">Monat</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- RIGHT: Aktionen -->
+              <div class="actions d-flex flex-wrap align-items-end gap-2">
+                <!-- Filtern / Zurücksetzen -->
+                <div aria-label="Filter-Aktionen" class="btn-group" role="group">
+                  <button class="btn btn-primary" type="submit">
+                    <i class="bi bi-search"></i> Filtern
+                  </button>
+                  <a class="btn btn-outline-secondary" href="{{ url_for('index') }}">
+                    <i class="bi bi-arrow-counterclockwise"></i> Zurücksetzen
+                  </a>
+                </div>
+                <!-- Export / Import -->
+                <div aria-label="Export/Import" class="btn-toolbar" role="toolbar">
+                  <div class="btn-group me-2" role="group">
+                    <!-- Wrapper erlaubt Tooltip auch bei disabled -->
+                    <span class="d-inline-block" data-bs-toggle="tooltip" tabindex="0"
+                      title="{{ '' if has_data else _('Keine Daten im Zeitraum') }}">
+                      {% if not has_data %}
+                      <button type="button" class="btn btn-outline-primary dropdown-toggle" id="exportDropdown"
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-download"></i> Export
+                      </button>
+                      {% endif %}
+                    </span>
+                    <ul aria-labelledby="exportDropdown" class="dropdown-menu dropdown-menu-end">
+                      <li>
+                        <a class="dropdown-item {{ '' if has_data else 'disabled pe-none' }}"
+                          href="{{ url_for('export_csv', **request.args) }}">
+                          <i class="bi bi-filetype-csv me-2"></i>CSV
+                        </a>
+                      </li>
+                      <li>
+                        <a class="dropdown-item {{ '' if has_data else 'disabled pe-none' }}"
+                          href="{{ url_for('export_pdf', **request.args) }}">
+                          <i class="bi bi-file-earmark-pdf me-2"></i>PDF
+                        </a>
+                      </li>
+                    </ul>
+                  </div>
+                  <div class="btn-group" role="group">
+                    <button class="btn btn-outline-primary" data-bs-target="#csvImportModal" data-bs-toggle="modal"
+                      type="button">
+                      <i class="bi bi-upload"></i> CSV Import
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </form>
-      </div>
-    </div>
-  </div>
-  {% endif %}
-</div>
-<!-- Tabelle -->
-<div class="card shadow-sm">
-  <div class="card-body">
-    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
-      <h2 class="h5 m-0">
-        {{ _('Einträge') }}
-        <small class="text-muted ms-1">({{ entries|length }})</small>
-        {% if filters_active %}
-        <span class="badge rounded-pill bg-warning-subtle text-warning-emphasis ms-2">
-          {{ _('Filter aktiv') }}
-        </span>
-        {% endif %}
-      </h2>
-      <form action="{{ url_for('index') }}" class="w-100" data-autosubmit="true" id="filtersForm" method="get"
-        role="search">
-        <div class="table-tools card-subsection px-3 py-3 rounded-3 mb-3">
-          <div class="d-flex flex-wrap align-items-end justify-content-between gap-3">
-            <!-- LEFT: Filterfelder -->
-            <div class="filters flex-grow-1">
-              <div class="row g-2 align-items-end">
-                <div class="col-12 col-md-4">
-                  <label class="form-label mb-1" for="q">Suche</label>
-                  <div class="input-group">
-                    <span class="input-group-text"><i class="bi bi-search"></i></span>
-                    <input class="form-control" id="q" name="q" placeholder="Datum/Bemerkung" type="text"
-                      value="{{ request.args.get('q', '') }}" />
-                    <button aria-label="Suche löschen" class="btn btn-outline-secondary" id="clear-q"
-                      title="Suche löschen" type="button">
-                      <i class="bi bi-x-lg"></i>
-                    </button>
-                  </div>
-                </div>
-                <div class="col-6 col-md-3">
-                  <label class="form-label mb-1" for="from">Von</label>
-                  <div class="input-group">
-                    <span class="input-group-text"><i class="bi bi-calendar-event"></i></span>
-                    <input class="form-control bb-date" id="from" name="from" placeholder="TT.MM.JJJJ" type="text"
-                      value="{{ request.args.get('from', '') }}" />
-                  </div>
-                </div>
-                <div class="col-6 col-md-3">
-                  <label class="form-label mb-1" for="to">Bis</label>
-                  <div class="input-group">
-                    <span class="input-group-text"><i class="bi bi-calendar-event"></i></span>
-                    <input class="form-control bb-date" id="to" name="to" placeholder="TT.MM.JJJJ" type="text"
-                      value="{{ request.args.get('to', '') }}" />
-                  </div>
-                </div>
-                <!-- QUICK RANGES -->
-                <div class="col-12 col-md-2">
-                  <label class="form-label mb-1 d-none d-md-block">Zeitraum</label>
-                  <div aria-label="Schnell-Zeiträume" class="btn-group w-100" role="group">
-                    <button
-                      class="btn btn-outline-secondary btn-quickrange {{ 'active' if range_active == 'today' else '' }}"
-                      data-range="today" type="button">Heute</button>
-                    <button
-                      class="btn btn-outline-secondary btn-quickrange {{ 'active' if range_active == 'week' else '' }}"
-                      data-range="week" type="button">Woche</button>
-                    <button
-                      class="btn btn-outline-secondary btn-quickrange {{ 'active' if range_active == 'month' else '' }}"
-                      data-range="month" type="button">Monat</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <!-- RIGHT: Aktionen -->
-            <div class="actions d-flex flex-wrap align-items-end gap-2">
-              <!-- Filtern / Zurücksetzen -->
-              <div aria-label="Filter-Aktionen" class="btn-group" role="group">
-                <button class="btn btn-primary" type="submit">
-                  <i class="bi bi-search"></i> Filtern
-                </button>
-                <a class="btn btn-outline-secondary" href="{{ url_for('index') }}">
-                  <i class="bi bi-arrow-counterclockwise"></i> Zurücksetzen
-                </a>
-              </div>
-              <!-- Export / Import -->
-              <div aria-label="Export/Import" class="btn-toolbar" role="toolbar">
-                <div class="btn-group me-2" role="group">
-                  <!-- Wrapper erlaubt Tooltip auch bei disabled -->
-                  <span class="d-inline-block" data-bs-toggle="tooltip" tabindex="0"
-                    title="{{ '' if has_data else _('Keine Daten im Zeitraum') }}">
-                    {% if not has_data %}
-                    <button type="button" class="btn btn-outline-primary dropdown-toggle" id="exportDropdown"
-                      data-bs-toggle="dropdown" aria-expanded="false">
-                      <i class="bi bi-download"></i> Export
-                    </button>
+        <!-- Tabelle -->
+        <div class="table-responsive">
+          <table class="table table-sm align-middle table-striped">
+            <thead class="table-light">
+              <tr>
+                <th aria-sort="none" onclick="sortTableByDate()" scope="col" style="cursor:pointer;">
+                  {{ _('Datum') }} <i class="bi bi-arrow-down-up"></i>
+                </th>
+                <th scope="col">{{ _('Vollgut') }}</th>
+                <th scope="col">{{ _('Leergut') }}</th>
+                <th scope="col">{{ _('Inventar') }}</th>
+                <th scope="col">{{ _('Einnahme') }}</th>
+                <th scope="col">{{ _('Ausgabe') }}</th>
+                <th scope="col">{{ _('Kassenbestand') }}</th>
+                <th scope="col">{{ _('Bemerkung') }}</th>
+                <th class="text-end" scope="col">{{ _('Aktionen') }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for e in entries %}
+              <tr>
+                <td>{{ format_date_de(e.datum) }}</td>
+                <td>{{ e.vollgut }}</td>
+                <td>{{ e.leergut }}</td>
+                <td>{{ e.inventar }}</td>
+                <td>{{ format_eur_de(e.einnahme) }}</td>
+                <td>{{ format_eur_de(e.ausgabe) }}</td>
+                <td>{{ format_eur_de(e.kassenbestand) }}</td>
+                <td>{{ e.bemerkung }}</td>
+                <td class="text-end">
+                  <!-- Bearbeiten -->
+                  <a class="btn btn-sm btn-outline-primary" href="{{ url_for('edit', entry_id=e.id) }}"
+                    title="{{ _('Bearbeiten') }}">
+                    <i class="bi-pencil-square"></i>
+                  </a>
+                  <!-- Dokumente öffnen (mit Badge) -->
+                  <button class="btn btn-sm btn-outline-secondary position-relative"
+                    onclick="openAttachments({{ e.id }})" title="{{ _('Dokumente öffnen') }}" type="button">
+                    <i class="bi-paperclip"></i>
+                    {% if e.attachment_count and e.attachment_count > 0 %}
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-secondary">
+                      {{ e.attachment_count }}
+                    </span>
                     {% endif %}
-                  </span>
-                  <ul aria-labelledby="exportDropdown" class="dropdown-menu dropdown-menu-end">
-                    <li>
-                      <a class="dropdown-item {{ '' if has_data else 'disabled pe-none' }}"
-                        href="{{ url_for('export_csv', **request.args) }}">
-                        <i class="bi bi-filetype-csv me-2"></i>CSV
-                      </a>
-                    </li>
-                    <li>
-                      <a class="dropdown-item {{ '' if has_data else 'disabled pe-none' }}"
-                        href="{{ url_for('export_pdf', **request.args) }}">
-                        <i class="bi bi-file-earmark-pdf me-2"></i>PDF
-                      </a>
-                    </li>
-                  </ul>
-                </div>
-                <div class="btn-group" role="group">
-                  <button class="btn btn-outline-primary" data-bs-target="#csvImportModal" data-bs-toggle="modal"
-                    type="button">
-                    <i class="bi bi-upload"></i> CSV Import
                   </button>
-                </div>
-              </div>
-            </div>
-          </div>
+                  <!-- Löschen -->
+                  <form action="{{ url_for('delete', entry_id=e.id) }}" class="d-inline" method="post"
+                    onsubmit="return confirm('{{ _('Eintrag wirklich löschen?') }}');">
+                    <input name="csrf_token" type="hidden" value="{{ csrf_token() }}" />
+                    <button class="btn btn-sm btn-outline-danger" title="{{ _('Löschen') }}">
+                      <i class="bi-trash"></i>
+                    </button>
+                  </form>
+                </td>
+              </tr>
+              {% else %}
+              <tr>
+                <td class="text-center text-muted" colspan="9">{{ _('Keine Einträge vorhanden.') }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
         </div>
-      </form>
-      <!-- Tabelle -->
-      <div class="table-responsive">
-        <table class="table table-sm align-middle table-striped">
-          <thead class="table-light">
-            <tr>
-              <th aria-sort="none" onclick="sortTableByDate()" scope="col" style="cursor:pointer;">
-                {{ _('Datum') }} <i class="bi bi-arrow-down-up"></i>
-              </th>
-              <th scope="col">{{ _('Vollgut') }}</th>
-              <th scope="col">{{ _('Leergut') }}</th>
-              <th scope="col">{{ _('Inventar') }}</th>
-              <th scope="col">{{ _('Einnahme') }}</th>
-              <th scope="col">{{ _('Ausgabe') }}</th>
-              <th scope="col">{{ _('Kassenbestand') }}</th>
-              <th scope="col">{{ _('Bemerkung') }}</th>
-              <th class="text-end" scope="col">{{ _('Aktionen') }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for e in entries %}
-            <tr>
-              <td>{{ format_date_de(e.datum) }}</td>
-              <td>{{ e.vollgut }}</td>
-              <td>{{ e.leergut }}</td>
-              <td>{{ e.inventar }}</td>
-              <td>{{ format_eur_de(e.einnahme) }}</td>
-              <td>{{ format_eur_de(e.ausgabe) }}</td>
-              <td>{{ format_eur_de(e.kassenbestand) }}</td>
-              <td>{{ e.bemerkung }}</td>
-              <td class="text-end">
-                <!-- Bearbeiten -->
-                <a class="btn btn-sm btn-outline-primary" href="{{ url_for('edit', entry_id=e.id) }}"
-                  title="{{ _('Bearbeiten') }}">
-                  <i class="bi-pencil-square"></i>
-                </a>
-                <!-- Dokumente öffnen (mit Badge) -->
-                <button class="btn btn-sm btn-outline-secondary position-relative" onclick="openAttachments({{ e.id }})"
-                  title="{{ _('Dokumente öffnen') }}" type="button">
-                  <i class="bi-paperclip"></i>
-                  {% if e.attachment_count and e.attachment_count > 0 %}
-                  <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-secondary">
-                    {{ e.attachment_count }}
-                  </span>
-                  {% endif %}
-                </button>
-                <!-- Löschen -->
-                <form action="{{ url_for('delete', entry_id=e.id) }}" class="d-inline" method="post"
-                  onsubmit="return confirm('{{ _('Eintrag wirklich löschen?') }}');">
-                  <input name="csrf_token" type="hidden" value="{{ csrf_token() }}" />
-                  <button class="btn btn-sm btn-outline-danger" title="{{ _('Löschen') }}">
-                    <i class="bi-trash"></i>
-                  </button>
-                </form>
-              </td>
-            </tr>
-            {% else %}
-            <tr>
-              <td class="text-center text-muted" colspan="9">{{ _('Keine Einträge vorhanden.') }}</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
       </div>
     </div>
   </div>
 </div>
+
 <!-- CSV Import Modal -->
 <div aria-hidden="true" aria-labelledby="csvImportModalLabel" class="modal fade" id="csvImportModal" tabindex="-1">
   <div class="modal-dialog modal-lg">

@@ -119,146 +119,110 @@
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
       <h2 class="h5 m-0">{{ _('Einträge') }}</h2>
 
-      <!-- Filter -->
-      <form method="get" class="row g-2 align-items-end w-100 w-md-auto">
-        <div class="col-12 col-md-3">
-          <label class="form-label">{{ _('Suche') }}</label>
-          <input type="text" name="q" class="form-control" placeholder="{{ _('Datum/Bemerkung') }}" value="{{ request.args.get('q','') }}">
-        </div>
-        <div class="col-6 col-md-2">
-          <label class="form-label">{{ _('Von') }}</label>
-          <input type="date" name="from" class="form-control" value="{{ request.args.get('from','') }}">
-        </div>
-        <div class="col-6 col-md-2">
-          <label class="form-label">{{ _('Bis') }}</label>
-          <input type="date" name="to" class="form-control" value="{{ request.args.get('to','') }}">
-        </div>
+      <form id="filtersForm" role="search" class="w-100" method="get" action="{{ url_for('entries') }}">
+        <div class="table-tools card-subsection px-3 py-3 rounded-3 mb-3">
+          <div class="d-flex flex-wrap align-items-end justify-content-between gap-3">
 
-        <!-- Toggle für Anhänge -->
-        <div class="col-12 mt-2">
-          <div class="btn-group" role="group" aria-label="Filter Anhänge">
-            <!-- Alle -->
-            <input type="radio"
-                  class="btn-check"
-                  name="attachments"
-                  id="att-all"
-                  value=""
-                  autocomplete="off"
-                  {% if not request.args.get('attachments') %}checked{% endif %}>
-            <label class="btn btn-outline-secondary position-relative"
-                  for="att-all"
-                  title="{{ _('Alle') }}"
-                  aria-label="{{ _('Alle') }}">
-              <i class="bi-list"></i>
-            </label>
+            <!-- LEFT: Filterfelder -->
+            <div class="filters flex-grow-1">
+              <div class="row g-2 align-items-end">
+                <div class="col-12 col-md-4">
+                  <label for="q" class="form-label mb-1">Suche</label>
+                  <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input id="q" name="q" type="text" class="form-control"
+                          placeholder="Datum/Bemerkung" value="{{ request.args.get('q', '') }}">
+                    <button class="btn btn-outline-secondary" type="button" id="clear-q"
+                            aria-label="Suche löschen" title="Suche löschen">
+                      <i class="bi bi-x-lg"></i>
+                    </button>
+                  </div>
+                </div>
 
-            <!-- Nur mit Anhang -->
-            <input type="radio"
-                  class="btn-check"
-                  name="attachments"
-                  id="att-only"
-                  value="only"
-                  autocomplete="off"
-                  {% if request.args.get('attachments') == 'only' %}checked{% endif %}>
-            <label class="btn btn-outline-secondary position-relative"
-                  for="att-only"
-                  title="{{ _('Nur mit Anhang') }}"
-                  aria-label="{{ _('Nur mit Anhang') }}">
-              <i class="bi-paperclip"></i>
-            </label>
+                <div class="col-6 col-md-3">
+                  <label for="from" class="form-label mb-1">Von</label>
+                  <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-calendar-event"></i></span>
+                    <input id="from" name="from" type="text"
+                          class="form-control bb-date" placeholder="TT.MM.JJJJ"
+                          value="{{ request.args.get('from', '') }}">
+                  </div>
+                </div>
 
-            <!-- Ohne Anhang -->
-            <input type="radio"
-                  class="btn-check"
-                  name="attachments"
-                  id="att-none"
-                  value="none"
-                  autocomplete="off"
-                  {% if request.args.get('attachments') == 'none' %}checked{% endif %}>
-            <label class="btn btn-outline-secondary position-relative"
-                  for="att-none"
-                  title="{{ _('Ohne Anhang') }}"
-                  aria-label="{{ _('Ohne Anhang') }}">
-              <i class="bi-paperclip"></i>
-              <i class="bi-slash"></i>
-            </label>
-          </div>
-        </div>
+                <div class="col-6 col-md-3">
+                  <label for="to" class="form-label mb-1">Bis</label>
+                  <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-calendar-event"></i></span>
+                    <input id="to" name="to" type="text"
+                          class="form-control bb-date" placeholder="TT.MM.JJJJ"
+                          value="{{ request.args.get('to', '') }}">
+                  </div>
+                </div>
 
-        <div class="col-12 col-md-auto mt-2 mt-md-0">
-          <div class="d-flex flex-row flex-wrap gap-2 align-items-center">
-            <button class="btn btn-outline-primary" type="submit">
-              <i class="bi-search me-1"></i> {{ _('Filtern') }}
-            </button>
-            <a class="btn btn-outline-secondary" href="{{ url_for('index') }}">
-              <i class="bi-x-circle me-1"></i> {{ _('Zurücksetzen') }}
-            </a>
+                <!-- QUICK RANGES (optional) -->
+                <div class="col-12 col-md-2">
+                  <label class="form-label mb-1 d-none d-md-block">Zeitraum</label>
+                  <div class="btn-group w-100" role="group" aria-label="Schnell-Zeiträume">
+                    <button type="button" class="btn btn-outline-secondary btn-quickrange" data-range="today">Heute</button>
+                    <button type="button" class="btn btn-outline-secondary btn-quickrange" data-range="week">Woche</button>
+                    <button type="button" class="btn btn-outline-secondary btn-quickrange" data-range="month">Monat</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- RIGHT: Aktionen -->
+            <div class="actions d-flex flex-wrap align-items-end gap-2">
+
+              <!-- Filtern / Zurücksetzen -->
+              <div class="btn-group" role="group" aria-label="Filter-Aktionen">
+                <button type="submit" class="btn btn-primary">
+                  <i class="bi bi-search"></i> Filtern
+                </button>
+                <a href="{{ url_for('entries') }}" class="btn btn-outline-secondary">
+                  <i class="bi bi-arrow-counterclockwise"></i> Zurücksetzen
+                </a>
+              </div>
+
+              <!-- Export / Import -->
+              <div class="btn-toolbar" role="toolbar" aria-label="Export/Import">
+                <div class="btn-group me-2" role="group">
+                  <button id="exportDropdown" type="button"
+                          class="btn btn-outline-primary dropdown-toggle"
+                          data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-download"></i> Export
+                  </button>
+                  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="exportDropdown">
+                    <li>
+                      <a class="dropdown-item {{ 'disabled pe-none' if (entries|length == 0) else '' }}"
+                        href="{{ url_for('export_csv') }}">
+                        <i class="bi bi-filetype-csv me-2"></i>CSV
+                      </a>
+                    </li>
+                    <li>
+                      <a class="dropdown-item {{ 'disabled pe-none' if (entries|length == 0) else '' }}"
+                        href="{{ url_for('export_pdf') }}">
+                        <i class="bi bi-file-earmark-pdf me-2"></i>PDF
+                      </a>
+                    </li>
+                  </ul>
+                </div>
+
+                <div class="btn-group" role="group">
+                  <button type="button" class="btn btn-outline-primary"
+                          data-bs-toggle="modal" data-bs-target="#csvImportModal">
+                    <i class="bi bi-upload"></i> CSV Import
+                  </button>
+                </div>
+              </div>
+
+            </div>
           </div>
         </div>
       </form>
 
-      <!-- Export -->
-      <div class="col-12 col-md-auto">
-        <div class="d-flex flex-row flex-wrap gap-2 align-items-center">
-          {% if can_export_pdf %}
-            <a class="btn btn-outline-danger"
-              href="{{ url_for('export_pdf') }}?{% if request.args.get('q') %}q={{ request.args.get('q')|urlencode }}{% endif %}{% if request.args.get('from') %}{% if request.args.get('q') %}&{% endif %}from={{ request.args.get('from')|urlencode }}{% endif %}{% if request.args.get('to') %}{% if request.args.get('q') or request.args.get('from') %}&{% endif %}to={{ request.args.get('to')|urlencode }}{% endif %}{% if request.args.get('attachments') %}{% if request.args.get('q') or request.args.get('from') or request.args.get('to') %}&{% endif %}attachments={{ request.args.get('attachments')|urlencode }}{% endif %}">
-              <i class="bi-file-earmark-pdf me-1"></i> PDF
-            </a>
-          {% endif %}
-          {% if can_export_csv %}
-          <a class="btn btn-outline-primary"
-            href="{{ url_for('export_csv') }}?{% if request.args.get('q') %}q={{ request.args.get('q')|urlencode }}{% endif %}{% if request.args.get('from') %}{% if request.args.get('q') %}&{% endif %}from={{ request.args.get('from')|urlencode }}{% endif %}{% if request.args.get('to') %}{% if request.args.get('q') or request.args.get('from') %}&{% endif %}to={{ request.args.get('to')|urlencode }}{% endif %}{% if request.args.get('attachments') %}{% if request.args.get('q') or request.args.get('from') or request.args.get('to') %}&{% endif %}attachments={{ request.args.get('attachments')|urlencode }}{% endif %}">
-            <i class="bi-download me-1"></i> CSV
-          </a>
-          {% endif %}
-          <!-- Import -->
-          {% if can_import %}
-              <!--details>
-                <summary style="cursor:pointer; font-weight:600;">
-                  {{ _('CSV Import') }}
-                </summary>
-                <div style="margin-top: .75rem;">
-                  <form action="{{ url_for('import_preview') if IMPORT_USE_PREVIEW else url_for('import_csv') }}" method="post" enctype="multipart/form-data" style="display:grid; gap:.5rem; grid-template-columns: 1fr auto;">
-                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <div>
-                      <label for="csvFile" style="display:block; font-weight:600; margin-bottom:.25rem;">{{ _('CSV-Datei auswählen') }}</label>
-                      <input id="csvFile" name="file" type="file" accept=".csv,text/csv" required
-                            style="width:100%; padding:.375rem .5rem; border:1px solid #ced4da; border-radius:.25rem;">
-                      <small style="color:#6c757d;">
-                        {{ _("Erwartete Header:") }} <code>Datum;Vollgut;Leergut;Inventar;Einnahme;Ausgabe;Kassenbestand;Bemerkung</code>
-                        {{ _("oder Kurzform ohne Inventar/Kassenbestand.") }}
-                      </small>
-                    </div>
 
-                    <div style="display:flex; flex-direction:column; justify-content:flex-end; gap:.25rem; min-width: 240px;">
-                      <label style="display:flex; align-items:center; gap:.5rem; white-space:nowrap;">
-                        <input type="checkbox" name="replace_all">
-                        <span>{{ _('Bestehende Einträge komplett ersetzen') }}</span>
-                      </label>
-
-                      <button type="submit"
-                              style="padding:.5rem .75rem; border:1px solid #0d6efd; background:#0d6efd; color:#fff; border-radius:.25rem; cursor:pointer;">
-                        {{ _('Vorschau anzeigen') }}
-                      </button>
-
-                      <a href="{{ url_for('import_sample') }}" style="text-align:center; font-size:.9rem; color:#0d6efd; text-decoration:none;">
-                        {{ _('Beispiel-CSV herunterladen') }}
-                      </a>
-                    </div>
-                  </form>
-                </div>
-              </details-->
-              <!-- CSV Import Button (öffnet Modal) -->
-              <a class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#csvImportModal">
-                <i class="bi-upload me-1"></i> CSV Import
-              </a>
-            {% endif %}
-        </div>
-      </div>
-    </div>
-
-    <!-- Tabelle -->
+<!-- Tabelle -->
     <div class="table-responsive">
       <table class="table table-sm align-middle table-striped">
         <thead class="table-light">
@@ -639,12 +603,11 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Auto-Submit beim Wechsel der Anhänge-Toggles
-    document.querySelectorAll('input[name="attachments"]').forEach(el => {
-      el.addEventListener('change', () => {
-        // Falls "Alle" (value="") gewählt ist, bleibt attachments="" – dein Server-Code
-        // wertet nur 'only'/'none' aus; leeres value führt zu keiner Einschränkung.
-        el.form?.submit();
-      });
+  document.querySelectorAll('input[name="attachments"]').forEach(el => {
+    el.addEventListener('change', () => {
+      // Falls "Alle" (value="") gewählt ist, bleibt attachments="" – dein Server-Code
+      // wertet nur 'only'/'none' aus; leeres value führt zu keiner Einschränkung.
+      el.form?.submit();
     });
   });
   </script>
@@ -721,95 +684,44 @@ async function openAttachments(entryId) {
 </script>
 
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-  const csrf = "{{ csrf_token() }}";
-  const token = document.getElementById('temp_token')?.value || '';
-  const listEl = document.getElementById('addTempAttachmentsList');
-  const badge = document.getElementById('uploadBadge');
-  const fileEl = document.getElementById('add_temp_files');
-  const btnUp = document.getElementById('btnTempUpload');
-
-  function toggleBtn() { if (btnUp) btnUp.disabled = !(fileEl?.files?.length > 0); }
-  fileEl?.addEventListener('change', toggleBtn);
-  toggleBtn();
-
-  function updateBadge(count) {
-    if (!badge) return;
-    if (count > 0) { badge.textContent = count > 99 ? '99+' : String(count); badge.classList.remove('d-none'); }
-    else { badge.classList.add('d-none'); }
-  }
-
-  async function refreshTempList() {
-    if (!token || !listEl) return;
-    const url = "{{ url_for('attachments_temp_list', token='__T__') }}".replace('__T__', token);
-    const resp = await fetch(url, { credentials: 'same-origin' });
-    if (!resp.ok) return;
-    const items = await resp.json();
-    listEl.innerHTML = '';
-    if (!items || items.length === 0) {
-      listEl.innerHTML = `<li class="list-group-item text-muted">{{ _('Keine Anhänge vorhanden.') }}</li>`;
-      updateBadge(0);
-      return;
-    }
-    updateBadge(items.length);
-    items.forEach(it => {
-      const li = document.createElement('li');
-      li.className = 'list-group-item d-flex justify-content-between align-items-center';
-      const left = document.createElement('div');
-      left.className = 'text-truncate'; left.style.maxWidth = '70%';
-      const icon = document.createElement('i'); icon.className = 'bi-paperclip me-1';
-      const nameSpan = document.createElement('span'); nameSpan.textContent = it.name;
-      left.append(icon, nameSpan);
-      const actions = document.createElement('div'); actions.className = 'd-flex gap-2';
-      const openA = document.createElement('a'); openA.className = 'btn btn-sm btn-outline-primary'; openA.href = it.url; openA.target = '_blank'; openA.textContent = "{{ _('Öffnen') }}";
-      const delBtn = document.createElement('button'); delBtn.className = 'btn btn-sm btn-outline-danger'; delBtn.dataset.id = it.id; delBtn.textContent = "{{ _('Löschen') }}";
-      delBtn.addEventListener('click', async (ev) => {
-        ev.preventDefault();
-        if (!confirm('{{ _("Anhang wirklich löschen?") }}')) return;
-        const attId = delBtn.dataset.id;
-        await fetch(`{{ url_for('attachments_temp_delete', att_id=0) }}`.replace('0', attId), { method: 'POST', headers: { 'X-CSRF-Token': "{{ csrf_token() }}" }, credentials: 'same-origin' });
-        refreshTempList();
-      });
-      actions.append(openA, delBtn);
-      li.append(left, actions);
-      listEl.appendChild(li);
-    });
-  }
-
-  const uploadModalEl = document.getElementById('uploadModal');
-  if (uploadModalEl) uploadModalEl.addEventListener('shown.bs.modal', refreshTempList);
-
-  btnUp?.addEventListener('click', async () => {
-    if (!token || !fileEl || !fileEl.files?.length) return;
-    for (const f of fileEl.files) {
-      const fd = new FormData();
-      fd.append('files', f);
-      fd.append('csrf_token', csrf);
-      const url = "{{ url_for('attachments_temp_upload', token='__T__') }}".replace('__T__', token);
-      const resp = await fetch(url, { method: 'POST', body: fd, credentials: 'same-origin' });
-      if (!resp.ok) { alert(await resp.text() || 'Upload fehlgeschlagen'); break; }
-    }
-    fileEl.value = '';
-    refreshTempList();
+  // Suchfeld leeren
+  document.getElementById('clear-q')?.addEventListener('click', () => {
+    const q = document.getElementById('q');
+    q.value = '';
+    q.focus();
   });
 
-  refreshTempList();
-});
-</script>
-
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-  // ... dein bestehender Code ...
-
-  // Auto-Submit beim Wechsel der Anhänge-Toggles
-  document.querySelectorAll('input[name="attachments"]').forEach(el => {
-    el.addEventListener('change', () => {
-      // Falls "Alle" (value="") gewählt ist, bleibt attachments="" – dein Server-Code
-      // wertet nur 'only'/'none' aus; leeres value führt zu keiner Einschränkung.
-      el.form?.submit();
-    });
-  });
-});
+  // Quickrange-Buttons (passt die Flatpickr Felder an)
+  function format(d) {
+    const pad = n => String(n).padStart(2, '0');
+    return `${pad(d.getDate())}.${pad(d.getMonth()+1)}.${d.getFullYear()}`;
+  }
+  const btns = document.querySelectorAll('.btn-quickrange');
+  btns.forEach(b => b.addEventListener('click', () => {
+    btns.forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    const from = document.getElementById('from');
+    const to = document.getElementById('to');
+    const now = new Date();
+    let start = new Date(now), end = new Date(now);
+    switch (b.dataset.range) {
+      case 'today':
+        // start/end = today
+        break;
+      case 'week': {
+        const day = (now.getDay()+6)%7; // Mo=0
+        start.setDate(now.getDate()-day);
+        end.setDate(start.getDate()+6);
+        break;
+      }
+      case 'month':
+        start = new Date(now.getFullYear(), now.getMonth(), 1);
+        end = new Date(now.getFullYear(), now.getMonth()+1, 0);
+        break;
+    }
+    from.value = format(start);
+    to.value = format(end);
+  }));
 </script>
 
 {% endblock %}

@@ -198,3 +198,61 @@ body {
     transform: rotate(360deg);
   }
 }
+
+/* ===== Table Tools / Toolbar ===== */
+.table-tools {
+  background: var(--bs-tertiary-bg, rgba(0,0,0,0.03));
+  border: 1px solid var(--bs-border-color, rgba(0,0,0,0.1));
+}
+
+/* Einheitliche Höhen für Inputs/Buttons */
+.table-tools .form-control,
+.table-tools .input-group-text,
+.table-tools .btn {
+  min-height: 38px;
+}
+
+.table-tools .input-group-text {
+  background-color: var(--bs-secondary-bg);
+  border-color: var(--bs-border-color);
+}
+
+/* Abstände und Kompaktheit */
+.table-tools .btn,
+.table-tools .form-control {
+  font-size: .95rem;
+}
+
+/* Dropdown im Dark Mode sauber */
+[data-bs-theme="dark"] .dropdown-menu {
+  background-color: var(--bs-body-bg);
+  border-color: var(--bs-border-color);
+}
+
+/* Quickrange aktiv-Style */
+.btn-quickrange.active {
+  background-color: var(--bs-primary);
+  color: #fff;
+  border-color: var(--bs-primary);
+}
+
+/* Mobile: Tools stapeln sich sinnvoll */
+@media (max-width: 768px) {
+  .table-tools .actions {
+    width: 100%;
+    justify-content: flex-start; /* Buttons unter den Filtern */
+  }
+  .table-tools .btn-toolbar {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+
+/* Optional: Sticky-Tools oberhalb der Tabelle beim Scrollen */
+@supports (position: sticky) {
+  .table-tools {
+    position: sticky;
+    top: calc(var(--bb-sticky-offset, 0px));
+    z-index: 101; /* über Tabellen-Header */
+  }
+}

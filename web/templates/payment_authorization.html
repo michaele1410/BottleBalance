@@ -1,4 +1,3 @@
-
 {% extends "base.html" %}
 {% block content %}
 <div class="container mt-4">
@@ -30,77 +29,105 @@
         </tr>
       </thead>
       <tbody>
-        {% for a in antraege %}
+        {% for antrag in antraege %}
         <tr>
-          <td>{{ a.antragsteller }}</td>
-          <td>{{ a.datum }}</td>
-          <td>{{ a.betrag }} €</td>
+          <td colspan="5">
+            <div class="mb-2">
+              <strong>Freigabe-Fortschritt:</strong>
+              {{ antrag.freigaben_count }} von {{ antrag.freigaben_gesamt }} freigegeben
+            </div>
+            <div class="progress" style="height: 20px;">
+              <div class="progress-bar" role="progressbar"
+                style="width: {{ (antrag.freigaben_count / antrag.freigaben_gesamt) * 100 }}%;"
+                aria-valuenow="{{ antrag.freigaben_count }}" aria-valuemin="0"
+                aria-valuemax="{{ antrag.freigaben_gesamt }}">
+                {{ antrag.freigaben_count }} / {{ antrag.freigaben_gesamt }}
+
+              </div>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td>{{ antrag.antragsteller }}</td>
+          <td>{{ antrag.datum }}</td>
+          <td>{{ antrag.betrag }} €</td>
           <td>
-            <span class="badge badge-status-{{ a.status|replace(' ', '_') }}">{{ a.status }}</span>
+            <span class="badge badge-status-{{ antrag.status|replace(' ', '_') }}">{{ antrag.status }}</span>
           </td>
           <td class="text-nowrap">
             <!-- Details -->
             <a class="btn btn-sm btn-outline-secondary"
-               href="{{ url_for('zahlungsfreigabe_detail', antrag_id=a.id) }}" title="Details">
+              href="{{ url_for('zahlungsfreigabe_detail', antrag_id=antrag.id) }}" title="Details">
               <i class="bi bi-eye"></i>
             </a>
 
             <!-- PDF -->
-            <a class="btn btn-sm btn-outline-dark"
-               href="{{ url_for('export_einzelantrag_pdf', antrag_id=a.id) }}" title="Als PDF exportieren">
+            <a class="btn btn-sm btn-outline-dark" href="{{ url_for('export_einzelantrag_pdf', antrag_id=antrag.id) }}"
+              title="Als PDF exportieren">
               <i class="bi bi-filetype-pdf"></i>
             </a>
 
-            <!-- Freigeben -->
-            <form method="post" action="{{ url_for('freigeben_antrag', antrag_id=a.id) }}" class="d-inline">
-              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <button class="btn btn-sm btn-success" {% if not a.can_freigeben %}disabled{% endif %}>
-                Freigeben
-              </button>
-            </form>
+            <!-- Freigeben -->            
+            {% if antrag.can_freigeben %}
+              <form method="post" action="{{ url_for('freigeben_antrag', antrag_id=antrag.id) }}" class="d-inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-sm btn-success">
+                  <i class="bi bi-check2-circle me-1"></i> Freigeben
+                </button>
+              </form>
+            {% endif %}
 
             <!-- On Hold -->
-            <form method="post" action="{{ url_for('on_hold_antrag', antrag_id=a.id) }}" class="d-inline">
+            <form method="post" action="{{ url_for('on_hold_antrag', antrag_id=antrag.id) }}" class="d-inline">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <button class="btn btn-sm btn-secondary" {% if not a.can_on_hold %}disabled{% endif %}>
+              <button class="btn btn-sm btn-secondary" {% if not antrag.can_on_hold %}disabled{% endif %}>
                 On Hold
               </button>
             </form>
 
+            <!-- Fortsetzen -->
+            {% if antrag.can_fortsetzen %}
+            <form method="post" action="{{ url_for('fortsetzen_antrag', antrag_id=antrag.id) }}" class="d-inline">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="btn btn-sm btn-secondary" {% if antrag.status !='On Hold' %}disabled{% endif %}>
+                Fortsetzen
+              </button>
+            </form>
+            {% endif %}
+
             <!-- Ablehnen -->
-            <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal"
-                    data-bs-target="#ablehnenModal" data-antrag-id="{{ a.id }}"
-                    {% if not a.can_ablehnen %}disabled{% endif %}>
+            <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#ablehnenModal"
+              data-antrag-id="{{ antrag.id }}" {% if not antrag.can_ablehnen %}disabled{% endif %}>
               Ablehnen
             </button>
 
             <!-- Zurückziehen -->
-            <form method="post" action="{{ url_for('zurueckziehen_antrag', antrag_id=a.id) }}" class="d-inline">
+            <form method="post" action="{{ url_for('zurueckziehen_antrag', antrag_id=antrag.id) }}" class="d-inline">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <button class="btn btn-sm btn-warning" {% if not a.can_zurueckziehen %}disabled{% endif %}>
+              <button class="btn btn-sm btn-warning" {% if not antrag.can_zurueckziehen %}disabled{% endif %}>
                 Zurückziehen
               </button>
             </form>
 
             <!-- Abschließen -->
-            <form method="post" action="{{ url_for('abschliessen_antrag', antrag_id=a.id) }}" class="d-inline">
+            <form method="post" action="{{ url_for('abschliessen_antrag', antrag_id=antrag.id) }}" class="d-inline">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <button class="btn btn-sm btn-info" {% if not a.can_abschliessen %}disabled{% endif %}>
+              <button class="btn btn-sm btn-info" {% if not antrag.can_abschliessen %}disabled{% endif %}>
                 Abschließen
               </button>
             </form>
 
             <!-- Löschen -->
-            <form method="post" action="{{ url_for('loeschen_antrag', antrag_id=a.id) }}" class="d-inline"
-                  onsubmit="return confirm('Wirklich löschen?');">
+            <form method="post" action="{{ url_for('loeschen_antrag', antrag_id=antrag.id) }}" class="d-inline"
+              onsubmit="return confirm('Wirklich löschen?');">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <button class="btn btn-sm btn-danger" {% if not a.can_loeschen %}disabled{% endif %}>
+              <button class="btn btn-sm btn-danger" {% if not antrag.can_loeschen %}disabled{% endif %}>
                 Löschen
               </button>
             </form>
           </td>
         </tr>
-        {% endfor %}
+        {% endfor %}  
       </tbody>
     </table>
   </div>
@@ -120,7 +147,7 @@
           <div class="mb-3">
             <label class="form-label">Begründung (Pflicht)</label>
             <textarea class="form-control" name="grund" required rows="4"
-                      placeholder="Bitte Ablehnungsgrund angeben."></textarea>
+              placeholder="Bitte Ablehnungsgrund angeben."></textarea>
           </div>
         </div>
         <div class="modal-footer">
@@ -145,7 +172,8 @@
 <!-- Modal: Neuer Antrag -->
 <div class="modal fade" id="antragModal" tabindex="-1" aria-labelledby="antragModalLabel" aria-hidden="true">
   <div class="modal-dialog">
-    <form method="post" action="{{ url_for('zahlungsfreigabe_antrag') }}" id="antragForm" class="needs-validation" novalidate>
+    <form method="post" action="{{ url_for('zahlungsfreigabe_antrag') }}" id="antragForm" class="needs-validation"
+      novalidate>
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title" id="antragModalLabel">Neuen Zahlungsantrag erstellen</h5>
@@ -174,8 +202,8 @@
             <div class="col-md-6">
               <label class="form-label">Betrag</label>
               <div class="input-group">
-                <input type="text" name="betrag" class="form-control" inputmode="decimal"
-                       placeholder="z. B. 49,90" required>
+                <input type="text" name="betrag" class="form-control" inputmode="decimal" placeholder="z. B. 49,90"
+                  required>
                 <span class="input-group-text">EUR</span>
                 <div class="invalid-feedback">Bitte einen Betrag angeben.</div>
               </div>
@@ -191,7 +219,7 @@
           <div class="mb-3">
             <label class="form-label">Begründung (optional)</label>
             <textarea name="begruendung" rows="3" class="form-control"
-                      placeholder="Weshalb ist die Zahlung notwendig?"></textarea>
+              placeholder="Weshalb ist die Zahlung notwendig?"></textarea>
           </div>
         </div>
 

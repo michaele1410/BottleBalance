@@ -35,20 +35,6 @@
           <div class="row g-3 align-items-start">
             <!-- Linke Spalte: Aktuelle Optionen -->
             <div class="col-md-5 order-2 order-md-1">
-              <label class="form-label">{{ _('Aktuelle Optionen') }}</label>
-              <ul class="list-group list-group-flush border rounded">
-                {% for opt in current_options %}
-                <li class="list-group-item py-1">{{ opt }}</li>
-                {% else %}
-                <li class="list-group-item text-muted">
-                  {{ _('Keine Optionen vorhanden') }}
-                </li>
-                {% endfor %}
-              </ul>
-            </div>
-
-            <!-- Rechte Spalte: Textarea-Formular -->
-            <div class="col-md-7 order-1 order-md-2">
               <form method="post" action="{{ url_for('admin_tools') }}" class="h-100 d-flex flex-column">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <input type="hidden" name="action" value="update_bemerkungen">
@@ -69,6 +55,20 @@
                   </button>
                 </div>
               </form>
+            </div>
+
+            <!-- Rechte Spalte: Textarea-Formular -->
+            <div class="col-md-7 order-1 order-md-2">
+              <label class="form-label">{{ _('Aktuelle Optionen') }}</label>
+              <ul class="list-group list-group-flush border rounded">
+                {% for opt in current_options %}
+                <li class="list-group-item py-1">{{ opt }}</li>
+                {% else %}
+                <li class="list-group-item text-muted">
+                  {{ _('Keine Optionen vorhanden') }}
+                </li>
+                {% endfor %}
+              </ul>
             </div>
           </div>
         </div>

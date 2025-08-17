@@ -2950,6 +2950,7 @@ def parse_date_iso_or_today(s: str | None) -> date:
         return date.today()
 
 
+
 @app.post('/zahlungsfreigabe/antrag')
 @login_required
 @require_csrf
@@ -2972,15 +2973,17 @@ def zahlungsfreigabe_antrag():
         flash(f'Ungültige Eingabe: {e}', 'danger')
         return redirect(url_for('zahlungsfreigabe'))
 
+    # 1) Antrag + Audit in EINER Transaktion
     with engine.begin() as conn:
-        res = conn.execute(text("""
+        antrag_id = conn.execute(text("""
             INSERT INTO zahlungsantraege (
                 antragsteller_id, datum, paragraph, verwendungszweck, betrag,
                 lieferant, begruendung, status, read_only, created_at, updated_at
             ) VALUES (
                 :uid, :datum, :para, :zweck, :betrag,
                 :lieferant, :begruendung, 'offen', TRUE, NOW(), NOW()
-            ) RETURNING id
+            )
+            RETURNING id
         """), {
             'uid': user['id'],
             'datum': datum,
@@ -2989,13 +2992,34 @@ def zahlungsfreigabe_antrag():
             'betrag': str(betrag),
             'lieferant': lieferant,
             'begruendung': begruendung
-        })
-        antrag_id = res.scalar_one()
+        }).scalar_one()
 
         conn.execute(text("""
             INSERT INTO zahlungsantrag_audit (antrag_id, user_id, action, timestamp, detail)
             VALUES (:aid, :uid, 'erstellt', NOW(), NULL)
         """), {'aid': antrag_id, 'uid': user['id']})
+
+    # 2) Approver-E-Mails in EINEM separaten DB-Block ermitteln
+    approver_emails = []
+    with engine.begin() as conn:
+        approver_emails = conn.execute(text("""
+            SELECT email
+            FROM users
+            WHERE can_approve = TRUE AND email IS NOT NULL AND email <> ''
+        """)).scalars().all()
+
+    # 3) Versand NACH der Transaktion (so blockiert SMTP die DB nicht)
+    if approver_emails:
+        link = f"{(APP_BASE_URL or '').rstrip('/')}/zahlungsfreigabe/{antrag_id}"
+        subject = f"Neuer Zahlungsantrag #{antrag_id}"
+        body = f"Es wurde ein neuer Zahlungsantrag erstellt.\n\nLink: {link}"
+
+        for email in approver_emails:
+            try:
+                send_mail(email, subject, body)
+            except Exception as e:
+                # Fehler loggen, aber Nutzerfluss nicht abbrechen
+                logger.error("E-Mail an Approver %s fehlgeschlagen: %s", email, e)
 
     flash('Zahlungsantrag erfolgreich erstellt.', 'success')
     return redirect(url_for('zahlungsfreigabe'))
@@ -3449,38 +3473,140 @@ def export_alle_antraege_pdf():
     buffer.seek(0)
     return send_file(buffer, as_attachment=True, download_name='alle_antraege.pdf', mimetype='application/pdf')
 
+@app.route('/zahlungsfreigabe/<int:antrag_id>')
+@login_required
+def zahlungsfreigabe_detail(antrag_id):
+    user = current_user()
+    is_approver = bool(user and user.get('can_approve'))
+
+    with engine.begin() as conn:
+        antrag = conn.execute(text("""
+            SELECT z.id, z.antragsteller_id, u.username AS antragsteller,
+                   z.datum, z.paragraph, z.verwendungszweck, z.betrag,
+                   z.lieferant, z.begruendung, z.status, z.read_only,
+                   z.created_at, z.updated_at
+            FROM zahlungsantraege z
+            LEFT JOIN users u ON u.id = z.antragsteller_id
+            WHERE z.id = :id
+        """), {'id': antrag_id}).mappings().first()
+        if not antrag:
+            abort(404)
+
+        audit = conn.execute(text("""
+            SELECT a.id, a.user_id, u.username, a.action, a.timestamp, a.detail
+            FROM zahlungsantrag_audit a
+            LEFT JOIN users u ON u.id = a.user_id
+            WHERE a.antrag_id = :id
+            ORDER BY a.timestamp ASC
+        """), {'id': antrag_id}).mappings().all()
+
+        freigaben_count = conn.execute(text("""
+            SELECT COUNT(*) FROM zahlungsantrag_audit
+            WHERE antrag_id = :aid AND action = 'freigegeben'
+        """), {'aid': antrag_id}).scalar_one()
+
+        freigaben_gesamt = conn.execute(text("""
+            SELECT COUNT(*) FROM users WHERE can_approve = TRUE
+        """)).scalar_one()
+
+        already_approved = False
+        if user:
+            already_approved = conn.execute(text("""
+                SELECT EXISTS (
+                    SELECT 1 FROM zahlungsantrag_audit
+                    WHERE antrag_id = :aid AND user_id = :uid AND action = 'freigegeben'
+                )
+            """), {'aid': antrag_id, 'uid': user['id']}).scalar()
+
+    # Berechtigungs-Flags wie in der Übersicht
+    can_freigeben = is_approver and antrag['status'] == 'offen' and not already_approved
+    can_zurueckziehen_freigabe = is_approver and already_approved and antrag['status'] == 'offen'
+
+    return render_template(
+        'payment_authorization_detail.html',
+        antrag=antrag,
+        audit=audit,
+        freigaben_count=freigaben_count,
+        freigaben_gesamt=freigaben_gesamt,
+        can_freigeben=can_freigeben,
+        can_zurueckziehen_freigabe=can_zurueckziehen_freigabe
+    )
 @app.get('/zahlungsfreigabe/<int:antrag_id>/export/pdf')
 @login_required
 def export_einzelantrag_pdf(antrag_id):
     with engine.begin() as conn:
-        r = conn.execute(text("""
-            SELECT z.id, u.username AS antragsteller, z.datum, z.paragraph, z.verwendungszweck, z.betrag, z.lieferant, z.begruendung, z.status
+        antrag = conn.execute(text("""
+            SELECT z.id, u.username AS antragsteller, z.datum, z.paragraph,
+                   z.verwendungszweck, z.betrag, z.lieferant, z.begruendung, z.status
             FROM zahlungsantraege z
             LEFT JOIN users u ON u.id = z.antragsteller_id
-            WHERE z.id=:id
+            WHERE z.id = :id
         """), {'id': antrag_id}).mappings().first()
-    if not r:
-        abort(404)
 
+        if not antrag:
+            abort(404)
+
+        audit = conn.execute(text("""
+            SELECT a.timestamp, a.action, a.detail, u.username
+            FROM zahlungsantrag_audit a
+            LEFT JOIN users u ON u.id = a.user_id
+            WHERE a.antrag_id = :id
+            ORDER BY a.timestamp ASC
+        """), {'id': antrag_id}).mappings().all()
+
+    # PDF erstellen
     buffer = io.BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=A4)
+    doc = SimpleDocTemplate(buffer, pagesize=A4, leftMargin=18*mm, rightMargin=18*mm, topMargin=18*mm, bottomMargin=18*mm)
     styles = getSampleStyleSheet()
-    story = [Paragraph(f"Zahlungsantrag #{r['id']}", styles['Title']), Spacer(1, 12)]
-    for label, value in [
-        ('Antragsteller', r['antragsteller']),
-        ('Datum', r['datum'].strftime('%d.%m.%Y')),
-        ('Paragraph', f"§ {r['paragraph']}"),
-        ('Verwendungszweck', r['verwendungszweck']),
-        ('Betrag', f"{r['betrag']} EUR"),
-        ('Lieferant', r['lieferant']),
-        ('Begründung', r['begruendung']),
-        ('Status', r['status'])
-    ]:
-        story.append(Paragraph(f"<b>{label}:</b> {value}", styles['Normal']))
-        story.append(Spacer(1, 6))
+    story = []
+
+    story.append(Paragraph(f"Zahlungsantrag #{antrag['id']}", styles['Title']))
+    story.append(Spacer(1, 12))
+
+    details = [
+        ["Antragsteller/in:", antrag['antragsteller']],
+        ["Datum:", antrag['datum'].strftime('%d.%m.%Y') if antrag['datum'] else ''],
+        ["Paragraph:", f"§ {antrag['paragraph']}"],
+        ["Verwendungszweck:", antrag['verwendungszweck']],
+        ["Betrag:", f"{antrag['betrag']} EUR"],
+        ["Lieferant:", antrag['lieferant']],
+        ["Begründung:", antrag['begruendung']],
+        ["Status:", antrag['status']],
+    ]
+    table = Table(details, colWidths=[40*mm, None])
+    table.setStyle(TableStyle([
+        ('FONTNAME', (0,0), (0,-1), 'Helvetica-Bold'),
+        ('VALIGN', (0,0), (-1,-1), 'TOP'),
+        ('LINEBELOW', (0,0), (-1,-1), 0.25, colors.HexColor('#e9ecef')),
+    ]))
+    story.append(table)
+    story.append(Spacer(1, 12))
+
+    story.append(Paragraph("Audit-Historie", styles['Heading3']))
+    if audit:
+        audit_data = [["Zeitpunkt", "Aktion", "Benutzer", "Details"]]
+        for a in audit:
+            audit_data.append([
+                a['timestamp'].strftime('%d.%m.%Y %H:%M:%S'),
+                a['action'],
+                a['username'] or 'Unbekannt',
+                a['detail'] or ''
+            ])
+        audit_table = Table(audit_data, colWidths=[35*mm, 35*mm, 35*mm, None])
+        audit_table.setStyle(TableStyle([
+            ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#f1f3f5')),
+            ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+            ('GRID', (0,0), (-1,-1), 0.25, colors.HexColor('#dee2e6')),
+        ]))
+        story.append(audit_table)
+    else:
+        story.append(Paragraph("Keine Audit-Einträge vorhanden.", styles['Normal']))
+
     doc.build(story)
     buffer.seek(0)
-    return send_file(buffer, as_attachment=True, download_name=f'antrag_{antrag_id}.pdf', mimetype='application/pdf')
+    filename = f"zahlungsantrag_{antrag_id}.pdf"
+    return send_file(buffer, as_attachment=True, download_name=filename, mimetype='application/pdf')
+
 
 # -----------------------
 # SMTP Test Mail if paraam SEND_TEST_MAIL is set to true
@@ -3569,34 +3695,6 @@ def admin_tools():
         current_options = []
 
     return render_template("admin_tools.html", status=status, current_options=current_options)
-
-@app.route('/zahlungsfreigabe/<int:antrag_id>')
-@login_required
-def zahlungsfreigabe_detail(antrag_id):
-    user = current_user()
-    with engine.begin() as conn:
-        antrag = conn.execute(text("""
-            SELECT z.id, z.antragsteller_id, u.username AS antragsteller,
-                   z.datum, z.paragraph, z.verwendungszweck, z.betrag,
-                   z.lieferant, z.begruendung, z.status, z.read_only,
-                   z.created_at, z.updated_at
-            FROM zahlungsantraege z
-            LEFT JOIN users u ON u.id = z.antragsteller_id
-            WHERE z.id = :id
-        """), {'id': antrag_id}).mappings().first()
-
-        if not antrag:
-            abort(404)
-
-        audit = conn.execute(text("""
-            SELECT a.id, a.user_id, u.username, a.action, a.timestamp, a.detail
-            FROM zahlungsantrag_audit a
-            LEFT JOIN users u ON u.id = a.user_id
-            WHERE a.antrag_id = :id
-            ORDER BY a.timestamp ASC
-        """), {'id': antrag_id}).mappings().all()
-
-    return render_template('payment_authorization_detail.html', antrag=antrag, audit=audit)
 
 def send_status_email(to_email: str, antrag_id: int, status: str):
     subject = f"Zahlungsantrag #{antrag_id} – Status: {status.capitalize()}"

@@ -39,6 +39,101 @@
     </dd>
   </dl>
 
+
+  <!-- Fortschrittsanzeige -->
+  <div class="progress mb-3">
+    <div class="progress-bar bg-success" role="progressbar"
+      style="width: {{ (freigaben_count / freigaben_gesamt * 100) if freigaben_gesamt else 0 }}%;">
+      {{ freigaben_count }}/{{ freigaben_gesamt }} freigegeben
+    </div>
+  </div>
+
+  <!-- Buttons -->
+  <div class="btn-group" role="group">
+    <!-- Freigeben -->
+     <!--
+    {% if antrag.can_freigeben %}
+    <form method="post" action="{{ url_for('freigeben_antrag', antrag_id=antrag.id) }}" class="d-inline">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="btn btn-sm btn-success">
+        <i class="bi bi-check2-circle me-1"></i> Freigeben
+      </button>
+    </form>
+    {% elif antrag.can_zurueckziehen_freigabe %}
+    <form method="post" action="{{ url_for('freigabe_zurueckziehen', antrag_id=antrag.id) }}" class="d-inline">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="btn btn-sm btn-warning">
+        <i class="bi bi-arrow-counterclockwise me-1"></i> Freigabe zurückziehen
+      </button>
+    </form>
+    {% endif %}
+    -->
+    
+
+
+    <!-- On Hold -->
+     <!--
+    <form method="post" action="{{ url_for('on_hold_antrag', antrag_id=antrag.id) }}" class="d-inline">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="btn btn-sm btn-secondary" {% if not antrag.can_on_hold %}disabled{% endif %}>
+        On Hold
+      </button>
+    </form>
+    -->
+    
+
+    <!-- Fortsetzen -->
+     <!--
+    {% if antrag.can_fortsetzen %}
+    <form method="post" action="{{ url_for('fortsetzen_antrag', antrag_id=antrag.id) }}" class="d-inline">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="btn btn-sm btn-secondary">Fortsetzen</button>
+    </form>
+    {% endif %}
+    -->
+    
+
+
+    <!-- Ablehnen -->
+     <!--
+    <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#ablehnenModal"
+      data-antrag-id="{{ antrag.id }}" {% if not antrag.can_ablehnen %}disabled{% endif %}>
+      Ablehnen
+    </button>
+    -->
+    
+
+    <!-- Zurückziehen -->
+    <!--
+    <form method="post" action="{{ url_for('zurueckziehen_antrag', antrag_id=antrag.id) }}" class="d-inline">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="btn btn-sm btn-warning" {% if not antrag.can_zurueckziehen %}disabled{% endif %}>
+        Zurückziehen
+      </button>
+    </form>-->
+    
+    <!-- Abschließen -->
+     <!--
+    <form method="post" action="{{ url_for('abschliessen_antrag', antrag_id=antrag.id) }}" class="d-inline">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="btn btn-sm btn-info" {% if not antrag.can_abschliessen %}disabled{% endif %}>
+        Abschließen
+      </button>
+    </form>-->
+
+    <!-- Löschen -->
+    <!--
+    <form method="post" action="{{ url_for('loeschen_antrag', antrag_id=antrag.id) }}" class="d-inline"
+      onsubmit="return confirm('Wirklich löschen?');">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="btn btn-sm btn-danger" {% if not antrag.can_loeschen %}disabled{% endif %}>
+        Löschen
+      </button>
+    </form>
+  </div>-->
+    
+
+
   <h4 class="mt-5">Audit-Historie</h4>
   <table class="table table-sm table-striped align-middle">
     <thead>
@@ -61,4 +156,28 @@
     </tbody>
   </table>
 </div>
+
+<!-- Modal: Ablehnen -->
+<div class="modal fade" id="ablehnenModal" tabindex="-1" aria-labelledby="ablehnenLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <form method="post" action="{{ url_for('ablehnen_antrag', antrag_id=antrag.id) }}" class="modal-content">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="modal-header">
+        <h5 class="modal-title" id="ablehnenLabel">Antrag ablehnen</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label for="ablehnungsgrund" class="form-label">Begründung</label>
+          <textarea id="ablehnungsgrund" name="grund" class="form-control" rows="3" required></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
+        <button type="submit" class="btn btn-danger">Ablehnen</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 {% endblock %}

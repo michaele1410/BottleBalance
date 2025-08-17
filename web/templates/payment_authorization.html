@@ -45,7 +45,7 @@
             </a>
 
             <!-- PDF -->
-            <a class="btn btn-outline-danger"
+            <a class="btn btn-sm btn-outline-danger"
               href="{{ url_for('export_pdf') }}?{{ request.query_string.decode() if request.query_string else '' }}"
               title="{{ _('PDF exportieren') }}">
               <i class="bi-file-earmark-pdf me-1 text-danger"></i>

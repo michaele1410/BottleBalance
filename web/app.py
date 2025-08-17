@@ -2990,6 +2990,9 @@ def freigeben_antrag(antrag_id):
     with engine.begin() as conn:
         conn.execute(text("UPDATE zahlungsantraege SET status='freigegeben', updated_at=NOW() WHERE id=:id"), {'id': antrag_id})
         conn.execute(text("INSERT INTO zahlungsantrag_audit (antrag_id, user_id, action, timestamp) VALUES (:aid, :uid, 'freigegeben', NOW())"), {'aid': antrag_id, 'uid': user['id']})
+    email = get_antrag_email(antrag_id)
+    if email:
+        send_status_email(email, antrag_id, 'freigegeben')
     flash('Antrag wurde freigegeben.', 'success')
     return redirect(url_for('zahlungsfreigabe'))
 
@@ -3003,6 +3006,9 @@ def on_hold_antrag(antrag_id):
     with engine.begin() as conn:
         conn.execute(text("UPDATE zahlungsantraege SET status='on_hold', updated_at=NOW() WHERE id=:id"), {'id': antrag_id})
         conn.execute(text("INSERT INTO zahlungsantrag_audit (antrag_id, user_id, action, timestamp) VALUES (:aid, :uid, 'on_hold', NOW())"), {'aid': antrag_id, 'uid': user['id']})
+    email = get_antrag_email(antrag_id)
+    if email:
+        send_status_email(email, antrag_id, 'on_hold')
     flash('Antrag wurde auf On Hold gesetzt.', 'info')
     return redirect(url_for('zahlungsfreigabe'))
 
@@ -3020,6 +3026,9 @@ def abschliessen_antrag(antrag_id):
             return redirect(url_for('zahlungsfreigabe'))
         conn.execute(text("UPDATE zahlungsantraege SET status='abgeschlossen', updated_at=NOW() WHERE id=:id"), {'id': antrag_id})
         conn.execute(text("INSERT INTO zahlungsantrag_audit (antrag_id, user_id, action, timestamp) VALUES (:aid, :uid, 'abgeschlossen', NOW())"), {'aid': antrag_id, 'uid': user['id']})
+    email = get_antrag_email(antrag_id)
+    if email:
+        send_status_email(email, antrag_id, 'abschliessen')
     flash('Antrag wurde abgeschlossen.', 'success')
     return redirect(url_for('zahlungsfreigabe'))
 
@@ -3033,6 +3042,9 @@ def loeschen_antrag(antrag_id):
     with engine.begin() as conn:
         conn.execute(text("DELETE FROM zahlungsantraege WHERE id=:id"), {'id': antrag_id})
         conn.execute(text("INSERT INTO zahlungsantrag_audit (antrag_id, user_id, action, timestamp) VALUES (:aid, :uid, 'geloescht', NOW())"), {'aid': antrag_id, 'uid': user['id']})
+    email = get_antrag_email(antrag_id)
+    if email:
+        send_status_email(email, antrag_id, 'loeschen')
     flash('Antrag wurde gelöscht.', 'danger')
     return redirect(url_for('zahlungsfreigabe'))
 
@@ -3149,6 +3161,43 @@ def zahlungsfreigabe_detail(antrag_id):
         """), {'id': antrag_id}).mappings().all()
 
     return render_template('payment_authorization_detail.html', antrag=antrag, audit=audit)
+
+def send_status_email(to_email: str, antrag_id: int, status: str):
+    subject = f"Zahlungsantrag #{antrag_id} – Status: {status.capitalize()}"
+    body = f"Ihr Zahlungsantrag #{antrag_id} wurde auf '{status}' gesetzt.\n\nLink: {APP_BASE_URL}/zahlungsfreigabe/{antrag_id}"
+    msg = EmailMessage()
+    msg["From"] = FROM_EMAIL
+    msg["To"] = to_email
+    msg["Subject"] = subject
+    msg.set_content(body)
+
+    try:
+        if SMTP_SSL_ON:
+            context = ssl.create_default_context()
+            with SMTP_SSL(SMTP_HOST, SMTP_PORT, timeout=SMTP_TIMEOUT, context=context) as s:
+                if SMTP_USER and SMTP_PASS:
+                    s.login(SMTP_USER, SMTP_PASS)
+                s.send_message(msg)
+        else:
+            with SMTP(SMTP_HOST, SMTP_PORT, timeout=SMTP_TIMEOUT) as s:
+                s.ehlo()
+                if SMTP_TLS:
+                    s.starttls(context=ssl.create_default_context())
+                    s.ehlo()
+                if SMTP_USER and SMTP_PASS:
+                    s.login(SMTP_USER, SMTP_PASS)
+                s.send_message(msg)
+        logger.info("Status-E-Mail gesendet an %s für Antrag %s", to_email, antrag_id)
+    except Exception as e:
+        logger.error("Fehler beim Senden der Status-E-Mail: %s", e)
+
+def get_antrag_email(antrag_id: int):
+    with engine.begin() as conn:
+        return conn.execute(text("""
+            SELECT u.email FROM zahlungsantraege z
+            JOIN users u ON u.id = z.antragsteller_id
+            WHERE z.id = :id
+        """), {'id': antrag_id}).scalar_one_or_none()
 
     # SMTP-Status vorbereiten
     if not SMTP_HOST or not SMTP_PORT or not SMTP_USER or not SMTP_PASS:

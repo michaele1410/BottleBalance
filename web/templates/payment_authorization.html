@@ -1,0 +1,137 @@
+
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Zahlungsfreigabeformular</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</head>
+<body>
+<div class="container mt-4">
+    <h2>Zahlungsfreigabe</h2>
+    <div class="mb-3">
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#antragModal">Hinzufügen</button>
+    </div>
+    
+    <div class="mb-3">
+        <a href="{{ url_for('zahlungsfreigabe_audit') }}" class="btn btn-outline-secondary">
+            Audit-Übersicht anzeigen
+        </a>
+    </div>
+
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Antragsteller/in</th>
+                <th>Datum</th>
+                <th>Betrag</th>
+                <th>Status</th>
+                <th>Aktionen</th>
+            </tr>
+        </thead>
+        <tbody id="antragListe">
+            <tbody id="antragListe">
+            {% for a in antraege %}
+            <tr>
+                <td>{{ a.antragsteller }}</td>
+                <td>{{ a.datum }}</td>
+                <td>{{ a.betrag }}</td>
+                <td><span class="badge bg-warning text-dark">{{ a.status }}</span></td>
+                <td>
+                <form method="post" action="{{ url_for('freigeben_antrag', antrag_id=a.id) }}" style="display:inline;">
+                    <button class="btn btn-sm btn-success" {% if not a.can_freigeben %}disabled{% endif %}>Freigeben</button>
+                </form>
+                <form method="post" action="{{ url_for('on_hold_antrag', antrag_id=a.id) }}" style="display:inline;">
+                    <button class="btn btn-sm btn-secondary" {% if not a.can_on_hold %}disabled{% endif %}>On Hold</button>
+                </form>
+                <form method="post" action="{{ url_for('abschliessen_antrag', antrag_id=a.id) }}" style="display:inline;">
+                    <button class="btn btn-sm btn-info" {% if not a.can_abschliessen %}disabled{% endif %}>Abgeschlossen</button>
+                </form>
+                <form method="post" action="{{ url_for('loeschen_antrag', antrag_id=a.id) }}" style="display:inline;">
+                    <button class="btn btn-sm btn-danger" {% if not a.can_loeschen %}disabled{% endif %}>Löschen</button>
+                </form>
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+
+        </tbody>
+    </table>
+</div>
+
+<!-- Modal für neuen Antrag -->
+<div class="modal fade" id="antragModal" tabindex="-1" aria-labelledby="antragModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <form id="antragForm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Neuer Zahlungsantrag</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
+            </div>
+            <div class="modal-body">
+                <p>Sehr geehrter Vorstand,<br>
+                hiermit beantrage ich die Genehmigung für folgende Ausgabe gemäß § <input type="text" name="paragraph" class="form-control d-inline w-25" required> unserer Satzung:</p>
+                <div class="mb-3">
+                    <label>Antragsteller/in</label>
+                    <input type="text" name="antragsteller" class="form-control" value="Eingeloggter Benutzer" required>
+                </div>
+                <div class="mb-3">
+                    <label>Datum des Antrags</label>
+                    <input type="date" name="datum" class="form-control" value="2025-08-17" required>
+                </div>
+                <div class="mb-3">
+                    <label>Verwendungszweck</label>
+                    <textarea name="zweck" class="form-control" required></textarea>
+                </div>
+                <div class="mb-3">
+                    <label>Betrag (EUR, brutto)</label>
+                    <input type="number" name="betrag" class="form-control" step="0.01" required>
+                </div>
+                <div class="mb-3">
+                    <label>Lieferant/Dienstleister</label>
+                    <textarea name="lieferant" class="form-control" required></textarea>
+                </div>
+                <div class="mb-3">
+                    <label>Begründung/Nutzen für den Verein</label>
+                    <textarea name="begruendung" class="form-control" required></textarea>
+                </div>
+                <p>Mit der Bitte um Freigabe.<br>
+                Mit freundlichen Grüßen<br>
+                <span id="antragstellerName">Eingeloggter Benutzer</span></p>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-success">Antrag stellen</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
+            </div>
+        </div>
+    </form>
+  </div>
+</div>
+
+<script>
+document.getElementById('antragForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    // Formulardaten sammeln
+    const formData = new FormData(e.target);
+    const row = document.createElement('tr');
+    row.innerHTML = `
+        <td>${formData.get('antragsteller')}</td>
+        <td>${formData.get('datum')}</td>
+        <td>${formData.get('betrag')}</td>
+        <td><span class="badge bg-warning text-dark">Offen</span></td>
+        <td>
+            <button class="btn btn-sm btn-success">Freigeben</button>
+            <button class="btn btn-sm btn-secondary">On Hold</button>
+            <button class="btn btn-sm btn-danger">Löschen</button>
+            <button class="btn btn-sm btn-info" disabled>Abgeschlossen</button>
+        </td>
+    `;
+    document.getElementById('antragListe').appendChild(row);
+    e.target.reset();
+    const modal = bootstrap.Modal.getInstance(document.getElementById('antragModal'));
+    modal.hide();
+});
+</script>
+</body>
+</html>

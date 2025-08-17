@@ -70,6 +70,12 @@
         </a>
         {% endif %}
 
+        {% if 'users:manage' in (ROLES.get(session.get('role'), [])) %}
+        <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('zahlungsfreigabe') }}">
+          <i class="bi-tools me-1"></i> {{ _('Antrag') }}
+        </a>
+        {% endif %}
+
         <form method="post" action="{{ url_for('logout') }}" class="d-inline">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <button type="submit" class="btn btn-outline-secondary btn-sm">

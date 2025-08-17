@@ -1157,6 +1157,23 @@ def inject_theme():
         '_': translate  # Babel-Funktion explizit bereitstellen
     }
 
+def inject_helpers():
+    def qs(_remove=None, **overrides):
+        # aktuelle args kopieren
+        current = request.args.to_dict()
+        # entfernen
+        for k in (_remove or []):
+            current.pop(k, None)
+        # überschreiben/hinzufügen (nur nicht-None)
+        for k, v in overrides.items():
+            if v is None:
+                current.pop(k, None)
+            else:
+                current[k] = v
+        return urlencode(current, doseq=True)
+    return dict(qs=qs)
+
+
 # -----------------------
 # Password reset tokens
 # -----------------------

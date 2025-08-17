@@ -1,7 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
 
-
 <div class="row g-3 mb-4">
   <!-- Inventar -->
   <div class="col-6 col-md-4">
@@ -18,7 +17,7 @@
     </div>
   </div>
 
-<!-- Kassenbestand -->
+  <!-- Kassenbestand -->
   <div class="col-6 col-md-4">
     <div class="card shadow-sm h-100">
       <div class="card-header d-flex justify-content-between align-items-center">
@@ -33,79 +32,77 @@
     </div>
   </div>
 
-<!-- Formular für neuen Datensatz -->
-
-{% if can_add %}
+  <!-- Formular für neuen Datensatz -->
+  {% if can_add %}
   <div class="col-12 col-md-4">
     <div class="card shadow-sm h-100">
       <div class="card-body">
         <h2 class="h6 mb-3">{{ _('Neuen Datensatz hinzufügen') }}</h2>
         <form method="post" action="{{ url_for('add') }}" id="transaction-form" novalidate>
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <!-- Datum -->
-        <div class="form-floating mb-3">
-          <input type="text" name="datum" id="datum" class="form-control" placeholder="Datum" value="{{ default_date }}" required autofocus>
-          <label for="datum">{{ _('Datum') }}</label>
-        </div>
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-        <!-- Vollgut -->
-        <div class="form-floating mb-3">
-          <input id="vollgut" name="vollgut" type="number" inputmode="numeric" min="0" step="1" class="form-control" placeholder="0" autocomplete="off">
-          <label for="vollgut">{{ _('Vollgut') }}</label>
-        </div>
-
-        <!-- Leergut -->
-        <div class="form-floating mb-3">
-          <input id="leergut" name="leergut" type="number" inputmode="numeric" min="0" step="1" class="form-control" placeholder="0" autocomplete="off">
-          <label for="leergut">{{ _('Leergut') }}</label>
-        </div>
-
-        <!-- Einnahme -->
-        <div class="input-group mb-3">
-        <span class="input-group-text">{{ _('waehrung') }}</span>
-        <div class="form-floating flex-grow-1">
-            <input name="einnahme" type="number" step="0.01" inputmode="decimal" class="form-control" placeholder="0.00" id="einnahme" autocomplete="off">
-            <label for="einnahme">{{ _('Einnahme') }}</label>
+          <!-- Datum -->
+          <div class="form-floating mb-3">
+            <input type="text" name="datum" id="datum" class="form-control" placeholder="Datum" value="{{ default_date }}" required autofocus>
+            <label for="datum">{{ _('Datum') }}</label>
           </div>
-        </div>
 
-        <!-- Ausgabe -->
-        <div class="input-group mb-3">
-          <span class="input-group-text">{{ _('waehrung') }}</span>
-          <div class="form-floating flex-grow-1">
+          <!-- Vollgut -->
+          <div class="form-floating mb-3">
+            <input id="vollgut" name="vollgut" type="number" inputmode="numeric" min="0" step="1" class="form-control" placeholder="0" autocomplete="off">
+            <label for="vollgut">{{ _('Vollgut') }}</label>
+          </div>
+
+          <!-- Leergut -->
+          <div class="form-floating mb-3">
+            <input id="leergut" name="leergut" type="number" inputmode="numeric" min="0" step="1" class="form-control" placeholder="0" autocomplete="off">
+            <label for="leergut">{{ _('Leergut') }}</label>
+          </div>
+
+          <!-- Einnahme -->
+          <div class="input-group mb-3">
+            <span class="input-group-text">{{ _('waehrung') }}</span>
+            <div class="form-floating flex-grow-1">
+              <input name="einnahme" type="number" step="0.01" inputmode="decimal" class="form-control" placeholder="0.00" id="einnahme" autocomplete="off">
+              <label for="einnahme">{{ _('Einnahme') }}</label>
+            </div>
+          </div>
+
+          <!-- Ausgabe -->
+          <div class="input-group mb-3">
+            <span class="input-group-text">{{ _('waehrung') }}</span>
+            <div class="form-floating flex-grow-1">
               <input name="ausgabe" type="number" step="0.01" inputmode="decimal" class="form-control" placeholder="0.00" id="ausgabe" autocomplete="off">
               <label for="ausgabe">{{ _('Ausgabe') }}</label>
             </div>
-        </div>
+          </div>
 
-        <!-- Bemerkung -->
-        <div class="form-floating mb-3">
-          <input id="bemerkung" name="bemerkung" class="form-control" maxlength="500" placeholder="{{ _('Notiz') }}">
-          <label for="bemerkung">{{ _('Bemerkung') }}</label>
-        </div>
+          <!-- Bemerkung -->
+          <div class="form-floating mb-3">
+            <input id="bemerkung" name="bemerkung" class="form-control" maxlength="500" placeholder="{{ _('Notiz') }}">
+            <label for="bemerkung">{{ _('Bemerkung') }}</label>
+          </div>
 
-        <!-- Upload -->
-        <input type="hidden" name="temp_token" id="temp_token" value="{{ temp_token }}">
+          <!-- Upload -->
+          <input type="hidden" name="temp_token" id="temp_token" value="{{ temp_token }}">
 
-        <div class="d-flex gap-2">
-          <!-- Hinzufügen -->
-          <button type="submit" class="btn btn-success flex-grow-1" disabled>
-            <i class="bi-plus-lg me-1"></i> {{ _('Hinzufügen') }}
-          </button>
+          <div class="d-flex gap-2">
+            <!-- Hinzufügen -->
+            <button type="submit" class="btn btn-success flex-grow-1" disabled>
+              <i class="bi-plus-lg me-1"></i> {{ _('Hinzufügen') }}
+            </button>
 
-
-          <!-- Upload-Button mit Badge -->
-          <button type="button"
-          class="btn btn-outline-primary position-relative"
-          data-bs-toggle="modal"
-          data-bs-target="#uploadModal"
-          id="uploadBtn"
-          aria-label="{{ _('Temporäre Anhänge hochladen') }}"
-          title="{{ _('Temporäre Anhänge hochladen') }}">
-            <i class="bi-upload me-1"></i> {{ _('Upload') }}
-          </button>
-
-        </div>
+            <!-- Upload-Button mit Badge -->
+            <button type="button"
+                    class="btn btn-outline-primary position-relative"
+                    data-bs-toggle="modal"
+                    data-bs-target="#uploadModal"
+                    id="uploadBtn"
+                    aria-label="{{ _('Temporäre Anhänge hochladen') }}"
+                    title="{{ _('Temporäre Anhänge hochladen') }}">
+              <i class="bi-upload me-1"></i> {{ _('Upload') }}
+            </button>
+          </div>
         </form>
       </div>
     </div>
@@ -117,9 +114,18 @@
 <div class="card shadow-sm">
   <div class="card-body">
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
-      <h2 class="h5 m-0">{{ _('Einträge') }}</h2>
 
-      <form id="filtersForm" role="search" class="w-100" method="get" action="{{ url_for('entries') }}">
+      <h2 class="h5 m-0">
+        {{ _('Einträge') }}
+        <small class="text-muted ms-1">({{ entries|length }})</small>
+        {% if filters_active %}
+          <span class="badge rounded-pill bg-warning-subtle text-warning-emphasis ms-2">
+            {{ _('Filter aktiv') }}
+          </span>
+        {% endif %}
+      </h2>
+
+      <form id="filtersForm" role="search" class="w-100" method="get" action="{{ url_for('index') }}" data-autosubmit="true">
         <div class="table-tools card-subsection px-3 py-3 rounded-3 mb-3">
           <div class="d-flex flex-wrap align-items-end justify-content-between gap-3">
 
@@ -131,7 +137,7 @@
                   <div class="input-group">
                     <span class="input-group-text"><i class="bi bi-search"></i></span>
                     <input id="q" name="q" type="text" class="form-control"
-                          placeholder="Datum/Bemerkung" value="{{ request.args.get('q', '') }}">
+                           placeholder="Datum/Bemerkung" value="{{ request.args.get('q', '') }}">
                     <button class="btn btn-outline-secondary" type="button" id="clear-q"
                             aria-label="Suche löschen" title="Suche löschen">
                       <i class="bi bi-x-lg"></i>
@@ -144,8 +150,8 @@
                   <div class="input-group">
                     <span class="input-group-text"><i class="bi bi-calendar-event"></i></span>
                     <input id="from" name="from" type="text"
-                          class="form-control bb-date" placeholder="TT.MM.JJJJ"
-                          value="{{ request.args.get('from', '') }}">
+                           class="form-control bb-date" placeholder="TT.MM.JJJJ"
+                           value="{{ request.args.get('from', '') }}">
                   </div>
                 </div>
 
@@ -154,18 +160,24 @@
                   <div class="input-group">
                     <span class="input-group-text"><i class="bi bi-calendar-event"></i></span>
                     <input id="to" name="to" type="text"
-                          class="form-control bb-date" placeholder="TT.MM.JJJJ"
-                          value="{{ request.args.get('to', '') }}">
+                           class="form-control bb-date" placeholder="TT.MM.JJJJ"
+                           value="{{ request.args.get('to', '') }}">
                   </div>
                 </div>
 
-                <!-- QUICK RANGES (optional) -->
+                <!-- QUICK RANGES -->
                 <div class="col-12 col-md-2">
                   <label class="form-label mb-1 d-none d-md-block">Zeitraum</label>
                   <div class="btn-group w-100" role="group" aria-label="Schnell-Zeiträume">
-                    <button type="button" class="btn btn-outline-secondary btn-quickrange" data-range="today">Heute</button>
-                    <button type="button" class="btn btn-outline-secondary btn-quickrange" data-range="week">Woche</button>
-                    <button type="button" class="btn btn-outline-secondary btn-quickrange" data-range="month">Monat</button>
+                    <button type="button"
+                            class="btn btn-outline-secondary btn-quickrange {{ 'active' if range_active == 'today' else '' }}"
+                            data-range="today">Heute</button>
+                    <button type="button"
+                            class="btn btn-outline-secondary btn-quickrange {{ 'active' if range_active == 'week' else '' }}"
+                            data-range="week">Woche</button>
+                    <button type="button"
+                            class="btn btn-outline-secondary btn-quickrange {{ 'active' if range_active == 'month' else '' }}"
+                            data-range="month">Monat</button>
                   </div>
                 </div>
               </div>
@@ -173,13 +185,12 @@
 
             <!-- RIGHT: Aktionen -->
             <div class="actions d-flex flex-wrap align-items-end gap-2">
-
               <!-- Filtern / Zurücksetzen -->
               <div class="btn-group" role="group" aria-label="Filter-Aktionen">
                 <button type="submit" class="btn btn-primary">
                   <i class="bi bi-search"></i> Filtern
                 </button>
-                <a href="{{ url_for('entries') }}" class="btn btn-outline-secondary">
+                <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
                   <i class="bi bi-arrow-counterclockwise"></i> Zurücksetzen
                 </a>
               </div>
@@ -187,27 +198,31 @@
               <!-- Export / Import -->
               <div class="btn-toolbar" role="toolbar" aria-label="Export/Import">
                 <div class="btn-group me-2" role="group">
-                  <button id="exportDropdown" type="button"
-                          class="btn btn-outline-primary dropdown-toggle"
-                          data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="bi bi-download"></i> Export
-                  </button>
+                  <!-- Wrapper erlaubt Tooltip auch bei disabled -->
+                  <span class="d-inline-block" tabindex="0" data-bs-toggle="tooltip"
+                        title="{{ '' if has_data else _('Keine Daten im Zeitraum') }}">
+                    <button id="exportDropdown" type="button"
+                            class="btn btn-outline-primary dropdown-toggle {{ '' if has_data else 'disabled' }}"
+                            data-bs-toggle="dropdown" aria-expanded="false"
+                            {{ '' if has_data else 'disabled' }}>
+                      <i class="bi bi-download"></i> Export
+                    </button>
+                  </span>
                   <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="exportDropdown">
                     <li>
-                      <a class="dropdown-item {{ 'disabled pe-none' if (entries|length == 0) else '' }}"
-                        href="{{ url_for('export_csv') }}">
+                      <a class="dropdown-item {{ '' if has_data else 'disabled pe-none' }}"
+                         href="{{ url_for('export_csv', **request.args) }}">
                         <i class="bi bi-filetype-csv me-2"></i>CSV
                       </a>
                     </li>
                     <li>
-                      <a class="dropdown-item {{ 'disabled pe-none' if (entries|length == 0) else '' }}"
-                        href="{{ url_for('export_pdf') }}">
+                      <a class="dropdown-item {{ '' if has_data else 'disabled pe-none' }}"
+                         href="{{ url_for('export_pdf', **request.args) }}">
                         <i class="bi bi-file-earmark-pdf me-2"></i>PDF
                       </a>
                     </li>
                   </ul>
                 </div>
-
                 <div class="btn-group" role="group">
                   <button type="button" class="btn btn-outline-primary"
                           data-bs-toggle="modal" data-bs-target="#csvImportModal">
@@ -215,72 +230,74 @@
                   </button>
                 </div>
               </div>
-
             </div>
+
           </div>
         </div>
       </form>
 
+      <!-- Tabelle -->
+      <div class="table-responsive">
+        <table class="table table-sm align-middle table-striped">
+          <thead class="table-light">
+            <tr>
+              <th scope="col" style="cursor:pointer;" onclick="sortTableByDate()" aria-sort="none">
+                {{ _('Datum') }} <i class="bi bi-arrow-down-up"></i>
+              </th>
+              <th scope="col">{{ _('Vollgut') }}</th>
+              <th scope="col">{{ _('Leergut') }}</th>
+              <th scope="col">{{ _('Inventar') }}</th>
+              <th scope="col">{{ _('Einnahme') }}</th>
+              <th scope="col">{{ _('Ausgabe') }}</th>
+              <th scope="col">{{ _('Kassenbestand') }}</th>
+              <th scope="col">{{ _('Bemerkung') }}</th>
+              <th scope="col" class="text-end">{{ _('Aktionen') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for e in entries %}
+            <tr>
+              <td>{{ format_date_de(e.datum) }}</td>
+              <td>{{ e.vollgut }}</td>
+              <td>{{ e.leergut }}</td>
+              <td>{{ e.inventar }}</td>
+              <td>{{ format_eur_de(e.einnahme) }}</td>
+              <td>{{ format_eur_de(e.ausgabe) }}</td>
+              <td>{{ format_eur_de(e.kassenbestand) }}</td>
+              <td>{{ e.bemerkung }}</td>
+              <td class="text-end">
+                <!-- Bearbeiten -->
+                <a class="btn btn-sm btn-outline-primary" href="{{ url_for('edit', entry_id=e.id) }}" title="{{ _('Bearbeiten') }}">
+                  <i class="bi-pencil-square"></i>
+                </a>
 
-<!-- Tabelle -->
-    <div class="table-responsive">
-      <table class="table table-sm align-middle table-striped">
-        <thead class="table-light">
-          <tr>
-            <th style="cursor:pointer;" onclick="sortTableByDate()">{{ _('Datum') }}<i class="bi bi-arrow-down-up"></i></th>
-            <th>{{ _('Vollgut') }}</th>
-            <th>{{ _('Leergut') }}</th>
-            <th>{{ _('Inventar') }}</th>
-            <th>{{ _('Einnahme') }}</th>
-            <th>{{ _('Ausgabe') }}</th>
-            <th>{{ _('Kassenbestand') }}</th>
-            <th>{{ _('Bemerkung') }}</th>
-            <th class="text-end">{{ _('Aktionen') }}</th>
-          </tr>
-        </thead>
-        <tbody>
-        {% for e in entries %}
-          <tr>
-            <td>{{ format_date_de(e.datum) }}</td>
-            <td>{{ e.vollgut }}</td>
-            <td>{{ e.leergut }}</td>
-            <td>{{ e.inventar }}</td>
-            <td>{{ format_eur_de(e.einnahme) }}</td>
-            <td>{{ format_eur_de(e.ausgabe) }}</td>
-            <td>{{ format_eur_de(e.kassenbestand) }}</td>
-            <td>{{ e.bemerkung }}</td>
-            <td class="text-end">
-              <!-- Bearbeiten -->
-              <a class="btn btn-sm btn-outline-primary" href="{{ url_for('edit', entry_id=e.id) }}" title="{{ _('Bearbeiten') }}">
-                <i class="bi-pencil-square"></i>
-              </a>
-              
-              <!-- Dokumente öffnen (mit Badge) -->
-              <button class="btn btn-sm btn-outline-secondary position-relative" type="button"
-                      onclick="openAttachments({{ e.id }})" title="{{ _('Dokumente öffnen') }}">
-                <i class="bi-paperclip"></i>
-                {% if e.attachment_count and e.attachment_count > 0 %}
-                  <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-secondary">
-                    {{ e.attachment_count }}
-                  </span>
-                {% endif %}
-              </button>
-
-              <!-- Löschen -->
-              <form method="post" action="{{ url_for('delete', entry_id=e.id) }}" class="d-inline"
-                    onsubmit="return confirm('{{ _('Eintrag wirklich löschen?') }}');">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button class="btn btn-sm btn-outline-danger" title="{{ _('Löschen') }}">
-                  <i class="bi-trash"></i>
+                <!-- Dokumente öffnen (mit Badge) -->
+                <button class="btn btn-sm btn-outline-secondary position-relative" type="button"
+                        onclick="openAttachments({{ e.id }})" title="{{ _('Dokumente öffnen') }}">
+                  <i class="bi-paperclip"></i>
+                  {% if e.attachment_count and e.attachment_count > 0 %}
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-secondary">
+                      {{ e.attachment_count }}
+                    </span>
+                  {% endif %}
                 </button>
-              </form>
-            </td>
-          </tr>
-        {% else %}
-          <tr><td colspan="9" class="text-center text-muted">{{ _('Keine Einträge vorhanden.') }}</td></tr>
-        {% endfor %}
-        </tbody>
-      </table>
+
+                <!-- Löschen -->
+                <form method="post" action="{{ url_for('delete', entry_id=e.id) }}" class="d-inline"
+                      onsubmit="return confirm('{{ _('Eintrag wirklich löschen?') }}');">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button class="btn btn-sm btn-outline-danger" title="{{ _('Löschen') }}">
+                    <i class="bi-trash"></i>
+                  </button>
+                </form>
+              </td>
+            </tr>
+          {% else %}
+            <tr><td colspan="9" class="text-center text-muted">{{ _('Keine Einträge vorhanden.') }}</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 </div>
@@ -320,7 +337,7 @@
   </div>
 </div>
 
-<!-- NEU: Attachments Modal -->
+<!-- Attachments Modal -->
 <div class="modal fade" id="attachmentsModal" tabindex="-1" aria-labelledby="attachmentsModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-md">
     <div class="modal-content">
@@ -368,18 +385,17 @@
     </div>
   </div>
 </div>
-<div class="toast-container position-fixed top-0 end-0 p-3" id="bbToastContainer"></div>
 
+<div class="toast-container position-fixed top-0 end-0 p-3" id="bbToastContainer"></div>
 
 {% endblock %}
 
 {% block scripts %}
 <script>
+/** Toast-Helfer **/
 function showToast(message, variant = 'danger') {
-  // variant: 'primary'|'success'|'warning'|'danger'|...
   const container = document.getElementById('bbToastContainer');
   if (!container) return alert(message); // Fallback
-
   const toastEl = document.createElement('div');
   toastEl.className = `toast align-items-center text-bg-${variant} border-0`;
   toastEl.setAttribute('role', 'alert');
@@ -395,17 +411,31 @@ function showToast(message, variant = 'danger') {
   toast.show();
   toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
 }
+</script>
 
-
+<script>
+/** Charts (Sparkline) **/
 (function () {
   // Daten aus Flask
   const labelsRaw = {{ entries|map(attribute='datum')|list|tojson }};
   const dataInv   = {{ series_inv|tojson }};
   const dataKas   = {{ series_kas|tojson }};
 
-  const labels = labelsRaw.map(d => {
-    try { return new Date(d).toLocaleDateString('de-DE'); } catch { return String(d); }
-  });
+  function toLocalDateLabel(d) {
+    if (typeof d === 'string') {
+      const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(d);
+      if (m) {
+        const y  = Number(m[1]);
+        const mo = Number(m[2]);
+        const da = Number(m[3]);
+        const dt = new Date(y, mo - 1, da); // Lokale Zeit
+        return isNaN(dt) ? String(d) : dt.toLocaleDateString('de-DE');
+      }
+    }
+    const t = new Date(d);
+    return isNaN(t) ? String(d) : t.toLocaleDateString('de-DE');
+  }
+  const labels = labelsRaw.map(toLocalDateLabel);
 
   const css          = getComputedStyle(document.documentElement);
   const colorPrimary = (css.getPropertyValue('--bs-primary') || '#0d6efd').trim();
@@ -449,7 +479,20 @@ function showToast(message, variant = 'danger') {
     const invCtx = invCanvas.getContext('2d');
     new Chart(invCtx, {
       type: 'line',
-      data: { labels, datasets: [{ label: 'Inventar', data: dataInv, borderColor: colorPrimary, backgroundColor: makeGradient(invCtx, colorPrimary), borderWidth: 2, fill: true, tension: 0.35, pointRadius: 3, pointBackgroundColor: colorPrimary }] },
+      data: {
+        labels,
+        datasets: [{
+          label: 'Inventar',
+          data: dataInv,
+          borderColor: colorPrimary,
+          backgroundColor: makeGradient(invCtx, colorPrimary),
+          borderWidth: 2,
+          fill: true,
+          tension: 0.35,
+          pointRadius: 3,
+          pointBackgroundColor: colorPrimary
+        }]
+      },
       options: baseOptions
     });
   }
@@ -459,7 +502,20 @@ function showToast(message, variant = 'danger') {
     const kasCtx = kasCanvas.getContext('2d');
     new Chart(kasCtx, {
       type: 'line',
-      data: { labels, datasets: [{ label: 'Kassenbestand', data: dataKas, borderColor: colorSuccess, backgroundColor: makeGradient(kasCtx, colorSuccess), borderWidth: 2, fill: true, tension: 0.35, pointRadius: 3, pointBackgroundColor: colorSuccess }] },
+      data: {
+        labels,
+        datasets: [{
+          label: 'Kassenbestand',
+          data: dataKas,
+          borderColor: colorSuccess,
+          backgroundColor: makeGradient(kasCtx, colorSuccess),
+          borderWidth: 2,
+          fill: true,
+          tension: 0.35,
+          pointRadius: 3,
+          pointBackgroundColor: colorSuccess
+        }]
+      },
       options: baseOptions
     });
   }
@@ -467,12 +523,13 @@ function showToast(message, variant = 'danger') {
 </script>
 
 <script>
+/** Formular-Interaktionen (Auto-Tab, Validierung, Flatpickr, Haptik) **/
 document.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('transaction-form');
   const orderIds = ['datum', 'vollgut', 'leergut', 'einnahme', 'ausgabe', 'bemerkung'];
   const fields = orderIds.map(id => document.getElementById(id) || form?.querySelector(`[name="${id}"]`)).filter(Boolean);
 
-  // Auto-Tab
+  // Auto-Tab per Enter / Shift+Enter
   function focusByOffset(currentEl, delta) {
     const idx = Number(currentEl?.dataset?.idx ?? -1);
     if (idx < 0) return;
@@ -490,7 +547,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (el.type === 'number') el.addEventListener('wheel', (e) => e.preventDefault(), { passive: false });
   });
 
-  // Flatpickr
+  // Flatpickr (Dark-Mode synchronisieren)
   function isDark() { return document.documentElement.getAttribute('data-bs-theme') === 'dark'; }
   function toggleCalendarDark(calEl, dark) { if (calEl) calEl.classList.toggle('flatpickr-dark', !!dark); }
   if (window.flatpickr) {
@@ -506,11 +563,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-bs-theme'] });
   }
 
-  // Haptik
+  // Haptik bei Fokus
   function hapticFeedback() { if (navigator.vibrate) navigator.vibrate(10); }
   form?.querySelectorAll('input, textarea, select').forEach(el => el.addEventListener('focus', hapticFeedback));
 
-  // Pflichtfelder-Gruppe
+  // Pflichtfelder-Gruppe: mindestens ein Wert > 0
   const feldIds = ['einnahme', 'ausgabe', 'vollgut', 'leergut'];
   const felder = feldIds.map(id => document.getElementById(id)).filter(Boolean);
   function getNumericValue(el) {
@@ -521,7 +578,10 @@ document.addEventListener('DOMContentLoaded', () => {
   function anyPositive() { return felder.some(el => getNumericValue(el) > 0); }
 
   function setInlineInvalid(on) {
-    felder.forEach(el => { el.classList.toggle('is-invalid', on); el.setAttribute('aria-invalid', on ? 'true' : 'false'); });
+    felder.forEach(el => {
+      el.classList.toggle('is-invalid', on);
+      el.setAttribute('aria-invalid', on ? 'true' : 'false');
+    });
     const ausgabeWrap = document.getElementById('ausgabe')?.closest('.input-group, .form-floating');
     if (on && ausgabeWrap && !ausgabeWrap.querySelector('.invalid-feedback')) {
       const fb = document.createElement('div');
@@ -544,14 +604,14 @@ document.addEventListener('DOMContentLoaded', () => {
     alert.textContent = msg;
     alert.classList.remove('d-none');
     alert.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    (felder[0] || form).focus({ preventScroll: true });
+    (felder[0] || form)?.focus?.({ preventScroll: true });
   }
   function clearGlobalError() {
     const alert = form?.querySelector('#globalFormError');
     if (alert) { alert.classList.add('d-none'); alert.textContent = ''; }
   }
 
-  // Submit-Button deaktivieren bis >0
+  // Submit-Button aktivieren/deaktivieren
   const submitBtn = form?.querySelector('.btn.btn-success.flex-grow-1');
   function updateSubmit() {
     if (!submitBtn) return;
@@ -560,7 +620,6 @@ document.addEventListener('DOMContentLoaded', () => {
     submitBtn.setAttribute('aria-disabled', String(!enabled));
     submitBtn.title = enabled ? '' : '{{ _("Bitte mindestens einen Wert bei Einnahme, Ausgabe, Vollgut oder Leergut angeben.") }}';
   }
-
   feldIds.forEach(id => {
     const el = document.getElementById(id);
     el?.addEventListener('input', () => {
@@ -573,10 +632,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Submit-Handler
   if (form) {
-
-  // Safari/Back-Forward-Cache: Spinner entfernen, wenn Nutzer per "Zurück" auf die Seite kommt
-  window.addEventListener('pageshow', (e) => {
-    if (e.persisted) form.classList.remove('is-submitting');
+    // Safari bfcache: Spinner-Klasse entfernen, wenn per „Zurück“ geladen
+    window.addEventListener('pageshow', (e) => {
+      if (e.persisted) form.classList.remove('is-submitting');
     });
 
     form.addEventListener('submit', (event) => {
@@ -588,140 +646,122 @@ document.addEventListener('DOMContentLoaded', () => {
         updateSubmit();
         return;
       }
-
-      // Browser-Constraint-Validation
-      if (!form.checkValidity()) {
+      if (!form.checkValidity()) { // Browser-Constraint-Validation
         event.preventDefault(); event.stopPropagation();
         form.classList.add('was-validated');
         return;
       }
-
-      // ✅ Alles ok: Spinner-Klasse setzen (wird serverseitig durch Redirect automatisch beendet)
-      form.classList.add('is-submitting');
-      form.classList.add('was-validated');
+      // Alles ok: Spinner setzen
+      form.classList.add('is-submitting', 'was-validated');
     }, false);
   }
 
-  // Auto-Submit beim Wechsel der Anhänge-Toggles
+  // Optional: Autosubmit bei Attachments-Toggles (nur wenn vorhanden)
   document.querySelectorAll('input[name="attachments"]').forEach(el => {
-    el.addEventListener('change', () => {
-      // Falls "Alle" (value="") gewählt ist, bleibt attachments="" – dein Server-Code
-      // wertet nur 'only'/'none' aus; leeres value führt zu keiner Einschränkung.
-      el.form?.submit();
-    });
+    el.addEventListener('change', () => el.form?.submit());
   });
-  </script>
+});
+</script>
 
 <script>
+/** Tabelle sortieren nach Datum (TT.MM.JJJJ) + A11y/Icon-Update **/
 function sortTableByDate() {
   const table = document.querySelector("table");
+  if (!table) return;
   const tbody = table.querySelector("tbody");
   const rows = Array.from(tbody.querySelectorAll("tr"));
   const isAsc = table.dataset.sortOrder !== "asc";
   table.dataset.sortOrder = isAsc ? "asc" : "desc";
-  rows.sort((a, b) => {
-    const dateA = new Date(a.cells[0].innerText.split(".").reverse().join("-"));
-    const dateB = new Date(b.cells[0].innerText.split(".").reverse().join("-"));
-    return isAsc ? dateA - dateB : dateB - dateA;
+
+  const toTime = (row) => {
+    const text = (row.cells[0]?.innerText || '').trim();
+    const m = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(text);
+    if (!m) return Number.NEGATIVE_INFINITY; // „Keine Einträge“ unten
+    const [, dd, mm, yyyy] = m.map(Number);
+    return new Date(yyyy, mm - 1, dd).getTime();
+  };
+
+  rows.sort((a, b) => isAsc ? (toTime(a) - toTime(b)) : (toTime(b) - toTime(a)));
+  rows.forEach(r => tbody.appendChild(r));
+
+  // ARIA & Icon im TH aktualisieren
+  table.querySelectorAll('thead th').forEach(th => th.removeAttribute('aria-sort'));
+  const th = table.querySelector('thead th');
+  th?.setAttribute('aria-sort', isAsc ? 'ascending' : 'descending');
+  const icon = th?.querySelector('i.bi');
+  if (icon) icon.className = isAsc ? 'bi bi-arrow-down' : 'bi bi-arrow-up';
+}
+</script>
+
+<script>
+/** Filter, Quickranges, Tooltips, Clear-Search **/
+document.addEventListener('DOMContentLoaded', () => {
+  // Tooltips (auch für Wrapper mit disabled Button)
+  document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
+    try { new bootstrap.Tooltip(el); } catch {}
   });
-  rows.forEach(row => tbody.appendChild(row));
-}
-</script>
 
-<script>
-async function openAttachments(entryId) {
-  try {
-    const resp = await fetch(`{{ url_for('attachments_list', entry_id=0) }}`.replace('0', entryId));
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    const list = await resp.json();
+  const form   = document.getElementById('filtersForm');
+  const auto   = form?.dataset.autosubmit === 'true';
+  const q      = document.getElementById('q');
+  const fromEl = document.getElementById('from');
+  const toEl   = document.getElementById('to');
 
-    const ul = document.getElementById('attachmentsList');
-    ul.innerHTML = '';
-
-    if (!list || list.length === 0) {
-      ul.innerHTML = `<li class="list-group-item text-muted">{{ _('Keine Anhänge vorhanden.') }}</li>`;
-      new bootstrap.Modal(document.getElementById('attachmentsModal')).show();
-      return;
-    }
-
-    if (list.length === 1) {
-      window.open(list[0].url, '_blank');
-      return;
-    }
-
-    list.forEach(it => {
-      const li = document.createElement('li');
-      li.className = 'list-group-item d-flex justify-content-between align-items-center';
-
-      const left = document.createElement('div');
-      left.className = 'text-truncate';
-      left.style.maxWidth = '70%';
-
-      const icon = document.createElement('i');
-      icon.className = 'bi-paperclip me-1';
-
-      const nameSpan = document.createElement('span');
-      nameSpan.textContent = it.name;
-
-      left.append(icon, nameSpan);
-
-      const openA = document.createElement('a');
-      openA.className = 'btn btn-sm btn-outline-primary';
-      openA.href = it.url;
-      openA.target = '_blank';
-      openA.textContent = "{{ _('Öffnen') }}";
-
-      li.append(left, openA);
-      ul.appendChild(li);
-    });
-
-    new bootstrap.Modal(document.getElementById('attachmentsModal')).show();
-  } catch (e) {
-    console.error(e);
-    alert('Fehler beim Laden der Anhänge.');
-  }
-}
-</script>
-
-<script>
-  // Suchfeld leeren
+  // Clear: Button
   document.getElementById('clear-q')?.addEventListener('click', () => {
-    const q = document.getElementById('q');
+    if (!q) return;
     q.value = '';
     q.focus();
   });
+  // Clear: ESC
+  q?.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      q.value = '';
+      q.focus();
+    }
+  });
 
-  // Quickrange-Buttons (passt die Flatpickr Felder an)
-  function format(d) {
-    const pad = n => String(n).padStart(2, '0');
-    return `${pad(d.getDate())}.${pad(d.getMonth()+1)}.${d.getFullYear()}`;
+  // Autosubmit bei Von/Bis (nur wenn aktiviert)
+  function autoSubmitIfEnabled() {
+    if (auto && form) form.requestSubmit();
   }
+  fromEl?.addEventListener('change', autoSubmitIfEnabled);
+  toEl?.addEventListener('change', autoSubmitIfEnabled);
+
+  // Quickranges
+  const pad = (n) => String(n).padStart(2, '0');
+  const fmt = (d) => `${pad(d.getDate())}.${pad(d.getMonth()+1)}.${d.getFullYear()}`;
   const btns = document.querySelectorAll('.btn-quickrange');
   btns.forEach(b => b.addEventListener('click', () => {
     btns.forEach(x => x.classList.remove('active'));
     b.classList.add('active');
-    const from = document.getElementById('from');
-    const to = document.getElementById('to');
+
     const now = new Date();
     let start = new Date(now), end = new Date(now);
+
     switch (b.dataset.range) {
       case 'today':
-        // start/end = today
+        // start/end sind heute
         break;
       case 'week': {
         const day = (now.getDay()+6)%7; // Mo=0
         start.setDate(now.getDate()-day);
+        end = new Date(start);
         end.setDate(start.getDate()+6);
         break;
       }
       case 'month':
         start = new Date(now.getFullYear(), now.getMonth(), 1);
-        end = new Date(now.getFullYear(), now.getMonth()+1, 0);
+        end   = new Date(now.getFullYear(), now.getMonth()+1, 0);
         break;
     }
-    from.value = format(start);
-    to.value = format(end);
-  }));
-</script>
 
+    if (fromEl) fromEl.value = fmt(start);
+    if (toEl)   toEl.value   = fmt(end);
+
+    autoSubmitIfEnabled();
+  }));
+});
+</script>
 {% endblock %}

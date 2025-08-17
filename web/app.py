@@ -303,6 +303,12 @@ def migrate_columns(conn):
     conn.execute(text(CREATE_TABLE_ATTACHMENTS_TEMP))
     conn.execute(text(CREATE_INDEX_ATTACHMENTS_TEMP))
 
+    conn.execute(text("CREATE INDEX IF NOT EXISTS idx_entries_datum ON entries (datum, id)"))
+    conn.execute(text("CREATE INDEX IF NOT EXISTS idx_entries_created_by ON entries (created_by)"))
+    conn.execute(text("CREATE INDEX IF NOT EXISTS idx_attachments_entry ON attachments (entry_id)"))
+    conn.execute(text("CREATE INDEX IF NOT EXISTS idx_audit_created_at ON audit_log (created_at)"))
+
+
 def init_db():
     with engine.begin() as conn:
         conn.execute(text(CREATE_TABLE_ENTRIES))
@@ -355,8 +361,9 @@ def cleanup_temp():
     with engine.begin() as conn:
         rows = conn.execute(text("""
             SELECT id, temp_token, stored_name FROM attachments_temp
-            WHERE created_at < :cut
-        """), {'cut': cutoff}).mappings().all()
+            WHERE created_at < NOW() - INTERVAL '24 hours'
+        """)).mappings().all()
+
 
     removed = 0
     for r in rows:
@@ -484,30 +491,49 @@ def require_csrf(fn):
 def _build_index_context(default_date: str | None = None, temp_token: str | None = None):
     """
     Bereitet alle Variablen für index.html auf – mit stabilem temp_token.
-    - totals-Modus via ?totals=filtered | all
-      * 'filtered': inv_aktuell/kas_aktuell aus der gefilterten Liste
-      * 'all' (Default): Gesamtstände aus der gesamten Tabelle
     """
-    # Filter aus Query
+    # --- Filter aus Query ---
     q = (request.args.get('q') or '').strip()
-    date_from_s = request.args.get('from')
-    date_to_s = request.args.get('to')
-    df = datetime.strptime(date_from_s, '%Y-%m-%d').date() if date_from_s else None
-    dt = datetime.strptime(date_to_s, '%Y-%m-%d').date() if date_to_s else None
+    s_from = request.args.get('from')
+    s_to   = request.args.get('to')
+
+    # Robust: 'TT.MM.JJJJ' und 'YYYY-MM-DD' akzeptieren
+    df = parse_date_query(s_from)
+    dt = parse_date_query(s_to)
 
     # Anhänge: 'only' | 'none' | None
     filter_attachments = request.args.get('attachments')
 
-    # Einträge DB-seitig mit allen Filtern holen
+    # --- Daten abrufen ---
     entries = fetch_entries(q or None, df, dt, attachments_filter=filter_attachments)
 
-    # Totals-Modus: 'all' (Default) oder 'filtered'
+    # --- Zustand/UX-Variablen ---
+    has_data = len(entries) > 0
+    filters_active = bool(q or df or dt or filter_attachments)
+
+    # Quickrange (persistente Markierung) ableiten
+    today = date.today()
+    week_start = today - timedelta(days=today.weekday())  # Montag
+    week_end   = week_start + timedelta(days=6)
+    month_start = date(today.year, today.month, 1)
+    next_month  = (month_start.replace(day=28) + timedelta(days=4)).replace(day=1)
+    month_end   = next_month - timedelta(days=1)
+
+    range_active = ''
+    if df and dt:
+        if df == today and dt == today:
+            range_active = 'today'
+        elif df == week_start and dt == week_end:
+            range_active = 'week'
+        elif df == month_start and dt == month_end:
+            range_active = 'month'
+
+    # --- Totals-Modus ---
     totals_mode = (request.args.get('totals') or 'all').strip().lower()
     if totals_mode not in ('all', 'filtered'):
         totals_mode = 'all'
 
     if totals_mode == 'filtered':
-        # Aus gefilterten Daten ableiten
         if entries:
             inv_aktuell = entries[-1]['inventar']
             kas_aktuell = entries[-1]['kassenbestand']
@@ -515,10 +541,9 @@ def _build_index_context(default_date: str | None = None, temp_token: str | None
             inv_aktuell = 0
             kas_aktuell = Decimal('0.00')
     else:
-        # Gesamtsystemstände
         inv_aktuell, kas_aktuell = current_totals()
 
-    # Serien für Sparklines (bewusst auf Basis der gefilterten Liste)
+    # --- Serien für Sparklines (gefiltert) ---
     series_inv = [e['inventar'] for e in entries]
     series_kas = [float(e['kassenbestand']) for e in entries]
 
@@ -528,9 +553,9 @@ def _build_index_context(default_date: str | None = None, temp_token: str | None
     role = session.get('role')
     allowed = ROLES.get(role, set())
 
-    # temp_token beibehalten oder anlegen (NICHT überschreiben, wenn übergeben)
+    # temp_token stabil halten
     token = temp_token or session.get('add_temp_token') or uuid4().hex
-    session['add_temp_token'] = token  # Session soll denselben Token kennen
+    session['add_temp_token'] = token
 
     return {
         'entries': entries,
@@ -549,8 +574,11 @@ def _build_index_context(default_date: str | None = None, temp_token: str | None
         'series_inv': series_inv,
         'series_kas': series_kas,
         'temp_token': token,
-        # Optional im Template verwenden, falls du den Modus anzeigen willst:
         'totals_mode': totals_mode,
+        # 🔽 NEU: für die UX/Toolbar
+        'has_data': has_data,
+        'filters_active': filters_active,
+        'range_active': range_active,
     }
 
 # -----------------------
@@ -563,6 +591,21 @@ def parse_date_de_or_today(s: str | None) -> date:
     if not s or not s.strip():
         return date.today()
     return datetime.strptime(s.strip(), '%d.%m.%Y').date()
+
+def parse_date_query(s: str | None) -> date | None:
+    """
+    Parsen von Querystring-Datumswerten für Filter.
+    Akzeptiert 'TT.MM.JJJJ' (UI) und 'YYYY-MM-DD' (kompatibel zu alten Links).
+    """
+    if not s:
+        return None
+    s = s.strip()
+    for fmt in ('%d.%m.%Y', '%Y-%m-%d'):
+        try:
+            return datetime.strptime(s, fmt).date()
+        except Exception:
+            continue
+    return None
 
 def format_date_de(d: date) -> str:
     return d.strftime('%d.%m.%Y')
@@ -593,6 +636,7 @@ def parse_money(value: str | None) -> Decimal:
         return Decimal('0')
 
     # Währung/Spaces entfernen (inkl. NBSP/NNBSP/Narrow NBSP)
+    s = re.sub(r'(€|EUR|Euro)', '', s, flags=re.IGNORECASE)
     s = s.replace("{{ _('waehrung') }}", "").replace("{{ _('(waehrungEURUSD)') }}", "")
     s = re.sub(r'[\s\u00A0\u202F]', '', s)
 
@@ -813,7 +857,7 @@ def login_post():
 
     # Falls Passwort geändert werden muss: Info + Flag für spätere Weiterleitung setzen
     force_profile = False
-    if user['must_change_password'] and user['role'] != 'admin':
+    if user['must_change_password'] and (user['role'] or '').lower() != 'admin':
         flash(_('Bitte das Passwort <a href="{0}" class="alert-link">im Profil</a> ändern.')
               .format(url_for('profile')), 'warning')
         force_profile = True
@@ -1354,8 +1398,8 @@ def audit_list():
     q = (request.args.get('q') or '').strip()
     date_from = request.args.get('from')
     date_to = request.args.get('to')
-    df = datetime.strptime(date_from, '%Y-%m-%d').date() if date_from else None
-    dt = datetime.strptime(date_to, '%Y-%m-%d').date() if date_to else None
+    df = parse_date_query(date_from) if date_from else None
+    dt = parse_date_query(date_to) if date_to else None
     params = {}
     where = []
     if q:
@@ -1515,7 +1559,7 @@ def add():
 
     log_action(user['id'], 'entries:add', new_id, f'attachments_moved={moved}')
     if moved:
-        flash(_(f'Datensatz gespeichert, {moved} Datei(en) übernommen.'), 'success')
+        flash(_('Datensatz gespeichert, %(count)s Datei(en) übernommen.', count=moved), 'success')
     else:
         flash(_('Datensatz wurde gespeichert.'), 'success')
 
@@ -1569,15 +1613,15 @@ def edit(entry_id: int):
 
     return render_template('edit.html', data=data, attachments=att_data)
 
-@app.post('/edit/<int:entry_id>')
+
 @login_required
-@require_perms('entries:edit:any')
 @require_csrf
 def edit_post(entry_id: int):
     with engine.begin() as conn:
         row = conn.execute(text('SELECT created_by FROM entries WHERE id=:id'), {'id': entry_id}).mappings().first()
     if not row:
         abort(404)
+
     allowed = ROLES.get(session.get('role'), set())
     if 'entries:edit:any' not in allowed:
         user = current_user()
@@ -1631,8 +1675,8 @@ def export_csv():
     dt = request.args.get('to')
     attachments_filter = request.args.get('attachments')  # 'only' | 'none' | None
 
-    date_from = datetime.strptime(df, '%Y-%m-%d').date() if df else None
-    date_to   = datetime.strptime(dt, '%Y-%m-%d').date() if dt else None
+    date_from = parse_date_query(df)
+    date_to   = parse_date_query(dt)
 
     entries = fetch_entries(q or None, date_from, date_to, attachments_filter=attachments_filter)
 
@@ -2395,8 +2439,8 @@ def export_pdf():
     dt = request.args.get('to')
     attachments_filter = request.args.get('attachments')
 
-    date_from = datetime.strptime(df, '%Y-%m-%d').date() if df else None
-    date_to   = datetime.strptime(dt, '%Y-%m-%d').date() if dt else None
+    date_from = parse_date_query(df)
+    date_to   = parse_date_query(dt)
 
     entries = fetch_entries(q or None, date_from, date_to, attachments_filter=attachments_filter)
 
@@ -2611,12 +2655,11 @@ def attachments_download(att_id: int):
                      mimetype=r.get('content_type') or 'application/octet-stream')
 
 #Delete
-# app.py
 @app.post('/attachments/<int:att_id>/delete')
 @login_required
-@require_perms('entries:edit:any')
 @require_csrf
 def attachments_delete(att_id: int):
+
     with engine.begin() as conn:
         r = conn.execute(text("""
             SELECT id, entry_id, stored_name, original_name FROM attachments WHERE id=:id

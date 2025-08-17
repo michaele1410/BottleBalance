@@ -77,9 +77,9 @@ body {
    Flatpickr Dark Mode
    ========================================================= */
 :root[data-bs-theme="dark"] .flatpickr-calendar {
-  background-color: var(--bs-body-bg);
-  color: var(--bs-body-color);
-  border: 1px solid var(--bs-border-color);
+  background-color: var(--bs-body-bg) !important;
+  color: var(--bs-body-color) !important;
+  border: 1px solid var(--bs-border-color) !important;
 }
 
 /* =========================================================
@@ -104,55 +104,53 @@ body {
     height: 80px !important;
   }
 }
-
-/* =========================================================
-   BottleBalance: Formular-Submit-Button (global)
-   ========================================================= */
-
-/* Sanfte Übergänge; wird bei reduced-motion abgeschaltet */
-#transaction-form .btn.btn-success.flex-grow-1 {
-  transition: opacity 0.15s ease-in-out, filter 0.15s ease-in-out;
+/* Extra-Small: noch flacher */
+@media (max-width: 576px) {
+  #sparklineInv,
+  #sparklineKas {
+    height: 60px !important;
+  }
 }
 
-/* Deutlich erkennbarer "deaktiviert"-Zustand */
-#transaction-form .btn.btn-success.flex-grow-1:disabled,
-#transaction-form .btn.btn-success.flex-grow-1[aria-disabled="true"] {
+/* =========================================================
+   BottleBalance: Formular-Submit-Button
+   ========================================================= */
+.bb-submit-btn {
+  transition: opacity 0.15s ease-in-out, filter 0.15s ease-in-out;
+}
+.bb-submit-btn:disabled,
+.bb-submit-btn[aria-disabled="true"] {
   opacity: 0.55;
   cursor: not-allowed;
   box-shadow: none !important;
   filter: grayscale(25%);
 }
-
-/* Aktiver Zustand: kleine Hover-/Focus-Affordanzen */
-#transaction-form .btn.btn-success.flex-grow-1:not(:disabled):hover {
+.bb-submit-btn:not(:disabled):hover {
   filter: brightness(1.03);
 }
-#transaction-form .btn.btn-success.flex-grow-1:not(:disabled):focus-visible {
+.bb-submit-btn:not(:disabled):focus-visible {
   outline: 2px solid rgba(25, 135, 84, 0.5);
   outline-offset: 2px;
 }
 @supports (color: color-mix(in srgb, #000, #fff)) {
-  #transaction-form .btn.btn-success.flex-grow-1:not(:disabled):focus-visible {
+  .bb-submit-btn:not(:disabled):focus-visible {
     outline: 2px solid color-mix(in srgb, var(--bs-success), transparent 50%);
   }
 }
-
-/* Bewegungseinstellungen respektieren */
 @media (prefers-reduced-motion: reduce) {
-  #transaction-form .btn.btn-success.flex-grow-1 {
+  .bb-submit-btn {
     transition: none;
   }
 }
-
-/* Optionaler Spinner beim Absenden */
-#transaction-form.is-submitting .btn.btn-success.flex-grow-1 {
+/* Spinner beim Absenden */
+.is-submitting .bb-submit-btn {
   position: relative;
   pointer-events: none;
 }
-#transaction-form.is-submitting .btn.btn-success.flex-grow-1 i.bi-plus-lg {
+.is-submitting .bb-submit-btn i.bi-plus-lg {
   visibility: hidden;
 }
-#transaction-form.is-submitting .btn.btn-success.flex-grow-1::after {
+.is-submitting .bb-submit-btn::after {
   content: "";
   position: absolute;
   inset-inline-start: 0.75rem;
@@ -165,8 +163,15 @@ body {
   border-radius: 50%;
   animation: bb-spin 0.6s linear infinite;
 }
+@keyframes bb-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 
-/* Slash-Icon sauber über dem Paperclip positionieren */
+/* =========================================================
+   Buttons & Icons
+   ========================================================= */
 .btn .bi-slash {
   position: absolute;
   top: 0;
@@ -175,84 +180,78 @@ body {
   font-size: 0.7em;
   color: #dc3545;
 }
-
-/* Aktive Farbe für ausgewählten Toggle */
+[data-bs-theme="dark"] .btn .bi-slash {
+  color: #f87171;
+}
 .btn-check:checked + .btn {
   background-color: var(--bs-primary);
   color: #fff;
   border-color: var(--bs-primary);
 }
-
-/* Hover-Verbesserung für Outline-Buttons */
 .btn-outline-secondary:hover {
   background-color: var(--bs-secondary-bg);
+  filter: brightness(1.1);
 }
 
-/* Dark-Mode-Optimierung: helleres Rot für das Slash-Icon */
-[data-bs-theme="dark"] .btn .bi-slash {
-  color: #f87171;
-}
-
-@keyframes bb-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* ===== Table Tools / Toolbar ===== */
+/* =========================================================
+   Table Tools / Toolbar
+   ========================================================= */
 .table-tools {
   background: var(--bs-tertiary-bg, rgba(0,0,0,0.03));
   border: 1px solid var(--bs-border-color, rgba(0,0,0,0.1));
+  padding: .75rem 1rem;
+  border-radius: .5rem;
 }
-
-/* Einheitliche Höhen für Inputs/Buttons */
 .table-tools .form-control,
 .table-tools .input-group-text,
 .table-tools .btn {
   min-height: 38px;
 }
-
 .table-tools .input-group-text {
   background-color: var(--bs-secondary-bg);
   border-color: var(--bs-border-color);
 }
-
-/* Abstände und Kompaktheit */
 .table-tools .btn,
 .table-tools .form-control {
   font-size: .95rem;
 }
-
-/* Dropdown im Dark Mode sauber */
+.table-tools .form-label {
+  margin-bottom: .25rem;
+  font-weight: 500;
+}
+[data-bs-theme="dark"] .table-tools {
+  background: color-mix(in srgb, var(--bs-body-bg), #fff 4%);
+}
 [data-bs-theme="dark"] .dropdown-menu {
   background-color: var(--bs-body-bg);
   border-color: var(--bs-border-color);
 }
-
-/* Quickrange aktiv-Style */
 .btn-quickrange.active {
   background-color: var(--bs-primary);
   color: #fff;
   border-color: var(--bs-primary);
 }
-
-/* Mobile: Tools stapeln sich sinnvoll */
 @media (max-width: 768px) {
-  .table-tools .actions {
-    width: 100%;
-    justify-content: flex-start; /* Buttons unter den Filtern */
-  }
+  .table-tools .actions,
   .table-tools .btn-toolbar {
     width: 100%;
     justify-content: flex-start;
   }
 }
+.btn-outline-primary:disabled,
+.btn-outline-primary.disabled {
+  opacity: .65;
+  pointer-events: none;
+}
+.dropdown-item.disabled {
+  color: var(--bs-secondary-color, #6c757d) !important;
+}
 
-/* Optional: Sticky-Tools oberhalb der Tabelle beim Scrollen */
+/* Sticky Toolbar */
 @supports (position: sticky) {
   .table-tools {
     position: sticky;
     top: calc(var(--bb-sticky-offset, 0px));
-    z-index: 101; /* über Tabellen-Header */
+    z-index: 1020; /* über Dropdowns */
   }
 }

@@ -28,8 +28,28 @@
           <th class="text-nowrap">Aktionen</th>
         </tr>
       </thead>
+
       <tbody>
         {% for a in antraege %}
+        <tr>
+          <td colspan="5">
+            <div class="mb-2">
+              <strong>Freigabe-Fortschritt:</strong>
+              {{ a.freigaben_count }} von {{ a.freigaben_gesamt }} freigegeben
+              {% if a.approved_by_me %}
+              • <i class="bi bi-person-check text-success"></i> von dir
+              {% endif %}
+            </div>
+            <div class="progress" style="height: 20px;">
+              <div class="progress-bar" role="progressbar" style="width: {{ a.freigabe_prozent }}%;"
+                aria-valuenow="{{ a.freigaben_count }}" aria-valuemin="0" aria-valuemax="{{ a.freigaben_gesamt }}">
+                {{ a.freigaben_count }} / {{ a.freigaben_gesamt }}
+              </div>
+            </div>
+
+          </td>
+        </tr>
+
         <tr>
           <td>{{ a.antragsteller }}</td>
           <td>{{ a.datum }}</td>
@@ -38,68 +58,73 @@
             <span class="badge badge-status-{{ a.status|replace(' ', '_') }}">{{ a.status }}</span>
           </td>
           <td class="text-nowrap">
+
             <!-- Details -->
-            <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('zahlungsfreigabe_detail', antrag_id=a.id) }}"
-              title="Details">
-              <i class="bi bi-eye"></i>
+            <a href="{{ url_for('zahlungsfreigabe_detail', antrag_id=a.id) }}" class="btn btn-sm btn-outline-secondary">
+              Details
             </a>
 
-            <!-- PDF -->
-            <a class="btn btn-sm btn-outline-danger"
-              href="{{ url_for('export_pdf') }}?{{ request.query_string.decode() if request.query_string else '' }}"
-              title="{{ _('PDF exportieren') }}">
-              <i class="bi-file-earmark-pdf me-1 text-danger"></i>
-            </a>
-
-            <!-- Freigeben -->
-            <form method="post" action="{{ url_for('freigeben_antrag', antrag_id=a.id) }}" class="d-inline">
+            {% if a.can_freigeben %}
+            <form method="post" action="{{ url_for('freigeben_antrag', antrag_id=a.id) }}" style="display:inline">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <button class="btn btn-sm btn-success" title="Freigeben" {% if not a.can_freigeben %}disabled{% endif %}>
-                <i class="bi bi-check-lg"></i>
-              </button>
+              <button class="btn btn-sm btn-success">Freigeben</button>
             </form>
+            {% endif %}
 
-            <!-- On Hold -->
-            <form method="post" action="{{ url_for('on_hold_antrag', antrag_id=a.id) }}" class="d-inline">
+            {% if a.can_freigabe_zurueckziehen %}
+            <form method="post" action="{{ url_for('freigabe_zurueckziehen', antrag_id=a.id) }}" style="display:inline">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <button class="btn btn-sm btn-outline-secondary" title="On Hold" {% if not a.can_on_hold %}disabled{%
-                endif %}>
-                <i class="bi bi-pause-fill"></i>
-              </button>
+              <button class="btn btn-sm btn-warning">Freigabe zurückziehen</button>
             </form>
+            {% endif %}
 
-            <!-- Ablehnen -->
-            <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#ablehnenModal"
-              data-antrag-id="{{ a.id }}" title="Ablehnen" {% if not a.can_ablehnen %}disabled{% endif %}>
-              <i class="bi bi-x-lg"></i>
-            </button>
-
-            <!-- Zurückziehen -->
-            <form method="post" action="{{ url_for('zurueckziehen_antrag', antrag_id=a.id) }}" class="d-inline">
+            {% if a.can_on_hold %}
+            <form method="post" action="{{ url_for('on_hold_antrag', antrag_id=a.id) }}" style="display:inline">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <button class="btn btn-sm btn-warning" title="Zurückziehen" {% if not a.can_zurueckziehen %}disabled{%
-                endif %}>
-                <i class="bi bi-arrow-left"></i>
-              </button>
+              <button class="btn btn-sm btn-outline-warning">On hold</button>
             </form>
+            {% endif %}
 
-            <!-- Abschließen -->
-            <form method="post" action="{{ url_for('abschliessen_antrag', antrag_id=a.id) }}" class="d-inline">
+            {% if has_endpoint('fortsetzen_antrag') and a.can_fortsetzen %}
+            <form method="post" action="{{ url_for('fortsetzen_antrag', antrag_id=a.id) }}" style="display:inline">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <button class="btn btn-sm btn-outline-dark" title="Abschließen" {% if not a.can_abschliessen %}disabled{%
-                endif %}>
-                <i class="bi bi-flag-fill btn-success"></i>
-              </button>
+              <button class="btn btn-sm btn-outline-primary">Fortsetzen</button>
             </form>
+            {% endif %}
 
-            <!-- Löschen -->
-            <form method="post" action="{{ url_for('loeschen_antrag', antrag_id=a.id) }}" class="d-inline"
-              onsubmit="return confirm('Wirklich löschen?');">
+            {% if a.can_abschliessen %}
+            <form method="post" action="{{ url_for('abschliessen_antrag', antrag_id=a.id) }}" style="display:inline">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <button class="btn btn-sm btn-danger" title="Löschen" {% if not a.can_loeschen %}disabled{% endif %}>
-                <i class="bi bi-trash"></i>
-              </button>
+              <button class="btn btn-sm btn-primary">Abschließen</button>
             </form>
+            {% endif %}
+
+            {% if a.can_ablehnen %}
+            <!-- Einfaches Inline-Ablehnen mit Grund -->
+            <form method="post" action="{{ url_for('ablehnen_antrag', antrag_id=a.id) }}" style="display:inline"
+              onsubmit="return confirm('Ablehnen?');">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="hidden" name="grund" value="Abgelehnt (kurzbegründet)">
+              <!-- ersetze bei Bedarf durch Modal -->
+              <button class="btn btn-sm btn-outline-danger">Ablehnen</button>
+            </form>
+            {% endif %}
+
+            {% if a.can_zurueckziehen %}
+            <form method="post" action="{{ url_for('zurueckziehen_antrag', antrag_id=a.id) }}" style="display:inline"
+              onsubmit="return confirm('Antrag zurückziehen?');">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="btn btn-sm btn-outline-secondary">Zurückziehen</button>
+            </form>
+            {% endif %}
+
+            {% if a.can_loeschen and a.status != 'abgeschlossen' %}
+            <form method="post" action="{{ url_for('loeschen_antrag', antrag_id=a.id) }}" style="display:inline"
+              onsubmit="return confirm('Antrag endgültig löschen?');">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="btn btn-sm btn-danger">Löschen</button>
+            </form>
+            {% endif %}
           </td>
         </tr>
         {% endfor %}

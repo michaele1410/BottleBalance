@@ -83,11 +83,15 @@
             </div>
           </div>
 
-          <!-- Bemerkung -->
+          <!-- Bemerkung als Dropdown -->
           <div class="form-floating mb-3">
-            <input id="bemerkung" name="bemerkung" class="form-control" maxlength="500" placeholder="{{ _('Notiz') }}">
-            <label for="bemerkung">{{ _('Bemerkung') }}</label>
-          </div>
+          <select id="bemerkung" name="bemerkung" class="form-select">
+            {% for option in bemerkungsoptionen %}
+              <option value="{{ option }}">{{ option }}</option>
+            {% endfor %}
+          </select>
+          <label for="bemerkung">{{ _('Bemerkung') }}</label>
+        </div>
 
           <!-- Upload -->
           <input type="hidden" name="temp_token" id="temp_token" value="{{ temp_token }}">

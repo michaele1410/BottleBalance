@@ -281,6 +281,17 @@ CREATE TABLE IF NOT EXISTS attachments_temp (
 );
 """
 
+CREATE_TABLE_BEMERKUNGSOPTIONEN = """
+CREATE TABLE IF NOT EXISTS bemerkungsoptionen (
+    id SERIAL PRIMARY KEY,
+    text TEXT NOT NULL UNIQUE,
+    active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+"""
+
+
 CREATE_INDEX_ATTACHMENTS_TEMP = """
 CREATE INDEX IF NOT EXISTS idx_attachments_temp_token
 ON attachments_temp (temp_token, uploaded_by, created_at);
@@ -302,6 +313,22 @@ def migrate_columns(conn):
     conn.execute(text(CREATE_TABLE_ATTACHMENTS))
     conn.execute(text(CREATE_TABLE_ATTACHMENTS_TEMP))
     conn.execute(text(CREATE_INDEX_ATTACHMENTS_TEMP))
+    conn.execute(text(CREATE_TABLE_BEMERKUNGSOPTIONEN))
+
+    # Standardwerte einfügen, falls Tabelle leer ist
+    default_bemerkungen = [
+        "Entnahme",
+        "Inventur",
+        "Kassenzählung",
+        "Leerung Kasse GR",
+        "Lieferung Getränke"
+    ]
+    existing = conn.execute(text("SELECT COUNT(*) FROM bemerkungsoptionen")).scalar_one()
+    if existing == 0:
+        for text_value in default_bemerkungen:
+            conn.execute(text("""
+                INSERT INTO bemerkungsoptionen (text) VALUES (:t)
+            """), {'t': text_value})
 
 def init_db():
     with engine.begin() as conn:
@@ -377,6 +404,10 @@ def cleanup_temp():
             pass
     print(f"Temp cleanup done. Files removed: {removed}")
 
+def get_bemerkungsoptionen():
+    with engine.begin() as conn:
+        rows = conn.execute(text("SELECT text FROM bemerkungsoptionen WHERE active = TRUE ORDER BY text ASC")).scalars().all()
+    return rows
 
 # -----------------------
 # Error Handling
@@ -1419,6 +1450,7 @@ def users_delete(uid: int):
 @login_required
 def index():
     ctx = _build_index_context(default_date=today_ddmmyyyy())
+    ctx['bemerkungsoptionen'] = get_bemerkungsoptionen()
     return render_template('index.html', **ctx)
 
 @app.post('/add')
@@ -2844,8 +2876,11 @@ if SEND_TEST_MAIL:
 @require_csrf
 def admin_tools():
     status = None
+    current_options = []
+
     if request.method == "POST":
         action = request.form.get("action")
+
         if action == "smtp":
             try:
                 if not SMTP_HOST or not SMTP_PORT or not SMTP_USER or not SMTP_PASS:
@@ -2883,6 +2918,34 @@ def admin_tools():
             except subprocess.CalledProcessError as e:
                 flash(_('Error during database dump: ') + str(e), "error")
                 log_action(session.get('user_id'), 'db:export:error', None, f'Dump failed: {e}')
+
+        elif action == "update_bemerkungen":
+            raw = request.form.get("options") or ""
+            lines = [line.strip() for line in raw.splitlines() if line.strip()]
+            try:
+                with engine.begin() as conn:
+                    conn.execute(text("DELETE FROM bemerkungsoptionen"))
+                    for line in lines:
+                        conn.execute(text("INSERT INTO bemerkungsoptionen (text) VALUES (:t)"), {'t': line})
+                flash(_("Bemerkungsoptionen aktualisiert."), "success")
+            except Exception as e:
+                flash(_("Fehler beim Speichern der Bemerkungsoptionen: ") + str(e), "error")
+
+    # SMTP-Status vorbereiten
+    if not SMTP_HOST or not SMTP_PORT or not SMTP_USER or not SMTP_PASS:
+        status = _("SMTP configuration incomplete.")
+    else:
+        status = _("SMTP configuration detected for host {}:{}.".format(SMTP_HOST, SMTP_PORT))
+
+    # Aktuelle Bemerkungsoptionen laden
+    try:
+        with engine.begin() as conn:
+            current_options = conn.execute(text("SELECT text FROM bemerkungsoptionen ORDER BY text ASC")).scalars().all()
+    except Exception:
+        current_options = []
+
+    return render_template("admin_tools.html", status=status, current_options=current_options)
+
 
     if not SMTP_HOST or not SMTP_PORT or not SMTP_USER or not SMTP_PASS:
         status = _("SMTP configuration incomplete.")

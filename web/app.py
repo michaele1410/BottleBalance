@@ -3032,6 +3032,11 @@ def zahlungsfreigabe():
             user_is_antragsteller = user and user['id'] == r['antragsteller_id']
             status = r['status']
 
+            already_approved = conn.execute(text("""
+                SELECT COUNT(*) FROM zahlungsantrag_audit
+                WHERE antrag_id = :aid AND user_id = :uid AND action = 'freigegeben'
+                """), {'aid': r['id'], 'uid': user['id']}).scalar_one()
+
             antraege.append({
                 'id': r['id'],
                 'antragsteller': r['antragsteller'],
@@ -3047,13 +3052,15 @@ def zahlungsfreigabe():
                 'updated_at': r['updated_at'],
                 'freigaben_count': freigaben_count,
                 'freigaben_gesamt': freigaben_gesamt,
-                'can_freigeben': is_approver and status == 'offen',
                 'can_on_hold': is_approver and status == 'offen',
                 'can_fortsetzen': is_approver and status == 'on_hold',
                 'can_ablehnen': is_approver and status in ['offen', 'on_hold'],
                 'can_zurueckziehen': user_is_antragsteller and status in ['offen', 'on_hold'],
                 'can_abschliessen': is_approver and status == 'freigegeben',
-                'can_loeschen': user_is_antragsteller and status == 'zurueckgezogen',
+                'already_approved': already_approved > 0,
+                'can_freigeben': is_approver and status == 'offen' and not already_approved,
+                'can_zurueckziehen_freigabe': is_approver and already_approved and status == 'offen',
+                'can_loeschen': user_is_antragsteller and status in ['zurueckgezogen', 'offen'],
             })
 
     return render_template('payment_authorization.html', antraege=antraege)
@@ -3106,6 +3113,45 @@ def freigeben_antrag(antrag_id):
             flash('Deine Freigabe wurde gespeichert.', 'success')
 
     return redirect(url_for('zahlungsfreigabe'))
+
+@app.post('/freigabe_zurueckziehen/<int:antrag_id>')
+@login_required
+@require_csrf
+def freigabe_zurueckziehen(antrag_id):
+    user = current_user()
+    _require_approver(user)
+
+    with engine.begin() as conn:
+        # Prüfen, ob Freigabe existiert
+        deleted = conn.execute(text("""
+            DELETE FROM zahlungsantrag_audit
+            WHERE antrag_id = :aid AND user_id = :uid AND action = 'freigegeben'
+        """), {'aid': antrag_id, 'uid': user['id']}).rowcount
+
+        if deleted == 0:
+            flash('Keine Freigabe zum Zurückziehen gefunden.', 'warning')
+            return redirect(url_for('zahlungsfreigabe'))
+
+        # Status ggf. zurück auf 'offen' setzen
+        freigaben_count = conn.execute(text("""
+            SELECT COUNT(*) FROM zahlungsantrag_audit
+            WHERE antrag_id = :aid AND action = 'freigegeben'
+        """), {'aid': antrag_id}).scalar_one()
+
+        if freigaben_count == 0:
+            conn.execute(text("""
+                UPDATE zahlungsantraege SET status='offen', updated_at=NOW()
+                WHERE id=:id
+            """), {'id': antrag_id})
+
+        conn.execute(text("""
+            INSERT INTO zahlungsantrag_audit (antrag_id, user_id, action, timestamp)
+            VALUES (:aid, :uid, 'freigabe_zurueckgezogen', NOW())
+        """), {'aid': antrag_id, 'uid': user['id']})
+
+    flash('Deine Freigabe wurde zurückgezogen.', 'info')
+    return redirect(url_for('zahlungsfreigabe'))
+
 
 @app.post('/on_hold/<int:antrag_id>')
 @login_required

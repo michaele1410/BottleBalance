@@ -69,13 +69,21 @@
 
             <!-- Freigeben -->            
             {% if antrag.can_freigeben %}
-              <form method="post" action="{{ url_for('freigeben_antrag', antrag_id=antrag.id) }}" class="d-inline">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button type="submit" class="btn btn-sm btn-success">
-                  <i class="bi bi-check2-circle me-1"></i> Freigeben
-                </button>
-              </form>
+            <form method="post" action="{{ url_for('freigeben_antrag', antrag_id=antrag.id) }}" class="d-inline">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn btn-sm btn-success">
+                <i class="bi bi-check2-circle me-1"></i> Freigeben
+              </button>
+            </form>
+            {% elif antrag.can_zurueckziehen_freigabe %}
+            <form method="post" action="{{ url_for('freigabe_zurueckziehen', antrag_id=antrag.id) }}" class="d-inline">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn btn-sm btn-warning">
+                <i class="bi bi-arrow-counterclockwise me-1"></i> Freigabe zurückziehen
+              </button>
+            </form>
             {% endif %}
+
 
             <!-- On Hold -->
             <form method="post" action="{{ url_for('on_hold_antrag', antrag_id=antrag.id) }}" class="d-inline">
@@ -86,14 +94,13 @@
             </form>
 
             <!-- Fortsetzen -->
-            {% if antrag.can_fortsetzen %}
+           {% if antrag.can_fortsetzen %}
             <form method="post" action="{{ url_for('fortsetzen_antrag', antrag_id=antrag.id) }}" class="d-inline">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <button class="btn btn-sm btn-secondary" {% if antrag.status !='On Hold' %}disabled{% endif %}>
-                Fortsetzen
-              </button>
+              <button class="btn btn-sm btn-secondary">Fortsetzen</button>
             </form>
             {% endif %}
+
 
             <!-- Ablehnen -->
             <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#ablehnenModal"

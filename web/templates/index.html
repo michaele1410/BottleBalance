@@ -100,12 +100,16 @@
 
 
             <!-- Upload-Button mit Badge -->
+            <!-- Upload-Button mit Badge -->
             <button type="button" class="btn btn-outline-primary position-relative" data-bs-toggle="modal"
               data-bs-target="#uploadModal" id="uploadBtn" aria-label="{{ _('Temporäre Anhänge hochladen') }}"
               title="{{ _('Temporäre Anhänge hochladen') }}">
               <i class="bi-upload me-1"></i> {{ _('Upload') }}
+              <span id="uploadBadge"
+                class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-secondary d-none">
+                0
+              </span>
             </button>
-
           </div>
         </form>
       </div>
@@ -137,7 +141,8 @@
           <!-- Zeitraum (Date Range Picker) -->
           <div class="col">
             <label for="filter_daterange" class="form-label mb-1">{{ _('Zeitraum') }}</label>
-            <input type="text" id="filter_daterange" class="form-control" placeholder="{{ _('TT.MM.JJJJ – TT.MM.JJJJ') }}" autocomplete="off">
+            <input type="text" id="filter_daterange" class="form-control"
+              placeholder="{{ _('TT.MM.JJJJ – TT.MM.JJJJ') }}" autocomplete="off">
             <input type="hidden" name="from" id="filter_from" value="{{ request.args.get('from','') }}">
             <input type="hidden" name="to" id="filter_to" value="{{ request.args.get('to','') }}">
           </div>
@@ -166,36 +171,36 @@
 
           {# Aktionen rechts: Export / Import (Dropdown für Export) #}
           <div class="col ms-md-auto d-flex flex-wrap gap-2">
-          <!-- Export-Button mit Dropdown -->
-          <div class="btn-group">
-            <a class="btn btn-outline-danger"
-              href="{{ url_for('export_pdf') }}?{{ request.query_string.decode() if request.query_string else '' }}"
-              title="{{ _('PDF exportieren') }}">
-              <i class="bi-file-earmark-pdf me-1 text-danger"></i> PDF
-            </a>
-            <button type="button" class="btn btn-outline-danger dropdown-toggle dropdown-toggle-split"
-                    data-bs-toggle="dropdown" aria-expanded="false" aria-label="{{ _('Weitere Exportoptionen') }}">
-              <span class="visually-hidden">{{ _('Weitere Exportoptionen') }}</span>
-            </button>
-            <ul class="dropdown-menu dropdown-menu-end">
-              {% if can_export_csv %}
-              <li>
-                <a class="dropdown-item"
-                  href="{{ url_for('export_csv') }}?{{ request.query_string.decode() if request.query_string else '' }}">
-                  <i class="bi-filetype-csv me-2 text-success"></i> CSV
-                </a>
-              </li>
-              {% endif %}
-            </ul>
-          </div>
+            <!-- Export-Button mit Dropdown -->
+            <div class="btn-group">
+              <a class="btn btn-outline-danger"
+                href="{{ url_for('export_pdf') }}?{{ request.query_string.decode() if request.query_string else '' }}"
+                title="{{ _('PDF exportieren') }}">
+                <i class="bi-file-earmark-pdf me-1 text-danger"></i> PDF
+              </a>
+              <button type="button" class="btn btn-outline-danger dropdown-toggle dropdown-toggle-split"
+                data-bs-toggle="dropdown" aria-expanded="false" aria-label="{{ _('Weitere Exportoptionen') }}">
+                <span class="visually-hidden">{{ _('Weitere Exportoptionen') }}</span>
+              </button>
+              <ul class="dropdown-menu dropdown-menu-end">
+                {% if can_export_csv %}
+                <li>
+                  <a class="dropdown-item"
+                    href="{{ url_for('export_csv') }}?{{ request.query_string.decode() if request.query_string else '' }}">
+                    <i class="bi-filetype-csv me-2 text-success"></i> CSV
+                  </a>
+                </li>
+                {% endif %}
+              </ul>
+            </div>
 
-          {% if can_import %}
-          <button type="button" class="btn btn-outline-success" data-bs-toggle="modal"
-                  data-bs-target="#csvImportModal">
-            <i class="bi-upload me-1"></i> CSV Import
-          </button>
-          {% endif %}
-        </div>
+            {% if can_import %}
+            <button type="button" class="btn btn-outline-success" data-bs-toggle="modal"
+              data-bs-target="#csvImportModal">
+              <i class="bi-upload me-1"></i> CSV Import
+            </button>
+            {% endif %}
+          </div>
         </form>
       </div>
     </div>
@@ -383,8 +388,9 @@
 
 
   (function () {
-  // Daten aus Flask
-  const labelsRaw = {{ entries|map(attribute='datum')|list|tojson }};
+    // Daten aus Flask
+    const labelsRaw = {{ entries| map(attribute = 'datum') | list | tojson
+  }};
   const dataInv = {{ series_inv| tojson }};
   const dataKas = {{ series_kas| tojson }};
 
@@ -675,8 +681,12 @@
 
     function updateBadge(count) {
       if (!badge) return;
-      if (count > 0) { badge.textContent = count > 99 ? '99+' : String(count); badge.classList.remove('d-none'); }
-      else { badge.classList.add('d-none'); }
+      if (count > 0) {
+        badge.textContent = count > 99 ? '99+' : String(count);
+        badge.classList.remove('d-none');
+      } else {
+        badge.classList.add('d-none');
+      }
     }
 
     async function refreshTempList() {
@@ -686,6 +696,7 @@
       if (!resp.ok) return;
       const items = await resp.json();
       listEl.innerHTML = '';
+      updateBadge(items.length); // ← Badge aktualisieren
       if (!items || items.length === 0) {
         listEl.innerHTML = `<li class="list-group-item text-muted">{{ _('Keine Anhänge vorhanden.') }}</li>`;
         updateBadge(0);
@@ -739,71 +750,71 @@
 
 <script>
 
-document.addEventListener('DOMContentLoaded', () => {
-const form    = document.getElementById('filtersForm');
-const elRange = document.getElementById('filter_daterange');
-const elFrom  = document.getElementById('filter_from');
-const elTo    = document.getElementById('filter_to');
+  document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('filtersForm');
+    const elRange = document.getElementById('filter_daterange');
+    const elFrom = document.getElementById('filter_from');
+    const elTo = document.getElementById('filter_to');
 
-// Lokales YYYY-MM-DD (kein UTC-Shift)
-const fmtLocal = (d) => {
-  if (!d) return '';
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-};
+    // Lokales YYYY-MM-DD (kein UTC-Shift)
+    const fmtLocal = (d) => {
+      if (!d) return '';
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    };
 
-// Re-Submit nur bei echter Änderung (Loop-Schutz)
-const submitIfChanged = (() => {
-  let lastKey = `${elFrom.value}|${elTo.value}`;
-  return () => {
-    const key = `${elFrom.value}|${elTo.value}`;
-    if (key === lastKey) return;
-    lastKey = key;
-    form?.requestSubmit();
-  };
-})();
+    // Re-Submit nur bei echter Änderung (Loop-Schutz)
+    const submitIfChanged = (() => {
+      let lastKey = `${elFrom.value}|${elTo.value}`;
+      return () => {
+        const key = `${elFrom.value}|${elTo.value}`;
+        if (key === lastKey) return;
+        lastKey = key;
+        form?.requestSubmit();
+      };
+    })();
 
-// Auto-Submit für Anhänge  Enter im Suchfeld
-document.getElementById('filter_attachments')?.addEventListener('change', submitIfChanged);
-document.getElementById('filter_q')?.addEventListener('keydown', e => { if (e.key === 'Enter') submitIfChanged(); });
+    // Auto-Submit für Anhänge  Enter im Suchfeld
+    document.getElementById('filter_attachments')?.addEventListener('change', submitIfChanged);
+    document.getElementById('filter_q')?.addEventListener('keydown', e => { if (e.key === 'Enter') submitIfChanged(); });
 
-if (!window.flatpickr || !elRange) return;
-if (flatpickr.l10ns?.de) flatpickr.localize(flatpickr.l10ns.de);
-const isDark = () => document.documentElement.getAttribute('data-bs-theme') === 'dark';
+    if (!window.flatpickr || !elRange) return;
+    if (flatpickr.l10ns?.de) flatpickr.localize(flatpickr.l10ns.de);
+    const isDark = () => document.documentElement.getAttribute('data-bs-theme') === 'dark';
 
-let hydrating = true; // verhindert Submit beim Initialisieren
-const fp = flatpickr(elRange, {
-  mode: 'range',
-  dateFormat: 'Y-m-d',  // intern
-  altInput: true,
-  altFormat: 'd.m.Y',   // Anzeige
-  allowInput: true,
-  clickOpens: true,
-  locale: { rangeSeparator: ' – ', firstDayOfWeek: 1 },
-  onOpen: (_, __, i) => i.calendarContainer.classList.toggle('flatpickr-dark', isDark()),
-  onChange: (dates) => {
-    const [from, to] = dates;
-    elFrom.value = fmtLocal(from);
-    elTo.value   = fmtLocal(to);
-    if (!hydrating && from && to) submitIfChanged();
-  }
-});
+    let hydrating = true; // verhindert Submit beim Initialisieren
+    const fp = flatpickr(elRange, {
+      mode: 'range',
+      dateFormat: 'Y-m-d',  // intern
+      altInput: true,
+      altFormat: 'd.m.Y',   // Anzeige
+      allowInput: true,
+      clickOpens: true,
+      locale: { rangeSeparator: ' – ', firstDayOfWeek: 1 },
+      onOpen: (_, __, i) => i.calendarContainer.classList.toggle('flatpickr-dark', isDark()),
+      onChange: (dates) => {
+        const [from, to] = dates;
+        elFrom.value = fmtLocal(from);
+        elTo.value = fmtLocal(to);
+        if (!hydrating && from && to) submitIfChanged();
+      }
+    });
 
-// Vorbelegung aus Query OHNE Events → kein First-Load-Submit
-const preset = [elFrom.value, elTo.value].filter(Boolean);
-if (preset.length) {
-  fp.setDate(preset, false, 'Y-m-d'); // false = keine Events
-}
-hydrating = false;
+    // Vorbelegung aus Query OHNE Events → kein First-Load-Submit
+    const preset = [elFrom.value, elTo.value].filter(Boolean);
+    if (preset.length) {
+      fp.setDate(preset, false, 'Y-m-d'); // false = keine Events
+    }
+    hydrating = false;
 
-// Dark/Light live nachziehen
-new MutationObserver(() => {
-  document.querySelectorAll('.flatpickr-calendar')
-    .forEach(c => c.classList.toggle('flatpickr-dark', isDark()));
-}).observe(document.documentElement, { attributes: true, attributeFilter: ['data-bs-theme'] });
-});
+    // Dark/Light live nachziehen
+    new MutationObserver(() => {
+      document.querySelectorAll('.flatpickr-calendar')
+        .forEach(c => c.classList.toggle('flatpickr-dark', isDark()));
+    }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-bs-theme'] });
+  });
 
 </script>
 

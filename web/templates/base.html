@@ -68,6 +68,9 @@
         <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('admin_tools') }}">
           <i class="bi-tools me-1"></i> {{ _('Admin-Werkzeuge') }}
         </a>
+        <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('zahlungsfreigabe') }}">
+          <i class="bi-tools me-1"></i> {{ _('Antrag stellen') }}
+        </a>
         {% endif %}
 
         <form method="post" action="{{ url_for('logout') }}" class="d-inline">

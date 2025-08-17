@@ -43,6 +43,7 @@
             <th>{{ _('Aktiv') }}</th>
             <th>{{ _('Geschäftsführend') }}</th>
             <th>{{ _('Erstellt') }}</th>
+            <th>{{ _('Aktualisiert') }}</th>
             <th class="text-end">{{ _('Aktionen') }}</th>
           </tr>
         </thead>
@@ -52,7 +53,7 @@
             <!-- Benutzername + ID -->
             <td class="text-nowrap">
               {{ u.username }}<br>
-              <small class="text-muted">ID: {{ u.id }}</small>
+              <!--small class="text-muted">ID: {{ u.id }}</small-->
             </td>
 
             <!-- E-Mail -->
@@ -64,7 +65,7 @@
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <select class="form-select form-select-sm" name="role">
                   {% for r in ROLES.keys() %}
-                    <option value="{{ r }}" {% if r==u.role %}selected{% endif %}>{{ r }}</option>
+                  <option value="{{ r }}" {% if r==u.role %}selected{% endif %}>{{ r }}</option>
                   {% endfor %}
                 </select>
                 <button class="btn btn-sm btn-outline-primary" title="{{ _('Speichern') }}">
@@ -78,13 +79,13 @@
               <form method="post" action="{{ url_for('users_toggle', uid=u.id) }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 {% if u.active %}
-                  <button class="btn btn-sm btn-outline-secondary" title="{{ _('Deaktivieren') }}">
-                    <i class="bi bi-toggle-on me-1"></i>{{ _('Deaktivieren') }}
-                  </button>
+                <button class="btn btn-sm btn-outline-secondary" title="{{ _('Deaktivieren') }}">
+                  <i class="bi bi-toggle-on me-1"></i>{{ _('Deaktivieren') }}
+                </button>
                 {% else %}
-                  <button class="btn btn-sm btn-outline-success" title="{{ _('Aktivieren') }}">
-                    <i class="bi bi-toggle-off me-1"></i>{{ _('Aktivieren') }}
-                  </button>
+                <button class="btn btn-sm btn-outline-success" title="{{ _('Aktivieren') }}">
+                  <i class="bi bi-toggle-off me-1"></i>{{ _('Aktivieren') }}
+                </button>
                 {% endif %}
               </form>
             </td>
@@ -94,56 +95,55 @@
               <form method="post" action="{{ url_for('users_toggle_approve', uid=u.id) }}" class="d-inline">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 {% if u.can_approve %}
-                  <button class="btn btn-sm btn-success" title="{{ _('Berechtigung entfernen') }}">
-                    <i class="bi bi-check2-circle me-1"></i>{{ _('Ja') }}
-                  </button>
+                <button class="btn btn-sm btn-success" title="{{ _('Berechtigung entfernen') }}">
+                  <i class="bi bi-check2-circle me-1"></i>{{ _('Ja') }}
+                </button>
                 {% else %}
-                  <button class="btn btn-sm btn-outline-secondary" title="{{ _('Berechtigung vergeben') }}">
-                    <i class="bi bi-dash-circle me-1"></i>{{ _('Nein') }}
-                  </button>
+                <button class="btn btn-sm btn-outline-secondary" title="{{ _('Berechtigung vergeben') }}">
+                  <i class="bi bi-dash-circle me-1"></i>{{ _('Nein') }}
+                </button>
                 {% endif %}
               </form>
             </td>
 
             <!-- Erstellt -->
-            <td class="text-nowrap">{{ u.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+            <td class="text-nowrap">{{ u.created_at and u.created_at.strftime('%d.%m.%Y %H:%M') or '—' }}</td>
 
-            <!-- Aktionen (Passwort setzen, Reset-Link, Löschen) -->
+            <!-- Aktualisiert-->
+            <td class="text-nowrap">{{ u.updated_at and u.updated_at.strftime('%d.%m.%Y %H:%M') or '—' }}</td>
+
+           <!-- Buttons Aktionen-->
             <td class="text-end">
-              <div class="d-flex gap-2 justify-content-end flex-wrap">
-                <!-- Passwort setzen -->
-                <form method="post" action="{{ url_for('users_reset_pw', uid=u.id) }}" class="d-flex gap-2">
+              <div class="d-flex gap-2 justify-content-end">
+                 <!-- Reset-Link -->
+                <form method="post" action="{{ url_for('users_reset_link', uid=u.id) }}">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                  <input type="password" class="form-control form-control-sm" name="password"
-                         placeholder="{{ _('Neues Passwort') }}" minlength="8" required style="max-width: 180px;">
-                  <button class="btn btn-sm btn-outline-warning">
-                    <i class="bi bi-key me-1"></i>{{ _('Passwort setzen') }}
-                  </button>
-                </form>
-
-                <!-- Reset-Link senden -->
-                <form method="post" action="{{ url_for('users_reset_link', uid=u.id) }}" class="d-flex gap-2">
-                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                  <button class="btn btn-sm btn-outline-info" title="{{ _('Reset-Link generieren') }}">
-                    <i class="bi bi-envelope me-1"></i>{{ _('Reset-Link') }}
+                  <button class="btn btn-sm btn-outline-info" aria-label="{{ _('Reset-Link generieren') }}">
+                    <i class="bi bi-envelope me-1"></i>
                   </button>
                 </form>
 
                 <!-- Löschen -->
                 <form method="post" action="{{ url_for('users_delete', uid=u.id) }}"
-                      onsubmit="return confirm('{{ _('Benutzer wirklich löschen?') }}');"
-                      class="d-flex gap-2">
+                  onsubmit="return confirm('{{ _('Benutzer wirklich löschen?') }}');">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                  <button type="submit" class="btn btn-danger btn-sm">
-                    <i class="bi bi-trash me-1"></i>{{ _('Löschen') }}
+                  <button type="submit" class="btn btn-sm btn-outline-info" title="{{ _('Benutzer löschen') }}">
+                    <i class="bi bi-trash me-1 text-danger"></i>
                   </button>
                 </form>
+
+                <!-- Bearbeiten -->
+                <a href="{{ url_for('edit_user', uid=u.id) }}" class="btn btn-sm btn-outline-primary"
+                  title="{{ _('Benutzer bearbeiten') }}">
+                  <i class="bi bi-pencil-square"></i>
+                </a>
               </div>
             </td>
+
           </tr>
           {% else %}
           <tr>
-            <td colspan="7" class="text-center text-muted">{{ _('Keine Benutzer vorhanden') }}.</td>
+            <td colspan="8" class="text-center text-muted">{{ _('Keine Benutzer vorhanden') }}.</td>
           </tr>
           {% endfor %}
         </tbody>

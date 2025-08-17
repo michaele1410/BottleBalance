@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h2>Benutzer bearbeiten: {{ user.username }}</h2>
+  <form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <div class="mb-3">
+      <label class="form-label">E-Mail</label>
+      <input type="email" name="email" class="form-control" value="{{ user.email or '' }}">
+    </div>
+
+
+    <div class="mb-3">
+      <label for="password">Neues Passwort (optional)</label>
+      <input type="password" class="form-control" id="password" name="password" placeholder="Neues Passwort eingeben">
+      <small class="form-text text-muted">Leer lassen, wenn das Passwort nicht geändert werden soll.</small>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Rolle</label>
+      <select name="role" class="form-select" required>
+        {% for r in roles %}
+        <option value="{{ r }}" {% if user.role==r %}selected{% endif %}>{{ r }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!--div class="mb-3">
+      <label for="password" class="form-label">Neues Passwort (optional)</label>
+      <input type="password" class="form-control" id="password" name="password" autocomplete="new-password"
+        placeholder="Neues Passwort">
+      <div class="form-text">Leer lassen, wenn das Passwort nicht geändert werden soll.</div>
+    </div-->
+
+
+    <div class="form-check mb-2">
+      <input class="form-check-input" type="checkbox" name="active" id="active" {% if user.active %}checked{% endif %}>
+      <label class="form-check-label" for="active">Aktiv</label>
+    </div>
+
+    <div class="form-check mb-3">
+      <input class="form-check-input" type="checkbox" name="can_approve" id="can_approve" {% if user.can_approve
+        %}checked{% endif %}>
+      <label class="form-check-label" for="can_approve">Darf Zahlungsfreigaben erteilen</label>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Speichern</button>
+    <a href="{{ url_for('users_list') }}" class="btn btn-secondary">Abbrechen</a>
+  </form>
+</div>
+{% endblock %}

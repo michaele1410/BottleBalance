@@ -10,7 +10,7 @@ from datetime import datetime, date, timedelta
 from decimal import Decimal, InvalidOperation
 from flask_babel import Babel, gettext as _, gettext as translate
 from flask import Flask, render_template, request, redirect, url_for, session, send_file, flash, abort, jsonify, current_app
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine, text, bindparam, Boolean
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import OperationalError
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -1357,6 +1357,86 @@ def users_reset_link(uid: int):
         logger.warning("Keine E-Mail-Adresse oder kein SMTP_HOST – Token im UI angezeigt (user_id=%s).", uid)
     return redirect(url_for('users_list'))
 
+
+@app.route('/admin/users/<int:uid>/edit', methods=['GET', 'POST'])
+@login_required
+@require_perms('users:manage')
+def edit_user(uid):
+    if request.method == 'POST':
+        role = request.form.get('role')
+        email = (request.form.get('email') or '').strip() or None
+
+        # Checkboxen -> bool (Checkbox sendet nur, wenn angehakt)
+        active = request.form.get('active') is not None
+        can_approve = request.form.get('can_approve') is not None
+
+        # Optionales Passwort
+        password = (request.form.get('password') or '').strip()
+
+        if role not in ROLES.keys():
+            flash('Ungültige Rolle.')
+            return redirect(url_for('edit_user', uid=uid))
+
+        with engine.begin() as conn:
+            if password:
+                hashed = generate_password_hash(password)
+                stmt = text("""
+                    UPDATE users
+                    SET email=:email,
+                        role=:role,
+                        active=:active,
+                        can_approve=:can_approve,
+                        password_hash=:pwd,
+                        updated_at=NOW()
+                    WHERE id=:id
+                """).bindparams(
+                    bindparam('active', type_=Boolean()),
+                    bindparam('can_approve', type_=Boolean()),
+                )
+                conn.execute(stmt, {
+                    'email': email,
+                    'role': role,
+                    'active': active,
+                    'can_approve': can_approve,
+                    'pwd': hashed,
+                    'id': uid
+                })
+            else:
+                stmt = text("""
+                    UPDATE users
+                    SET email=:email,
+                        role=:role,
+                        active=:active,
+                        can_approve=:can_approve,
+                        updated_at=NOW()
+                    WHERE id=:id
+                """).bindparams(
+                    bindparam('active', type_=Boolean()),
+                    bindparam('can_approve', type_=Boolean()),
+                )
+                conn.execute(stmt, {
+                    'email': email,
+                    'role': role,
+                    'active': active,
+                    'can_approve': can_approve,
+                    'id': uid
+                })
+
+        flash('Benutzer aktualisiert.')
+        return redirect(url_for('users_list'))
+
+    # GET-Teil
+    with engine.begin() as conn:
+        user = conn.execute(text("""
+            SELECT id, username, email, role, active, can_approve
+            FROM users
+            WHERE id=:id
+        """), {'id': uid}).mappings().first()
+    if not user:
+        abort(404)
+    roles = ROLES.keys()
+    return render_template('edit_user.html', user=user, roles=roles)
+
 # Reset-Formular (Token-only)
 @app.get('/reset')
 def reset_form():
@@ -1397,10 +1477,12 @@ def reset_post():
 def users_list():
     with engine.begin() as conn:
         rows = conn.execute(text("""
-            SELECT id, username, email, role, active, must_change_password, can_approve, created_at
+            SELECT id, username, email, role, active, must_change_password, can_approve, created_at, updated_at
             FROM users
             ORDER BY username ASC
         """)).mappings().all()
+
+    # rows = db.session.execute(stmt).mappings().all()  # liefert RowMapping-Objekte
     return render_template('users.html', users=rows)
 
 @app.post('/admin/users/add')

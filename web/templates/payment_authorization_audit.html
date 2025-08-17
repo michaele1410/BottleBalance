@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h2 class="mb-4">Audit-Übersicht</h2>
+  <div class="table-responsive">
+    <table class="table table-striped align-middle">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Antrag</th>
+          <th>Benutzer</th>
+          <th>Aktion</th>
+          <th>Zeitpunkt</th>
+          <th>Details</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for log in logs %}
+        <tr>
+          <td>{{ log.id }}</td>
+          <td>{{ log.antrag_id }}</td>
+          <td>{{ log.username or 'Unbekannt' }}</td>
+          <td>{{ log.action }}</td>
+          <td>{{ log.timestamp.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+          <td>{{ log.detail or '' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <a href="{{ url_for('zahlungsfreigabe') }}" class="btn btn-secondary mt-3">
+    <i class="bi bi-arrow-left"></i> Zurück
+  </a>
+</div>
+{% endblock %}

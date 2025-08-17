@@ -9,7 +9,7 @@ from email.message import EmailMessage
 from datetime import datetime, date, timedelta
 from decimal import Decimal, InvalidOperation
 from flask_babel import Babel, gettext as _, gettext as translate
-from flask import Flask, render_template, request, redirect, url_for, session, send_file, flash, abort, jsonify
+from flask import Flask, render_template, request, redirect, url_for, session, send_file, flash, abort, jsonify, current_app
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import OperationalError
@@ -19,6 +19,9 @@ from email.mime.text import MIMEText
 from email.header import Header
 from functools import wraps
 from typing import Tuple
+from urllib.parse import urlencode
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image as RLImage, PageBreak, KeepTogether
+from types import SimpleNamespace
 #from flask_login import login_required
 import csv
 import io
@@ -281,6 +284,11 @@ CREATE TABLE IF NOT EXISTS attachments_temp (
 );
 """
 
+CREATE_INDEX_ATTACHMENTS_TEMP = """
+CREATE INDEX IF NOT EXISTS idx_attachments_temp_token
+ON attachments_temp (temp_token, uploaded_by, created_at);
+"""
+
 CREATE_TABLE_BEMERKUNGSOPTIONEN = """
 CREATE TABLE IF NOT EXISTS bemerkungsoptionen (
     id SERIAL PRIMARY KEY,
@@ -291,10 +299,32 @@ CREATE TABLE IF NOT EXISTS bemerkungsoptionen (
 );
 """
 
+CREATE_TABLE_ZAHLUNGSFREIGABE = """
+CREATE TABLE IF NOT EXISTS zahlungsantraege (
+    id SERIAL PRIMARY KEY,
+    antragsteller_id INTEGER NOT NULL,
+    datum DATE NOT NULL,
+    paragraph VARCHAR(10),
+    verwendungszweck TEXT,
+    betrag NUMERIC(10,2),
+    lieferant TEXT,
+    begruendung TEXT,
+    status VARCHAR(20) DEFAULT 'offen',
+    read_only BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+"""
 
-CREATE_INDEX_ATTACHMENTS_TEMP = """
-CREATE INDEX IF NOT EXISTS idx_attachments_temp_token
-ON attachments_temp (temp_token, uploaded_by, created_at);
+CREATE_TABLE_ZAHLUNGSFREIGABE_AUDIT = """
+CREATE TABLE IF NOT EXISTS zahlungsantrag_audit (
+    id SERIAL PRIMARY KEY,
+    antrag_id INTEGER NOT NULL,
+    user_id INTEGER,
+    action VARCHAR(50),
+    timestamp TIMESTAMP NOT NULL DEFAULT NOW(),
+    detail TEXT
+);
 """
 
 def migrate_columns(conn):
@@ -310,10 +340,12 @@ def migrate_columns(conn):
     conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS timezone TEXT"))
     conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS theme_preference TEXT DEFAULT 'system'"))
     conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login_at TIMESTAMP"))
+    conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS can_approve BOOLEAN NOT NULL DEFAULT FALSE"))
     conn.execute(text(CREATE_TABLE_ATTACHMENTS))
     conn.execute(text(CREATE_TABLE_ATTACHMENTS_TEMP))
-    conn.execute(text(CREATE_INDEX_ATTACHMENTS_TEMP))
     conn.execute(text(CREATE_TABLE_BEMERKUNGSOPTIONEN))
+    conn.execute(text(CREATE_TABLE_ZAHLUNGSFREIGABE))
+    conn.execute(text(CREATE_TABLE_ZAHLUNGSFREIGABE_AUDIT))
 
     # Standardwerte einfügen, falls Tabelle leer ist
     default_bemerkungen = [
@@ -460,9 +492,10 @@ def current_user():
         return None
     with engine.begin() as conn:
         row = conn.execute(text("""
-            SELECT id, username, email, role, active, must_change_password, totp_enabled, backup_codes, locale, timezone, theme_preference
-            FROM users WHERE id=:id
-        """), {'id': uid}).mappings().first()
+                    SELECT id, username, email, role, active, must_change_password, totp_enabled,
+                        backup_codes, locale, timezone, theme_preference, can_approve, last_login_at
+                    FROM users WHERE id=:id
+                """), {'id': uid}).mappings().first()
     return dict(row) if row else None
 
 def login_required(fn):
@@ -1172,12 +1205,48 @@ def update_preferences():
     return redirect(url_for('profile'))
 
 @app.context_processor
+def utility_processor():
+    def safe_url_for(endpoint, **values):
+        try:
+            return url_for(endpoint, **values)
+        except Exception:
+            return '#'
+    def has_endpoint(endpoint):
+        try:
+            return endpoint in current_app.view_functions
+        except Exception:
+            return False
+    return dict(safe_url_for=safe_url_for, has_endpoint=has_endpoint)
+
+
+# ---- Jinja current_user Proxy (callable + dict-like) ----
+class _CurrentUserProxy(SimpleNamespace):
+    def __call__(self):
+        # erlaubt legacy {{ current_user() }} - gibt sich selbst zurück
+        return self
+    def get(self, key, default=None):
+        # erlaubt legacy {{ current_user().get('feld') }}
+        return getattr(self, key, default)
+
+@app.context_processor
 def inject_theme():
-    user = current_user()
-    theme = user.get('theme_preference') if user else 'system'
+    """
+    Stellt globale Template-Variablen bereit.
+    Backwards-compat:
+      - {{ current_user.is_authenticated }}
+      - {{ current_user().get('username') }}
+    """
+    user_dict = current_user()  # nutzt deine bestehende DB-Funktion
+    theme = 'system'
+    if user_dict:
+        cu = _CurrentUserProxy(**user_dict, is_authenticated=True)
+        theme = user_dict.get('theme_preference') or 'system'
+    else:
+        cu = _CurrentUserProxy(is_authenticated=False)
+
     return {
         'theme_preference': theme,
-        'current_user': current_user,
+        'current_user': cu,               # Objekt, aber auch aufrufbar
         'ROLES': ROLES,
         'set': set,
         'IMPORT_USE_PREVIEW': IMPORT_USE_PREVIEW,
@@ -1185,9 +1254,10 @@ def inject_theme():
         'format_date_de': format_date_de,
         'format_eur_de': format_eur_de,
         'csrf_token': csrf_token,
-        '_': translate  # Babel-Funktion explizit bereitstellen
+        '_': translate                   # Babel-Funktion für Templates
     }
 
+@app.context_processor
 def inject_helpers():
     def qs(_remove=None, **overrides):
         # aktuelle args kopieren
@@ -1326,7 +1396,11 @@ def reset_post():
 @require_perms('users:manage')
 def users_list():
     with engine.begin() as conn:
-        rows = conn.execute(text("SELECT id, username, email, role, active, must_change_password, created_at FROM users ORDER BY username ASC")).mappings().all()
+        rows = conn.execute(text("""
+            SELECT id, username, email, role, active, must_change_password, can_approve, created_at
+            FROM users
+            ORDER BY username ASC
+        """)).mappings().all()
     return render_template('users.html', users=rows)
 
 @app.post('/admin/users/add')
@@ -1440,6 +1514,16 @@ def users_delete(uid: int):
         conn.execute(text("DELETE FROM users WHERE id=:id"), {'id': uid})
     log_action(current_uid, 'users:delete', None, f"user_id={uid}")
     flash(_('Benutzer gelöscht.'))
+    return redirect(url_for('users_list'))
+
+@app.post('/admin/users/<int:uid>/toggle_approve')
+@login_required
+@require_perms('users:manage')
+@require_csrf
+def users_toggle_approve(uid: int):
+    with engine.begin() as conn:
+        conn.execute(text("UPDATE users SET can_approve = NOT can_approve, updated_at=NOW() WHERE id=:id"), {'id': uid})
+    flash('Freigabeberechtigung geändert.')
     return redirect(url_for('users_list'))
 
 # -----------------------
@@ -2860,6 +2944,440 @@ def attachments_temp_delete(att_id: int):
     return ('', 204)
 
 # -----------------------
+# Zahlungsfreigabe
+# -----------------------
+def parse_date_iso_or_today(s: str | None) -> date:
+    try:
+        return datetime.strptime(s.strip(), '%Y-%m-%d').date()
+    except Exception:
+        return date.today()
+
+@app.post('/zahlungsfreigabe/antrag')
+@login_required
+@require_csrf
+def zahlungsfreigabe_antrag():
+    user = current_user()
+    if not user:
+        abort(403)
+
+    paragraph = (request.form.get('paragraph') or '').strip()
+    verwendungszweck = (request.form.get('zweck') or '').strip()
+    datum = parse_date_iso_or_today(request.form.get('datum'))
+    datum_str = (request.form.get('datum') or '').strip()
+    betrag_str = (request.form.get('betrag') or '').strip()
+    lieferant = (request.form.get('lieferant') or '').strip()
+    begruendung = (request.form.get('begruendung') or '').strip()
+
+    try:
+        datum = datetime.strptime(datum_str, '%Y-%m-%d').date()
+        betrag = Decimal(betrag_str.replace(',', '.'))
+    except Exception as e:
+        flash(f'Ungültige Eingabe: {e}', 'danger')
+        return redirect(url_for('zahlungsfreigabe'))
+
+    with engine.begin() as conn:
+        res = conn.execute(text("""
+            INSERT INTO zahlungsantraege (
+                antragsteller_id, datum, paragraph, verwendungszweck, betrag,
+                lieferant, begruendung, status, read_only, created_at, updated_at
+            ) VALUES (
+                :uid, :datum, :para, :zweck, :betrag,
+                :lieferant, :begruendung, 'offen', TRUE, NOW(), NOW()
+            ) RETURNING id
+        """), {
+            'uid': user['id'],
+            'datum': datum,
+            'para': paragraph,
+            'zweck': verwendungszweck,
+            'betrag': str(betrag),
+            'lieferant': lieferant,
+            'begruendung': begruendung
+        })
+        antrag_id = res.scalar_one()
+
+        conn.execute(text("""
+            INSERT INTO zahlungsantrag_audit (antrag_id, user_id, action, timestamp, detail)
+            VALUES (:aid, :uid, 'erstellt', NOW(), NULL)
+        """), {'aid': antrag_id, 'uid': user['id']})
+
+    flash('Zahlungsantrag erfolgreich erstellt.', 'success')
+    return redirect(url_for('zahlungsfreigabe'))
+
+@app.route('/zahlungsfreigabe')
+@login_required
+def zahlungsfreigabe():
+    user = current_user()
+    is_approver = bool(user and user.get('can_approve'))  # ⬅️ statt Rolle
+
+    with engine.begin() as conn:
+        rows = conn.execute(text("""
+            SELECT z.id, z.antragsteller_id, u.username AS antragsteller,
+                   z.datum, z.paragraph, z.verwendungszweck, z.betrag,
+                   z.lieferant, z.begruendung, z.status, z.read_only,
+                   z.created_at, z.updated_at
+            FROM zahlungsantraege z
+            LEFT JOIN users u ON u.id = z.antragsteller_id
+            ORDER BY z.created_at DESC
+        """)).mappings().all()
+
+    antraege = []
+    for r in rows:
+        antraege.append({
+            'id': r['id'],
+            'antragsteller': r['antragsteller'],
+            'datum': r['datum'].strftime('%d.%m.%Y') if r['datum'] else '',
+            'paragraph': r['paragraph'],
+            'verwendungszweck': r['verwendungszweck'],
+            'betrag': str(r['betrag']),
+            'lieferant': r['lieferant'],
+            'begruendung': r['begruendung'],
+            'status': r['status'],
+            'read_only': r['read_only'],
+            'created_at': r['created_at'],
+            'updated_at': r['updated_at'],
+            # bestehende:
+            'can_freigeben': is_approver and r['status'] == 'offen',
+            'can_on_hold': is_approver and r['status'] == 'offen',
+            'can_abschliessen': is_approver and r['status'] == 'freigegeben',
+            'can_loeschen': is_approver,
+            # neu:
+            'can_ablehnen': is_approver and r['status'] in ('offen', 'on_hold'),
+            'can_zurueckziehen': (user and user['id'] == r['antragsteller_id']
+                                   and r['status'] in ('offen', 'on_hold')),
+        })
+
+    return render_template('payment_authorization.html', antraege=antraege)
+
+
+def _require_approver(user):
+    if not user or not user.get('can_approve'):
+        abort(403)
+
+
+@app.post('/freigeben/<int:antrag_id>')
+@login_required
+@require_csrf
+def freigeben_antrag(antrag_id):
+    user = current_user()
+    _require_approver(user)
+    with engine.begin() as conn:
+        curr = conn.execute(text("SELECT status FROM zahlungsantraege WHERE id=:id"), {'id': antrag_id}).scalar_one_or_none()
+        if curr != 'offen':
+            flash('Nur offene Anträge können freigegeben werden.', 'warning')
+            return redirect(url_for('zahlungsfreigabe'))
+        conn.execute(text("UPDATE zahlungsantraege SET status='freigegeben', updated_at=NOW() WHERE id=:id"), {'id': antrag_id})
+        conn.execute(text("INSERT INTO zahlungsantrag_audit (antrag_id, user_id, action, timestamp) VALUES (:aid, :uid, 'freigegeben', NOW())"),
+                     {'aid': antrag_id, 'uid': user['id']})
+    if (email := get_antrag_email(antrag_id)):
+        send_status_email(email, antrag_id, 'freigegeben')
+    flash('Antrag wurde freigegeben.', 'success')
+    return redirect(url_for('zahlungsfreigabe'))
+
+@app.post('/on_hold/<int:antrag_id>')
+@login_required
+@require_csrf
+def on_hold_antrag(antrag_id):
+    user = current_user()
+    _require_approver(user)
+    with engine.begin() as conn:
+        curr = conn.execute(text("SELECT status FROM zahlungsantraege WHERE id=:id"), {'id': antrag_id}).scalar_one_or_none()
+        if curr != 'offen':
+            flash('Nur offene Anträge können auf On Hold gesetzt werden.', 'warning')
+            return redirect(url_for('zahlungsfreigabe'))
+        conn.execute(text("UPDATE zahlungsantraege SET status='on_hold', updated_at=NOW() WHERE id=:id"), {'id': antrag_id})
+        conn.execute(text("INSERT INTO zahlungsantrag_audit (antrag_id, user_id, action, timestamp) VALUES (:aid, :uid, 'on_hold', NOW())"),
+                     {'aid': antrag_id, 'uid': user['id']})
+    if (email := get_antrag_email(antrag_id)):
+        send_status_email(email, antrag_id, 'on_hold')
+    flash('Antrag wurde auf On Hold gesetzt.', 'info')
+    return redirect(url_for('zahlungsfreigabe'))
+
+@app.post('/abschliessen/<int:antrag_id>')
+@login_required
+@require_csrf
+def abschliessen_antrag(antrag_id):
+    user = current_user()
+    _require_approver(user)
+    with engine.begin() as conn:
+        curr = conn.execute(text("SELECT status FROM zahlungsantraege WHERE id=:id"), {'id': antrag_id}).scalar_one_or_none()
+        if curr != 'freigegeben':
+            flash('Antrag kann nur nach Freigabe abgeschlossen werden.', 'warning')
+            return redirect(url_for('zahlungsfreigabe'))
+        conn.execute(text("UPDATE zahlungsantraege SET status='abgeschlossen', updated_at=NOW() WHERE id=:id"), {'id': antrag_id})
+        conn.execute(text("INSERT INTO zahlungsantrag_audit (antrag_id, user_id, action, timestamp) VALUES (:aid, :uid, 'abgeschlossen', NOW())"),
+                     {'aid': antrag_id, 'uid': user['id']})
+    if (email := get_antrag_email(antrag_id)):
+        send_status_email(email, antrag_id, 'abgeschlossen')
+    flash('Antrag wurde abgeschlossen.', 'success')
+    return redirect(url_for('zahlungsfreigabe'))
+
+@app.post('/loeschen/<int:antrag_id>')
+@login_required
+@require_csrf
+def loeschen_antrag(antrag_id):
+    user = current_user()
+    _require_approver(user)
+    with engine.begin() as conn:
+        conn.execute(text("DELETE FROM zahlungsantraege WHERE id=:id"), {'id': antrag_id})
+        conn.execute(text("INSERT INTO zahlungsantrag_audit (antrag_id, user_id, action, timestamp) VALUES (:aid, :uid, 'geloescht', NOW())"),
+                     {'aid': antrag_id, 'uid': user['id']})
+    if (email := get_antrag_email(antrag_id)):
+        send_status_email(email, antrag_id, 'geloescht')
+    flash('Antrag wurde gelöscht.', 'danger')
+    return redirect(url_for('zahlungsfreigabe'))
+
+@app.post('/ablehnen/<int:antrag_id>')
+@login_required
+@require_csrf
+def ablehnen_antrag(antrag_id):
+    user = current_user()
+    _require_approver(user)
+    grund = (request.form.get('grund') or '').strip()
+
+    with engine.begin() as conn:
+        curr = conn.execute(text("SELECT status FROM zahlungsantraege WHERE id=:id"), {'id': antrag_id}).scalar_one_or_none()
+        if curr not in ('offen', 'on_hold'):
+            flash('Nur offene oder pausierte Anträge können abgelehnt werden.', 'warning')
+            return redirect(url_for('zahlungsfreigabe'))
+        if not grund:
+            flash('Bitte einen Ablehnungsgrund angeben.', 'warning')
+            return redirect(url_for('zahlungsfreigabe'))
+        conn.execute(text("UPDATE zahlungsantraege SET status='abgelehnt', updated_at=NOW() WHERE id=:id"), {'id': antrag_id})
+        conn.execute(text("""
+            INSERT INTO zahlungsantrag_audit (antrag_id, user_id, action, timestamp, detail)
+            VALUES (:aid, :uid, 'abgelehnt', NOW(), :detail)
+        """), {'aid': antrag_id, 'uid': user['id'], 'detail': grund})
+
+    if (email := get_antrag_email(antrag_id)):
+        send_status_email(email, antrag_id, 'abgelehnt')
+
+    flash('Antrag wurde abgelehnt.', 'danger')
+    return redirect(url_for('zahlungsfreigabe'))
+
+@app.post('/zurueckziehen/<int:antrag_id>')
+@login_required
+@require_csrf
+def zurueckziehen_antrag(antrag_id):
+    user = current_user()
+    with engine.begin() as conn:
+        row = conn.execute(text("SELECT antragsteller_id, status FROM zahlungsantraege WHERE id=:id"), {'id': antrag_id}).mappings().first()
+        if not row:
+            abort(404)
+        if row['antragsteller_id'] != user['id'] or row['status'] not in ('offen','on_hold'):
+            flash('Du kannst nur eigene, offene oder pausierte Anträge zurückziehen.', 'warning')
+            return redirect(url_for('zahlungsfreigabe'))
+
+        conn.execute(text("UPDATE zahlungsantraege SET status='zurueckgezogen', updated_at=NOW() WHERE id=:id"),
+                     {'id': antrag_id})
+        conn.execute(text("""
+            INSERT INTO zahlungsantrag_audit (antrag_id, user_id, action, timestamp)
+            VALUES (:aid, :uid, 'zurueckgezogen', NOW())
+        """), {'aid': antrag_id, 'uid': user['id']})
+
+    if (email := get_antrag_email(antrag_id)):
+        send_status_email(email, antrag_id, 'zurückgezogen')
+
+    flash('Antrag wurde zurückgezogen.', 'info')
+    return redirect(url_for('zahlungsfreigabe'))
+
+@app.route('/zahlungsfreigabe/audit')
+@login_required
+@require_perms('audit:view')
+def zahlungsfreigabe_audit():
+    with engine.begin() as conn:
+        rows = conn.execute(text("""
+            SELECT a.id, a.antrag_id, a.user_id, u.username, a.action, a.timestamp, a.detail
+            FROM zahlungsantrag_audit a
+            LEFT JOIN users u ON u.id = a.user_id
+            ORDER BY a.timestamp DESC, a.id DESC
+        """)).mappings().all()
+    return render_template('payment_authorization_audit.html', logs=rows)
+
+@app.get('/zahlungsfreigabe/export/pdf')
+@login_required
+def export_alle_antraege_pdf():
+    # ---- 1) Daten laden: Anträge + Audit ----
+    with engine.begin() as conn:
+        antraege = conn.execute(text("""
+            SELECT z.id,
+                   u.username AS antragsteller,
+                   z.datum,
+                   z.paragraph,
+                   z.verwendungszweck,
+                   z.betrag,
+                   z.lieferant,
+                   z.begruendung,
+                   z.status,
+                   z.created_at
+            FROM zahlungsantraege z
+            LEFT JOIN users u ON u.id = z.antragsteller_id
+            ORDER BY z.created_at DESC, z.id DESC
+        """)).mappings().all()
+
+        audits = conn.execute(text("""
+            SELECT a.antrag_id,
+                   a.timestamp,
+                   a.action,
+                   a.detail,
+                   u.username
+            FROM zahlungsantrag_audit a
+            LEFT JOIN users u ON u.id = a.user_id
+            ORDER BY a.antrag_id ASC, a.timestamp ASC, a.id ASC
+        """)).mappings().all()
+
+    # Map: antrag_id -> Liste der Audit-Einträge
+    audit_by_antrag: dict[int, list] = {}
+    for row in audits:
+        aid = row['antrag_id']
+        audit_by_antrag.setdefault(aid, []).append(row)
+
+    # ---- 2) PDF-Dokument vorbereiten ----
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=A4,
+        leftMargin=18*mm, rightMargin=18*mm, topMargin=18*mm, bottomMargin=18*mm
+    )
+    styles = getSampleStyleSheet()
+    story = []
+
+    # Titel / Meta
+    story.append(Paragraph("Zahlungsanträge – Gesamtdokument", styles['Title']))
+    story.append(Spacer(1, 6))
+    story.append(Paragraph(
+        f"Erstellt am {datetime.now().strftime('%d.%m.%Y %H:%M')} – Anzahl Anträge: {len(antraege)}",
+        styles['Normal']
+    ))
+    story.append(Spacer(1, 12))
+
+    # Hilfsfunktion: Text -> Paragraph (mit Zeilenumbruch-Unterstützung)
+    def P(text: str | None, style='Normal'):
+        txt = (text or '').replace('\n', '<br/>')
+        return Paragraph(txt, styles[style])
+
+    # ---- 3) Pro Antrag: Details + Audit ----
+    for idx, r in enumerate(antraege):
+        blocks = []
+
+        # Kopf je Antrag
+        blocks.append(Paragraph(f"<b>Zahlungsantrag #{r['id']}</b>", styles['Heading2']))
+        blocks.append(Spacer(1, 6))
+
+        # Details (2-Spalten-Tabelle: Label / Wert)
+        details_data = [
+            ["Antragsteller/in:", P(r['antragsteller'])],
+            ["Datum:", P(r['datum'].strftime('%d.%m.%Y') if r['datum'] else '')],
+            ["Paragraph:", P(f"§ {r['paragraph']}" if r['paragraph'] else '')],
+            ["Verwendungszweck:", P(r['verwendungszweck'])],
+            ["Betrag:", P(f"{r['betrag']} EUR" if r['betrag'] is not None else '')],
+            ["Lieferant:", P(r['lieferant'])],
+            ["Begründung:", P(r['begruendung'])],
+            ["Status:", P(r['status'])],
+        ]
+        details_table = Table(details_data, colWidths=[42*mm, None], hAlign='LEFT')
+        details_table.setStyle(TableStyle([
+            ('VALIGN', (0,0), (-1,-1), 'TOP'),
+            ('FONTNAME', (0,0), (0,-1), 'Helvetica-Bold'),
+            ('TEXTCOLOR', (0,0), (0,-1), colors.HexColor('#212529')),
+            ('TEXTCOLOR', (1,0), (1,-1), colors.HexColor('#212529')),
+            ('FONTSIZE', (0,0), (-1,-1), 10),
+            ('LEFTPADDING', (0,0), (-1,-1), 4),
+            ('RIGHTPADDING', (0,0), (-1,-1), 4),
+            ('TOPPADDING', (0,0), (-1,-1), 3),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 3),
+            ('LINEBELOW', (0,0), (-1,-1), 0.25, colors.HexColor('#e9ecef')),
+        ]))
+        blocks.append(details_table)
+        blocks.append(Spacer(1, 10))
+
+        # Audit-Sektion
+        blocks.append(Paragraph("Audit-Historie", styles['Heading3']))
+        rows = audit_by_antrag.get(r['id'], [])
+        if rows:
+            audit_data = [[
+                Paragraph("<b>Zeitpunkt</b>", styles['Normal']),
+                Paragraph("<b>Aktion</b>", styles['Normal']),
+                Paragraph("<b>Benutzer</b>", styles['Normal']),
+                Paragraph("<b>Details</b>", styles['Normal']),
+            ]]
+            for a in rows:
+                audit_data.append([
+                    a['timestamp'].strftime('%d.%m.%Y %H:%M:%S') if a['timestamp'] else '',
+                    a['action'] or '',
+                    a['username'] or 'Unbekannt',
+                    P(a['detail']),
+                ])
+            audit_table = Table(audit_data, colWidths=[36*mm, 32*mm, 35*mm, None], repeatRows=1)
+            audit_table.setStyle(TableStyle([
+                ('VALIGN', (0,0), (-1,-1), 'TOP'),
+                ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#f1f3f5')),
+                ('TEXTCOLOR', (0,0), (-1,0), colors.HexColor('#212529')),
+                ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0,0), (-1,-1), 9.5),
+                ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.white, colors.HexColor('#fcfcfd')]),
+                ('GRID', (0,0), (-1,-1), 0.25, colors.HexColor('#dee2e6')),
+                ('LEFTPADDING', (0,0), (-1,-1), 4),
+                ('RIGHTPADDING', (0,0), (-1,-1), 4),
+                ('TOPPADDING', (0,0), (-1,-1), 3),
+                ('BOTTOMPADDING', (0,0), (-1,-1), 3),
+            ]))
+            blocks.append(audit_table)
+        else:
+            blocks.append(Paragraph("<i>Keine Audit‑Einträge vorhanden.</i>", styles['Normal']))
+
+        # Alles zusammen (falls Blockseitenumbruch zu unschönen Split führt, zusammenhalten)
+        story.append(KeepTogether(blocks))
+
+        # Seitenumbruch zwischen Anträgen
+        if idx < len(antraege) - 1:
+            story.append(PageBreak())
+
+    # ---- 4) Seitenzahlen im Footer ----
+    def _footer(canvas, doc_):
+        canvas.saveState()
+        canvas.setFont("Helvetica", 9)
+        page_txt = f"Seite {doc_.page}"
+        canvas.drawRightString(doc_.pagesize[0] - 18*mm, 12, page_txt)
+        canvas.restoreState()
+
+    doc.build(story, onFirstPage=_footer, onLaterPages=_footer)
+    buffer.seek(0)
+    return send_file(buffer, as_attachment=True, download_name='alle_antraege.pdf', mimetype='application/pdf')
+
+@app.get('/zahlungsfreigabe/<int:antrag_id>/export/pdf')
+@login_required
+def export_einzelantrag_pdf(antrag_id):
+    with engine.begin() as conn:
+        r = conn.execute(text("""
+            SELECT z.id, u.username AS antragsteller, z.datum, z.paragraph, z.verwendungszweck, z.betrag, z.lieferant, z.begruendung, z.status
+            FROM zahlungsantraege z
+            LEFT JOIN users u ON u.id = z.antragsteller_id
+            WHERE z.id=:id
+        """), {'id': antrag_id}).mappings().first()
+    if not r:
+        abort(404)
+
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4)
+    styles = getSampleStyleSheet()
+    story = [Paragraph(f"Zahlungsantrag #{r['id']}", styles['Title']), Spacer(1, 12)]
+    for label, value in [
+        ('Antragsteller', r['antragsteller']),
+        ('Datum', r['datum'].strftime('%d.%m.%Y')),
+        ('Paragraph', f"§ {r['paragraph']}"),
+        ('Verwendungszweck', r['verwendungszweck']),
+        ('Betrag', f"{r['betrag']} EUR"),
+        ('Lieferant', r['lieferant']),
+        ('Begründung', r['begruendung']),
+        ('Status', r['status'])
+    ]:
+        story.append(Paragraph(f"<b>{label}:</b> {value}", styles['Normal']))
+        story.append(Spacer(1, 6))
+    doc.build(story)
+    buffer.seek(0)
+    return send_file(buffer, as_attachment=True, download_name=f'antrag_{antrag_id}.pdf', mimetype='application/pdf')
+
+# -----------------------
 # SMTP Test Mail if paraam SEND_TEST_MAIL is set to true
 # -----------------------
 logger.info("ENV SEND_TEST_MAIL in .env  is set to %s", SEND_TEST_MAIL)
@@ -2931,6 +3449,87 @@ def admin_tools():
             except Exception as e:
                 flash(_("Fehler beim Speichern der Bemerkungsoptionen: ") + str(e), "error")
 
+        return redirect(url_for("admin_tools"))  # ✅ Nur nach POST redirecten
+
+    # ---------- GET: Status & Optionen laden ----------
+    if not SMTP_HOST or not SMTP_PORT or not SMTP_USER or not SMTP_PASS:
+        status = _("SMTP configuration incomplete.")
+    else:
+        status = _("SMTP configuration detected for host {}:{}.".format(SMTP_HOST, SMTP_PORT))
+
+    try:
+        with engine.begin() as conn:
+            current_options = conn.execute(text("SELECT text FROM bemerkungsoptionen ORDER BY text ASC")).scalars().all()
+    except Exception:
+        current_options = []
+
+    return render_template("admin_tools.html", status=status, current_options=current_options)
+
+@app.route('/zahlungsfreigabe/<int:antrag_id>')
+@login_required
+def zahlungsfreigabe_detail(antrag_id):
+    user = current_user()
+    with engine.begin() as conn:
+        antrag = conn.execute(text("""
+            SELECT z.id, z.antragsteller_id, u.username AS antragsteller,
+                   z.datum, z.paragraph, z.verwendungszweck, z.betrag,
+                   z.lieferant, z.begruendung, z.status, z.read_only,
+                   z.created_at, z.updated_at
+            FROM zahlungsantraege z
+            LEFT JOIN users u ON u.id = z.antragsteller_id
+            WHERE z.id = :id
+        """), {'id': antrag_id}).mappings().first()
+
+        if not antrag:
+            abort(404)
+
+        audit = conn.execute(text("""
+            SELECT a.id, a.user_id, u.username, a.action, a.timestamp, a.detail
+            FROM zahlungsantrag_audit a
+            LEFT JOIN users u ON u.id = a.user_id
+            WHERE a.antrag_id = :id
+            ORDER BY a.timestamp ASC
+        """), {'id': antrag_id}).mappings().all()
+
+    return render_template('payment_authorization_detail.html', antrag=antrag, audit=audit)
+
+def send_status_email(to_email: str, antrag_id: int, status: str):
+    subject = f"Zahlungsantrag #{antrag_id} – Status: {status.capitalize()}"
+    body = f"Ihr Zahlungsantrag #{antrag_id} wurde auf '{status}' gesetzt.\n\nLink: {APP_BASE_URL}/zahlungsfreigabe/{antrag_id}"
+    msg = EmailMessage()
+    msg["From"] = FROM_EMAIL
+    msg["To"] = to_email
+    msg["Subject"] = subject
+    msg.set_content(body)
+
+    try:
+        if SMTP_SSL_ON:
+            context = ssl.create_default_context()
+            with SMTP_SSL(SMTP_HOST, SMTP_PORT, timeout=SMTP_TIMEOUT, context=context) as s:
+                if SMTP_USER and SMTP_PASS:
+                    s.login(SMTP_USER, SMTP_PASS)
+                s.send_message(msg)
+        else:
+            with SMTP(SMTP_HOST, SMTP_PORT, timeout=SMTP_TIMEOUT) as s:
+                s.ehlo()
+                if SMTP_TLS:
+                    s.starttls(context=ssl.create_default_context())
+                    s.ehlo()
+                if SMTP_USER and SMTP_PASS:
+                    s.login(SMTP_USER, SMTP_PASS)
+                s.send_message(msg)
+        logger.info("Status-E-Mail gesendet an %s für Antrag %s", to_email, antrag_id)
+    except Exception as e:
+        logger.error("Fehler beim Senden der Status-E-Mail: %s", e)
+
+def get_antrag_email(antrag_id: int):
+    with engine.begin() as conn:
+        return conn.execute(text("""
+            SELECT u.email FROM zahlungsantraege z
+            JOIN users u ON u.id = z.antragsteller_id
+            WHERE z.id = :id
+        """), {'id': antrag_id}).scalar_one_or_none()
+
     # SMTP-Status vorbereiten
     if not SMTP_HOST or not SMTP_PORT or not SMTP_USER or not SMTP_PASS:
         status = _("SMTP configuration incomplete.")
@@ -2944,16 +3543,7 @@ def admin_tools():
     except Exception:
         current_options = []
 
-    return render_template("admin_tools.html", status=status, current_options=current_options)
-
-
-    if not SMTP_HOST or not SMTP_PORT or not SMTP_USER or not SMTP_PASS:
-        status = _("SMTP configuration incomplete.")
-    else:
-        status = _("SMTP configuration detected for host {}:{}.".format(SMTP_HOST, SMTP_PORT))
-        
-
-    return render_template("admin_tools.html", status=status)
+    return render_template("admin_tools.html", status=status, current_options=current_options)  
 
 if __name__ == '__main__':
     os.environ.setdefault('TZ', 'Europe/Berlin')

@@ -1,10 +1,10 @@
-
 {% extends "base.html" %}
 {% block content %}
 <div class="card shadow-sm">
   <div class="card-body">
     <h1 class="h5 mb-3">{{ _('Benutzerverwaltung') }}</h1>
 
+    <!-- Neuer Benutzer -->
     <form method="post" action="{{ url_for('users_add') }}" class="row g-2 align-items-end mb-3">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div class="col-12 col-md-3">
@@ -23,13 +23,16 @@
       </div>
       <div class="col-12 col-md-2">
         <label class="form-label">{{ _('Passwort') }}</label>
-        <input type="password" name="password" class="form-control" required>
+        <input type="password" name="password" minlength="8" class="form-control" required>
       </div>
       <div class="col-12 col-md-2">
-        <button class="btn btn-success w-100"><i class="bi-plus-lg me-1"></i> {{ _('Anlegen') }}</button>
+        <button class="btn btn-success w-100">
+          <i class="bi bi-plus-lg me-1"></i> {{ _('Anlegen') }}
+        </button>
       </div>
     </form>
 
+    <!-- Liste der Benutzer -->
     <div class="table-responsive">
       <table class="table table-sm align-middle table-striped">
         <thead class="table-light">
@@ -38,6 +41,7 @@
             <th>{{ _('E-Mail') }}</th>
             <th>{{ _('Rolle') }}</th>
             <th>{{ _('Aktiv') }}</th>
+            <th>{{ _('Geschäftsführend') }}</th>
             <th>{{ _('Erstellt') }}</th>
             <th class="text-end">{{ _('Aktionen') }}</th>
           </tr>
@@ -45,46 +49,102 @@
         <tbody>
           {% for u in users %}
           <tr>
-            <td>{{ u.username }}</td>
+            <!-- Benutzername + ID -->
+            <td class="text-nowrap">
+              {{ u.username }}<br>
+              <small class="text-muted">ID: {{ u.id }}</small>
+            </td>
+
+            <!-- E-Mail -->
             <td>{{ u.email or '—' }}</td>
+
+            <!-- Rollenwechsel -->
             <td>
               <form method="post" action="{{ url_for('users_change_role', uid=u.id) }}" class="d-flex gap-2">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <select class="form-select form-select-sm" name="role">
-                  {% for r in ROLES.keys() %}<option value="{{ r }}" {% if r==u.role %}selected{% endif %}>{{ r }}</option>{% endfor %}
+                  {% for r in ROLES.keys() %}
+                    <option value="{{ r }}" {% if r==u.role %}selected{% endif %}>{{ r }}</option>
+                  {% endfor %}
                 </select>
-                <button class="btn btn-sm btn-outline-primary">{{ _('Speichern') }}</button>
-              </form>
-            </td>
-            <td>
-              <form method="post" action="{{ url_for('users_toggle', uid=u.id) }}">      
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button class="btn btn-sm {{ 'btn-outline-success' if not u.active else 'btn-outline-secondary' }}">
-                    {{ _('Aktivieren') if not u.active else _('Deaktivieren') }}
+                <button class="btn btn-sm btn-outline-primary" title="{{ _('Speichern') }}">
+                  <i class="bi bi-save"></i>
                 </button>
               </form>
             </td>
+
+            <!-- Aktiv-Toggle (mit Icon, i18n-Text) -->
+            <td>
+              <form method="post" action="{{ url_for('users_toggle', uid=u.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                {% if u.active %}
+                  <button class="btn btn-sm btn-outline-secondary" title="{{ _('Deaktivieren') }}">
+                    <i class="bi bi-toggle-on me-1"></i>{{ _('Deaktivieren') }}
+                  </button>
+                {% else %}
+                  <button class="btn btn-sm btn-outline-success" title="{{ _('Aktivieren') }}">
+                    <i class="bi bi-toggle-off me-1"></i>{{ _('Aktivieren') }}
+                  </button>
+                {% endif %}
+              </form>
+            </td>
+
+            <!-- Geschäftsführend (can_approve) -->
+            <td>
+              <form method="post" action="{{ url_for('users_toggle_approve', uid=u.id) }}" class="d-inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                {% if u.can_approve %}
+                  <button class="btn btn-sm btn-success" title="{{ _('Berechtigung entfernen') }}">
+                    <i class="bi bi-check2-circle me-1"></i>{{ _('Ja') }}
+                  </button>
+                {% else %}
+                  <button class="btn btn-sm btn-outline-secondary" title="{{ _('Berechtigung vergeben') }}">
+                    <i class="bi bi-dash-circle me-1"></i>{{ _('Nein') }}
+                  </button>
+                {% endif %}
+              </form>
+            </td>
+
+            <!-- Erstellt -->
             <td class="text-nowrap">{{ u.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+
+            <!-- Aktionen (Passwort setzen, Reset-Link, Löschen) -->
             <td class="text-end">
-              <div class="d-flex gap-2 justify-content-end">
+              <div class="d-flex gap-2 justify-content-end flex-wrap">
+                <!-- Passwort setzen -->
                 <form method="post" action="{{ url_for('users_reset_pw', uid=u.id) }}" class="d-flex gap-2">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                  <input type="password" class="form-control form-control-sm" name="password" placeholder="{{ _('Neues Passwort') }}" required style="max-width: 180px;">
-                  <button class="btn btn-sm btn-outline-warning">{{ _('Passwort setzen') }}</button>
+                  <input type="password" class="form-control form-control-sm" name="password"
+                         placeholder="{{ _('Neues Passwort') }}" minlength="8" required style="max-width: 180px;">
+                  <button class="btn btn-sm btn-outline-warning">
+                    <i class="bi bi-key me-1"></i>{{ _('Passwort setzen') }}
+                  </button>
                 </form>
+
+                <!-- Reset-Link senden -->
                 <form method="post" action="{{ url_for('users_reset_link', uid=u.id) }}" class="d-flex gap-2">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                  <button class="btn btn-sm btn-outline-info" title="Reset-Link generieren">{{ _('Reset-Link') }}</button>
+                  <button class="btn btn-sm btn-outline-info" title="{{ _('Reset-Link generieren') }}">
+                    <i class="bi bi-envelope me-1"></i>{{ _('Reset-Link') }}
+                  </button>
                 </form>
-                <form method="post" action="{{ url_for('users_delete', uid=u.id) }}" onsubmit="return confirm('Benutzer wirklich löschen?');" class="d-flex gap-2">
+
+                <!-- Löschen -->
+                <form method="post" action="{{ url_for('users_delete', uid=u.id) }}"
+                      onsubmit="return confirm('{{ _('Benutzer wirklich löschen?') }}');"
+                      class="d-flex gap-2">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                  <button type="submit" class="btn btn-danger btn-sm">{{ _('Löschen') }}</button>
+                  <button type="submit" class="btn btn-danger btn-sm">
+                    <i class="bi bi-trash me-1"></i>{{ _('Löschen') }}
+                  </button>
                 </form>
               </div>
             </td>
           </tr>
           {% else %}
-          <tr><td colspan="6" class="text-center text-muted">{{ _('Keine Benutzer vorhanden') }}.</td></tr>
+          <tr>
+            <td colspan="7" class="text-center text-muted">{{ _('Keine Benutzer vorhanden') }}.</td>
+          </tr>
           {% endfor %}
         </tbody>
       </table>

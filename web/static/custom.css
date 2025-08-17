@@ -1,5 +1,9 @@
-/* Tabellen */
-.table td, .table th { vertical-align: middle; }
+/* =========================================
+   Allgemeine Tabellen & Layout
+   ========================================= */
+.table td, .table th {
+  vertical-align: middle;
+}
 
 /* Chart-Canvas */
 canvas {
@@ -8,7 +12,9 @@ canvas {
   max-height: 100%;
 }
 
-/* Farbvariablen (Light/Dark) */
+/* =========================================
+   Farbvariablen (Light/Dark)
+   ========================================= */
 :root {
   --bg-color: #ffffff;
   --text-color: #000000;
@@ -22,17 +28,41 @@ body {
   color: var(--text-color);
 }
 
-/* Logos */
-.logo-img { height: 80px; width: auto; vertical-align: middle; }
-.logo-wrapper svg { height: 28px !important; width: auto !important; vertical-align: middle; }
-.navbar-brand { font-size: 1.5rem; }
+/* =========================================
+   Logos & Branding
+   ========================================= */
+.logo-img {
+  height: 80px;
+  width: auto;
+  vertical-align: middle;
+}
+.logo-wrapper svg {
+  height: 28px !important;
+  width: auto !important;
+  vertical-align: middle;
+}
+.navbar-brand {
+  font-size: 1.5rem;
+}
 
-/* Animationen */
-.error-card { animation: fadeIn 0.6s ease-in-out; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+/* =========================================
+   Animationen
+   ========================================= */
+.error-card {
+  animation: fadeIn 0.6s ease-in-out;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
-/* Dark-Mode Cards */
-[data-bs-theme="dark"] .card { background-color: #2c2f33; color: #f8f9fa; }
+/* =========================================
+   Dark-Mode Cards
+   ========================================= */
+[data-bs-theme="dark"] .card {
+  background-color: #2c2f33;
+  color: #f8f9fa;
+}
 
 /* Flatpickr Dark Mode */
 :root[data-bs-theme="dark"] .flatpickr-calendar {
@@ -41,11 +71,9 @@ body {
   border: 1px solid var(--bs-border-color);
 }
 
-/* =========================================================
+/* =========================================
    Responsive Layout
-   ========================================================= */
-
-/* Sicherstellen, dass Bootstrap-Grid greift */
+   ========================================= */
 .row.g-3 > [class*="col-"] {
   flex: 0 0 auto;
 }
@@ -59,79 +87,191 @@ body {
   #sparklineInv, #sparklineKas { height: 80px !important; }
 }
 
-/* ---------- BottleBalance: Formular-Submit-Button (global) ---------- */
-
-    /* Sanfte Übergänge; wird bei reduced-motion abgeschaltet */
-    #transaction-form .btn.btn-success.flex-grow-1 {
-      transition: opacity .15s ease-in-out, filter .15s ease-in-out;
-    }
-
-    /* Deutlich erkennbarer "deaktiviert"-Zustand */
-    #transaction-form .btn.btn-success.flex-grow-1:disabled,
-    #transaction-form .btn.btn-success.flex-grow-1[aria-disabled="true"] {
-      opacity: .55;                /* sichtbarer als Bootstrap-Default */
-      cursor: not-allowed;         /* klarer Hinweis */
-      box-shadow: none !important; /* keine Fokus-Schattierung im disabled */
-      filter: grayscale(25%);      /* dezente Entsättigung */
-    }
-
-    /* Aktiver Zustand: kleine Hover-/Focus-Affordanzen */
-    #transaction-form .btn.btn-success.flex-grow-1:not(:disabled):hover {
-      filter: brightness(1.03);
-    }
-    #transaction-form .btn.btn-success.flex-grow-1:not(:disabled):focus-visible {
-      /* Fallback-Farbe für Outline (Bootstrap Success ~ #198754) */
-      outline: 2px solid rgba(25, 135, 84, .5);
-      outline-offset: 2px;
-    }
-    /* Theme-aware via CSS-Variablen, falls verfügbar */
-    @supports (color: color-mix(in srgb, #000, #fff)) {
-      #transaction-form .btn.btn-success.flex-grow-1:not(:disabled):focus-visible {
-        outline: 2px solid color-mix(in srgb, var(--bs-success), transparent 50%);
-      }
-    }
-
-    /* Bewegungseinstellungen respektieren */
-    @media (prefers-reduced-motion: reduce) {
-      #transaction-form .btn.btn-success.flex-grow-1 {
-        transition: none;
-      }
-    }
-
-    /* ---------- Optionaler Spinner beim Absenden ---------- */
-    #transaction-form.is-submitting .btn.btn-success.flex-grow-1 {
-      position: relative;
-      pointer-events: none;   /* Keine doppelten Klicks */
-    }
-    #transaction-form.is-submitting .btn.btn-success.flex-grow-1 i.bi-plus-lg {
-      visibility: hidden;     /* Plus-Icon ausblenden, Text bleibt sichtbar */
-    }
-    #transaction-form.is-submitting .btn.btn-success.flex-grow-1::after {
-      content: "";
-      position: absolute;
-      inset-inline-start: .75rem; /* links vom Text (rtl/ltl-aware mit logical property) */
-      top: 50%;
-      width: 1rem; height: 1rem;
-      margin-top: -.5rem;
-      border: .15em solid currentColor;
-      border-right-color: transparent;
-      border-radius: 50%;
-      animation: bb-spin .6s linear infinite;
-    }
-
-    @keyframes bb-spin { to { transform: rotate(360deg); } }
-
-
-.form-compact .form-label { font-size: .9rem; margin-bottom: .25rem; }
-  .form-compact .input-group-text { padding: .375rem .5rem; }
-  @media (min-width: 768px) {
-    .form-compact .form-control, .form-compact .form-select { min-width: 12rem; }
+/* =========================================
+   Formular-Buttons (BottleBalance)
+   ========================================= */
+#transaction-form .btn.btn-success.flex-grow-1 {
+  transition: opacity .15s ease-in-out, filter .15s ease-in-out;
+}
+#transaction-form .btn.btn-success.flex-grow-1:disabled,
+#transaction-form .btn.btn-success.flex-grow-1[aria-disabled="true"] {
+  opacity: .55;
+  cursor: not-allowed;
+  box-shadow: none !important;
+  filter: grayscale(25%);
+}
+#transaction-form .btn.btn-success.flex-grow-1:not(:disabled):hover {
+  filter: brightness(1.03);
+}
+#transaction-form .btn.btn-success.flex-grow-1:not(:disabled):focus-visible {
+  outline: 2px solid rgba(25, 135, 84, .5);
+  outline-offset: 2px;
+}
+@supports (color: color-mix(in srgb, #000, #fff)) {
+  #transaction-form .btn.btn-success.flex-grow-1:not(:disabled):focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--bs-success), transparent 50%);
   }
+}
+@media (prefers-reduced-motion: reduce) {
+  #transaction-form .btn.btn-success.flex-grow-1 {
+    transition: none;
+  }
+}
+/* Spinner beim Absenden */
+#transaction-form.is-submitting .btn.btn-success.flex-grow-1 {
+  position: relative;
+  pointer-events: none;
+}
+#transaction-form.is-submitting .btn.btn-success.flex-grow-1 i.bi-plus-lg {
+  visibility: hidden;
+}
+#transaction-form.is-submitting .btn.btn-success.flex-grow-1::after {
+  content: "";
+  position: absolute;
+  inset-inline-start: .75rem;
+  top: 50%;
+  width: 1rem; height: 1rem;
+  margin-top: -.5rem;
+  border: .15em solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: bb-spin .6s linear infinite;
+}
+@keyframes bb-spin { to { transform: rotate(360deg); } }
 
-  .flatpickr-dark {
+/* =========================================
+   Kompakte Formulare
+   ========================================= */
+.form-compact .form-label { font-size: .9rem; margin-bottom: .25rem; }
+.form-compact .input-group-text { padding: .375rem .5rem; }
+@media (min-width: 768px) {
+  .form-compact .form-control, .form-compact .form-select { min-width: 12rem; }
+}
+
+/* =========================================
+   Flatpickr Dark Mode
+   ========================================= */
+.flatpickr-dark {
   background: #2b2b2b;
   color: #fff;
 }
 .flatpickr-dark .flatpickr-day {
   color: #fff;
 }
+
+/* =========================================
+   Admin-Tools Styling
+   ========================================= */
+.card {
+  border-radius: .5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+.card-header {
+  font-weight: 600;
+  font-size: 1rem;
+  background-color: var(--bs-light);
+}
+[data-bs-theme="dark"] .card-header {
+  background-color: #343a40;
+  color: #f8f9fa;
+}
+textarea#options {
+  font-family: monospace;
+  resize: vertical;
+}
+.btn i {
+  vertical-align: middle;
+}
+.alert {
+  border-radius: .375rem;
+  font-size: .95rem;
+}
+@media (max-width: 768px) {
+  .card-header { font-size: .95rem; }
+  textarea#options { font-size: .9rem; }
+}
+
+/* =========================================
+   Status Badges – Zahlungsfreigabe
+   ========================================= */
+
+/* Farb-Variablen – leicht anpassbar */
+:root {
+  --bb-status-offen:         #ffc107; /* Gelb */
+  --bb-status-on-hold:       #6c757d; /* Grau */
+  --bb-status-freigegeben:   #0d6efd; /* Blau */
+  --bb-status-abgelehnt:     #dc3545; /* Rot */
+  --bb-status-zurueckgezogen:#fd7e14; /* Orange */
+  --bb-status-abgeschlossen: #198754; /* Grün */
+  --bb-status-unknown:       #0dcaf0; /* Cyan/Info */
+}
+
+/* Einheitliche Badge-Basis */
+.badge {
+  font-size: .85rem;
+  font-weight: 600;
+  padding: .45em .6em;
+  letter-spacing: .01em;
+  vertical-align: middle;
+}
+
+/* Fokus sichtbarer (A11y) */
+.badge:focus-visible {
+  outline: 2px solid rgba(13,110,253,.5);
+  outline-offset: 2px;
+}
+
+/* Einzelne Status-Farben */
+.badge-status-offen {
+  background-color: var(--bb-status-offen);
+  color: #212529; /* dunkler Text auf Gelb */
+}
+.badge-status-on_hold {
+  background-color: var(--bb-status-on-hold);
+  color: #fff;
+}
+.badge-status-freigegeben {
+  background-color: var(--bb-status-freigegeben);
+  color: #fff;
+}
+.badge-status-abgelehnt {
+  background-color: var(--bb-status-abgelehnt);
+  color: #fff;
+}
+.badge-status-zurueckgezogen {
+  background-color: var(--bb-status-zurueckgezogen);
+  color: #fff;
+}
+.badge-status-abgeschlossen {
+  background-color: var(--bb-status-abgeschlossen);
+  color: #fff;
+}
+
+/* Fallback für unbekannte/neue Statuswerte */
+.badge-status-unknown,
+.badge-status-Unbekannt,
+.badge-status-default {
+  background-color: var(--bb-status-unknown);
+  color: #08222a;
+}
+
+/* Mini-Statuspunkt (optional) */
+.status-dot {
+  display: inline-block;
+  width: .5rem;
+  height: .5rem;
+  border-radius: 50%;
+  vertical-align: middle;
+  margin-right: .35rem;
+  background-color: var(--bb-status-unknown);
+}
+.status-dot.offen          { background-color: var(--bb-status-offen); }
+.status-dot.on_hold        { background-color: var(--bb-status-on-hold); }
+.status-dot.freigegeben    { background-color: var(--bb-status-freigegeben); }
+.status-dot.abgelehnt      { background-color: var(--bb-status-abgelehnt); }
+.status-dot.zurueckgezogen { background-color: var(--bb-status-zurueckgezogen); }
+.status-dot.abgeschlossen  { background-color: var(--bb-status-abgeschlossen); }
+
+/* Button/Tabellen-Feinschliff bei Aktionsleisten */
+.table td .btn { margin: 2px; }
+.table th, .table td { white-space: nowrap; }

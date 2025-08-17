@@ -134,17 +134,12 @@
             </div>
           </div>
 
-          {# Von #}
+          <!-- Zeitraum (Date Range Picker) -->
           <div class="col">
-            <label for="filter_from" class="form-label mb-1">{{ _('Von') }}</label>
-            <input type="date" id="filter_from" name="from" class="form-control"
-              value="{{ request.args.get('from','') }}">
-          </div>
-
-          {# Bis #}
-          <div class="col">
-            <label for="filter_to" class="form-label mb-1">{{ _('Bis') }}</label>
-            <input type="date" id="filter_to" name="to" class="form-control" value="{{ request.args.get('to','') }}">
+            <label for="filter_daterange" class="form-label mb-1">{{ _('Zeitraum') }}</label>
+            <input type="text" id="filter_daterange" class="form-control" placeholder="{{ _('TT.MM.JJJJ – TT.MM.JJJJ') }}" autocomplete="off">
+            <input type="hidden" name="from" id="filter_from" value="{{ request.args.get('from','') }}">
+            <input type="hidden" name="to" id="filter_to" value="{{ request.args.get('to','') }}">
           </div>
 
           {# Anhänge-Filter als Select (statt 3 Buttons) #}
@@ -377,9 +372,8 @@
 
 
   (function () {
-    // Daten aus Flask
-    const labelsRaw = {{ entries| map(attribute = 'datum') | list | tojson
-  }};
+  // Daten aus Flask
+  const labelsRaw = {{ entries|map(attribute='datum')|list|tojson }};
   const dataInv = {{ series_inv| tojson }};
   const dataKas = {{ series_kas| tojson }};
 
@@ -733,20 +727,73 @@
 </script>
 
 <script>
-  // Auto submit
-  document.addEventListener('DOMContentLoaded', () => {
-    const form = document.getElementById('filtersForm');
-    if (!form) return;
-    // Auto-submit bei Änderung von date/select
-    ['filter_from', 'filter_to', 'filter_attachments'].forEach(id => {
-      const el = document.getElementById(id);
-      el?.addEventListener('change', () => form.requestSubmit());
-    });
-    // ENTER in Suche löst Submit aus (ist Standard, hier nur robust)
-    document.getElementById('filter_q')?.addEventListener('keydown', e => {
-      if (e.key === 'Enter') form.requestSubmit();
-    });
-  });
+
+document.addEventListener('DOMContentLoaded', () => {
+const form    = document.getElementById('filtersForm');
+const elRange = document.getElementById('filter_daterange');
+const elFrom  = document.getElementById('filter_from');
+const elTo    = document.getElementById('filter_to');
+
+// Lokales YYYY-MM-DD (kein UTC-Shift)
+const fmtLocal = (d) => {
+  if (!d) return '';
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+};
+
+// Re-Submit nur bei echter Änderung (Loop-Schutz)
+const submitIfChanged = (() => {
+  let lastKey = `${elFrom.value}|${elTo.value}`;
+  return () => {
+    const key = `${elFrom.value}|${elTo.value}`;
+    if (key === lastKey) return;
+    lastKey = key;
+    form?.requestSubmit();
+  };
+})();
+
+// Auto-Submit für Anhänge  Enter im Suchfeld
+document.getElementById('filter_attachments')?.addEventListener('change', submitIfChanged);
+document.getElementById('filter_q')?.addEventListener('keydown', e => { if (e.key === 'Enter') submitIfChanged(); });
+
+if (!window.flatpickr || !elRange) return;
+if (flatpickr.l10ns?.de) flatpickr.localize(flatpickr.l10ns.de);
+const isDark = () => document.documentElement.getAttribute('data-bs-theme') === 'dark';
+
+let hydrating = true; // verhindert Submit beim Initialisieren
+const fp = flatpickr(elRange, {
+  mode: 'range',
+  dateFormat: 'Y-m-d',  // intern
+  altInput: true,
+  altFormat: 'd.m.Y',   // Anzeige
+  allowInput: true,
+  clickOpens: true,
+  locale: { rangeSeparator: ' – ', firstDayOfWeek: 1 },
+  onOpen: (_, __, i) => i.calendarContainer.classList.toggle('flatpickr-dark', isDark()),
+  onChange: (dates) => {
+    const [from, to] = dates;
+    elFrom.value = fmtLocal(from);
+    elTo.value   = fmtLocal(to);
+    if (!hydrating && from && to) submitIfChanged();
+  }
+});
+
+// Vorbelegung aus Query OHNE Events → kein First-Load-Submit
+const preset = [elFrom.value, elTo.value].filter(Boolean);
+if (preset.length) {
+  fp.setDate(preset, false, 'Y-m-d'); // false = keine Events
+}
+hydrating = false;
+
+// Dark/Light live nachziehen
+new MutationObserver(() => {
+  document.querySelectorAll('.flatpickr-calendar')
+    .forEach(c => c.classList.toggle('flatpickr-dark', isDark()));
+}).observe(document.documentElement, { attributes: true, attributeFilter: ['data-bs-theme'] });
+});
+
 </script>
 
 {% endblock %}

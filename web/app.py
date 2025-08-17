@@ -19,9 +19,7 @@ from email.mime.text import MIMEText
 from email.header import Header
 from functools import wraps
 from typing import Tuple
-from flask_login import login_required
-
-
+#from flask_login import login_required
 import csv
 import io
 import time
@@ -482,19 +480,45 @@ def require_csrf(fn):
         return fn(*args, **kwargs)
     return wrapper
 
+
 def _build_index_context(default_date: str | None = None, temp_token: str | None = None):
-    """Bereitet alle Variablen für index.html auf – mit stabilem temp_token."""
-    # Filter aus Query (wie in index())
+    """
+    Bereitet alle Variablen für index.html auf – mit stabilem temp_token.
+    - totals-Modus via ?totals=filtered | all
+      * 'filtered': inv_aktuell/kas_aktuell aus der gefilterten Liste
+      * 'all' (Default): Gesamtstände aus der gesamten Tabelle
+    """
+    # Filter aus Query
     q = (request.args.get('q') or '').strip()
     date_from_s = request.args.get('from')
     date_to_s = request.args.get('to')
     df = datetime.strptime(date_from_s, '%Y-%m-%d').date() if date_from_s else None
     dt = datetime.strptime(date_to_s, '%Y-%m-%d').date() if date_to_s else None
 
-    # Daten aufbereiten
-    entries = fetch_entries(q or None, df, dt)
-    inv, kas = current_totals()
+    # Anhänge: 'only' | 'none' | None
+    filter_attachments = request.args.get('attachments')
 
+    # Einträge DB-seitig mit allen Filtern holen
+    entries = fetch_entries(q or None, df, dt, attachments_filter=filter_attachments)
+
+    # Totals-Modus: 'all' (Default) oder 'filtered'
+    totals_mode = (request.args.get('totals') or 'all').strip().lower()
+    if totals_mode not in ('all', 'filtered'):
+        totals_mode = 'all'
+
+    if totals_mode == 'filtered':
+        # Aus gefilterten Daten ableiten
+        if entries:
+            inv_aktuell = entries[-1]['inventar']
+            kas_aktuell = entries[-1]['kassenbestand']
+        else:
+            inv_aktuell = 0
+            kas_aktuell = Decimal('0.00')
+    else:
+        # Gesamtsystemstände
+        inv_aktuell, kas_aktuell = current_totals()
+
+    # Serien für Sparklines (bewusst auf Basis der gefilterten Liste)
     series_inv = [e['inventar'] for e in entries]
     series_kas = [float(e['kassenbestand']) for e in entries]
 
@@ -505,26 +529,28 @@ def _build_index_context(default_date: str | None = None, temp_token: str | None
     allowed = ROLES.get(role, set())
 
     # temp_token beibehalten oder anlegen (NICHT überschreiben, wenn übergeben)
-    if temp_token:
-        token = temp_token
-    else:
-        token = session.get('add_temp_token')
-        if not token:
-            token = uuid4().hex
-    session['add_temp_token'] = token  # sicherstellen, dass Session denselben Token kennt
+    token = temp_token or session.get('add_temp_token') or uuid4().hex
+    session['add_temp_token'] = token  # Session soll denselben Token kennen
 
     return {
         'entries': entries,
-        'inv_aktuell': inv, 'kas_aktuell': kas,
-        'filter_inv': finv, 'filter_kas': fkas,
+        'inv_aktuell': inv_aktuell,
+        'kas_aktuell': kas_aktuell,
+        'filter_inv': finv,
+        'filter_kas': fkas,
         'default_date': default_date or today_ddmmyyyy(),
-        'format_eur_de': format_eur_de, 'format_date_de': format_date_de,
+        'format_eur_de': format_eur_de,
+        'format_date_de': format_date_de,
         'can_add': ('entries:add' in allowed),
         'can_export_csv': ('export:csv' in allowed),
         'can_export_pdf': ('export:pdf' in allowed),
         'can_import': ('import:csv' in allowed),
-        'role': role, 'series_inv': series_inv, 'series_kas': series_kas,
-        'temp_token': token
+        'role': role,
+        'series_inv': series_inv,
+        'series_kas': series_kas,
+        'temp_token': token,
+        # Optional im Template verwenden, falls du den Modus anzeigen willst:
+        'totals_mode': totals_mode,
     }
 
 # -----------------------
@@ -638,38 +664,71 @@ def parse_int_strict(value: str):
 # Data Access
 # -----------------------
 
-def fetch_entries(search: str | None = None, date_from: date | None = None, date_to: date | None = None):
+
+
+def fetch_entries(
+    search: str | None = None,
+    date_from: date | None = None,
+    date_to: date | None = None,
+    attachments_filter: str | None = None  # 'only' | 'none' | None
+):
+    """
+    Holt Einträge inkl. fortlaufend berechnetem Inventar/Kassenbestand.
+    - Zählt Attachments via LEFT JOIN auf eine Aggregation (performanter als korrelierte Subqueries).
+    - attachments_filter:
+        'only'  -> nur Einträge mit mind. 1 Anhang
+        'none'  -> nur Einträge ohne Anhang
+        None    -> keine Einschränkung
+    """
     where = []
-    params = {}
+    params: dict[str, object] = {}
+
     if search:
-        where.append("(bemerkung ILIKE :q OR to_char(datum, 'DD.MM.YYYY') ILIKE :q)")
+        where.append("(e.bemerkung ILIKE :q OR to_char(e.datum, 'DD.MM.YYYY') ILIKE :q)")
         params['q'] = f"%{search}%"
     if date_from:
-        where.append("datum >= :df")
+        where.append("e.datum >= :df")
         params['df'] = date_from
     if date_to:
-        where.append("datum <= :dt")
+        where.append("e.datum <= :dt")
         params['dt'] = date_to
-    where_sql = (" WHERE " + " AND ".join(where)) if where else ""
+
+    # Anhangsfilter direkt in WHERE aufnehmen (Alias 'a' ist durch den JOIN vorhanden)
+    if attachments_filter == 'only':
+        where.append("COALESCE(a.cnt, 0) > 0")
+    elif attachments_filter == 'none':
+        where.append("COALESCE(a.cnt, 0) = 0")
+
+
+    where_sql = ("WHERE " + " AND ".join(where)) if where else ""
+
+    # Aggregation für Attachments einmalig bilden und joinen
+    
+    sql = f"""
+         WITH att AS (
+             SELECT entry_id, COUNT(*) AS cnt
+             FROM attachments
+             GROUP BY entry_id
+         )
+         SELECT
+             e.id,
+             e.datum,
+             e.vollgut,
+             e.leergut,
+             e.einnahme,
+             e.ausgabe,
+             e.bemerkung,
+             e.created_by,
+             COALESCE(a.cnt, 0) AS attachment_count
+         FROM entries e
+         LEFT JOIN att a ON a.entry_id = e.id
+         {where_sql}
+
+        ORDER BY e.datum ASC, e.id ASC
+    """
 
     with engine.begin() as conn:
-        rows = conn.execute(text(f"""
-            SELECT 
-                e.id,
-                e.datum,
-                e.vollgut,
-                e.leergut,
-                e.einnahme,
-                e.ausgabe,
-                e.bemerkung,
-                e.created_by,
-                COALESCE((
-                    SELECT COUNT(*) FROM attachments a WHERE a.entry_id = e.id
-                ), 0) AS attachment_count
-            FROM entries e
-            {where_sql}
-            ORDER BY e.datum ASC, e.id ASC
-        """), params).mappings().all()
+        rows = conn.execute(text(sql), params).mappings().all()
 
     inventar = 0
     kassenbestand = Decimal('0.00')
@@ -679,13 +738,22 @@ def fetch_entries(search: str | None = None, date_from: date | None = None, date
         leer = r['leergut'] or 0
         ein = Decimal(r['einnahme'] or 0)
         aus = Decimal(r['ausgabe'] or 0)
-        inventar = inventar + (voll - leer)
+
+        inventar += (voll - leer)
         kassenbestand = (kassenbestand + ein - aus).quantize(Decimal('0.01'))
+
         result.append({
-            'id': r['id'], 'datum': r['datum'], 'vollgut': voll, 'leergut': leer,
-            'einnahme': ein, 'ausgabe': aus, 'bemerkung': r['bemerkung'] or '',
-            'inventar': inventar, 'kassenbestand': kassenbestand, 'created_by': r['created_by'],
-            'attachment_count': r.get('attachment_count', 0)  # <— NEU
+            'id': r['id'],
+            'datum': r['datum'],
+            'vollgut': voll,
+            'leergut': leer,
+            'einnahme': ein,
+            'ausgabe': aus,
+            'bemerkung': r['bemerkung'] or '',
+            'inventar': inventar,
+            'kassenbestand': kassenbestand,
+            'created_by': r['created_by'],
+            'attachment_count': r['attachment_count'],
         })
     return result
 
@@ -1561,16 +1629,21 @@ def export_csv():
     q = (request.args.get('q') or '').strip()
     df = request.args.get('from')
     dt = request.args.get('to')
+    attachments_filter = request.args.get('attachments')  # 'only' | 'none' | None
+
     date_from = datetime.strptime(df, '%Y-%m-%d').date() if df else None
-    date_to = datetime.strptime(dt, '%Y-%m-%d').date() if dt else None
-    entries = fetch_entries(q or None, date_from, date_to)
+    date_to   = datetime.strptime(dt, '%Y-%m-%d').date() if dt else None
+
+    entries = fetch_entries(q or None, date_from, date_to, attachments_filter=attachments_filter)
+
     output = io.StringIO()
     writer = csv.writer(output, delimiter=';', lineterminator='\n')
     writer.writerow(['Datum','Vollgut','Leergut','Inventar','Einnahme','Ausgabe','Kassenbestand','Bemerkung'])
     for e in entries:
         writer.writerow([
             format_date_de(e['datum']), e['vollgut'], e['leergut'], e['inventar'],
-            str(e['einnahme']).replace('.', ','), str(e['ausgabe']).replace('.', ','), str(e['kassenbestand']).replace('.', ','), e['bemerkung']
+            str(e['einnahme']).replace('.', ','), str(e['ausgabe']).replace('.', ','),
+            str(e['kassenbestand']).replace('.', ','), e['bemerkung']
         ])
     mem = io.BytesIO()
     mem.write(output.getvalue().encode('utf-8-sig'))
@@ -2320,9 +2393,12 @@ def export_pdf():
     q = (request.args.get('q') or '').strip()
     df = request.args.get('from')
     dt = request.args.get('to')
+    attachments_filter = request.args.get('attachments')
+
     date_from = datetime.strptime(df, '%Y-%m-%d').date() if df else None
-    date_to = datetime.strptime(dt, '%Y-%m-%d').date() if dt else None
-    entries = fetch_entries(q or None, date_from, date_to)
+    date_to   = datetime.strptime(dt, '%Y-%m-%d').date() if dt else None
+
+    entries = fetch_entries(q or None, date_from, date_to, attachments_filter=attachments_filter)
 
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(
@@ -2337,11 +2413,9 @@ def export_pdf():
         story.append(RLImage(logo_path, width=40*mm, height=12*mm))
         story.append(Spacer(1, 6))
 
-    # Titel in echtem HTML (ReportLab-Paragraph versteht <b>…</b>)
     story.append(Paragraph(f"<b>{_('BottleBalance – Export')}</b>", styles['Title']))
     story.append(Spacer(1, 6))
 
-    # Tabelle
     data = [[
         _('Datum'), _('Vollgut'), _('Leergut'), _('Inventar'),
         _('Einnahme'), _('Ausgabe'), _('Kassenbestand'), _('Bemerkung')

@@ -9,7 +9,7 @@ from email.message import EmailMessage
 from datetime import datetime, date, timedelta
 from decimal import Decimal, InvalidOperation
 from flask_babel import Babel, gettext as _, gettext as translate
-from flask import Flask, render_template, request, redirect, url_for, session, send_file, flash, abort, jsonify
+from flask import Flask, render_template, request, redirect, url_for, session, send_file, flash, abort, jsonify, current_app
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import OperationalError
@@ -20,7 +20,7 @@ from email.header import Header
 from functools import wraps
 from typing import Tuple
 from urllib.parse import urlencode
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image as RLImage, PageBreak
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image as RLImage, PageBreak, KeepTogether
 #from flask_login import login_required
 import csv
 import io
@@ -1204,6 +1204,19 @@ def update_preferences():
     return redirect(url_for('profile'))
 
 @app.context_processor
+def utility_processor():
+    def safe_url_for(endpoint, **values):
+        try:
+            return url_for(endpoint, **values)
+        except Exception:
+            return '#'
+    def has_endpoint(endpoint):
+        try:
+            return endpoint in current_app.view_functions
+        except Exception:
+            return False
+    return dict(safe_url_for=safe_url_for, has_endpoint=has_endpoint)
+
 def inject_theme():
     user = current_user()
     theme = user.get('theme_preference') if user else 'system'
@@ -3151,8 +3164,9 @@ def zahlungsfreigabe_audit():
 @app.get('/zahlungsfreigabe/export/pdf')
 @login_required
 def export_alle_antraege_pdf():
+    # ---- 1) Daten laden: Anträge + Audit ----
     with engine.begin() as conn:
-        rows = conn.execute(text("""
+        antraege = conn.execute(text("""
             SELECT z.id,
                    u.username AS antragsteller,
                    z.datum,
@@ -3161,14 +3175,32 @@ def export_alle_antraege_pdf():
                    z.betrag,
                    z.lieferant,
                    z.begruendung,
-                   z.status
+                   z.status,
+                   z.created_at
             FROM zahlungsantraege z
             LEFT JOIN users u ON u.id = z.antragsteller_id
-            ORDER BY z.created_at DESC
+            ORDER BY z.created_at DESC, z.id DESC
         """)).mappings().all()
 
+        audits = conn.execute(text("""
+            SELECT a.antrag_id,
+                   a.timestamp,
+                   a.action,
+                   a.detail,
+                   u.username
+            FROM zahlungsantrag_audit a
+            LEFT JOIN users u ON u.id = a.user_id
+            ORDER BY a.antrag_id ASC, a.timestamp ASC, a.id ASC
+        """)).mappings().all()
+
+    # Map: antrag_id -> Liste der Audit-Einträge
+    audit_by_antrag: dict[int, list] = {}
+    for row in audits:
+        aid = row['antrag_id']
+        audit_by_antrag.setdefault(aid, []).append(row)
+
+    # ---- 2) PDF-Dokument vorbereiten ----
     buffer = io.BytesIO()
-    # etwas komfortablere Ränder
     doc = SimpleDocTemplate(
         buffer,
         pagesize=A4,
@@ -3181,23 +3213,26 @@ def export_alle_antraege_pdf():
     story.append(Paragraph("Zahlungsanträge – Gesamtdokument", styles['Title']))
     story.append(Spacer(1, 6))
     story.append(Paragraph(
-        f"Erstellt am {datetime.now().strftime('%d.%m.%Y %H:%M')} – Anzahl Anträge: {len(rows)}",
+        f"Erstellt am {datetime.now().strftime('%d.%m.%Y %H:%M')} – Anzahl Anträge: {len(antraege)}",
         styles['Normal']
     ))
     story.append(Spacer(1, 12))
 
-    # kleine Helfer: Paragraph mit Zeilenumbruchsupport
-    def P(text: str | None):
+    # Hilfsfunktion: Text -> Paragraph (mit Zeilenumbruch-Unterstützung)
+    def P(text: str | None, style='Normal'):
         txt = (text or '').replace('\n', '<br/>')
-        return Paragraph(txt, styles['Normal'])
+        return Paragraph(txt, styles[style])
 
-    for idx, r in enumerate(rows):
-        # Überschrift je Antrag
-        story.append(Paragraph(f"<b>Zahlungsantrag #{r['id']}</b>", styles['Heading2']))
-        story.append(Spacer(1, 6))
+    # ---- 3) Pro Antrag: Details + Audit ----
+    for idx, r in enumerate(antraege):
+        blocks = []
 
-        # Detailtabelle (Label / Wert)
-        data = [
+        # Kopf je Antrag
+        blocks.append(Paragraph(f"<b>Zahlungsantrag #{r['id']}</b>", styles['Heading2']))
+        blocks.append(Spacer(1, 6))
+
+        # Details (2-Spalten-Tabelle: Label / Wert)
+        details_data = [
             ["Antragsteller/in:", P(r['antragsteller'])],
             ["Datum:", P(r['datum'].strftime('%d.%m.%Y') if r['datum'] else '')],
             ["Paragraph:", P(f"§ {r['paragraph']}" if r['paragraph'] else '')],
@@ -3207,9 +3242,8 @@ def export_alle_antraege_pdf():
             ["Begründung:", P(r['begruendung'])],
             ["Status:", P(r['status'])],
         ]
-
-        t = Table(data, colWidths=[40*mm, None], hAlign='LEFT')
-        t.setStyle(TableStyle([
+        details_table = Table(details_data, colWidths=[42*mm, None], hAlign='LEFT')
+        details_table.setStyle(TableStyle([
             ('VALIGN', (0,0), (-1,-1), 'TOP'),
             ('FONTNAME', (0,0), (0,-1), 'Helvetica-Bold'),
             ('TEXTCOLOR', (0,0), (0,-1), colors.HexColor('#212529')),
@@ -3219,17 +3253,54 @@ def export_alle_antraege_pdf():
             ('RIGHTPADDING', (0,0), (-1,-1), 4),
             ('TOPPADDING', (0,0), (-1,-1), 3),
             ('BOTTOMPADDING', (0,0), (-1,-1), 3),
-            # dezente Unterteilungslinie zwischen Zeilen
             ('LINEBELOW', (0,0), (-1,-1), 0.25, colors.HexColor('#e9ecef')),
         ]))
-        story.append(t)
+        blocks.append(details_table)
+        blocks.append(Spacer(1, 10))
 
-        # Abstand & Seitenumbruch zwischen Anträgen
-        if idx < len(rows) - 1:
-            story.append(Spacer(1, 6))
+        # Audit-Sektion
+        blocks.append(Paragraph("Audit-Historie", styles['Heading3']))
+        rows = audit_by_antrag.get(r['id'], [])
+        if rows:
+            audit_data = [[
+                Paragraph("<b>Zeitpunkt</b>", styles['Normal']),
+                Paragraph("<b>Aktion</b>", styles['Normal']),
+                Paragraph("<b>Benutzer</b>", styles['Normal']),
+                Paragraph("<b>Details</b>", styles['Normal']),
+            ]]
+            for a in rows:
+                audit_data.append([
+                    a['timestamp'].strftime('%d.%m.%Y %H:%M:%S') if a['timestamp'] else '',
+                    a['action'] or '',
+                    a['username'] or 'Unbekannt',
+                    P(a['detail']),
+                ])
+            audit_table = Table(audit_data, colWidths=[36*mm, 32*mm, 35*mm, None], repeatRows=1)
+            audit_table.setStyle(TableStyle([
+                ('VALIGN', (0,0), (-1,-1), 'TOP'),
+                ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#f1f3f5')),
+                ('TEXTCOLOR', (0,0), (-1,0), colors.HexColor('#212529')),
+                ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0,0), (-1,-1), 9.5),
+                ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.white, colors.HexColor('#fcfcfd')]),
+                ('GRID', (0,0), (-1,-1), 0.25, colors.HexColor('#dee2e6')),
+                ('LEFTPADDING', (0,0), (-1,-1), 4),
+                ('RIGHTPADDING', (0,0), (-1,-1), 4),
+                ('TOPPADDING', (0,0), (-1,-1), 3),
+                ('BOTTOMPADDING', (0,0), (-1,-1), 3),
+            ]))
+            blocks.append(audit_table)
+        else:
+            blocks.append(Paragraph("<i>Keine Audit‑Einträge vorhanden.</i>", styles['Normal']))
+
+        # Alles zusammen (falls Blockseitenumbruch zu unschönen Split führt, zusammenhalten)
+        story.append(KeepTogether(blocks))
+
+        # Seitenumbruch zwischen Anträgen
+        if idx < len(antraege) - 1:
             story.append(PageBreak())
 
-    # (Optional) Seitenzahlen im Footer
+    # ---- 4) Seitenzahlen im Footer ----
     def _footer(canvas, doc_):
         canvas.saveState()
         canvas.setFont("Helvetica", 9)
@@ -3239,7 +3310,6 @@ def export_alle_antraege_pdf():
 
     doc.build(story, onFirstPage=_footer, onLaterPages=_footer)
     buffer.seek(0)
-    # gleicher Dateiname wie zuvor, nur andere inhaltliche Struktur
     return send_file(buffer, as_attachment=True, download_name='alle_antraege.pdf', mimetype='application/pdf')
 
 @app.get('/zahlungsfreigabe/<int:antrag_id>/export/pdf')

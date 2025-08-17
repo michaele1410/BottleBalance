@@ -2,330 +2,366 @@
 {% block content %}
 
 <div class="row g-3 mb-4">
-<!-- Inventar -->
-<div class="col-6 col-md-4">
-<div class="card shadow-sm h-100">
-<div class="card-header d-flex justify-content-between align-items-center">
-<span>{{ _('Inventar:') }}</span>
-<span class="badge bg-primary">{{ inv_aktuell }} {{ _('Fl.') }}</span>
-</div>
-<div class="card-body sparkline-container">
-<div class="ratio sparkline-ratio">
-<canvas id="sparklineInv"></canvas>
-</div>
-</div>
-</div>
-</div>
-<!-- Kassenbestand -->
-<div class="col-6 col-md-4">
-<div class="card shadow-sm h-100">
-<div class="card-header d-flex justify-content-between align-items-center">
-<span>{{ _('Kasse:') }}</span>
-<span class="badge bg-success">{{ format_eur_de(kas_aktuell) }}</span>
-</div>
-<div class="card-body sparkline-container">
-<div class="ratio sparkline-ratio">
-<canvas id="sparklineKas"></canvas>
-</div>
-</div>
-</div>
-</div>
-<!-- Formular für neuen Datensatz -->
+  <!-- Inventar -->
+  <div class="col-6 col-md-4">
+    <div class="card shadow-sm h-100">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span>{{ _('Inventar:') }}</span>
+        <span class="badge bg-primary">{{ inv_aktuell }} {{ _('Fl.') }}</span>
+      </div>
+      <div class="card-body sparkline-container">
+        <div class="ratio sparkline-ratio">
+          <canvas id="sparklineInv"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Kassenbestand -->
+  <div class="col-6 col-md-4">
+    <div class="card shadow-sm h-100">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span>{{ _('Kasse:') }}</span>
+        <span class="badge bg-success">{{ format_eur_de(kas_aktuell) }}</span>
+      </div>
+      <div class="card-body sparkline-container">
+        <div class="ratio sparkline-ratio">
+          <canvas id="sparklineKas"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Formular für neuen Datensatz -->
   {% if can_add %}
   <div class="col-12 col-md-4">
-<div class="card shadow-sm h-100">
-<div class="card-body">
-<h2 class="h6 mb-3">{{ _('Neuen Datensatz hinzufügen') }}</h2>
-<form action="{{ url_for('add') }}" id="transaction-form" method="post" novalidate="">
-<input name="csrf_token" type="hidden" value="{{ csrf_token() }}"/>
-<!-- Datum -->
-<div class="form-floating mb-3">
-<input autofocus="" class="form-control" id="datum" name="datum" placeholder="Datum" required="" type="text" value="{{ default_date }}"/>
-<label for="datum">{{ _('Datum') }}</label>
-</div>
-<!-- Vollgut -->
-<div class="form-floating mb-3">
-<input autocomplete="off" class="form-control" id="vollgut" inputmode="numeric" min="0" name="vollgut" placeholder="0" step="1" type="number"/>
-<label for="vollgut">{{ _('Vollgut') }}</label>
-</div>
-<!-- Leergut -->
-<div class="form-floating mb-3">
-<input autocomplete="off" class="form-control" id="leergut" inputmode="numeric" min="0" name="leergut" placeholder="0" step="1" type="number"/>
-<label for="leergut">{{ _('Leergut') }}</label>
-</div>
-<!-- Einnahme -->
-<div class="input-group mb-3">
-<span class="input-group-text">{{ _('waehrung') }}</span>
-<div class="form-floating flex-grow-1">
-<input autocomplete="off" class="form-control" id="einnahme" inputmode="decimal" name="einnahme" placeholder="0.00" step="0.01" type="number"/>
-<label for="einnahme">{{ _('Einnahme') }}</label>
-</div>
-</div>
-<!-- Ausgabe -->
-<div class="input-group mb-3">
-<span class="input-group-text">{{ _('waehrung') }}</span>
-<div class="form-floating flex-grow-1">
-<input autocomplete="off" class="form-control" id="ausgabe" inputmode="decimal" name="ausgabe" placeholder="0.00" step="0.01" type="number"/>
-<label for="ausgabe">{{ _('Ausgabe') }}</label>
-</div>
-</div>
-<!-- Bemerkung -->
-<div class="form-floating mb-3">
-<input class="form-control" id="bemerkung" maxlength="500" name="bemerkung" placeholder="{{ _('Notiz') }}"/>
-<label for="bemerkung">{{ _('Bemerkung') }}</label>
-</div>
-<!-- Upload -->
-<input id="temp_token" name="temp_token" type="hidden" value="{{ temp_token }}"/>
-<div class="d-flex gap-2">
-<!-- Hinzufügen -->
-<button class="btn btn-success flex-grow-1" disabled="" type="submit">
-<i class="bi-plus-lg me-1"></i> {{ _('Hinzufügen') }}
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <h2 class="h6 mb-3">{{ _('Neuen Datensatz hinzufügen') }}</h2>
+        <form action="{{ url_for('add') }}" id="transaction-form" method="post" novalidate="">
+          <input name="csrf_token" type="hidden" value="{{ csrf_token() }}" />
+          <!-- Datum -->
+          <div class="form-floating mb-3">
+            <input autofocus="" class="form-control" id="datum" name="datum" placeholder="Datum" required="" type="text"
+              value="{{ default_date }}" />
+            <label for="datum">{{ _('Datum') }}</label>
+          </div>
+          <!-- Vollgut -->
+          <div class="form-floating mb-3">
+            <input autocomplete="off" class="form-control" id="vollgut" inputmode="numeric" min="0" name="vollgut"
+              placeholder="0" step="1" type="number" />
+            <label for="vollgut">{{ _('Vollgut') }}</label>
+          </div>
+          <!-- Leergut -->
+          <div class="form-floating mb-3">
+            <input autocomplete="off" class="form-control" id="leergut" inputmode="numeric" min="0" name="leergut"
+              placeholder="0" step="1" type="number" />
+            <label for="leergut">{{ _('Leergut') }}</label>
+          </div>
+          <!-- Einnahme -->
+          <div class="input-group mb-3">
+            <span class="input-group-text">{{ _('waehrung') }}</span>
+            <div class="form-floating flex-grow-1">
+              <input autocomplete="off" class="form-control" id="einnahme" inputmode="decimal" name="einnahme"
+                placeholder="0.00" step="0.01" type="number" />
+              <label for="einnahme">{{ _('Einnahme') }}</label>
+            </div>
+          </div>
+          <!-- Ausgabe -->
+          <div class="input-group mb-3">
+            <span class="input-group-text">{{ _('waehrung') }}</span>
+            <div class="form-floating flex-grow-1">
+              <input autocomplete="off" class="form-control" id="ausgabe" inputmode="decimal" name="ausgabe"
+                placeholder="0.00" step="0.01" type="number" />
+              <label for="ausgabe">{{ _('Ausgabe') }}</label>
+            </div>
+          </div>
+          <!-- Bemerkung -->
+          <div class="form-floating mb-3">
+            <input class="form-control" id="bemerkung" maxlength="500" name="bemerkung"
+              placeholder="{{ _('Notiz') }}" />
+            <label for="bemerkung">{{ _('Bemerkung') }}</label>
+          </div>
+          <!-- Upload -->
+          <input id="temp_token" name="temp_token" type="hidden" value="{{ temp_token }}" />
+          <div class="d-flex gap-2">
+            <!-- Hinzufügen -->
+            <button class="btn btn-success flex-grow-1" disabled="" type="submit">
+              <i class="bi-plus-lg me-1"></i> {{ _('Hinzufügen') }}
             </button>
-<!-- Upload-Button mit Badge -->
-<button aria-label="{{ _('Temporäre Anhänge hochladen') }}" class="btn btn-outline-primary position-relative" data-bs-target="#uploadModal" data-bs-toggle="modal" id="uploadBtn" title="{{ _('Temporäre Anhänge hochladen') }}" type="button">
-<i class="bi-upload me-1"></i> {{ _('Upload') }}
+            <!-- Upload-Button mit Badge -->
+            <button aria-label="{{ _('Temporäre Anhänge hochladen') }}"
+              class="btn btn-outline-primary position-relative" data-bs-target="#uploadModal" data-bs-toggle="modal"
+              id="uploadBtn" title="{{ _('Temporäre Anhänge hochladen') }}" type="button">
+              <i class="bi-upload me-1"></i> {{ _('Upload') }}
             </button>
-</div>
-</form>
-</div>
-</div>
-</div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
   {% endif %}
 </div>
 <!-- Tabelle -->
 <div class="card shadow-sm">
-<div class="card-body">
-<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
-<h2 class="h5 m-0">
+  <div class="card-body">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
+      <h2 class="h5 m-0">
         {{ _('Einträge') }}
         <small class="text-muted ms-1">({{ entries|length }})</small>
         {% if filters_active %}
-          <span class="badge rounded-pill bg-warning-subtle text-warning-emphasis ms-2">
-            {{ _('Filter aktiv') }}
-          </span>
+        <span class="badge rounded-pill bg-warning-subtle text-warning-emphasis ms-2">
+          {{ _('Filter aktiv') }}
+        </span>
         {% endif %}
       </h2>
-<form action="{{ url_for('index') }}" class="w-100" data-autosubmit="true" id="filtersForm" method="get" role="search">
-<div class="table-tools card-subsection px-3 py-3 rounded-3 mb-3">
-<div class="d-flex flex-wrap align-items-end justify-content-between gap-3">
-<!-- LEFT: Filterfelder -->
-<div class="filters flex-grow-1">
-<div class="row g-2 align-items-end">
-<div class="col-12 col-md-4">
-<label class="form-label mb-1" for="q">Suche</label>
-<div class="input-group">
-<span class="input-group-text"><i class="bi bi-search"></i></span>
-<input class="form-control" id="q" name="q" placeholder="Datum/Bemerkung" type="text" value="{{ request.args.get('q', '') }}"/>
-<button aria-label="Suche löschen" class="btn btn-outline-secondary" id="clear-q" title="Suche löschen" type="button">
-<i class="bi bi-x-lg"></i>
-</button>
-</div>
-</div>
-<div class="col-6 col-md-3">
-<label class="form-label mb-1" for="from">Von</label>
-<div class="input-group">
-<span class="input-group-text"><i class="bi bi-calendar-event"></i></span>
-<input class="form-control bb-date" id="from" name="from" placeholder="TT.MM.JJJJ" type="text" value="{{ request.args.get('from', '') }}"/>
-</div>
-</div>
-<div class="col-6 col-md-3">
-<label class="form-label mb-1" for="to">Bis</label>
-<div class="input-group">
-<span class="input-group-text"><i class="bi bi-calendar-event"></i></span>
-<input class="form-control bb-date" id="to" name="to" placeholder="TT.MM.JJJJ" type="text" value="{{ request.args.get('to', '') }}"/>
-</div>
-</div>
-<!-- QUICK RANGES -->
-<div class="col-12 col-md-2">
-<label class="form-label mb-1 d-none d-md-block">Zeitraum</label>
-<div aria-label="Schnell-Zeiträume" class="btn-group w-100" role="group">
-<button class="btn btn-outline-secondary btn-quickrange {{ 'active' if range_active == 'today' else '' }}" data-range="today" type="button">Heute</button>
-<button class="btn btn-outline-secondary btn-quickrange {{ 'active' if range_active == 'week' else '' }}" data-range="week" type="button">Woche</button>
-<button class="btn btn-outline-secondary btn-quickrange {{ 'active' if range_active == 'month' else '' }}" data-range="month" type="button">Monat</button>
-</div>
-</div>
-</div>
-</div>
-<!-- RIGHT: Aktionen -->
-<div class="actions d-flex flex-wrap align-items-end gap-2">
-<!-- Filtern / Zurücksetzen -->
-<div aria-label="Filter-Aktionen" class="btn-group" role="group">
-<button class="btn btn-primary" type="submit">
-<i class="bi bi-search"></i> Filtern
-                </button>
-<a class="btn btn-outline-secondary" href="{{ url_for('index') }}">
-<i class="bi bi-arrow-counterclockwise"></i> Zurücksetzen
-                </a>
-</div>
-<!-- Export / Import -->
-<div aria-label="Export/Import" class="btn-toolbar" role="toolbar">
-<div class="btn-group me-2" role="group">
-<!-- Wrapper erlaubt Tooltip auch bei disabled -->
-<span class="d-inline-block" data-bs-toggle="tooltip" tabindex="0" title="{{ '' if has_data else _('Keine Daten im Zeitraum') }}">
-{% if not has_data %}disabled{% endif %}<button aria-expanded="false" class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown" id="exportDropdown" type="button">
-<i class="bi bi-download"></i> Export
+      <form action="{{ url_for('index') }}" class="w-100" data-autosubmit="true" id="filtersForm" method="get"
+        role="search">
+        <div class="table-tools card-subsection px-3 py-3 rounded-3 mb-3">
+          <div class="d-flex flex-wrap align-items-end justify-content-between gap-3">
+            <!-- LEFT: Filterfelder -->
+            <div class="filters flex-grow-1">
+              <div class="row g-2 align-items-end">
+                <div class="col-12 col-md-4">
+                  <label class="form-label mb-1" for="q">Suche</label>
+                  <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input class="form-control" id="q" name="q" placeholder="Datum/Bemerkung" type="text"
+                      value="{{ request.args.get('q', '') }}" />
+                    <button aria-label="Suche löschen" class="btn btn-outline-secondary" id="clear-q"
+                      title="Suche löschen" type="button">
+                      <i class="bi bi-x-lg"></i>
                     </button>
-</span>
-<ul aria-labelledby="exportDropdown" class="dropdown-menu dropdown-menu-end">
-<li>
-<a class="dropdown-item {{ '' if has_data else 'disabled pe-none' }}" href="{{ url_for('export_csv', **request.args) }}">
-<i class="bi bi-filetype-csv me-2"></i>CSV
+                  </div>
+                </div>
+                <div class="col-6 col-md-3">
+                  <label class="form-label mb-1" for="from">Von</label>
+                  <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-calendar-event"></i></span>
+                    <input class="form-control bb-date" id="from" name="from" placeholder="TT.MM.JJJJ" type="text"
+                      value="{{ request.args.get('from', '') }}" />
+                  </div>
+                </div>
+                <div class="col-6 col-md-3">
+                  <label class="form-label mb-1" for="to">Bis</label>
+                  <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-calendar-event"></i></span>
+                    <input class="form-control bb-date" id="to" name="to" placeholder="TT.MM.JJJJ" type="text"
+                      value="{{ request.args.get('to', '') }}" />
+                  </div>
+                </div>
+                <!-- QUICK RANGES -->
+                <div class="col-12 col-md-2">
+                  <label class="form-label mb-1 d-none d-md-block">Zeitraum</label>
+                  <div aria-label="Schnell-Zeiträume" class="btn-group w-100" role="group">
+                    <button
+                      class="btn btn-outline-secondary btn-quickrange {{ 'active' if range_active == 'today' else '' }}"
+                      data-range="today" type="button">Heute</button>
+                    <button
+                      class="btn btn-outline-secondary btn-quickrange {{ 'active' if range_active == 'week' else '' }}"
+                      data-range="week" type="button">Woche</button>
+                    <button
+                      class="btn btn-outline-secondary btn-quickrange {{ 'active' if range_active == 'month' else '' }}"
+                      data-range="month" type="button">Monat</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- RIGHT: Aktionen -->
+            <div class="actions d-flex flex-wrap align-items-end gap-2">
+              <!-- Filtern / Zurücksetzen -->
+              <div aria-label="Filter-Aktionen" class="btn-group" role="group">
+                <button class="btn btn-primary" type="submit">
+                  <i class="bi bi-search"></i> Filtern
+                </button>
+                <a class="btn btn-outline-secondary" href="{{ url_for('index') }}">
+                  <i class="bi bi-arrow-counterclockwise"></i> Zurücksetzen
+                </a>
+              </div>
+              <!-- Export / Import -->
+              <div aria-label="Export/Import" class="btn-toolbar" role="toolbar">
+                <div class="btn-group me-2" role="group">
+                  <!-- Wrapper erlaubt Tooltip auch bei disabled -->
+                  <span class="d-inline-block" data-bs-toggle="tooltip" tabindex="0"
+                    title="{{ '' if has_data else _('Keine Daten im Zeitraum') }}">
+                    {% if not has_data %}
+                    <button type="button" class="btn btn-outline-primary dropdown-toggle" id="exportDropdown"
+                      data-bs-toggle="dropdown" aria-expanded="false">
+                      <i class="bi bi-download"></i> Export
+                    </button>
+                    {% endif %}
+                  </span>
+                  <ul aria-labelledby="exportDropdown" class="dropdown-menu dropdown-menu-end">
+                    <li>
+                      <a class="dropdown-item {{ '' if has_data else 'disabled pe-none' }}"
+                        href="{{ url_for('export_csv', **request.args) }}">
+                        <i class="bi bi-filetype-csv me-2"></i>CSV
                       </a>
-</li>
-<li>
-<a class="dropdown-item {{ '' if has_data else 'disabled pe-none' }}" href="{{ url_for('export_pdf', **request.args) }}">
-<i class="bi bi-file-earmark-pdf me-2"></i>PDF
+                    </li>
+                    <li>
+                      <a class="dropdown-item {{ '' if has_data else 'disabled pe-none' }}"
+                        href="{{ url_for('export_pdf', **request.args) }}">
+                        <i class="bi bi-file-earmark-pdf me-2"></i>PDF
                       </a>
-</li>
-</ul>
-</div>
-<div class="btn-group" role="group">
-<button class="btn btn-outline-primary" data-bs-target="#csvImportModal" data-bs-toggle="modal" type="button">
-<i class="bi bi-upload"></i> CSV Import
+                    </li>
+                  </ul>
+                </div>
+                <div class="btn-group" role="group">
+                  <button class="btn btn-outline-primary" data-bs-target="#csvImportModal" data-bs-toggle="modal"
+                    type="button">
+                    <i class="bi bi-upload"></i> CSV Import
                   </button>
-</div>
-</div>
-</div>
-</div>
-</div>
-</form>
-<!-- Tabelle -->
-<div class="table-responsive">
-<table class="table table-sm align-middle table-striped">
-<thead class="table-light">
-<tr>
-<th aria-sort="none" onclick="sortTableByDate()" scope="col" style="cursor:pointer;">
-                {{ _('Datum') }} <i class="bi bi-arrow-down-up"></i>
-</th>
-<th scope="col">{{ _('Vollgut') }}</th>
-<th scope="col">{{ _('Leergut') }}</th>
-<th scope="col">{{ _('Inventar') }}</th>
-<th scope="col">{{ _('Einnahme') }}</th>
-<th scope="col">{{ _('Ausgabe') }}</th>
-<th scope="col">{{ _('Kassenbestand') }}</th>
-<th scope="col">{{ _('Bemerkung') }}</th>
-<th class="text-end" scope="col">{{ _('Aktionen') }}</th>
-</tr>
-</thead>
-<tbody>
-          {% for e in entries %}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </form>
+      <!-- Tabelle -->
+      <div class="table-responsive">
+        <table class="table table-sm align-middle table-striped">
+          <thead class="table-light">
             <tr>
-<td>{{ format_date_de(e.datum) }}</td>
-<td>{{ e.vollgut }}</td>
-<td>{{ e.leergut }}</td>
-<td>{{ e.inventar }}</td>
-<td>{{ format_eur_de(e.einnahme) }}</td>
-<td>{{ format_eur_de(e.ausgabe) }}</td>
-<td>{{ format_eur_de(e.kassenbestand) }}</td>
-<td>{{ e.bemerkung }}</td>
-<td class="text-end">
-<!-- Bearbeiten -->
-<a class="btn btn-sm btn-outline-primary" href="{{ url_for('edit', entry_id=e.id) }}" title="{{ _('Bearbeiten') }}">
-<i class="bi-pencil-square"></i>
-</a>
-<!-- Dokumente öffnen (mit Badge) -->
-<button class="btn btn-sm btn-outline-secondary position-relative" onclick="openAttachments({{ e.id }})" title="{{ _('Dokumente öffnen') }}" type="button">
-<i class="bi-paperclip"></i>
+              <th aria-sort="none" onclick="sortTableByDate()" scope="col" style="cursor:pointer;">
+                {{ _('Datum') }} <i class="bi bi-arrow-down-up"></i>
+              </th>
+              <th scope="col">{{ _('Vollgut') }}</th>
+              <th scope="col">{{ _('Leergut') }}</th>
+              <th scope="col">{{ _('Inventar') }}</th>
+              <th scope="col">{{ _('Einnahme') }}</th>
+              <th scope="col">{{ _('Ausgabe') }}</th>
+              <th scope="col">{{ _('Kassenbestand') }}</th>
+              <th scope="col">{{ _('Bemerkung') }}</th>
+              <th class="text-end" scope="col">{{ _('Aktionen') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for e in entries %}
+            <tr>
+              <td>{{ format_date_de(e.datum) }}</td>
+              <td>{{ e.vollgut }}</td>
+              <td>{{ e.leergut }}</td>
+              <td>{{ e.inventar }}</td>
+              <td>{{ format_eur_de(e.einnahme) }}</td>
+              <td>{{ format_eur_de(e.ausgabe) }}</td>
+              <td>{{ format_eur_de(e.kassenbestand) }}</td>
+              <td>{{ e.bemerkung }}</td>
+              <td class="text-end">
+                <!-- Bearbeiten -->
+                <a class="btn btn-sm btn-outline-primary" href="{{ url_for('edit', entry_id=e.id) }}"
+                  title="{{ _('Bearbeiten') }}">
+                  <i class="bi-pencil-square"></i>
+                </a>
+                <!-- Dokumente öffnen (mit Badge) -->
+                <button class="btn btn-sm btn-outline-secondary position-relative" onclick="openAttachments({{ e.id }})"
+                  title="{{ _('Dokumente öffnen') }}" type="button">
+                  <i class="bi-paperclip"></i>
                   {% if e.attachment_count and e.attachment_count > 0 %}
-                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-secondary">
-                      {{ e.attachment_count }}
-                    </span>
+                  <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-secondary">
+                    {{ e.attachment_count }}
+                  </span>
                   {% endif %}
                 </button>
-<!-- Löschen -->
-<form action="{{ url_for('delete', entry_id=e.id) }}" class="d-inline" method="post" onsubmit="return confirm('{{ _('Eintrag wirklich löschen?') }}');">
-<input name="csrf_token" type="hidden" value="{{ csrf_token() }}"/>
-<button class="btn btn-sm btn-outline-danger" title="{{ _('Löschen') }}">
-<i class="bi-trash"></i>
-</button>
-</form>
-</td>
-</tr>
-          {% else %}
-            <tr><td class="text-center text-muted" colspan="9">{{ _('Keine Einträge vorhanden.') }}</td></tr>
-          {% endfor %}
+                <!-- Löschen -->
+                <form action="{{ url_for('delete', entry_id=e.id) }}" class="d-inline" method="post"
+                  onsubmit="return confirm('{{ _('Eintrag wirklich löschen?') }}');">
+                  <input name="csrf_token" type="hidden" value="{{ csrf_token() }}" />
+                  <button class="btn btn-sm btn-outline-danger" title="{{ _('Löschen') }}">
+                    <i class="bi-trash"></i>
+                  </button>
+                </form>
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td class="text-center text-muted" colspan="9">{{ _('Keine Einträge vorhanden.') }}</td>
+            </tr>
+            {% endfor %}
           </tbody>
-</table>
-</div>
-</div>
-</div>
+        </table>
+      </div>
+    </div>
+  </div>
 </div>
 <!-- CSV Import Modal -->
 <div aria-hidden="true" aria-labelledby="csvImportModalLabel" class="modal fade" id="csvImportModal" tabindex="-1">
-<div class="modal-dialog modal-lg">
-<div class="modal-content">
-<form action="{{ url_for('import_preview') if IMPORT_USE_PREVIEW else url_for('import_csv') }}" enctype="multipart/form-data" method="post">
-<input name="csrf_token" type="hidden" value="{{ csrf_token() }}"/>
-<div class="modal-header">
-<h5 class="modal-title" id="csvImportModalLabel">{{ _('CSV-Datei importieren') }}</h5>
-<button aria-label="{{ _('Schließen') }}" class="btn-close" data-bs-dismiss="modal" type="button"></button>
-</div>
-<div class="modal-body bg-light p-3 rounded shadow-sm">
-<div class="mb-3">
-<label class="form-label" for="csvFile">{{ _('CSV-Datei auswählen') }}</label>
-<input accept=".csv,text/csv" class="form-control" id="csvFile" name="file" placeholder="CSV-Datei auswählen" required="" type="file"/>
-<small class="form-text text-muted">
-              {{ _("Erwartete Header:") }} <code>Datum;Vollgut;Leergut;Inventar;Einnahme;Ausgabe;Kassenbestand;Bemerkung</code>
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <form action="{{ url_for('import_preview') if IMPORT_USE_PREVIEW else url_for('import_csv') }}"
+        enctype="multipart/form-data" method="post">
+        <input name="csrf_token" type="hidden" value="{{ csrf_token() }}" />
+        <div class="modal-header">
+          <h5 class="modal-title" id="csvImportModalLabel">{{ _('CSV-Datei importieren') }}</h5>
+          <button aria-label="{{ _('Schließen') }}" class="btn-close" data-bs-dismiss="modal" type="button"></button>
+        </div>
+        <div class="modal-body bg-light p-3 rounded shadow-sm">
+          <div class="mb-3">
+            <label class="form-label" for="csvFile">{{ _('CSV-Datei auswählen') }}</label>
+            <input accept=".csv,text/csv" class="form-control" id="csvFile" name="file"
+              placeholder="CSV-Datei auswählen" required="" type="file" />
+            <small class="form-text text-muted">
+              {{ _("Erwartete Header:") }}
+              <code>Datum;Vollgut;Leergut;Inventar;Einnahme;Ausgabe;Kassenbestand;Bemerkung</code>
               {{ _("oder Kurzform ohne Inventar/Kassenbestand.") }}
             </small>
-</div>
-<div class="form-check mb-3">
-<input class="form-check-input" id="replaceAll" name="replace_all" type="checkbox"/>
-<label class="form-check-label" for="replaceAll">
+          </div>
+          <div class="form-check mb-3">
+            <input class="form-check-input" id="replaceAll" name="replace_all" type="checkbox" />
+            <label class="form-check-label" for="replaceAll">
               {{ _('Bestehende Einträge komplett ersetzen') }}
             </label>
-</div>
-</div>
-<div class="modal-footer d-flex justify-content-between">
-<a class="btn btn-link" href="{{ url_for('import_sample') }}">{{ _('Beispiel-CSV herunterladen') }}</a>
-<button class="btn btn-primary" type="submit">{{ _('Vorschau anzeigen') }}</button>
-</div>
-</form>
-</div>
-</div>
+          </div>
+        </div>
+        <div class="modal-footer d-flex justify-content-between">
+          <a class="btn btn-link" href="{{ url_for('import_sample') }}">{{ _('Beispiel-CSV herunterladen') }}</a>
+          <button class="btn btn-primary" type="submit">{{ _('Vorschau anzeigen') }}</button>
+        </div>
+      </form>
+    </div>
+  </div>
 </div>
 <!-- Attachments Modal -->
 <div aria-hidden="true" aria-labelledby="attachmentsModalLabel" class="modal fade" id="attachmentsModal" tabindex="-1">
-<div class="modal-dialog modal-md">
-<div class="modal-content">
-<div class="modal-header">
-<h5 class="modal-title" id="attachmentsModalLabel">{{ _('Anhänge') }}</h5>
-<button aria-label="{{ _('Schließen') }}" class="btn-close" data-bs-dismiss="modal" type="button"></button>
-</div>
-<div class="modal-body">
-<ul class="list-group" id="attachmentsList"></ul>
-</div>
-<div class="modal-footer">
-<button class="btn btn-secondary" data-bs-dismiss="modal" type="button">{{ _('Schließen') }}</button>
-</div>
-</div>
-</div>
+  <div class="modal-dialog modal-md">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="attachmentsModalLabel">{{ _('Anhänge') }}</h5>
+        <button aria-label="{{ _('Schließen') }}" class="btn-close" data-bs-dismiss="modal" type="button"></button>
+      </div>
+      <div class="modal-body">
+        <ul class="list-group" id="attachmentsList"></ul>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal" type="button">{{ _('Schließen') }}</button>
+      </div>
+    </div>
+  </div>
 </div>
 <!-- Upload-Modal -->
 <div aria-hidden="true" aria-labelledby="uploadModalLabel" class="modal fade" id="uploadModal" tabindex="-1">
-<div class="modal-dialog modal-lg">
-<div class="modal-content">
-<div class="modal-header">
-<h5 class="modal-title" id="uploadModalLabel">{{ _('Anhänge hochladen') }}</h5>
-<button aria-label="{{ _('Schließen') }}" class="btn-close" data-bs-dismiss="modal" type="button"></button>
-</div>
-<div class="modal-body">
-<div class="input-group mb-2">
-<input accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.heic,.heif,.svg,.txt,.csv,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.xml,.json" class="form-control" id="add_temp_files" multiple="" type="file"/>
-<button class="btn btn-outline-primary" id="btnTempUpload" type="button">
-<i class="bi-upload me-1"></i> {{ _('Hochladen') }}
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="uploadModalLabel">{{ _('Anhänge hochladen') }}</h5>
+        <button aria-label="{{ _('Schließen') }}" class="btn-close" data-bs-dismiss="modal" type="button"></button>
+      </div>
+      <div class="modal-body">
+        <div class="input-group mb-2">
+          <input
+            accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.heic,.heif,.svg,.txt,.csv,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.xml,.json"
+            class="form-control" id="add_temp_files" multiple="" type="file" />
+          <button class="btn btn-outline-primary" id="btnTempUpload" type="button">
+            <i class="bi-upload me-1"></i> {{ _('Hochladen') }}
           </button>
-</div>
-<div class="form-text">
+        </div>
+        <div class="form-text">
           {{ _('Zulässige Formate:') }} PDF, Bilder, Office, Text. {{ _('Mehrere Dateien möglich.') }}
         </div>
-<ul class="list-group mt-3" id="addTempAttachmentsList"></ul>
-</div>
-<div class="modal-footer">
-<button class="btn btn-secondary" data-bs-dismiss="modal" type="button">{{ _('Schließen') }}</button>
-</div>
-</div>
-</div>
+        <ul class="list-group mt-3" id="addTempAttachmentsList"></ul>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal" type="button">{{ _('Schließen') }}</button>
+      </div>
+    </div>
+  </div>
 </div>
 <div class="toast-container position-fixed top-0 end-0 p-3" id="bbToastContainer"></div>
 
@@ -333,39 +369,40 @@
 
 {% block scripts %}
 <script>
-/** Toast-Helfer **/
-function showToast(message, variant = 'danger') {
-  const container = document.getElementById('bbToastContainer');
-  if (!container) return alert(message); // Fallback
-  const toastEl = document.createElement('div');
-  toastEl.className = `toast align-items-center text-bg-${variant} border-0`;
-  toastEl.setAttribute('role', 'alert');
-  toastEl.setAttribute('aria-live', 'assertive');
-  toastEl.setAttribute('aria-atomic', 'true');
-  toastEl.innerHTML = `
+  /** Toast-Helfer **/
+  function showToast(message, variant = 'danger') {
+    const container = document.getElementById('bbToastContainer');
+    if (!container) return alert(message); // Fallback
+    const toastEl = document.createElement('div');
+    toastEl.className = `toast align-items-center text-bg-${variant} border-0`;
+    toastEl.setAttribute('role', 'alert');
+    toastEl.setAttribute('aria-live', 'assertive');
+    toastEl.setAttribute('aria-atomic', 'true');
+    toastEl.innerHTML = `
     <div class="d-flex">
       <div class="toast-body">${message}</div>
       <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
     </div>`;
-  container.appendChild(toastEl);
-  const toast = new bootstrap.Toast(toastEl, { delay: 4000 });
-  toast.show();
-  toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
-}
+    container.appendChild(toastEl);
+    const toast = new bootstrap.Toast(toastEl, { delay: 4000 });
+    toast.show();
+    toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
+  }
 </script>
 <script>
-/** Charts (Sparkline) **/
-(function () {
-  // Daten aus Flask
-  const labelsRaw = {{ entries|map(attribute='datum')|list|tojson }};
-  const dataInv   = {{ series_inv|tojson }};
-  const dataKas   = {{ series_kas|tojson }};
+  /** Charts (Sparkline) **/
+  (function () {
+    // Daten aus Flask
+    const labelsRaw = {{ entries| map(attribute = 'datum') | list | tojson
+  }};
+  const dataInv = {{ series_inv| tojson }};
+  const dataKas = {{ series_kas| tojson }};
 
   function toLocalDateLabel(d) {
     if (typeof d === 'string') {
       const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(d);
       if (m) {
-        const y  = Number(m[1]);
+        const y = Number(m[1]);
         const mo = Number(m[2]);
         const da = Number(m[3]);
         const dt = new Date(y, mo - 1, da); // Lokale Zeit
@@ -377,10 +414,10 @@ function showToast(message, variant = 'danger') {
   }
   const labels = labelsRaw.map(toLocalDateLabel);
 
-  const css          = getComputedStyle(document.documentElement);
+  const css = getComputedStyle(document.documentElement);
   const colorPrimary = (css.getPropertyValue('--bs-primary') || '#0d6efd').trim();
   const colorSuccess = (css.getPropertyValue('--bs-success') || '#198754').trim();
-  const gridColor    = (css.getPropertyValue('--bs-border-color') || '#dee2e6').trim();
+  const gridColor = (css.getPropertyValue('--bs-border-color') || '#dee2e6').trim();
 
   const baseOptions = {
     responsive: true,
@@ -459,246 +496,246 @@ function showToast(message, variant = 'danger') {
       options: baseOptions
     });
   }
-})();
+}) ();
 </script>
 <script>
-/** Formular-Interaktionen (Auto-Tab, Validierung, Flatpickr, Haptik) **/
-document.addEventListener('DOMContentLoaded', () => {
-  const form = document.getElementById('transaction-form');
-  const orderIds = ['datum', 'vollgut', 'leergut', 'einnahme', 'ausgabe', 'bemerkung'];
-  const fields = orderIds.map(id => document.getElementById(id) || form?.querySelector(`[name="${id}"]`)).filter(Boolean);
+  /** Formular-Interaktionen (Auto-Tab, Validierung, Flatpickr, Haptik) **/
+  document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('transaction-form');
+    const orderIds = ['datum', 'vollgut', 'leergut', 'einnahme', 'ausgabe', 'bemerkung'];
+    const fields = orderIds.map(id => document.getElementById(id) || form?.querySelector(`[name="${id}"]`)).filter(Boolean);
 
-  // Auto-Tab per Enter / Shift+Enter
-  function focusByOffset(currentEl, delta) {
-    const idx = Number(currentEl?.dataset?.idx ?? -1);
-    if (idx < 0) return;
-    const next = fields[idx + delta];
-    if (next) next.focus({ preventScroll: true });
-  }
-  fields.forEach((el, idx) => {
-    el.dataset.idx = idx;
-    el.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        focusByOffset(el, e.shiftKey ? -1 : 1);
+    // Auto-Tab per Enter / Shift+Enter
+    function focusByOffset(currentEl, delta) {
+      const idx = Number(currentEl?.dataset?.idx ?? -1);
+      if (idx < 0) return;
+      const next = fields[idx + delta];
+      if (next) next.focus({ preventScroll: true });
+    }
+    fields.forEach((el, idx) => {
+      el.dataset.idx = idx;
+      el.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          focusByOffset(el, e.shiftKey ? -1 : 1);
+        }
+      });
+      if (el.type === 'number') el.addEventListener('wheel', (e) => e.preventDefault(), { passive: false });
+    });
+
+    // Flatpickr (Dark-Mode synchronisieren)
+    function isDark() { return document.documentElement.getAttribute('data-bs-theme') === 'dark'; }
+    function toggleCalendarDark(calEl, dark) { if (calEl) calEl.classList.toggle('flatpickr-dark', !!dark); }
+    if (window.flatpickr) {
+      if (flatpickr.l10ns?.de) flatpickr.localize(flatpickr.l10ns.de);
+      const fp = flatpickr('#datum', {
+        allowInput: true, dateFormat: 'd.m.Y', clickOpens: true, disableMobile: false,
+        onClose: () => focusByOffset(document.getElementById('datum'), 1),
+        onOpen: (s, d, i) => toggleCalendarDark(i.calendarContainer, isDark())
+      });
+      new MutationObserver(() => {
+        const dark = isDark();
+        document.querySelectorAll('.flatpickr-calendar').forEach(c => toggleCalendarDark(c, dark));
+      }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-bs-theme'] });
+    }
+
+    // Haptik bei Fokus
+    function hapticFeedback() { if (navigator.vibrate) navigator.vibrate(10); }
+    form?.querySelectorAll('input, textarea, select').forEach(el => el.addEventListener('focus', hapticFeedback));
+
+    // Pflichtfelder-Gruppe: mindestens ein Wert > 0
+    const feldIds = ['einnahme', 'ausgabe', 'vollgut', 'leergut'];
+    const felder = feldIds.map(id => document.getElementById(id)).filter(Boolean);
+    function getNumericValue(el) {
+      const raw = (el?.value ?? '').toString().trim().replace(',', '.');
+      const val = parseFloat(raw);
+      return Number.isFinite(val) ? val : 0;
+    }
+    function anyPositive() { return felder.some(el => getNumericValue(el) > 0); }
+
+    function setInlineInvalid(on) {
+      felder.forEach(el => {
+        el.classList.toggle('is-invalid', on);
+        el.setAttribute('aria-invalid', on ? 'true' : 'false');
+      });
+      const ausgabeWrap = document.getElementById('ausgabe')?.closest('.input-group, .form-floating');
+      if (on && ausgabeWrap && !ausgabeWrap.querySelector('.invalid-feedback')) {
+        const fb = document.createElement('div');
+        fb.className = 'invalid-feedback';
+        fb.textContent = '{{ _("Bitte mindestens einen Wert bei Einnahme, Ausgabe, Vollgut oder Leergut angeben.") }}';
+        (ausgabeWrap.parentElement || ausgabeWrap).appendChild(fb);
       }
-    });
-    if (el.type === 'number') el.addEventListener('wheel', (e) => e.preventDefault(), { passive: false });
-  });
-
-  // Flatpickr (Dark-Mode synchronisieren)
-  function isDark() { return document.documentElement.getAttribute('data-bs-theme') === 'dark'; }
-  function toggleCalendarDark(calEl, dark) { if (calEl) calEl.classList.toggle('flatpickr-dark', !!dark); }
-  if (window.flatpickr) {
-    if (flatpickr.l10ns?.de) flatpickr.localize(flatpickr.l10ns.de);
-    const fp = flatpickr('#datum', {
-      allowInput: true, dateFormat: 'd.m.Y', clickOpens: true, disableMobile: false,
-      onClose: () => focusByOffset(document.getElementById('datum'), 1),
-      onOpen: (s, d, i) => toggleCalendarDark(i.calendarContainer, isDark())
-    });
-    new MutationObserver(() => {
-      const dark = isDark();
-      document.querySelectorAll('.flatpickr-calendar').forEach(c => toggleCalendarDark(c, dark));
-    }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-bs-theme'] });
-  }
-
-  // Haptik bei Fokus
-  function hapticFeedback() { if (navigator.vibrate) navigator.vibrate(10); }
-  form?.querySelectorAll('input, textarea, select').forEach(el => el.addEventListener('focus', hapticFeedback));
-
-  // Pflichtfelder-Gruppe: mindestens ein Wert > 0
-  const feldIds = ['einnahme', 'ausgabe', 'vollgut', 'leergut'];
-  const felder = feldIds.map(id => document.getElementById(id)).filter(Boolean);
-  function getNumericValue(el) {
-    const raw = (el?.value ?? '').toString().trim().replace(',', '.');
-    const val = parseFloat(raw);
-    return Number.isFinite(val) ? val : 0;
-  }
-  function anyPositive() { return felder.some(el => getNumericValue(el) > 0); }
-
-  function setInlineInvalid(on) {
-    felder.forEach(el => {
-      el.classList.toggle('is-invalid', on);
-      el.setAttribute('aria-invalid', on ? 'true' : 'false');
-    });
-    const ausgabeWrap = document.getElementById('ausgabe')?.closest('.input-group, .form-floating');
-    if (on && ausgabeWrap && !ausgabeWrap.querySelector('.invalid-feedback')) {
-      const fb = document.createElement('div');
-      fb.className = 'invalid-feedback';
-      fb.textContent = '{{ _("Bitte mindestens einen Wert bei Einnahme, Ausgabe, Vollgut oder Leergut angeben.") }}';
-      (ausgabeWrap.parentElement || ausgabeWrap).appendChild(fb);
     }
-  }
-  function showGlobalError(msg) {
-    const btnRow = form?.querySelector('.d-flex.gap-2') || form;
-    let alert = form.querySelector('#globalFormError');
-    if (!alert) {
-      alert = document.createElement('div');
-      alert.id = 'globalFormError';
-      alert.className = 'alert alert-danger';
-      alert.setAttribute('role', 'alert');
-      alert.setAttribute('aria-live', 'assertive');
-      btnRow.parentNode.insertBefore(alert, btnRow);
+    function showGlobalError(msg) {
+      const btnRow = form?.querySelector('.d-flex.gap-2') || form;
+      let alert = form.querySelector('#globalFormError');
+      if (!alert) {
+        alert = document.createElement('div');
+        alert.id = 'globalFormError';
+        alert.className = 'alert alert-danger';
+        alert.setAttribute('role', 'alert');
+        alert.setAttribute('aria-live', 'assertive');
+        btnRow.parentNode.insertBefore(alert, btnRow);
+      }
+      alert.textContent = msg;
+      alert.classList.remove('d-none');
+      alert.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      (felder[0] || form)?.focus?.({ preventScroll: true });
     }
-    alert.textContent = msg;
-    alert.classList.remove('d-none');
-    alert.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    (felder[0] || form)?.focus?.({ preventScroll: true });
-  }
-  function clearGlobalError() {
-    const alert = form?.querySelector('#globalFormError');
-    if (alert) { alert.classList.add('d-none'); alert.textContent = ''; }
-  }
+    function clearGlobalError() {
+      const alert = form?.querySelector('#globalFormError');
+      if (alert) { alert.classList.add('d-none'); alert.textContent = ''; }
+    }
 
-  // Submit-Button aktivieren/deaktivieren
-  const submitBtn = form?.querySelector('.btn.btn-success.flex-grow-1');
-  function updateSubmit() {
-    if (!submitBtn) return;
-    const enabled = anyPositive();
-    submitBtn.disabled = !enabled;
-    submitBtn.setAttribute('aria-disabled', String(!enabled));
-    submitBtn.title = enabled ? '' : '{{ _("Bitte mindestens einen Wert bei Einnahme, Ausgabe, Vollgut oder Leergut angeben.") }}';
-  }
-  feldIds.forEach(id => {
-    const el = document.getElementById(id);
-    el?.addEventListener('input', () => {
-      if (anyPositive()) { setInlineInvalid(false); clearGlobalError(); }
-      updateSubmit();
-    });
-    el?.addEventListener('change', updateSubmit);
-  });
-  updateSubmit();
-
-  // Submit-Handler
-  if (form) {
-    // Safari bfcache: Spinner-Klasse entfernen, wenn per „Zurück“ geladen
-    window.addEventListener('pageshow', (e) => {
-      if (e.persisted) form.classList.remove('is-submitting');
-    });
-
-    form.addEventListener('submit', (event) => {
-      if (!anyPositive()) {
-        event.preventDefault(); event.stopPropagation();
-        setInlineInvalid(true);
-        showGlobalError('{{ _("Bitte mindestens einen Wert bei Einnahme, Ausgabe, Vollgut oder Leergut angeben.") }}');
-        form.classList.add('was-validated');
+    // Submit-Button aktivieren/deaktivieren
+    const submitBtn = form?.querySelector('.btn.btn-success.flex-grow-1');
+    function updateSubmit() {
+      if (!submitBtn) return;
+      const enabled = anyPositive();
+      submitBtn.disabled = !enabled;
+      submitBtn.setAttribute('aria-disabled', String(!enabled));
+      submitBtn.title = enabled ? '' : '{{ _("Bitte mindestens einen Wert bei Einnahme, Ausgabe, Vollgut oder Leergut angeben.") }}';
+    }
+    feldIds.forEach(id => {
+      const el = document.getElementById(id);
+      el?.addEventListener('input', () => {
+        if (anyPositive()) { setInlineInvalid(false); clearGlobalError(); }
         updateSubmit();
-        return;
-      }
-      if (!form.checkValidity()) { // Browser-Constraint-Validation
-        event.preventDefault(); event.stopPropagation();
-        form.classList.add('was-validated');
-        return;
-      }
-      // Alles ok: Spinner setzen
-      form.classList.add('is-submitting', 'was-validated');
-    }, false);
+      });
+      el?.addEventListener('change', updateSubmit);
+    });
+    updateSubmit();
+
+    // Submit-Handler
+    if (form) {
+      // Safari bfcache: Spinner-Klasse entfernen, wenn per „Zurück“ geladen
+      window.addEventListener('pageshow', (e) => {
+        if (e.persisted) form.classList.remove('is-submitting');
+      });
+
+      form.addEventListener('submit', (event) => {
+        if (!anyPositive()) {
+          event.preventDefault(); event.stopPropagation();
+          setInlineInvalid(true);
+          showGlobalError('{{ _("Bitte mindestens einen Wert bei Einnahme, Ausgabe, Vollgut oder Leergut angeben.") }}');
+          form.classList.add('was-validated');
+          updateSubmit();
+          return;
+        }
+        if (!form.checkValidity()) { // Browser-Constraint-Validation
+          event.preventDefault(); event.stopPropagation();
+          form.classList.add('was-validated');
+          return;
+        }
+        // Alles ok: Spinner setzen
+        form.classList.add('is-submitting', 'was-validated');
+      }, false);
+    }
+
+    // Optional: Autosubmit bei Attachments-Toggles (nur wenn vorhanden)
+    document.querySelectorAll('input[name="attachments"]').forEach(el => {
+      el.addEventListener('change', () => el.form?.submit());
+    });
+  });
+</script>
+<script>
+  /** Tabelle sortieren nach Datum (TT.MM.JJJJ) + A11y/Icon-Update **/
+  function sortTableByDate() {
+    const table = document.querySelector("table");
+    if (!table) return;
+    const tbody = table.querySelector("tbody");
+    const rows = Array.from(tbody.querySelectorAll("tr"));
+    const isAsc = table.dataset.sortOrder !== "asc";
+    table.dataset.sortOrder = isAsc ? "asc" : "desc";
+
+    const toTime = (row) => {
+      const text = (row.cells[0]?.innerText || '').trim();
+      const m = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(text);
+      if (!m) return Number.NEGATIVE_INFINITY; // „Keine Einträge“ unten
+      const [, dd, mm, yyyy] = m.map(Number);
+      return new Date(yyyy, mm - 1, dd).getTime();
+    };
+
+    rows.sort((a, b) => isAsc ? (toTime(a) - toTime(b)) : (toTime(b) - toTime(a)));
+    rows.forEach(r => tbody.appendChild(r));
+
+    // ARIA & Icon im TH aktualisieren
+    table.querySelectorAll('thead th').forEach(th => th.removeAttribute('aria-sort'));
+    const th = table.querySelector('thead th');
+    th?.setAttribute('aria-sort', isAsc ? 'ascending' : 'descending');
+    const icon = th?.querySelector('i.bi');
+    if (icon) icon.className = isAsc ? 'bi bi-arrow-down' : 'bi bi-arrow-up';
   }
-
-  // Optional: Autosubmit bei Attachments-Toggles (nur wenn vorhanden)
-  document.querySelectorAll('input[name="attachments"]').forEach(el => {
-    el.addEventListener('change', () => el.form?.submit());
-  });
-});
 </script>
 <script>
-/** Tabelle sortieren nach Datum (TT.MM.JJJJ) + A11y/Icon-Update **/
-function sortTableByDate() {
-  const table = document.querySelector("table");
-  if (!table) return;
-  const tbody = table.querySelector("tbody");
-  const rows = Array.from(tbody.querySelectorAll("tr"));
-  const isAsc = table.dataset.sortOrder !== "asc";
-  table.dataset.sortOrder = isAsc ? "asc" : "desc";
+  /** Filter, Quickranges, Tooltips, Clear-Search **/
+  document.addEventListener('DOMContentLoaded', () => {
+    // Tooltips (auch für Wrapper mit disabled Button)
+    document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
+      try { new bootstrap.Tooltip(el); } catch { }
+    });
 
-  const toTime = (row) => {
-    const text = (row.cells[0]?.innerText || '').trim();
-    const m = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(text);
-    if (!m) return Number.NEGATIVE_INFINITY; // „Keine Einträge“ unten
-    const [, dd, mm, yyyy] = m.map(Number);
-    return new Date(yyyy, mm - 1, dd).getTime();
-  };
+    const form = document.getElementById('filtersForm');
+    const auto = form?.dataset.autosubmit === 'true';
+    const q = document.getElementById('q');
+    const fromEl = document.getElementById('from');
+    const toEl = document.getElementById('to');
 
-  rows.sort((a, b) => isAsc ? (toTime(a) - toTime(b)) : (toTime(b) - toTime(a)));
-  rows.forEach(r => tbody.appendChild(r));
-
-  // ARIA & Icon im TH aktualisieren
-  table.querySelectorAll('thead th').forEach(th => th.removeAttribute('aria-sort'));
-  const th = table.querySelector('thead th');
-  th?.setAttribute('aria-sort', isAsc ? 'ascending' : 'descending');
-  const icon = th?.querySelector('i.bi');
-  if (icon) icon.className = isAsc ? 'bi bi-arrow-down' : 'bi bi-arrow-up';
-}
-</script>
-<script>
-/** Filter, Quickranges, Tooltips, Clear-Search **/
-document.addEventListener('DOMContentLoaded', () => {
-  // Tooltips (auch für Wrapper mit disabled Button)
-  document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
-    try { new bootstrap.Tooltip(el); } catch {}
-  });
-
-  const form   = document.getElementById('filtersForm');
-  const auto   = form?.dataset.autosubmit === 'true';
-  const q      = document.getElementById('q');
-  const fromEl = document.getElementById('from');
-  const toEl   = document.getElementById('to');
-
-  // Clear: Button
-  document.getElementById('clear-q')?.addEventListener('click', () => {
-    if (!q) return;
-    q.value = '';
-    q.focus();
-  });
-  // Clear: ESC
-  q?.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-      e.preventDefault();
+    // Clear: Button
+    document.getElementById('clear-q')?.addEventListener('click', () => {
+      if (!q) return;
       q.value = '';
       q.focus();
-    }
-  });
-
-  // Autosubmit bei Von/Bis (nur wenn aktiviert)
-  function autoSubmitIfEnabled() {
-    if (auto && form) form.requestSubmit();
-  }
-  fromEl?.addEventListener('change', autoSubmitIfEnabled);
-  toEl?.addEventListener('change', autoSubmitIfEnabled);
-
-  // Quickranges
-  const pad = (n) => String(n).padStart(2, '0');
-  const fmt = (d) => `${pad(d.getDate())}.${pad(d.getMonth()+1)}.${d.getFullYear()}`;
-  const btns = document.querySelectorAll('.btn-quickrange');
-  btns.forEach(b => b.addEventListener('click', () => {
-    btns.forEach(x => x.classList.remove('active'));
-    b.classList.add('active');
-
-    const now = new Date();
-    let start = new Date(now), end = new Date(now);
-
-    switch (b.dataset.range) {
-      case 'today':
-        // start/end sind heute
-        break;
-      case 'week': {
-        const day = (now.getDay()+6)%7; // Mo=0
-        start.setDate(now.getDate()-day);
-        end = new Date(start);
-        end.setDate(start.getDate()+6);
-        break;
+    });
+    // Clear: ESC
+    q?.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        q.value = '';
+        q.focus();
       }
-      case 'month':
-        start = new Date(now.getFullYear(), now.getMonth(), 1);
-        end   = new Date(now.getFullYear(), now.getMonth()+1, 0);
-        break;
+    });
+
+    // Autosubmit bei Von/Bis (nur wenn aktiviert)
+    function autoSubmitIfEnabled() {
+      if (auto && form) form.requestSubmit();
     }
+    fromEl?.addEventListener('change', autoSubmitIfEnabled);
+    toEl?.addEventListener('change', autoSubmitIfEnabled);
 
-    if (fromEl) fromEl.value = fmt(start);
-    if (toEl)   toEl.value   = fmt(end);
+    // Quickranges
+    const pad = (n) => String(n).padStart(2, '0');
+    const fmt = (d) => `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}`;
+    const btns = document.querySelectorAll('.btn-quickrange');
+    btns.forEach(b => b.addEventListener('click', () => {
+      btns.forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
 
-    autoSubmitIfEnabled();
-  }));
-});
+      const now = new Date();
+      let start = new Date(now), end = new Date(now);
+
+      switch (b.dataset.range) {
+        case 'today':
+          // start/end sind heute
+          break;
+        case 'week': {
+          const day = (now.getDay() + 6) % 7; // Mo=0
+          start.setDate(now.getDate() - day);
+          end = new Date(start);
+          end.setDate(start.getDate() + 6);
+          break;
+        }
+        case 'month':
+          start = new Date(now.getFullYear(), now.getMonth(), 1);
+          end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+          break;
+      }
+
+      if (fromEl) fromEl.value = fmt(start);
+      if (toEl) toEl.value = fmt(end);
+
+      autoSubmitIfEnabled();
+    }));
+  });
 </script>
 {% endblock %}

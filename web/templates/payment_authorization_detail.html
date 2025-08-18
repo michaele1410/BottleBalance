@@ -114,20 +114,6 @@
     <p class="text-muted">Keine Anhänge vorhanden.</p>
     {% endif %}
 
-    {% if attachments %}
-    <ul class="list-group mt-3">
-      {% for att in attachments %}
-      <li class="list-group-item d-flex justify-content-between align-items-center">
-        <a href="{{ url_for('download_antrag_attachment', att_id=att.id) }}" target="_blank">{{ att.original_name }}</a>
-        <span class="text-muted">{{ (att.size_bytes / 1024)|round(1) }} KB</span>
-      </li>
-      {% endfor %}
-    </ul>
-    {% else %}
-    <p class="text-muted mt-2">Keine Anhänge vorhanden.</p>
-    {% endif %}
-
-
     <h5 class="mt-5">Audit-Historie</h5>
     <table class="table table-sm table-striped align-middle">
       <thead>

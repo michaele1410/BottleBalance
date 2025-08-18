@@ -348,7 +348,7 @@ CREATE TABLE IF NOT EXISTS zahlungsantraege (
     id SERIAL PRIMARY KEY,
     antragsteller_id INTEGER NOT NULL,
     datum DATE NOT NULL,
-    paragraph VARCHAR(10),
+    paragraph VARCHAR(50),
     verwendungszweck TEXT,
     betrag NUMERIC(10,2),
     lieferant TEXT,
@@ -412,8 +412,20 @@ def migrate_columns(conn):
     # Schneller zählen: DISTINCT user_id je Antrag/Aktion
     conn.execute(text("CREATE INDEX IF NOT EXISTS idx_za_antrag_action_user " "ON zahlungsantrag_audit(antrag_id, action, user_id)"))
     conn.execute(text(CREATE_TABLE_ZAHLUNGSFREIGABE_ATTACHMENTS))
+    try:
+        current_len = conn.execute(text("""
+            SELECT character_maximum_length
+            FROM information_schema.columns
+            WHERE table_name='zahlungsantraege'
+            AND column_name='paragraph'
+            AND data_type='character varying'
+        """)).scalar_one_or_none()
 
-
+        if current_len is not None and current_len < 50:
+            conn.execute(text("ALTER TABLE zahlungsantraege ALTER COLUMN paragraph TYPE VARCHAR(50)"))
+    except Exception:
+        # bewusst best effort – kein Crash, nur loggen
+        logging.getLogger(__name__).exception("Migration paragraph -> VARCHAR(50) fehlgeschlagen")
 
     # Standardwerte einfügen, falls Tabelle leer ist
     default_bemerkungen = [

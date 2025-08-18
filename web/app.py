@@ -356,7 +356,8 @@ CREATE TABLE IF NOT EXISTS zahlungsantraege (
     status VARCHAR(20) DEFAULT 'offen',
     read_only BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    approver_snapshot JSONB
 );
 """
 
@@ -389,6 +390,15 @@ CREATE INDEX IF NOT EXISTS idx_antrag_attachments_antrag_created
 ON antrag_attachments(antrag_id, created_at DESC, id DESC);
 """
 
+CREATE_TABLE_ZAHLUNGSFREIGABE_TRANSITIONS = """
+CREATE TABLE IF NOT EXISTS status_transitions (
+    id SERIAL PRIMARY KEY,
+    from_status VARCHAR(50) NOT NULL,
+    to_status VARCHAR(50) NOT NULL,
+    role_required VARCHAR(50) NOT NULL,
+    conditions TEXT
+);
+"""
 
 def migrate_columns(conn):
     # Best-effort migrations for added columns
@@ -404,6 +414,7 @@ def migrate_columns(conn):
     conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS theme_preference TEXT DEFAULT 'system'"))
     conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login_at TIMESTAMP"))
     conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS can_approve BOOLEAN NOT NULL DEFAULT FALSE"))
+    conn.execute(text("ALTER TABLE zahlungsantraege ADD COLUMN IF NOT EXISTS approver_snapshot JSONB"))
     conn.execute(text(CREATE_TABLE_ATTACHMENTS))
     conn.execute(text(CREATE_TABLE_ATTACHMENTS_TEMP))
     conn.execute(text(CREATE_TABLE_BEMERKUNGSOPTIONEN))
@@ -412,6 +423,8 @@ def migrate_columns(conn):
     # Schneller zählen: DISTINCT user_id je Antrag/Aktion
     conn.execute(text("CREATE INDEX IF NOT EXISTS idx_za_antrag_action_user " "ON zahlungsantrag_audit(antrag_id, action, user_id)"))
     conn.execute(text(CREATE_TABLE_ZAHLUNGSFREIGABE_ATTACHMENTS))
+    conn.execute(text(CREATE_TABLE_ZAHLUNGSFREIGABE_TRANSITIONS))
+    
     try:
         current_len = conn.execute(text("""
             SELECT character_maximum_length
@@ -563,7 +576,6 @@ def _user_can_edit_antrag(antrag_id: int) -> bool:
     is_owner = (row['antragsteller_id'] == user['id'])
     is_approver = bool(user.get('can_approve'))
     return is_owner or is_approver
-
 
 # -----------------------
 # Error Handling
@@ -3325,10 +3337,12 @@ def zahlungsfreigabe():
               GROUP BY antrag_id
             )
             SELECT z.id, z.antragsteller_id, u.username AS antragsteller,
-                   z.datum, z.paragraph, z.verwendungszweck, z.betrag,
-                   z.lieferant, z.begruendung, z.status, z.read_only,
-                   z.created_at, z.updated_at,
-                   COALESCE(a.approvals_done, 0) AS approvals_done
+            z.datum, z.paragraph, z.verwendungszweck, z.betrag,
+            z.lieferant, z.begruendung, z.status, z.read_only,
+            z.created_at, z.updated_at,
+            z.approver_snapshot,
+            COALESCE(a.approvals_done, 0) AS approvals_done
+
             FROM zahlungsantraege z
             LEFT JOIN users u ON u.id = z.antragsteller_id
             LEFT JOIN agg a   ON a.antrag_id = z.id
@@ -3338,7 +3352,20 @@ def zahlungsfreigabe():
         antraege = []
         for r in rows:
             done = int(r['approvals_done'] or 0)
-            total = int(approvals_total or 0)
+
+            snap = r.get('approver_snapshot')
+            if snap:
+                if isinstance(snap, str):
+                    try:
+                        approver_list = json.loads(snap)
+                    except Exception:
+                        approver_list = []
+                else:
+                    approver_list = snap
+                total = len(approver_list)
+            else:
+                total = int(approvals_total or 0)
+
             percent = int(done * 100 / total) if total > 0 else 0
 
             approved_by_me = False
@@ -3358,14 +3385,10 @@ def zahlungsfreigabe():
                 'read_only': r['read_only'],
                 'created_at': r['created_at'],
                 'updated_at': r['updated_at'],
-
-                # Fortschritt (deutsche Keys für dein Template)
                 'freigaben_count': done,
                 'freigaben_gesamt': total,
                 'freigabe_prozent': percent,
                 'approved_by_me': approved_by_me,
-
-                # Buttons
                 'can_freigeben': is_approver and r['status'] == 'offen' and not approved_by_me,
                 'can_freigabe_zurueckziehen': is_approver and r['status'] in ('offen','freigegeben') and approved_by_me,
                 'can_on_hold': is_approver and r['status'] == 'offen',
@@ -3375,7 +3398,6 @@ def zahlungsfreigabe():
                 'can_ablehnen': is_approver and r['status'] in ('offen', 'on_hold'),
                 'can_zurueckziehen': (user and user['id'] == r['antragsteller_id']
                                     and r['status'] in ('offen', 'on_hold')),
-                'can_fortsetzen': is_approver and r['status'] == 'on_hold',
 
             })
 
@@ -3385,14 +3407,12 @@ def _require_approver(user):
     if not user or not user.get('can_approve'):
         abort(403)
 
-
 @app.post('/freigeben/<int:antrag_id>')
 @login_required
 @require_csrf
 def freigeben_antrag(antrag_id):
     user = current_user()
     _require_approver(user)
-
     with engine.begin() as conn:
         # Nur offene Anträge können freigegeben werden
         status = conn.execute(
@@ -3409,33 +3429,54 @@ def freigeben_antrag(antrag_id):
             return redirect(url_for('zahlungsfreigabe'))
 
         # 1) Audit-Eintrag "freigegeben"
-        conn.execute(text("""
-            INSERT INTO zahlungsantrag_audit (antrag_id, user_id, action, timestamp)
-            VALUES (:aid, :uid, 'freigegeben', NOW())
-        """), {'aid': antrag_id, 'uid': user['id']})
+        conn.execute(
+            text("""
+                INSERT INTO zahlungsantrag_audit (antrag_id, user_id, action, timestamp)
+                VALUES (:aid, :uid, 'freigegeben', NOW())
+            """),
+            {'aid': antrag_id, 'uid': user['id']}
+        )
 
-        # 2) Fortschritt
-        done  = _approvals_done(conn, antrag_id)
+        # 2) Fortschritt prüfen
+        done = _approvals_done(conn, antrag_id)
         total = _approvals_total(conn)
 
         # 3) Vollständigkeit -> Statuswechsel + Audit + Mail
         if total > 0 and done >= total:
-            conn.execute(text("""
-                UPDATE zahlungsantraege SET status='freigegeben', updated_at=NOW()
-                WHERE id=:id
-            """), {'id': antrag_id})
-            conn.execute(text("""
-                INSERT INTO zahlungsantrag_audit (antrag_id, user_id, action, timestamp, detail)
-                VALUES (:aid, :uid, 'freigabe_vollständig', NOW(), :det)
-            """), {'aid': antrag_id, 'uid': user['id'], 'det': f'{done}/{total} Freigaben'})
+            # Status setzen
+            conn.execute(
+                text("""
+                    UPDATE zahlungsantraege SET status='freigegeben', updated_at=NOW()
+                    WHERE id=:id
+                """),
+                {'id': antrag_id}
+            )
+            # Approver-Snapshot nur setzen, wenn noch nicht vorhanden
+            snap = conn.execute(
+                text("SELECT approver_snapshot FROM zahlungsantraege WHERE id=:id"),
+                {'id': antrag_id}
+            ).scalar_one_or_none()
+            if not snap:
+                approvers = conn.execute(
+                    text("SELECT id, username FROM users WHERE can_approve=TRUE AND active=TRUE")
+                ).mappings().all()
+                conn.execute(
+                    text("UPDATE zahlungsantraege SET approver_snapshot=:snap WHERE id=:id"),
+                    {'snap': json.dumps([dict(a) for a in approvers]), 'id': antrag_id}
+                )
 
+            conn.execute(
+                text("""
+                    INSERT INTO zahlungsantrag_audit (antrag_id, user_id, action, timestamp, detail)
+                    VALUES (:aid, :uid, 'freigabe_vollständig', NOW(), :det)
+                """),
+                {'aid': antrag_id, 'uid': user['id'], 'det': f'{done}/{total} Freigaben'}
+            )
             if (email := get_antrag_email(antrag_id)):
                 send_status_email(email, antrag_id, 'freigegeben')
-
             flash('Alle erforderlichen Freigaben liegen vor – Antrag ist jetzt freigegeben.', 'success')
         else:
             flash(f'Teilfreigabe erfasst ({done}/{total}).', 'info')
-
     return redirect(url_for('zahlungsfreigabe'))
 
 @app.post('/on_hold/<int:antrag_id>')
@@ -4026,30 +4067,26 @@ def admin_tools():
     return render_template("admin_tools.html", status=status, current_options=current_options)
 
 
-
 @app.route('/zahlungsfreigabe/<int:antrag_id>')
 @login_required
 def zahlungsfreigabe_detail(antrag_id):
     user = current_user()
     is_approver = bool(user and user.get('can_approve'))
 
-    # Vorbelegen, um UnboundLocal zu vermeiden (und für klare Scope-Grenzen)
     antrag_row = None
     audit = []
     approvers = []
 
     with engine.begin() as conn:
-        # Antrag laden
-        antrag_row = conn.execute(text("""
-            SELECT z.id, z.antragsteller_id, u.username AS antragsteller,
-                   z.datum, z.paragraph, z.verwendungszweck, z.betrag,
-                   z.lieferant, z.begruendung, z.status, z.read_only,
-                   z.created_at, z.updated_at
-            FROM zahlungsantraege z
-            LEFT JOIN users u ON u.id = z.antragsteller_id
-            WHERE z.id = :id
-        """), {'id': antrag_id}).mappings().first()
-
+        # Antrag inkl. approver_snapshot laden
+        antrag_row = conn.execute(
+            text("""
+                SELECT z.*, u.username AS antragsteller
+                FROM zahlungsantraege z
+                LEFT JOIN users u ON u.id = z.antragsteller_id
+                WHERE z.id = :id
+            """), {'id': antrag_id}
+        ).mappings().first()
         if not antrag_row:
             abort(404)
 
@@ -4062,17 +4099,38 @@ def zahlungsfreigabe_detail(antrag_id):
             ORDER BY a.timestamp ASC, a.id ASC
         """), {'id': antrag_id}).mappings().all()
 
-        # Approver-Liste inkl. approved-Flag
-        approvers = conn.execute(text("""
-            SELECT u.id, u.username,
-                   EXISTS (
-                       SELECT 1 FROM zahlungsantrag_audit a
-                       WHERE a.antrag_id=:aid AND a.action='freigegeben' AND a.user_id=u.id
-                   ) AS approved
-            FROM users u
-            WHERE u.can_approve=TRUE AND u.active=TRUE
-            ORDER BY u.username ASC
-        """), {'aid': antrag_id}).mappings().all()
+        # Approver-Liste: Wenn Snapshot vorhanden, diesen verwenden! inkl. approved-Flag
+        if antrag_row.get('approver_snapshot'):
+            snap = antrag_row['approver_snapshot']
+            if isinstance(snap, str):
+                approver_list = json.loads(snap)
+            else:
+                approver_list = snap  # Bereits als Liste (z.B. bei PostgreSQL JSONB)
+            approved_ids = set(
+                a['user_id'] for a in audit if a['action'] == 'freigegeben'
+            )
+            approvers = [
+                {
+                    'id': ap['id'],
+                    'username': ap['username'],
+                    'approved': ap['id'] in approved_ids
+                }
+                for ap in approver_list
+            ]
+        else:
+            # Fallback: aktuelle Liste aus DB
+            approvers = conn.execute(
+                text("""
+                    SELECT u.id, u.username,
+                    EXISTS (
+                        SELECT 1 FROM zahlungsantrag_audit a
+                        WHERE a.antrag_id=:aid AND a.action='freigegeben' AND a.user_id=u.id
+                    ) AS approved
+                    FROM users u
+                    WHERE u.can_approve=TRUE AND u.active=TRUE
+                    ORDER BY u.username ASC
+                """), {'aid': antrag_id}
+            ).mappings().all()
 
         attachments = conn.execute(text("""    
             SELECT id, original_name, size_bytes, content_type, created_at

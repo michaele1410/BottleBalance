@@ -82,6 +82,14 @@ IMPORT_ALLOW_DRYRUN  = os.getenv("IMPORT_ALLOW_DRYRUN", "true").lower() in ("1",
 # Optionaler API-Token für CI/Headless-Dry-Runs (Header: X-Import-Token)
 IMPORT_API_TOKEN     = os.getenv("IMPORT_API_TOKEN")  # leer = kein Token erlaubt
 
+# Version
+def get_version():
+    try:
+        with open("version.txt", "r") as f:
+            return f.read().strip()
+    except FileNotFoundError:
+        return "unknown"
+
 # Document Upload
 ALLOWED_EXTENSIONS = {
     'pdf','png','jpg','jpeg','gif','webp','heic','heif','svg',
@@ -4375,21 +4383,10 @@ def attachments_view(att_id: int):
 
     return resp
 
-
-    # SMTP-Status vorbereiten
-    if not SMTP_HOST or not SMTP_PORT or not SMTP_USER or not SMTP_PASS:
-        status = _("SMTP configuration incomplete.")
-    else:
-        status = _("SMTP configuration detected for host {}:{}.".format(SMTP_HOST, SMTP_PORT))
-
-    # Aktuelle Bemerkungsoptionen laden
-    try:
-        with engine.begin() as conn:
-            current_options = conn.execute(text("SELECT text FROM bemerkungsoptionen ORDER BY text ASC")).scalars().all()
-    except Exception:
-        current_options = []
-
-    return render_template("admin_tools.html", status=status, current_options=current_options)  
+@app.route("/version")
+def version_info():
+    version = os.getenv("APP_VERSION", get_version())
+    return render_template_string("<h1>Version: {{ version }}</h1>", version=version)
 
 if __name__ == '__main__':
     os.environ.setdefault('TZ', 'Europe/Berlin')

@@ -36,13 +36,15 @@ RUN test -f ./scripts/update_translations.sh \
 # Compile translation files (initial)
 RUN pybabel compile -d translations
 
-
-
 # Expose port
 EXPOSE 5000
 
 # Set timezone
 ENV TZ=Europe/Berlin
+
+# Set version
+ARG APP_VERSION
+ENV APP_VERSION=${APP_VERSION}
 
 # Start script: erst update_translations.sh, dann gunicorn
 CMD ["sh", "-c", "sh ./scripts/update_translations.sh && gunicorn -b 0.0.0.0:5000 app:app"]

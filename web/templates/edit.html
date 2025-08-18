@@ -6,98 +6,58 @@
       <div class="card-body">
         <h1 class="h5 mb-3">{{ _('Datensatz bearbeiten') }}</h1>
 
-        <form method="post"
-              action="{{ url_for('edit_post', entry_id=data.id) }}"
-              class="row g-3"
-              id="transaction-form"
-              novalidate>
-              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <form method="post" action="{{ url_for('edit_post', entry_id=data.id) }}" class="row g-3" id="transaction-form"
+          novalidate>
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-          <!-- Datum (wie in index.html: Textfeld + Flatpickr) -->
+          <!-- Datum -->
           <div class="form-floating mb-3">
-            <input type="text"
-                   name="datum"
-                   id="datum"
-                   class="form-control"
-                   placeholder="Datum"
-                   value="{{ (data.datum if data.datum is string else (data.datum.strftime('%d.%m.%Y') if data.datum else '')) or (default_date or '') }}"
-                   required
-                   autofocus>
+            <input type="text" name="datum" id="datum" class="form-control" placeholder="Datum"
+              value="{{ (data.datum if data.datum is string else (data.datum.strftime('%d.%m.%Y') if data.datum else '')) or (default_date or '') }}"
+              required autofocus>
             <label for="datum">{{ _('Datum') }}</label>
           </div>
 
           <!-- Vollgut -->
           <div class="form-floating mb-3">
-            <input id="vollgut"
-                   name="vollgut"
-                   type="number"
-                   inputmode="numeric"
-                   min="0"
-                   step="1"
-                   class="form-control"
-                   placeholder="0"
-                   autocomplete="off"
-                   value="{{ data.vollgut if data.vollgut is not none else '' }}">
+            <input id="vollgut" name="vollgut" type="number" inputmode="numeric" min="0" step="1" class="form-control"
+              placeholder="0" autocomplete="off" value="{{ data.vollgut if data.vollgut is not none else '' }}">
             <label for="vollgut">{{ _('Vollgut') }}</label>
           </div>
 
           <!-- Leergut -->
           <div class="form-floating mb-3">
-            <input id="leergut"
-                   name="leergut"
-                   type="number"
-                   inputmode="numeric"
-                   min="0"
-                   step="1"
-                   class="form-control"
-                   placeholder="0"
-                   autocomplete="off"
-                   value="{{ data.leergut if data.leergut is not none else '' }}">
+            <input id="leergut" name="leergut" type="number" inputmode="numeric" min="0" step="1" class="form-control"
+              placeholder="0" autocomplete="off" value="{{ data.leergut if data.leergut is not none else '' }}">
             <label for="leergut">{{ _('Leergut') }}</label>
           </div>
 
-          <!-- Einnahme (wie in index.html: input-group + form-floating) -->
+          <!-- Einnahme -->
           <div class="input-group mb-3">
             <span class="input-group-text">{{ _('waehrung') }}</span>
             <div class="form-floating flex-grow-1">
-              <input name="einnahme"
-                     id="einnahme"
-                     type="number"
-                     step="0.01"
-                     inputmode="decimal"
-                     class="form-control"
-                     placeholder="0.00"
-                     autocomplete="off"
-                     value="{{ (data.einnahme|replace(',', '.') if data.einnahme is string else ('%.2f'|format(data.einnahme))) if data.einnahme is not none else '' }}">
+              <input name="einnahme" id="einnahme" type="number" step="0.01" inputmode="decimal" class="form-control"
+                placeholder="0.00" autocomplete="off"
+                value="{{ (data.einnahme|replace(',', '.') if data.einnahme is string else ('%.2f'|format(data.einnahme))) if data.einnahme is not none else '' }}">
               <label for="einnahme">{{ _('Einnahme') }}</label>
             </div>
           </div>
 
-          <!-- Ausgabe (wie in index.html) -->
+          <!-- Ausgabe -->
           <div class="input-group mb-3">
             <span class="input-group-text">{{ _('waehrung') }}</span>
             <div class="form-floating flex-grow-1">
-              <input name="ausgabe"
-                     id="ausgabe"
-                     type="number"
-                     step="0.01"
-                     inputmode="decimal"
-                     class="form-control"
-                     placeholder="0.00"
-                     autocomplete="off"
-                     value="{{ (data.ausgabe|replace(',', '.') if data.ausgabe is string else ('%.2f'|format(data.ausgabe))) if data.ausgabe is not none else '' }}">
+              <input name="ausgabe" id="ausgabe" type="number" step="0.01" inputmode="decimal" class="form-control"
+                placeholder="0.00" autocomplete="off"
+                value="{{ (data.ausgabe|replace(',', '.') if data.ausgabe is string else ('%.2f'|format(data.ausgabe))) if data.ausgabe is not none else '' }}">
               <label for="ausgabe">{{ _('Ausgabe') }}</label>
             </div>
           </div>
 
           <!-- Bemerkung -->
           <div class="form-floating mb-3">
-            <input id="bemerkung"
-                   name="bemerkung"
-                   class="form-control"
-                   maxlength="500"
-                   placeholder="{{ _('Notiz') }}"
-                   value="{{ data.bemerkung or '' }}">
+            <input id="bemerkung" name="bemerkung" class="form-control" maxlength="500" placeholder="{{ _('Notiz') }}"
+              value="{{ data.bemerkung or '' }}">
             <label for="bemerkung">{{ _('Bemerkung') }}</label>
           </div>
 
@@ -110,11 +70,12 @@
         <hr class="my-4">
         <h3 class="h6 mb-3">{{ _('Anhänge') }}</h3>
 
-        <form action="{{ url_for('attachments_upload', entry_id=data.id) }}" method="post" enctype="multipart/form-data" class="mb-3">
+        <form action="{{ url_for('attachments_upload', entry_id=data.id) }}" method="post" enctype="multipart/form-data"
+          class="mb-3">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <div class="input-group">
             <input class="form-control" type="file" name="files" multiple
-                  accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.heic,.heif,.svg,.txt,.csv,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.xml,.json">
+              accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.heic,.heif,.svg,.txt,.csv,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.xml,.json">
             <button class="btn btn-outline-primary" type="submit">
               <i class="bi-upload me-1"></i> {{ _('Hochladen') }}
             </button>
@@ -122,27 +83,27 @@
           <div class="form-text">
             {{ _('Zulässige Formate:') }} PDF, Bilder, Office, Text. {{ _('Mehrere Dateien möglich.') }}
           </div>
-        </form>       
-        <!-- Liste bestehender Anhänge -->
-       <div class="list-group mb-3">
+        </form>
+
+        <div class="list-group mb-3" id="editAttachmentsList">
           {% if attachments %}
-            {% for att in attachments %}
-              <div class="list-group-item d-flex justify-content-between align-items-center">
-                <div class="text-truncate" style="max-width: 70%;">
-                  <i class="bi bi-paperclip me-1"></i>
-                  <a href="{{ att.url }}" target="_blank">{{ att.name }}</a>
-                  <small class="text-muted">({{ att.size }} Bytes)</small>
-                </div>
-                <form method="post"
-                      action="{{ url_for('attachments_delete', att_id=att.id) }}"
-                      onsubmit="return confirm('{{ _('Anhang wirklich löschen?') }}');">
-                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                  <button class="btn btn-sm btn-outline-danger">{{ _('Löschen') }}</button>
-                </form>
-              </div>
-            {% endfor %}
+          {% for att in attachments %}
+          <div class="list-group-item d-flex justify-content-between align-items-center">
+            <div class="text-truncate" style="max-width: 70%;">
+              <i class="bi bi-paperclip me-1"></i>
+              <a href="{{ att.url }}" target="_blank">{{ att.name }}</a>
+              <small class="text-muted">({{ att.size }} Bytes)</small>
+              <a href="{{ att.view_url }}" target="_blank" class="btn btn-sm btn-outline-primary">Ansehen</a>
+            </div>
+            <form method="post" action="{{ url_for('attachments_delete', att_id=att.id) }}"
+              onsubmit="return confirm('{{ _('Anhang wirklich löschen?') }}');">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="btn btn-sm btn-outline-danger">{{ _('Löschen') }}</button>
+            </form>
+          </div>
+          {% endfor %}
           {% else %}
-            <div class="list-group-item text-muted">{{ _('Keine Anhänge vorhanden.') }}</div>
+          <div class="list-group-item text-muted">{{ _('Keine Anhänge vorhanden.') }}</div>
           {% endif %}
         </div>
       </div>
@@ -153,80 +114,85 @@
 
 {% block scripts %}
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-  // Flatpickr wie in index.html
-  function isDark() {
-    return document.documentElement.getAttribute('data-bs-theme') === 'dark';
-  }
-  function toggleCalendarDark(calEl, dark) {
-    if (!calEl) return;
-    calEl.classList.toggle('flatpickr-dark', !!dark);
-  }
-  if (window.flatpickr) {
-    if (flatpickr.l10ns?.de) flatpickr.localize(flatpickr.l10ns.de);
-    const fp = flatpickr('#datum', {
-      allowInput: true,
-      dateFormat: 'd.m.Y',
-      clickOpens: true,
-      disableMobile: false,
-      onOpen: (selectedDates, dateStr, instance) => {
-        toggleCalendarDark(instance.calendarContainer, isDark());
-      }
-    });
-    const themeObserver = new MutationObserver(() => {
-      const dark = isDark();
-      document.querySelectorAll('.flatpickr-calendar').forEach(c => toggleCalendarDark(c, dark));
-    });
-    themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-bs-theme'] });
-  }
+  document.addEventListener('DOMContentLoaded', () => {
+    function isDark() {
+      return document.documentElement.getAttribute('data-bs-theme') === 'dark';
+    }
+    function toggleCalendarDark(calEl, dark) {
+      if (!calEl) return;
+      calEl.classList.toggle('flatpickr-dark', !!dark);
+    }
+    if (window.flatpickr) {
+      if (flatpickr.l10ns?.de) flatpickr.localize(flatpickr.l10ns.de);
+      const fp = flatpickr('#datum', {
+        allowInput: true,
+        dateFormat: 'd.m.Y',
+        clickOpens: true,
+        disableMobile: false,
+        onOpen: (selectedDates, dateStr, instance) => {
+          toggleCalendarDark(instance.calendarContainer, isDark());
+        }
+      });
+      const themeObserver = new MutationObserver(() => {
+        const dark = isDark();
+        document.querySelectorAll('.flatpickr-calendar').forEach(c => toggleCalendarDark(c, dark));
+      });
+      themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-bs-theme'] });
+    }
 
-  // Optional: einfache Client-Validation analog index.html
-  const form = document.getElementById('transaction-form');
-  if (form) {
-    form.addEventListener('submit', (event) => {
-      if (!form.checkValidity()) {
-        event.preventDefault();
-        event.stopPropagation();
-      }
-      form.classList.add('was-validated');
-    }, false);
-  }
-});
+    const form = document.getElementById('transaction-form');
+    if (form) {
+      form.addEventListener('submit', (event) => {
+        if (!form.checkValidity()) {
+          event.preventDefault();
+          event.stopPropagation();
+        }
+        form.classList.add('was-validated');
+      }, false);
+    }
+  });
 </script>
 
 <script>
-document.addEventListener('DOMContentLoaded', async () => {
+  document.addEventListener('DOMContentLoaded', async () => {
   const entryId = {{ data.id }};
+  const listGroup = document.getElementById('editAttachmentsList');
   try {
-    const resp = await fetch(`{{ url_for('attachments_list', entry_id=0) }}`.replace('0', entryId));
-    const list = await resp.json();
-    const ul = document.getElementById('editAttachmentsList');
-    ul.innerHTML = '';
-    if (!list || list.length === 0) {
-      ul.innerHTML = `<li class="list-group-item text-muted">{{ _('Keine Anhänge vorhanden.') }}</li>`;
+    const resp = await fetch(`/attachments/${entryId}/list`);
+    const attachments = await resp.json();
+
+    listGroup.innerHTML = '';
+
+    if (!attachments || attachments.length === 0) {
+      listGroup.innerHTML = `<div class="list-group-item text-muted">Keine Anhänge vorhanden.</div>`;
       return;
     }
-    list.forEach(it => {
-      const li = document.createElement('li');
-      li.className = 'list-group-item d-flex justify-content-between align-items-center';
-      li.innerHTML = `
+
+    attachments.forEach(att => {
+      const item = document.createElement('div');
+      item.className = 'list-group-item d-flex justify-content-between align-items-center';
+
+      const deleteUrl = `/attachments/${att.id}/delete`;
+
+      item.innerHTML = `
         <div class="text-truncate" style="max-width: 70%;">
-          <i class="bi-paperclip me-1"></i> ${it.name}
+          <i class="bi bi-paperclip me-1"></i>
+          <a href="${att.url}" target="_blank">${att.name}</a>
+          <small class="text-muted">(${att.size} Bytes)</small>
+          <a href="${att.view_url}" target="_blank" class="btn btn-sm btn-outline-primary">Ansehen</a>
         </div>
-        <div class="d-flex gap-2">
-          <a class="btn btn-sm btn-outline-primary" href="${it.url}" target="_blank">{{ _('Öffnen') }}</a>
-          <form method="post" action="{{ url_for('attachments_delete', att_id=0) }}".replace('0', it.id) onsubmit="return confirm('{{ _('Anhang wirklich löschen?') }}');">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <button class="btn btn-sm btn-outline-danger">{{ _('Löschen') }}</button>
-          </form>
-        </div>
+        <form method="post" action="${deleteUrl}" onsubmit="return confirm('Anhang wirklich löschen?');">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="btn btn-sm btn-outline-danger">Löschen</button>
+        </form>
       `;
-      ul.appendChild(li);
+
+      listGroup.appendChild(item);
     });
   } catch (e) {
-    console.error(e);
+    console.error('Fehler beim Laden der Anhänge:', e);
+    listGroup.innerHTML = `<div class="list-group-item text-danger">Fehler beim Laden der Anhänge.</div>`;
   }
 });
 </script>
-
 {% endblock %}

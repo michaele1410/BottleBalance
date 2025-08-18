@@ -118,7 +118,7 @@
             </form>
             {% endif %}
 
-            {% if a.can_loeschen and a.status != 'abgeschlossen' %}
+            {% if a.can_loeschen and a.status not in ['abgeschlossen', 'abgelehnt', 'freigegeben']  %}
             <form method="post" action="{{ url_for('loeschen_antrag', antrag_id=a.id) }}" style="display:inline"
               onsubmit="return confirm('Antrag endgültig löschen?');">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

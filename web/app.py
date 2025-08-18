@@ -327,6 +327,25 @@ CREATE TABLE IF NOT EXISTS zahlungsantrag_audit (
 );
 """
 
+CREATE_TABLE_ZAHLUNGSFREIGABE_ATTACHMENTS = """
+CREATE TABLE IF NOT EXISTS antrag_attachments (
+    id SERIAL PRIMARY KEY,
+    antrag_id INTEGER NOT NULL REFERENCES zahlungsantraege(id) ON DELETE CASCADE,
+    stored_name TEXT NOT NULL,       -- serverseitiger Dateiname (uuid.ext)
+    original_name TEXT NOT NULL,     -- Originalname
+    content_type TEXT,
+    size_bytes BIGINT,
+    uploaded_by INTEGER,             -- users.id
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+"""
+
+CREATE_INDEX_ZAHLUNGSFREIGABE_ATTACHMENTS = """
+CREATE INDEX IF NOT EXISTS idx_antrag_attachments_antrag_created
+ON antrag_attachments(antrag_id, created_at DESC, id DESC);
+"""
+
+
 def migrate_columns(conn):
     # Best-effort migrations for added columns
     conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS email TEXT"))
@@ -348,6 +367,8 @@ def migrate_columns(conn):
     conn.execute(text(CREATE_TABLE_ZAHLUNGSFREIGABE_AUDIT))
     # Schneller zählen: DISTINCT user_id je Antrag/Aktion
     conn.execute(text("CREATE INDEX IF NOT EXISTS idx_za_antrag_action_user " "ON zahlungsantrag_audit(antrag_id, action, user_id)"))
+    conn.execute(text(CREATE_TABLE_ZAHLUNGSFREIGABE_ATTACHMENTS))
+
 
 
     # Standardwerte einfügen, falls Tabelle leer ist
@@ -443,6 +464,50 @@ def get_bemerkungsoptionen():
     with engine.begin() as conn:
         rows = conn.execute(text("SELECT text FROM bemerkungsoptionen WHERE active = TRUE ORDER BY text ASC")).scalars().all()
     return rows
+
+# Zahlungsfreigabe
+def _antrag_dir(antrag_id: int) -> str:
+    p = os.path.join(UPLOAD_FOLDER, f"antrag_{antrag_id}")
+    os.makedirs(p, exist_ok=True)
+    return p
+
+def _user_can_view_antrag(antrag_id: int) -> bool:
+    """Antragsteller:in oder Approver dürfen ansehen."""
+    user = current_user()
+    if not user:
+        return False
+    with engine.begin() as conn:
+        row = conn.execute(text("""
+            SELECT antragsteller_id FROM zahlungsantraege WHERE id=:id
+        """), {'id': antrag_id}).mappings().first()
+    if not row:
+        return False
+    is_owner = (row['antragsteller_id'] == user['id'])
+    is_approver = bool(user.get('can_approve'))
+    return is_owner or is_approver
+
+def _user_can_edit_antrag(antrag_id: int) -> bool:
+    """
+    Upload/Entfernen nur, wenn Antrag nicht 'abgeschlossen' ist
+    UND (Antragsteller:in oder Approver).
+    """
+    user = current_user()
+    if not user:
+        return False
+    with engine.begin() as conn:
+        row = conn.execute(text("""
+            SELECT antragsteller_id, status
+            FROM zahlungsantraege
+            WHERE id=:id
+        """), {'id': antrag_id}).mappings().first()
+    if not row:
+        return False
+    if row['status'] == 'abgeschlossen':
+        return False
+    is_owner = (row['antragsteller_id'] == user['id'])
+    is_approver = bool(user.get('can_approve'))
+    return is_owner or is_approver
+
 
 # -----------------------
 # Error Handling
@@ -3877,6 +3942,14 @@ def zahlungsfreigabe_detail(antrag_id):
             ORDER BY u.username ASC
         """), {'aid': antrag_id}).mappings().all()
 
+        attachments = conn.execute(text("""
+            SELECT id, original_name, size_bytes
+            FROM antrag_attachments
+            WHERE antrag_id=:aid
+            ORDER BY created_at DESC
+        """), {'aid': antrag_id}).mappings().all()
+
+
     # ---- JETZT ausserhalb des with-Blocks auf das Ergebnis zugreifen ----
     done = sum(1 for a in approvers if a['approved'])
     total = len(approvers)
@@ -3895,9 +3968,155 @@ def zahlungsfreigabe_detail(antrag_id):
         approvals_total=total,
         approval_percent=percent,
         can_fortsetzen=can_fortsetzen,
-        can_on_hold=can_on_hold
+        can_on_hold=can_on_hold,
+        attachments=attachments
     )
 
+# ============= Zahlungsantrag-Anhänge =============
+
+@app.post('/zahlungsfreigabe/<int:antrag_id>/attachments/upload')
+@login_required
+@require_csrf
+def upload_antrag_attachment(antrag_id: int):
+    if not _user_can_edit_antrag(antrag_id):
+        abort(403)
+
+    files = request.files.getlist('files') or []
+    if not files:
+        flash('Bitte Datei(en) auswählen.', 'warning')
+        return redirect(url_for('zahlungsfreigabe_detail', antrag_id=antrag_id))
+
+    target_dir = _antrag_dir(antrag_id)
+    saved = 0
+    user = current_user()
+
+    with engine.begin() as conn:
+        for f in files:
+            if not f or not f.filename:
+                continue
+            if not allowed_file(f.filename):
+                flash(f'Ungültiger Dateityp: {f.filename}', 'danger')
+                continue
+
+            ext = f.filename.rsplit('.', 1)[-1].lower() if '.' in f.filename else 'bin'
+            stored_name = f"{uuid4().hex}.{ext}"
+            original_name = secure_filename(f.filename) or f"file.{ext}"
+            path = os.path.join(target_dir, stored_name)
+            f.save(path)
+            size = os.path.getsize(path)
+            ctype = mimetypes.guess_type(original_name)[0] or 'application/octet-stream'
+
+            conn.execute(text("""
+                INSERT INTO antrag_attachments
+                    (antrag_id, stored_name, original_name, content_type, size_bytes, uploaded_by)
+                VALUES (:aid, :sn, :on, :ct, :sz, :ub)
+            """), {'aid': antrag_id, 'sn': stored_name, 'on': original_name,
+                   'ct': ctype, 'sz': size, 'ub': user['id']})
+            saved += 1
+
+        # Audit trail im Zahlungsantrags-Audit
+        if saved:
+            conn.execute(text("""
+                INSERT INTO zahlungsantrag_audit (antrag_id, user_id, action, timestamp, detail)
+                VALUES (:aid, :uid, 'anhang_hochgeladen', NOW(), :det)
+            """), {'aid': antrag_id, 'uid': user['id'], 'det': f'files={saved}'})
+
+    if saved:
+        flash(f'{saved} Datei(en) hochgeladen.', 'success')
+    else:
+        flash('Keine Dateien hochgeladen.', 'warning')
+
+    return redirect(url_for('zahlungsfreigabe_detail', antrag_id=antrag_id))
+
+
+@app.get('/zahlungsfreigabe/<int:antrag_id>/attachments/list')
+@login_required
+def list_antrag_attachments(antrag_id: int):
+    if not _user_can_view_antrag(antrag_id):
+        abort(403)
+    with engine.begin() as conn:
+        rows = conn.execute(text("""
+            SELECT id, original_name, content_type, size_bytes, created_at
+            FROM antrag_attachments
+            WHERE antrag_id = :aid
+            ORDER BY created_at DESC, id DESC
+        """), {'aid': antrag_id}).mappings().all()
+    data = [{
+        'id': r['id'],
+        'name': r['original_name'],
+        'size': r['size_bytes'],
+        'content_type': r['content_type'],
+        'created_at': r['created_at'].isoformat() if r['created_at'] else None,
+        'url': url_for('download_antrag_attachment', att_id=r['id']),
+    } for r in rows]
+    return jsonify(data), 200
+
+
+@app.get('/zahlungsfreigabe/attachments/<int:att_id>/download')
+@login_required
+def download_antrag_attachment(att_id: int):
+    # att + antrag laden
+    with engine.begin() as conn:
+        r = conn.execute(text("""
+            SELECT id, antrag_id, stored_name, original_name, content_type
+            FROM antrag_attachments
+            WHERE id=:id
+        """), {'id': att_id}).mappings().first()
+    if not r:
+        abort(404)
+    if not _user_can_view_antrag(r['antrag_id']):
+        abort(403)
+
+    path = os.path.join(_antrag_dir(r['antrag_id']), r['stored_name'])
+    if not os.path.exists(path):
+        abort(404)
+
+    # Optional: Audit im allgemeinen Log
+    log_action(session.get('user_id'), 'antrag_attachments:download', r['antrag_id'],
+               f"att_id={att_id}")
+
+    return send_file(
+        path,
+        as_attachment=True,
+        download_name=r['original_name'],
+        mimetype=r.get('content_type') or 'application/octet-stream'
+    )
+
+
+@app.post('/zahlungsfreigabe/attachments/<int:att_id>/delete')
+@login_required
+@require_csrf
+def delete_antrag_attachment(att_id: int):
+    # att + antrag laden
+    with engine.begin() as conn:
+        r = conn.execute(text("""
+            SELECT id, antrag_id, stored_name, original_name
+            FROM antrag_attachments
+            WHERE id=:id
+        """), {'id': att_id}).mappings().first()
+    if not r:
+        abort(404)
+
+    # Edit-Rechte & Status != 'abgeschlossen'
+    if not _user_can_edit_antrag(r['antrag_id']):
+        abort(403)
+
+    path = os.path.join(_antrag_dir(r['antrag_id']), r['stored_name'])
+    try:
+        if os.path.exists(path):
+            os.remove(path)
+    except Exception:
+        pass
+
+    with engine.begin() as conn:
+        conn.execute(text("DELETE FROM antrag_attachments WHERE id=:id"), {'id': att_id})
+        conn.execute(text("""
+            INSERT INTO zahlungsantrag_audit (antrag_id, user_id, action, timestamp, detail)
+            VALUES (:aid, :uid, 'anhang_geloescht', NOW(), :det)
+        """), {'aid': r['antrag_id'], 'uid': session.get('user_id'),
+               'det': f"att_id={att_id}, name={r['original_name']}"})
+    flash('Anhang gelöscht.', 'info')
+    return redirect(url_for('zahlungsfreigabe_detail', antrag_id=r['antrag_id']))
 
 def send_status_email(to_email: str, antrag_id: int, status: str):
     subject = f"Zahlungsantrag #{antrag_id} – Status: {status.capitalize()}"

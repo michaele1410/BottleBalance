@@ -67,27 +67,87 @@
     {% endfor %}
   </div>
 
+  <hr>
+    <h5>Dateianhänge</h5>
 
-  <h4 class="mt-5">Audit-Historie</h4>
-  <table class="table table-sm table-striped align-middle">
-    <thead>
-      <tr>
-        <th>Zeitpunkt</th>
-        <th>Aktion</th>
-        <th>Benutzer</th>
-        <th>Details</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for log in audit %}
-      <tr>
-        <td>{{ log.timestamp.strftime('%d.%m.%Y %H:%M:%S') }}</td>
-        <td>{{ log.action }}</td>
-        <td>{{ log.username or 'Unbekannt' }}</td>
-        <td>{{ log.detail or '' }}</td>
-      </tr>
+    <!-- Upload-Form -->
+    {% if can_on_hold or can_fortsetzen or antrag.status != 'abgeschlossen' %}
+    <form method="post" action="{{ url_for('upload_antrag_attachment', antrag_id=antrag.id) }}"
+      enctype="multipart/form-data" class="mb-3">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="row g-2 align-items-center">
+        <div class="col-auto">
+          <input type="file" name="files" multiple class="form-control form-control-sm">
+        </div>
+        <div class="col-auto">
+          <button type="submit" class="btn btn-sm btn-primary">Hochladen</button>
+        </div>
+      </div>
+    </form>
+    {% endif %}
+
+    <!-- Liste der Anhänge -->
+    {% if attachments and attachments|length > 0 %}
+    <ul class="list-group">
+      {% for att in attachments %}
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        <div>
+          <a href="{{ url_for('download_antrag_attachment', att_id=att.id) }}" target="_blank">
+            {{ att.original_name }}
+          </a>
+          <small class="text-muted ms-2">
+            {{ (att.size_bytes or 0) // 1024 }} KB
+            {% if att.created_at %} · {{ att.created_at.strftime('%d.%m.%Y %H:%M') }}{% endif %}
+          </small>
+        </div>
+        {% if antrag.status != 'abgeschlossen' %}
+        <form method="post" action="{{ url_for('delete_antrag_attachment', att_id=att.id) }}"
+          onsubmit="return confirm('Anhang wirklich löschen?');">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn btn-sm btn-outline-danger">Löschen</button>
+        </form>
+        {% endif %}
+      </li>
       {% endfor %}
-    </tbody>
-  </table>
+    </ul>
+    {% else %}
+    <p class="text-muted">Keine Anhänge vorhanden.</p>
+    {% endif %}
+
+    {% if attachments %}
+    <ul class="list-group mt-3">
+      {% for att in attachments %}
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        <a href="{{ url_for('download_antrag_attachment', att_id=att.id) }}" target="_blank">{{ att.original_name }}</a>
+        <span class="text-muted">{{ (att.size_bytes / 1024)|round(1) }} KB</span>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="text-muted mt-2">Keine Anhänge vorhanden.</p>
+    {% endif %}
+
+
+    <h5 class="mt-5">Audit-Historie</h5>
+    <table class="table table-sm table-striped align-middle">
+      <thead>
+        <tr>
+          <th>Zeitpunkt</th>
+          <th>Aktion</th>
+          <th>Benutzer</th>
+          <th>Details</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for log in audit %}
+        <tr>
+          <td>{{ log.timestamp.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+          <td>{{ log.action }}</td>
+          <td>{{ log.username or 'Unbekannt' }}</td>
+          <td>{{ log.detail or '' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
 </div>
 {% endblock %}

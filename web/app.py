@@ -9,7 +9,7 @@ from email.message import EmailMessage
 from datetime import datetime, date, timedelta
 from decimal import Decimal, InvalidOperation
 from flask_babel import Babel, gettext as _, gettext as translate
-from flask import Flask, render_template, request, redirect, url_for, session, send_file, flash, abort, jsonify, current_app
+from flask import Flask, render_template, request, redirect, url_for, session, send_file, send_from_directory, flash, abort, jsonify, current_app
 from sqlalchemy import create_engine, text, bindparam, Boolean
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import OperationalError
@@ -88,6 +88,8 @@ ALLOWED_EXTENSIONS = {
     'txt','csv','doc','docx','xls','xlsx','ppt','pptx','xml','json'
 }
 
+MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
+
 def allowed_file(filename: str) -> bool:
     if not filename or '.' not in filename:
         return False
@@ -115,6 +117,48 @@ def _user_can_edit_entry(entry_id: int) -> bool:
 def _user_can_view_entry(entry_id: int) -> bool:
     allowed = ROLES.get(session.get('role'), set())
     return 'entries:view' in allowed
+
+def validate_file(file):
+    if file.content_length > MAX_FILE_SIZE:
+        flash("Datei zu groß. Maximal erlaubt: 10 MB.", "danger")
+        return False
+    return True
+
+
+def serialize_attachment(att):
+    return {
+        "filename": att.original_name,
+        "download_url": url_for('download_file', filename=att.filename),
+        "view_url": url_for('view_file', filename=att.filename),
+        "mime_type": att.mime_type,
+        "size_kb": round(att.size_bytes / 1024, 1)
+    }
+
+def notify_managing_users(antrag_id, antragsteller, betrag, datum):
+    from flask_mail import Message
+    from app import mail  # falls Flask-Mail verwendet wird
+
+
+    # Liste geschäftsführender Benutzer abrufen
+    managing_users = User.query.filter_by(role='manager', is_active=True).all()
+
+    subject = f"Neuer Zahlungsfreigabeantrag von {antragsteller}"
+    body = f"""
+    Es wurde ein neuer Zahlungsfreigabeantrag erstellt.
+
+    Antragsteller: {antragsteller}
+    Betrag: {betrag} EUR
+    Datum: {datum}
+    Antrag-ID: {antrag_id}
+
+    Bitte prüfen Sie den Antrag im System.
+    """
+
+    for user in managing_users:
+        msg = Message(subject=subject,
+                      recipients=[user.email],
+                      body=body)
+        mail.send(msg)
 
 # -----------------------
 # Logging
@@ -707,6 +751,108 @@ def _approved_by_user(conn, antrag_id: int, user_id: int) -> bool:
         LIMIT 1
     """), {'aid': antrag_id, 'uid': user_id}).scalar_one_or_none())
 
+def get_antrag_email(antrag_id: int):
+    with engine.begin() as conn:
+        return conn.execute(text("""
+            SELECT u.email FROM zahlungsantraege z
+            JOIN users u ON u.id = z.antragsteller_id
+            WHERE z.id = :id
+        """), {'id': antrag_id}).scalar_one_or_none()
+
+def build_base_url():
+    # bevorzuge APP_BASE_URL, fallback auf request.url_root
+    try:
+        from flask import request
+        base = os.getenv("APP_BASE_URL") or request.url_root
+    except RuntimeError:
+        base = os.getenv("APP_BASE_URL") or "http://localhost:5000/"
+    return base.rstrip("/") + "/"
+
+def send_mail(to_email: str, subject: str, body: str) -> bool:
+    if not SMTP_HOST:
+        logger.warning("SMTP_HOST nicht gesetzt – Mailversand übersprungen (to=%s, subject=%s).", to_email, subject)
+        return False
+    msg = EmailMessage()
+    msg["From"] = FROM_EMAIL
+    msg["To"] = to_email
+    msg["Subject"] = subject
+    msg.set_content(body)
+
+    try:
+        if SMTP_SSL_ON:
+            context = ssl.create_default_context()
+            with SMTP_SSL(SMTP_HOST, SMTP_PORT, timeout=SMTP_TIMEOUT, context=context) as s:
+                if SMTP_USER and SMTP_PASS:
+                    s.login(SMTP_USER, SMTP_PASS)
+                s.send_message(msg)
+        else:
+            with SMTP(SMTP_HOST, SMTP_PORT, timeout=SMTP_TIMEOUT) as s:
+                s.ehlo()
+                if SMTP_TLS:
+                    s.starttls(context=ssl.create_default_context())
+                    s.ehlo()
+                if SMTP_USER and SMTP_PASS:
+                    s.login(SMTP_USER, SMTP_PASS)
+                s.send_message(msg)
+        logger.info("E-Mail erfolgreich gesendet (to=%s, subject=%s).", to_email, subject)
+        return True
+    except SMTPException as e:
+        logger.error("SMTP-Fehler beim Mailversand (to=%s, subject=%s): %s", to_email, subject, e, exc_info=True)
+        # optional zusätzlich ins Audit-Log schreiben (best effort)
+        try:
+            log_action(None, "email_error", None, f"to={to_email}, subject={subject}, err={e}")
+        except Exception:
+            logger.debug("Audit-Log für SMTP-Fehler konnte nicht geschrieben werden.", exc_info=True)
+        return False
+
+def send_new_request_notifications(antrag_id: int, approver_emails: list[str]) -> None:
+    """
+    Sendet Benachrichtigungs-E-Mails an alle approver_emails für einen neuen Zahlungsfreigabe-Antrag.
+    """
+    if not approver_emails:
+        current_app.logger.warning("Keine Empfänger für Antrag %s gefunden – keine Mail gesendet.", antrag_id)
+        return
+
+    base_url = os.getenv("APP_BASE_URL", "http://localhost:5000")
+    link = f"{base_url}/zahlungsfreigabe/{antrag_id}"
+
+    subject = f"Neuer Zahlungsfreigabe-Antrag #{antrag_id}"
+    body = (
+        f"Hallo,\n\n"
+        f"es wurde soeben ein neuer Zahlungsfreigabe-Antrag (#{antrag_id}) erstellt.\n"
+        f"Zur Prüfung/Freigabe:\n{link}\n\n"
+        f"Viele Grüße\nBottleBalance"
+    )
+
+    host = os.getenv("SMTP_HOST")
+    port = int(os.getenv("SMTP_PORT", "587"))
+    user = os.getenv("SMTP_USER")
+    password = os.getenv("SMTP_PASS")
+    use_tls = os.getenv("SMTP_TLS", "true").lower() == "true"
+    from_email = os.getenv("FROM_EMAIL") or user
+
+    if not host or not from_email:
+        raise RuntimeError("SMTP_HOST und FROM_EMAIL/SMTP_USER müssen konfiguriert sein.")
+
+    msg = EmailMessage()
+    msg["Subject"] = subject
+    msg["From"] = from_email
+    # Einzelversand oder Sammel-TO (hier Sammel-TO):
+    msg["To"] = ", ".join(approver_emails)
+    msg.set_content(body)
+
+    context = ssl.create_default_context()
+    with SMTP(host, port, timeout=30) as smtp:
+        if use_tls:
+            smtp.starttls(context=context)
+        if user and password:
+            smtp.login(user, password)
+        smtp.send_message(msg)
+
+    current_app.logger.info(
+        "Benachrichtigungen für Antrag %s an %s gesendet.",
+        antrag_id, approver_emails
+    )
 
 # -----------------------
 # Utils: Formatting
@@ -818,8 +964,6 @@ def parse_int_strict(value: str):
 # -----------------------
 # Data Access
 # -----------------------
-
-
 
 def fetch_entries(
     search: str | None = None,
@@ -1369,51 +1513,6 @@ def inject_helpers():
 # -----------------------
 # Password reset tokens
 # -----------------------
-def build_base_url():
-    # bevorzuge APP_BASE_URL, fallback auf request.url_root
-    try:
-        from flask import request
-        base = os.getenv("APP_BASE_URL") or request.url_root
-    except RuntimeError:
-        base = os.getenv("APP_BASE_URL") or "http://localhost:5000/"
-    return base.rstrip("/") + "/"
-
-def send_mail(to_email: str, subject: str, body: str) -> bool:
-    if not SMTP_HOST:
-        logger.warning("SMTP_HOST nicht gesetzt – Mailversand übersprungen (to=%s, subject=%s).", to_email, subject)
-        return False
-    msg = EmailMessage()
-    msg["From"] = FROM_EMAIL
-    msg["To"] = to_email
-    msg["Subject"] = subject
-    msg.set_content(body)
-
-    try:
-        if SMTP_SSL_ON:
-            context = ssl.create_default_context()
-            with SMTP_SSL(SMTP_HOST, SMTP_PORT, timeout=SMTP_TIMEOUT, context=context) as s:
-                if SMTP_USER and SMTP_PASS:
-                    s.login(SMTP_USER, SMTP_PASS)
-                s.send_message(msg)
-        else:
-            with SMTP(SMTP_HOST, SMTP_PORT, timeout=SMTP_TIMEOUT) as s:
-                s.ehlo()
-                if SMTP_TLS:
-                    s.starttls(context=ssl.create_default_context())
-                    s.ehlo()
-                if SMTP_USER and SMTP_PASS:
-                    s.login(SMTP_USER, SMTP_PASS)
-                s.send_message(msg)
-        logger.info("E-Mail erfolgreich gesendet (to=%s, subject=%s).", to_email, subject)
-        return True
-    except SMTPException as e:
-        logger.error("SMTP-Fehler beim Mailversand (to=%s, subject=%s): %s", to_email, subject, e, exc_info=True)
-        # optional zusätzlich ins Audit-Log schreiben (best effort)
-        try:
-            log_action(None, "email_error", None, f"to={to_email}, subject={subject}, err={e}")
-        except Exception:
-            logger.debug("Audit-Log für SMTP-Fehler konnte nicht geschrieben werden.", exc_info=True)
-        return False
 
 @app.post('/admin/users/<int:uid>/resetlink')
 @login_required
@@ -1870,9 +1969,10 @@ def edit(entry_id: int):
         'name': r['original_name'],
         'size': r['size_bytes'],
         'content_type': r['content_type'],
-        'url': url_for('attachments_download', att_id=r['id'])
+        'url': url_for('attachments_download', att_id=r['id']),
+        'view_url': url_for('attachments_view', att_id=r['id'])
     } for r in attachments]
-
+    
     return render_template('edit.html', data=data, attachments=att_data)
 
 @app.post('/edit/<int:entry_id>')
@@ -2890,7 +2990,8 @@ def attachments_list(entry_id: int):
         'name': r['original_name'],
         'size': r['size_bytes'],
         'content_type': r['content_type'],
-        'url': url_for('attachments_download', att_id=r['id'])
+        'url': url_for('attachments_download', att_id=r['id']),
+        'view_url': url_for('attachments_view', att_id=r['id'])
     } for r in rows]
     return jsonify(data), 200
 
@@ -3135,12 +3236,12 @@ def zahlungsfreigabe_antrag():
 
     paragraph = (request.form.get('paragraph') or '').strip()
     verwendungszweck = (request.form.get('zweck') or '').strip()
-    datum = parse_date_iso_or_today(request.form.get('datum'))
     datum_str = (request.form.get('datum') or '').strip()
     betrag_str = (request.form.get('betrag') or '').strip()
     lieferant = (request.form.get('lieferant') or '').strip()
     begruendung = (request.form.get('begruendung') or '').strip()
 
+    # Eingaben validieren
     try:
         datum = datetime.strptime(datum_str, '%Y-%m-%d').date()
         betrag = Decimal(betrag_str.replace(',', '.'))
@@ -3148,6 +3249,7 @@ def zahlungsfreigabe_antrag():
         flash(f'Ungültige Eingabe: {e}', 'danger')
         return redirect(url_for('zahlungsfreigabe'))
 
+    # Antrag speichern
     with engine.begin() as conn:
         res = conn.execute(text("""
             INSERT INTO zahlungsantraege (
@@ -3168,10 +3270,27 @@ def zahlungsfreigabe_antrag():
         })
         antrag_id = res.scalar_one()
 
+        # Audit-Eintrag
         conn.execute(text("""
             INSERT INTO zahlungsantrag_audit (antrag_id, user_id, action, timestamp, detail)
             VALUES (:aid, :uid, 'erstellt', NOW(), NULL)
         """), {'aid': antrag_id, 'uid': user['id']})
+
+    # Benachrichtigung an Approver (Best-Effort)
+    try:
+        with engine.begin() as conn:
+            approver_emails = conn.execute(text("""
+                SELECT email FROM users
+                WHERE can_approve = TRUE AND active = TRUE AND email IS NOT NULL
+            """)).scalars().all()
+
+        if approver_emails:
+            send_new_request_notifications(antrag_id, approver_emails)
+        else:
+            current_app.logger.warning("Keine Approver-E-Mails gefunden für Antrag %s", antrag_id)
+
+    except Exception:
+        logger.exception("Fehler beim Senden der Benachrichtigungen für neuen Antrag %s", antrag_id)
 
     flash('Zahlungsantrag erfolgreich erstellt.', 'success')
     return redirect(url_for('zahlungsfreigabe'))
@@ -3361,9 +3480,10 @@ def loeschen_antrag(antrag_id: int):
 
         if status is None:
             abort(404)
-
-        if status == 'abgeschlossen':
-            flash('Abgeschlossene Anträge können nicht gelöscht werden.', 'warning')
+        
+        # Nur löschen, wenn NICHT abgeschlossen/abgelehnt/freigegeben
+        if status in ('abgeschlossen', 'abgelehnt', 'freigegeben'):
+            flash('Abgelehnte, freigegebene oder abgeschlossene Anträge können nicht gelöscht werden.', 'warning')
             return redirect(url_for('zahlungsfreigabe'))
 
         # Löschen durchführen
@@ -3942,13 +4062,12 @@ def zahlungsfreigabe_detail(antrag_id):
             ORDER BY u.username ASC
         """), {'aid': antrag_id}).mappings().all()
 
-        attachments = conn.execute(text("""
-            SELECT id, original_name, size_bytes
+        attachments = conn.execute(text("""    
+            SELECT id, original_name, size_bytes, content_type, created_at
             FROM antrag_attachments
             WHERE antrag_id=:aid
             ORDER BY created_at DESC
         """), {'aid': antrag_id}).mappings().all()
-
 
     # ---- JETZT ausserhalb des with-Blocks auf das Ergebnis zugreifen ----
     done = sum(1 for a in approvers if a['approved'])
@@ -4052,6 +4171,52 @@ def list_antrag_attachments(antrag_id: int):
     return jsonify(data), 200
 
 
+@app.get('/zahlungsfreigabe/attachments/<int:att_id>/view')
+@login_required
+def view_antrag_attachment(att_id: int):
+    """
+    Zeigt einen Antrags-Anhang (inline) an – inkl. RBAC-Check.
+    """
+    # Datensatz laden
+    with engine.begin() as conn:
+        r = conn.execute(text("""
+            SELECT id, antrag_id, stored_name, original_name, content_type
+            FROM antrag_attachments
+            WHERE id = :id
+        """), {'id': att_id}).mappings().first()
+
+    if not r:
+        abort(404)
+    # Berechtigung: Antragsteller:in oder Approver
+    if not _user_can_view_antrag(r['antrag_id']):
+        abort(403)
+
+    # Pfad & Existenz prüfen
+    path = os.path.join(_antrag_dir(r['antrag_id']), r['stored_name'])
+    if not os.path.exists(path):
+        abort(404)
+
+    # Mimetype bestimmen (DB bevorzugt)
+    mimetype = r.get('content_type') or (
+        mimetypes.guess_type(r['original_name'])[0] or 'application/octet-stream'
+    )
+
+    # Audit (optional im allgemeinen Log)
+    log_action(session.get('user_id'), 'antrag_attachments:view', r['antrag_id'],
+               f"att_id={att_id}")
+
+    # Inline ausliefern + Sicherheitsheader
+    resp = send_file(
+        path,
+        as_attachment=False,
+        mimetype=mimetype,
+        download_name=r['original_name']
+    )
+    resp.headers['X-Content-Type-Options'] = 'nosniff'
+    # resp.headers['Content-Security-Policy'] = "default-src 'self'; img-src 'self' data:;"
+    return resp
+
+
 @app.get('/zahlungsfreigabe/attachments/<int:att_id>/download')
 @login_required
 def download_antrag_attachment(att_id: int):
@@ -4147,13 +4312,57 @@ def send_status_email(to_email: str, antrag_id: int, status: str):
     except Exception as e:
         logger.error("Fehler beim Senden der Status-E-Mail: %s", e)
 
-def get_antrag_email(antrag_id: int):
+@app.route('/view/<filename>')
+def view_file(filename):
+    response = send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['Content-Security-Policy'] = "default-src 'self'; img-src 'self' data:;"
+    return response
+
+@app.route("/attachments/<int:att_id>/view")
+@login_required
+def attachments_view(att_id: int):
+    # 1) Details aus DB holen
     with engine.begin() as conn:
-        return conn.execute(text("""
-            SELECT u.email FROM zahlungsantraege z
-            JOIN users u ON u.id = z.antragsteller_id
-            WHERE z.id = :id
-        """), {'id': antrag_id}).scalar_one_or_none()
+        r = conn.execute(text("""
+            SELECT a.id, a.entry_id, a.stored_name, a.original_name, a.content_type
+            FROM attachments a
+            WHERE a.id = :id
+        """), {'id': att_id}).mappings().first()
+
+    if not r:
+        abort(404)
+
+    # 2) Zugriffsrecht prüfen
+    if not _user_can_view_entry(r['entry_id']):
+        abort(403)
+
+    # 3) Dateipfad auflösen & prüfen
+    path = os.path.join(_entry_dir(r['entry_id']), r['stored_name'])
+    if not os.path.exists(path):
+        abort(404)
+
+    # 4) MIME-Type bestimmen (DB-Wert bevorzugen, sonst raten)
+    mimetype = r.get('content_type') or (
+        mimetypes.guess_type(r['original_name'])[0] or 'application/octet-stream'
+    )
+
+    # 5) Audit-Log
+    log_action(session.get('user_id'), 'attachments:view', r['entry_id'], f"att_id={att_id}")
+
+    # 6) Inline anzeigen + Sicherheits-Header
+    resp = send_file(
+        path,
+        as_attachment=False,
+        mimetype=mimetype,
+        download_name=r['original_name']  # optional: hilft Browsern beim Anzeigen
+    )
+    resp.headers['X-Content-Type-Options'] = 'nosniff'
+    # Optional: CSP, wenn du sehr restriktiv sein willst
+    # resp.headers['Content-Security-Policy'] = "default-src 'self'; img-src 'self' data:;"
+
+    return resp
+
 
     # SMTP-Status vorbereiten
     if not SMTP_HOST or not SMTP_PORT or not SMTP_USER or not SMTP_PASS:

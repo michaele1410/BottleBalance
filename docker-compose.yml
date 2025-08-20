@@ -1,6 +1,7 @@
 volumes:
   bottlebalance-db:
   bottlebalance-app:
+  bottlebalance-app-uploads:
 
 services:
   bottlebalance-db:
@@ -18,10 +19,7 @@ services:
       retries: 10
 
   bottlebalance-web:
-    build:
-      context: .
-      args:
-        APP_VERSION: "1.2.3"
+    build: ./web
     ports:
       - "5000:5000"
     environment:
@@ -43,12 +41,10 @@ services:
 
       # Optional, sinnvoll für Links in Mails (lokal):
       #- APP_BASE_URL=http://localhost:5000
-
-      - APP_VERSION=1.2.3
-
+      
     volumes:
       - bottlebalance-app:/app
-      - ./uploads:/app/uploads
+      - bottlebalance-app-uploads:/app/uploads
     depends_on:
       bottlebalance-db:
         condition: service_healthy

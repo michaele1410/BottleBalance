@@ -383,6 +383,10 @@ msgstr ""
 msgid "BottleBalance"
 msgstr "Willkommen"
 
+#: templates/base.html:5
+msgid "BottleBalanceTitle"
+msgstr "BottleBalance"
+
 #: templates/base.html:48
 msgid "Dashboard"
 msgstr ""

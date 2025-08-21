@@ -36,8 +36,11 @@ services:
       - SMTP_USER=${SMTP_USER}
       - SMTP_PASS=${SMTP_PASS}
       - SMTP_TLS=${SMTP_TLS}
+      - SMTP_SSL=${SMTP_SSL}
       - FROM_EMAIL=${FROM_EMAIL}
+      - SMTP_TIMEOUT=${SMTP_TIMEOUT}
       - APP_BASE_URL=${APP_BASE_URL}
+      - SEND_TEST_MAIL=${SEND_TEST_MAIL}
 
       # Optional, sinnvoll für Links in Mails (lokal):
       #- APP_BASE_URL=http://localhost:5000

@@ -616,6 +616,61 @@ def delete_antrag_attachment(att_id: int):
     flash('Anhang gelöscht.', 'info')
     return redirect(url_for('zahlungsfreigabe_detail', antrag_id=r['antrag_id']))
 
+@payment_routes.post('/zahlungsfreigabe/<int:antrag_id>/edit')
+@login_required
+@require_csrf
+def edit_antrag(antrag_id):
+    user = current_user()
+    # Prüfen: Antrag existiert, Status, Berechtigung
+    with engine.begin() as conn:
+        row = conn.execute(text("""
+            SELECT antragsteller_id, status FROM zahlungsantraege WHERE id=:id
+        """), {'id': antrag_id}).mappings().first()
+        if not row:
+            abort(404)
+        # Nur Antragsteller:in oder Approver, nur wenn noch nicht freigegeben
+        if row['status'] in ('freigegeben', 'abgeschlossen', 'abgelehnt'):
+            flash('Bearbeitung nicht mehr möglich.', 'warning')
+            return redirect(url_for('zahlungsfreigabe_detail', antrag_id=antrag_id))
+        if user['id'] != row['antragsteller_id'] and not user.get('can_approve'):
+            abort(403)
+
+        # Felder aus dem Formular holen
+        verwendungszweck = (request.form.get('verwendungszweck') or '').strip()
+        betrag = (request.form.get('betrag') or '').strip()
+        lieferant = (request.form.get('lieferant') or '').strip()
+        begruendung = (request.form.get('begruendung') or '').strip()
+        paragraph = (request.form.get('paragraph') or '').strip()
+        datum = (request.form.get('datum') or '').strip()
+
+        # Validierung (z.B. Betrag als Zahl)
+        try:
+            betrag_decimal = Decimal(betrag.replace(',', '.'))
+            datum_obj = datetime.strptime(datum, '%Y-%m-%d').date()
+        except Exception as e:
+            flash(f'Ungültige Eingabe: {e}', 'danger')
+            return redirect(url_for('zahlungsfreigabe_detail', antrag_id=antrag_id))
+
+        # Update
+        conn.execute(text("""
+            UPDATE zahlungsantraege
+            SET verwendungszweck=:zweck, betrag=:betrag, lieferant=:lieferant,
+                begruendung=:begruendung, paragraph=:paragraph, datum=:datum, updated_at=NOW()
+            WHERE id=:id
+        """), {
+            'zweck': verwendungszweck,
+            'betrag': str(betrag_decimal),
+            'lieferant': lieferant,
+            'begruendung': begruendung,
+            'paragraph': paragraph,
+            'datum': datum_obj,
+            'id': antrag_id
+        })
+        # Audit-Log
+        log_action(user['id'], 'antrag:bearbeitet', antrag_id, f'Felder geändert')
+        flash('Antrag gespeichert.', 'success')
+    return redirect(url_for('zahlungsfreigabe_detail', antrag_id=antrag_id))
+
 @payment_routes.get('/zahlungsfreigabe/export/pdf')
 @login_required
 def export_alle_antraege_pdf():

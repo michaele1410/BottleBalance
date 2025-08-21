@@ -19,7 +19,43 @@
     <dt class="col-sm-3">Datum</dt>
     <dd class="col-sm-9">{{ antrag.datum.strftime('%d.%m.%Y') if antrag.datum else '' }}</dd>
 
-    <dt class="col-sm-3">Paragraph</dt>
+
+    {% if antrag.status not in ['freigegeben', 'abgeschlossen', 'abgelehnt'] %}
+    <form method="post" action="{{ url_for('edit_antrag', antrag_id=antrag.id) }}">
+      {{ csrf_token() }}
+      <div class="mb-2">
+        <label>Paragraph:</label>
+        <input type="text" name="paragraph" value="{{ antrag.paragraph or '' }}" class="form-control">
+      </div>
+      <div class="mb-2">
+        <label>Verwendungszweck:</label>
+        <input type="text" name="verwendungszweck" value="{{ antrag.verwendungszweck or '' }}" class="form-control">
+      </div>
+      <div class="mb-2">
+        <label>Betrag123:</label>
+        <input type="text" name="betrag" value="{{ antrag.betrag or '' }}" class="form-control">
+      </div>
+      <div class="mb-2">
+        <label>Lieferant:</label>
+        <input type="text" name="lieferant" value="{{ antrag.lieferant or '' }}" class="form-control">
+      </div>
+      <div class="mb-2">
+        <label>Begründung:</label>
+        <textarea name="begruendung" class="form-control">{{ antrag.begruendung or '' }}</textarea>
+      </div>
+
+      <div class="mb-2">
+        <label>Datum:</label>
+        <input type="date" name="datum" value="{{ antrag.datum|strftime('%Y-%m-%d') if antrag.datum else '' }}"
+          class="form-control">
+      </div>
+      <button type="submit" class="btn btn-primary">Speichern</button>
+    </form>
+    {% else %}
+    <!-- Felder als readonly anzeigen -->
+    {% endif %}
+
+    <!--dt class="col-sm-3">Paragraph</dt>
     <dd class="col-sm-9">§ {{ antrag.paragraph }}</dd>
 
     <dt class="col-sm-3">Verwendungszweck</dt>
@@ -37,7 +73,7 @@
     <dt class="col-sm-3">Status</dt>
     <dd class="col-sm-9">
       <span class="badge badge-status-{{ antrag.status|replace(' ', '_') }}">{{ antrag.status }}</span>
-    </dd>
+    </dd-->
   </dl>
 
   <!-- PROGRESS BAR-->
@@ -75,8 +111,8 @@
 
   <!-- Upload-Form -->
   {% if can_on_hold or can_fortsetzen or antrag.status not in ['abgeschlossen', 'abgelehnt', 'freigegeben'] %}
-  <form action="{{ url_for('upload_antrag_attachment', antrag_id=antrag.id) }}" method="post" enctype="multipart/form-data"
-    class="mb-3">
+  <form action="{{ url_for('upload_antrag_attachment', antrag_id=antrag.id) }}" method="post"
+    enctype="multipart/form-data" class="mb-3">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div class="input-group">
       <input class="form-control form-control-sm" type="file" name="files" multiple
@@ -98,14 +134,14 @@
     <li class="list-group-item d-flex justify-content-between align-items-center">
       <div>
         <a href="{{ url_for('download_antrag_attachment', att_id=att.id) }}" target="_blank">
-           {{ att.original_name }}
-         </a>
-         <small class="text-muted ms-2">
-           {{ (att.size_bytes or 0) // 1024 }} KB
-           {% if att.created_at %} · {{ att.created_at.strftime('%d.%m.%Y %H:%M') }}{% endif %}
-         </small>
-        <a href="{{ url_for('view_antrag_attachment', att_id=att.id) }}"
-           target="_blank" class="btn btn-sm btn-outline-primary">Ansehen</a>
+          {{ att.original_name }}
+        </a>
+        <small class="text-muted ms-2">
+          {{ (att.size_bytes or 0) // 1024 }} KB
+          {% if att.created_at %} · {{ att.created_at.strftime('%d.%m.%Y %H:%M') }}{% endif %}
+        </small>
+        <a href="{{ url_for('view_antrag_attachment', att_id=att.id) }}" target="_blank"
+          class="btn btn-sm btn-outline-primary">Ansehen</a>
       </div>
       {% if antrag.status not in ['abgeschlossen', 'abgelehnt', 'freigegeben'] %}
       <form method="post" action="{{ url_for('delete_antrag_attachment', att_id=att.id) }}"

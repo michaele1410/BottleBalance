@@ -1,9 +1,13 @@
 from flask import Blueprint, request, session, redirect, url_for, render_template, flash
+from sqlalchemy import text
+from app import engine
+
 from modules.auth_utils import (
     login_required,
     current_user,
     require_csrf,
-    _finalize_login
+    _finalize_login,
+    check_password_hash
 )
 
 auth_routes = Blueprint('auth_routes', __name__)

@@ -1,6 +1,11 @@
 from flask import session, abort
 from sqlalchemy import text
-from app import engine, log_action, APP_BASE_URL
+from modules.core_utils import (
+    log_action,
+    ROLES,
+    engine,
+    APP_BASE_URL
+    ) 
 from modules.mail_utils import send_status_email
 
 def _user_can_view_antrag(antrag_id: int) -> bool:

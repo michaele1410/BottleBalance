@@ -6,7 +6,11 @@ from flask_babel import _
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy import text
 from modules.mail_utils import send_mail  # falls du Mails aus dem Profil versendest
-from app import engine, log_action, ROLES  # falls du diese zentral verwaltest
+from modules.core_utils import (
+    log_action,
+    ROLES,
+    engine
+    ) 
 
 # -----------------------
 # Helpers: Current user, RBAC

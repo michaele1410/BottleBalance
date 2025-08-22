@@ -6,15 +6,15 @@
       <div class="card-body">
         <h1 class="h5 mb-3">{{ _('Datensatz bearbeiten') }}</h1>
 
-        <form method="post" action="{{ url_for('bbalance_routes.edit_post', entry_id=data.id) }}" class="row g-3" id="transaction-form"
-          novalidate>
+        <form method="post" action="{{ url_for('bbalance_routes.edit_post', entry_id=data.id) }}" class="row g-3"
+          id="transaction-form" novalidate>
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
           <!-- Datum -->
           <div class="form-floating mb-3">
             <input type="text" name="datum" id="datum" class="form-control" placeholder="Datum"
-              value="{{ (data.datum if data.datum is string else (data.datum.strftime('%d.%m.%Y') if data.datum else '')) or (default_date or '') }}"
-              required autofocus>
+            value="{{ data.datum.strftime('%d.%m.%Y') if data.datum else '' }}"
+            required autofocus>
             <label for="datum">{{ _('Datum') }}</label>
           </div>
 
@@ -70,8 +70,8 @@
         <hr class="my-4">
         <h3 class="h6 mb-3">{{ _('Anhänge') }}</h3>
 
-        <form action="{{ url_for('attachments_routes.attachments_upload', entry_id=data.id) }}" method="post" enctype="multipart/form-data"
-          class="mb-3">
+        <form action="{{ url_for('attachments_routes.attachments_upload', entry_id=data.id) }}" method="post"
+          enctype="multipart/form-data" class="mb-3">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <div class="input-group">
             <input class="form-control" type="file" name="files" multiple
@@ -106,6 +106,27 @@
           <div class="list-group-item text-muted">{{ _('Keine Anhänge vorhanden.') }}</div>
           {% endif %}
         </div>
+        <h5 class="mt-5">Audit-Historie</h5>
+        <table class="table table-sm table-striped align-middle">
+          <thead>
+            <tr>
+              <th>Zeitpunkt</th>
+              <th>Aktion</th>
+              <th>Benutzer</th>
+              <th>Details</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for a in audit %}
+            <tr>
+              <td>{{ a.created_at.strftime('%d.%m.%Y %H:%M:%S') if a.created_at else '' }}</td>
+              <td>{{ a.action }}</td>
+              <td>{{ a.username or 'Unbekannt' }}</td>
+              <td>{{ (a.detail or '')|replace('\n', '<br>')|safe }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
       </div>
     </div>
   </div>
@@ -155,7 +176,7 @@
 
 <script>
   document.addEventListener('DOMContentLoaded', async () => {
-  const entryId = {{ data.id }};
+    const entryId = {{ data.id }};
   const listGroup = document.getElementById('editAttachmentsList');
   try {
     const resp = await fetch(`/attachments/${entryId}/list`);

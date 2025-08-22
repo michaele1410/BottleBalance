@@ -78,7 +78,7 @@
             <td>
               <form method="post" action="{{ url_for('user_routes.users_toggle', uid=u.id) }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                {% if u.active %}
+                {% if u.active and user.id != u.id%}
                 <button class="btn btn-sm btn-outline-secondary" title="{{ _('Deaktivieren') }}">
                   <i class="bi bi-toggle-on me-1"></i>{{ _('Deaktivieren') }}
                 </button>

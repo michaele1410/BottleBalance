@@ -28,7 +28,7 @@
         </div>
         {% endif %}-->
  
-        <form method="post" action="{{ url_for('login_post') }}">
+        <form method="post" action="{{ url_for('auth_routes.login') }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <div class="mb-3">
             <label class="form-label">{{ _('Benutzername') }}</label>

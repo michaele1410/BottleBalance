@@ -8,10 +8,10 @@
     <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#antragModal">
       <i class="bi bi-plus-lg me-1"></i> Neuer Antrag
     </button>
-    <a href="{{ url_for('export_alle_antraege_pdf') }}" class="btn btn-outline-primary">
+    <a href="{{ url_for('payment_routes.export_alle_antraege_pdf') }}" class="btn btn-outline-primary">
       <i class="bi bi-filetype-pdf me-1"></i> Alle Anträge als PDF
     </a>
-    <a href="{{ url_for('zahlungsfreigabe_audit') }}" class="btn btn-outline-secondary">
+    <a href="{{ url_for('payment_routes.zahlungsfreigabe') }}" class="btn btn-outline-secondary">
       <i class="bi bi-clock-history me-1"></i> Audit-Übersicht
     </a>
   </div>
@@ -60,40 +60,60 @@
           <td class="text-nowrap">
 
             <!-- Details -->
-            <a href="{{ url_for('zahlungsfreigabe_detail', antrag_id=a.id) }}" class="btn btn-sm btn-outline-secondary">
+            <a href="{{ url_for('payment_routes.zahlungsfreigabe_detail', antrag_id=a.id) }}"
+              class="btn btn-sm btn-outline-secondary">
               Details
             </a>
 
             {% if a.can_freigeben %}
-            <form method="post" action="{{ url_for('freigeben_antrag', antrag_id=a.id) }}" style="display:inline">
+            <form method="post" action="{{ url_for('payment_routes.freigeben_antrag', antrag_id=a.id) }}"
+              style="display:inline">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <button class="btn btn-sm btn-success">Freigeben</button>
             </form>
             {% endif %}
 
             {% if a.can_freigabe_zurueckziehen %}
-            <form method="post" action="{{ url_for('freigabe_zurueckziehen', antrag_id=a.id) }}" style="display:inline">
+            <form method="post" action="{{ url_for('payment_routes.freigabe_zurueckziehen', antrag_id=a.id) }}"
+              style="display:inline">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <button class="btn btn-sm btn-warning">Freigabe zurückziehen</button>
             </form>
             {% endif %}
 
-            {% if a.can_on_hold %}
-            <form method="post" action="{{ url_for('on_hold_antrag', antrag_id=a.id) }}" style="display:inline">
+            <!--{% if a.can_on_hold %}
+            <form method="post" action="{{ url_for('payment_routes.on_hold_antrag', antrag_id=a.id) }}" style="display:inline">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <button class="btn btn-sm btn-outline-warning">On hold</button>
             </form>
             {% endif %}
 
             {% if has_endpoint('fortsetzen_antrag') and a.can_fortsetzen %}
-            <form method="post" action="{{ url_for('fortsetzen_antrag', antrag_id=a.id) }}" style="display:inline">
+            <form method="post" action="{{ url_for('payment_routes.fortsetzen_antrag', antrag_id=a.id) }}" style="display:inline">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="btn btn-sm btn-outline-primary">Fortsetzen</button>
+            </form>
+            {% endif %}-->
+            {% if a.can_on_hold %}
+            <form method="post" action="{{ url_for('payment_routes.on_hold_antrag', antrag_id=a.id) }}"
+              style="display:inline">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="btn btn-sm btn-outline-warning">On Hold</button>
+            </form>
+            {% endif %}
+
+            {% if a.can_fortsetzen %}
+            <form method="post" action="{{ url_for('payment_routes.fortsetzen_antrag', antrag_id=a.id) }}"
+              style="display:inline">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <button class="btn btn-sm btn-outline-primary">Fortsetzen</button>
             </form>
             {% endif %}
 
+
             {% if a.can_abschliessen %}
-            <form method="post" action="{{ url_for('abschliessen_antrag', antrag_id=a.id) }}" style="display:inline">
+            <form method="post" action="{{ url_for('payment_routes.abschliessen_antrag', antrag_id=a.id) }}"
+              style="display:inline">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <button class="btn btn-sm btn-primary">Abschließen</button>
             </form>
@@ -101,8 +121,8 @@
 
             {% if a.can_ablehnen %}
             <!-- Einfaches Inline-Ablehnen mit Grund -->
-            <form method="post" action="{{ url_for('ablehnen_antrag', antrag_id=a.id) }}" style="display:inline"
-              onsubmit="return confirm('Ablehnen?');">
+            <form method="post" action="{{ url_for('payment_routes.ablehnen_antrag', antrag_id=a.id) }}"
+              style="display:inline" onsubmit="return confirm('Ablehnen?');">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <input type="hidden" name="grund" value="Abgelehnt (kurzbegründet)">
               <!-- ersetze bei Bedarf durch Modal -->
@@ -111,16 +131,16 @@
             {% endif %}
 
             {% if a.can_zurueckziehen %}
-            <form method="post" action="{{ url_for('zurueckziehen_antrag', antrag_id=a.id) }}" style="display:inline"
-              onsubmit="return confirm('Antrag zurückziehen?');">
+            <form method="post" action="{{ url_for('payment_routes.zurueckziehen_antrag', antrag_id=a.id) }}"
+              style="display:inline" onsubmit="return confirm('Antrag zurückziehen?');">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <button class="btn btn-sm btn-outline-secondary">Zurückziehen</button>
             </form>
             {% endif %}
 
-            {% if a.can_loeschen and a.status not in ['abgeschlossen', 'abgelehnt', 'freigegeben']  %}
-            <form method="post" action="{{ url_for('loeschen_antrag', antrag_id=a.id) }}" style="display:inline"
-              onsubmit="return confirm('Antrag endgültig löschen?');">
+            {% if a.can_loeschen and a.status not in ['abgeschlossen', 'abgelehnt', 'freigegeben'] %}
+            <form method="post" action="{{ url_for('payment_routes.loeschen_antrag', antrag_id=a.id) }}"
+              style="display:inline" onsubmit="return confirm('Antrag endgültig löschen?');">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <button class="btn btn-sm btn-danger">Löschen</button>
             </form>
@@ -165,15 +185,15 @@
     const button = event.relatedTarget;
     const antragId = button.getAttribute('data-antrag-id');
     const form = document.getElementById('ablehnenForm');
-    form.action = "{{ url_for('ablehnen_antrag', antrag_id=0) }}".replace('/0', '/' + antragId);
+    form.action = "{{ url_for('payment_routes.ablehnen_antrag', antrag_id=0) }}".replace('/0', '/' + antragId);
   });
 </script>
 
 <!-- Modal: Neuer Antrag -->
 <div class="modal fade" id="antragModal" tabindex="-1" aria-labelledby="antragModalLabel" aria-hidden="true">
   <div class="modal-dialog">
-    <form method="post" action="{{ url_for('zahlungsfreigabe_antrag') }}" id="antragForm" class="needs-validation"
-      novalidate>
+    <form method="post" action="{{ url_for('payment_routes.zahlungsfreigabe_antrag') }}" id="antragForm"
+      class="needs-validation" novalidate>
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title" id="antragModalLabel">Neuen Zahlungsantrag erstellen</h5>
@@ -185,7 +205,7 @@
 
           <div class="mb-3">
             <label class="form-label">Paragraph (optional)</label>
-            <input type="text" name="paragraph" class="form-control" placeholder="z. B. 3a">
+            <input type="text" name="paragraph" class="form-control" placeholder="z. B. 3a" value="$ 14 Abs. 2">
           </div>
 
           <div class="mb-3">
@@ -195,8 +215,9 @@
 
           <div class="row g-3">
             <div class="col-md-6">
-              <label class="form-label">Datum</label>
-              <input type="date" name="datum" class="form-control" required>
+              <label class="form-label">Datum</label>              
+              <input type="date" name="datum" class="form-control" required value="{{ today.strftime('%Y-%m-%d') }}">
+
               <div class="invalid-feedback">Bitte ein Datum angeben.</div>
             </div>
             <div class="col-md-6">

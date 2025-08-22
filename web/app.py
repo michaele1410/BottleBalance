@@ -8,17 +8,15 @@ import ssl
 import logging
 import re
 from logging.handlers import RotatingFileHandler
-#from smtplib import SMTP, SMTP_SSL, SMTPException
-#from email.message import EmailMessage
+from smtplib import SMTP, SMTP_SSL
+from email.message import EmailMessage
 from datetime import datetime, date, timedelta
-from decimal import Decimal, InvalidOperation
+from decimal import Decimal
 from flask_babel import Babel, gettext as _, gettext as translate
-from flask import Flask, render_template, request, redirect, url_for, session, send_file, send_from_directory, flash, abort, jsonify, current_app
-from sqlalchemy import create_engine, text, bindparam, Boolean
-from sqlalchemy.engine import Engine
+from flask import Flask, render_template, request, redirect, url_for, session, send_file, send_from_directory, flash, abort, current_app, render_template_string
+from sqlalchemy import text
 from sqlalchemy.exc import OperationalError
 from werkzeug.security import generate_password_hash, check_password_hash
-
 from email.mime.text import MIMEText
 from email.header import Header
 from functools import wraps
@@ -26,6 +24,14 @@ from typing import Tuple
 from urllib.parse import urlencode
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image as RLImage, PageBreak, KeepTogether
 from types import SimpleNamespace
+
+from auth import auth_routes
+from bbalance import bbalance_routes
+from attachments import attachments_routes
+from admin import admin_routes
+from user import user_routes
+from payment import payment_routes
+from mail import mail_routes
 
 # UTILS (def)
 from modules.core_utils import (
@@ -40,20 +46,31 @@ from modules.core_utils import (
 from modules.system_utils import (
     get_version
 )
-from auth import auth_routes
-from bbalance import bbalance_routes
+
+from modules.core_utils import (
+    DB_HOST,
+    DB_NAME,
+    DB_USER,
+    DB_PASS
+)
 
 from modules.bbalance_utils import (
     fetch_entries,
     format_date_de,
     format_eur_de,
-    today_ddmmyyyy,
-    current_totals,
-
+    _user_can_view_entry
 )
 from modules.mail_utils import (
-    send_mail, 
-    send_status_email
+    SMTP_HOST,
+    SMTP_PORT,
+    SMTP_USER,
+    SMTP_PASS,
+    SMTP_TLS,
+    SMTP_SSL,
+    SMTP_SSL_ON,
+    SMTP_TIMEOUT,
+    FROM_EMAIL,
+    logger
 )
 
 from modules.auth_utils import (
@@ -62,29 +79,25 @@ from modules.auth_utils import (
     require_perms, 
     require_csrf, 
     csrf_token,
-    login, 
-    login_post, 
-    login_2fa_get, 
-    login_2fa_post, 
-    logout,
-    profile, 
-    profile_post, 
-    enable_2fa_get, 
-    enable_2fa, 
-    confirm_2fa, 
-    disable_2fa,
-    update_theme, 
-    update_preferences, 
-    set_language,
-    inject_theme, 
-    inject_helpers, 
-    utility_processor
+    generate_and_store_backup_codes
 )
 
 from modules.payment_utils import (
     _user_can_view_antrag,
     _user_can_edit_antrag,
-    get_antrag_email
+    get_antrag_email,
+    _require_approver,
+    _approvals_done,
+    _approvals_total
+)
+
+from modules.csv_utils import (
+    parse_money,
+    _parse_csv_with_mapping,
+    compute_auto_mapping,
+    parse_date_de_or_today,
+    _signature,
+    _fetch_existing_signature_set
 )
 
 
@@ -208,10 +221,6 @@ def notify_managing_users(antrag_id, antragsteller, betrag, datum):
                       body=body)
         mail.send(msg)
 
-
-
-
-
 def get_locale():
     user = current_user()
     if user:
@@ -240,7 +249,7 @@ app = Flask(__name__, static_folder='static')
 app.register_blueprint(auth_routes)
 app.register_blueprint(bbalance_routes)
 app.register_blueprint(attachments_routes)
-app.register_blueprint(admin_tools_routes)
+app.register_blueprint(admin_routes)
 app.register_blueprint(user_routes)
 app.register_blueprint(payment_routes)
 app.register_blueprint(mail_routes)
@@ -419,6 +428,16 @@ CREATE TABLE IF NOT EXISTS status_transitions (
 
 def migrate_columns(conn):
     # Best-effort migrations for added columns
+    conn.execute(text(CREATE_TABLE_ATTACHMENTS))
+    conn.execute(text(CREATE_TABLE_ATTACHMENTS_TEMP))
+    conn.execute(text(CREATE_TABLE_BEMERKUNGSOPTIONEN))
+    conn.execute(text(CREATE_TABLE_ZAHLUNGSFREIGABE))
+    conn.execute(text(CREATE_TABLE_ZAHLUNGSFREIGABE_AUDIT))
+    # Schneller zählen: DISTINCT user_id je Antrag/Aktion
+    conn.execute(text("CREATE INDEX IF NOT EXISTS idx_za_antrag_action_user " "ON zahlungsantrag_audit(antrag_id, action, user_id)"))
+    conn.execute(text(CREATE_TABLE_ZAHLUNGSFREIGABE_ATTACHMENTS))
+    conn.execute(text(CREATE_TABLE_ZAHLUNGSFREIGABE_TRANSITIONS))
+
     conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS email TEXT"))
     conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS totp_secret TEXT"))
     conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS totp_enabled BOOLEAN NOT NULL DEFAULT FALSE"))
@@ -432,15 +451,6 @@ def migrate_columns(conn):
     conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login_at TIMESTAMP"))
     conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS can_approve BOOLEAN NOT NULL DEFAULT FALSE"))
     conn.execute(text("ALTER TABLE zahlungsantraege ADD COLUMN IF NOT EXISTS approver_snapshot JSONB"))
-    conn.execute(text(CREATE_TABLE_ATTACHMENTS))
-    conn.execute(text(CREATE_TABLE_ATTACHMENTS_TEMP))
-    conn.execute(text(CREATE_TABLE_BEMERKUNGSOPTIONEN))
-    conn.execute(text(CREATE_TABLE_ZAHLUNGSFREIGABE))
-    conn.execute(text(CREATE_TABLE_ZAHLUNGSFREIGABE_AUDIT))
-    # Schneller zählen: DISTINCT user_id je Antrag/Aktion
-    conn.execute(text("CREATE INDEX IF NOT EXISTS idx_za_antrag_action_user " "ON zahlungsantrag_audit(antrag_id, action, user_id)"))
-    conn.execute(text(CREATE_TABLE_ZAHLUNGSFREIGABE_ATTACHMENTS))
-    conn.execute(text(CREATE_TABLE_ZAHLUNGSFREIGABE_TRANSITIONS))
     
     try:
         current_len = conn.execute(text("""
@@ -546,16 +556,9 @@ def cleanup_temp():
             pass
     print(f"Temp cleanup done. Files removed: {removed}")
 
-def get_bemerkungsoptionen():
-    with engine.begin() as conn:
-        rows = conn.execute(text("SELECT text FROM bemerkungsoptionen WHERE active = TRUE ORDER BY text ASC")).scalars().all()
-    return rows
 
-# Zahlungsfreigabe
-def _antrag_dir(antrag_id: int) -> str:
-    p = os.path.join(UPLOAD_FOLDER, f"antrag_{antrag_id}")
-    os.makedirs(p, exist_ok=True)
-    return p
+
+
 
 
 
@@ -583,7 +586,7 @@ def not_found(e):
 @app.errorhandler(413)
 def request_entity_too_large(e):
     flash(_('Datei zu groß. Bitte kleinere Datei hochladen.'))
-    return redirect(request.referrer or url_for('index'))
+    return redirect(request.referrer or url_for('bbalance_routes.index'))
 
 
 @app.errorhandler(500)
@@ -605,159 +608,14 @@ logger.info("Flask-Babel version: %s", fb_ver)
 # Helpers: Current user, RBAC
 # -----------------------
 
-def _build_index_context(default_date: str | None = None, temp_token: str | None = None):
-    """
-    Bereitet alle Variablen für index.html auf – mit stabilem temp_token.
-    - totals-Modus via ?totals=filtered | all
-      * 'filtered': inv_aktuell/kas_aktuell aus der gefilterten Liste
-      * 'all' (Default): Gesamtstände aus der gesamten Tabelle
-    """
-    # Filter aus Query
-    q = (request.args.get('q') or '').strip()
-    date_from_s = request.args.get('from')
-    date_to_s = request.args.get('to')
-    df = datetime.strptime(date_from_s, '%Y-%m-%d').date() if date_from_s else None
-    dt = datetime.strptime(date_to_s, '%Y-%m-%d').date() if date_to_s else None
-
-    # Anhänge: 'only' | 'none' | None
-    filter_attachments = request.args.get('attachments')
-
-    # Einträge DB-seitig mit allen Filtern holen
-    entries = fetch_entries(q or None, df, dt, attachments_filter=filter_attachments)
-
-    # Totals-Modus: 'all' (Default) oder 'filtered'
-    totals_mode = (request.args.get('totals') or 'all').strip().lower()
-    if totals_mode not in ('all', 'filtered'):
-        totals_mode = 'all'
-
-    if totals_mode == 'filtered':
-        # Aus gefilterten Daten ableiten
-        if entries:
-            inv_aktuell = entries[-1]['inventar']
-            kas_aktuell = entries[-1]['kassenbestand']
-        else:
-            inv_aktuell = 0
-            kas_aktuell = Decimal('0.00')
-    else:
-        # Gesamtsystemstände
-        inv_aktuell, kas_aktuell = current_totals()
-
-    # Serien für Sparklines (bewusst auf Basis der gefilterten Liste)
-    series_inv = [e['inventar'] for e in entries]
-    series_kas = [float(e['kassenbestand']) for e in entries]
-
-    finv = entries[-1]['inventar'] if entries else 0
-    fkas = entries[-1]['kassenbestand'] if entries else Decimal('0')
-
-    role = session.get('role')
-    allowed = ROLES.get(role, set())
-
-    # temp_token beibehalten oder anlegen (NICHT überschreiben, wenn übergeben)
-    token = temp_token or session.get('add_temp_token') or uuid4().hex
-    session['add_temp_token'] = token  # Session soll denselben Token kennen
-
-    return {
-        'entries': entries,
-        'inv_aktuell': inv_aktuell,
-        'kas_aktuell': kas_aktuell,
-        'filter_inv': finv,
-        'filter_kas': fkas,
-        'default_date': default_date or today_ddmmyyyy(),
-        'format_eur_de': format_eur_de,
-        'format_date_de': format_date_de,
-        'can_add': ('entries:add' in allowed),
-        'can_export_csv': ('export:csv' in allowed),
-        'can_export_pdf': ('export:pdf' in allowed),
-        'can_import': ('import:csv' in allowed),
-        'role': role,
-        'series_inv': series_inv,
-        'series_kas': series_kas,
-        'temp_token': token,
-        # Optional im Template verwenden, falls du den Modus anzeigen willst:
-        'totals_mode': totals_mode,
-    }
-
-def _approvals_total(conn) -> int:
-    # Nur aktive, freigabeberechtigte Benutzer zählen
-    return conn.execute(text("""
-        SELECT COUNT(*) FROM users WHERE can_approve = TRUE AND active = TRUE
-    """)).scalar_one()
-
-def _approvals_done(conn, antrag_id: int) -> int:
-    # DISTINCT user_id, die für diesen Antrag freigegeben haben
-    return conn.execute(text("""
-        SELECT COUNT(DISTINCT user_id)
-        FROM zahlungsantrag_audit
-        WHERE antrag_id = :aid AND action = 'freigegeben'
-    """), {'aid': antrag_id}).scalar_one()
-
-def _approved_by_user(conn, antrag_id: int, user_id: int) -> bool:
-    return bool(conn.execute(text("""
-        SELECT 1
-        FROM zahlungsantrag_audit
-        WHERE antrag_id = :aid AND action = 'freigegeben' AND user_id = :uid
-        LIMIT 1
-    """), {'aid': antrag_id, 'uid': user_id}).scalar_one_or_none())
 
 
 
-def build_base_url():
-    # bevorzuge APP_BASE_URL, fallback auf request.url_root
-    try:
-        from flask import request
-        base = os.getenv("APP_BASE_URL") or request.url_root
-    except RuntimeError:
-        base = os.getenv("APP_BASE_URL") or "http://localhost:5000/"
-    return base.rstrip("/") + "/"
 
-def send_new_request_notifications(antrag_id: int, approver_emails: list[str]) -> None:
-    """
-    Sendet Benachrichtigungs-E-Mails an alle approver_emails für einen neuen Zahlungsfreigabe-Antrag.
-    """
-    if not approver_emails:
-        current_app.logger.warning("Keine Empfänger für Antrag %s gefunden – keine Mail gesendet.", antrag_id)
-        return
 
-    base_url = os.getenv("APP_BASE_URL", "http://localhost:5000")
-    link = f"{base_url}/zahlungsfreigabe/{antrag_id}"
 
-    subject = f"Neuer Zahlungsfreigabe-Antrag #{antrag_id}"
-    body = (
-        f"Hallo,\n\n"
-        f"es wurde soeben ein neuer Zahlungsfreigabe-Antrag (#{antrag_id}) erstellt.\n"
-        f"Zur Prüfung/Freigabe:\n{link}\n\n"
-        f"Viele Grüße\nBottleBalance"
-    )
 
-    host = os.getenv("SMTP_HOST")
-    port = int(os.getenv("SMTP_PORT", "587"))
-    user = os.getenv("SMTP_USER")
-    password = os.getenv("SMTP_PASS")
-    use_tls = os.getenv("SMTP_TLS", "true").lower() == "true"
-    from_email = os.getenv("FROM_EMAIL") or user
 
-    if not host or not from_email:
-        raise RuntimeError("SMTP_HOST und FROM_EMAIL/SMTP_USER müssen konfiguriert sein.")
-
-    msg = EmailMessage()
-    msg["Subject"] = subject
-    msg["From"] = from_email
-    # Einzelversand oder Sammel-TO (hier Sammel-TO):
-    msg["To"] = ", ".join(approver_emails)
-    msg.set_content(body)
-
-    context = ssl.create_default_context()
-    with SMTP(host, port, timeout=30) as smtp:
-        if use_tls:
-            smtp.starttls(context=context)
-        if user and password:
-            smtp.login(user, password)
-        smtp.send_message(msg)
-
-    current_app.logger.info(
-        "Benachrichtigungen für Antrag %s an %s gesendet.",
-        antrag_id, approver_emails
-    )
 
 
 
@@ -788,97 +646,7 @@ def parse_int_strict(value: str):
 # -----------------------
 
 
-@app.get('/2fa')
-def login_2fa_get():
-    if not session.get('pending_2fa_user_id'):
-        return redirect(url_for('login'))
-    return render_template('2fa.html')
 
-@app.post('/2fa')
-@require_csrf
-def login_2fa_post():
-    uid = session.get('pending_2fa_user_id')
-    if not uid:
-        return redirect(url_for('login'))
-
-    raw = request.form.get('code') or ''
-    code = re.sub(r'[\s\-]', '', raw).lower()
-
-    with engine.begin() as conn:
-        user = conn.execute(text("""
-            SELECT id, role, totp_secret, backup_codes
-            FROM users WHERE id=:id
-        """), {'id': uid}).mappings().first()
-
-    if not user or not user['totp_secret']:
-        flash(_('2FA nicht aktiv.'))
-        return redirect(url_for('login'))
-
-    totp = pyotp.TOTP(user['totp_secret'])
-
-    # Prüfe TOTP
-    if totp.verify(code, valid_window=1):
-        _finalize_login(user['id'], user['role'])
-        # Flag auswerten
-        if session.pop('force_profile_after_login', None):
-            return redirect(url_for('profile'))
-        return redirect(url_for('index'))
-
-    # Prüfe Backup-Codes
-    bc_raw = user.get('backup_codes') or '[]'
-    try:
-        hashes = json.loads(bc_raw)
-        if not isinstance(hashes, list):
-            hashes = []
-    except Exception:
-        hashes = []
-
-    matched_idx = None
-    for i, h in enumerate(hashes):
-        if h and check_password_hash(h, code):
-            matched_idx = i
-            break
-
-    if matched_idx is not None:
-        # Neuen Satz Backup-Codes generieren
-        new_codes = generate_and_store_backup_codes(uid)
-
-        # Einmalige Anzeige im Profil
-        session['new_backup_codes'] = new_codes
-
-        _finalize_login(user['id'], user['role'])
-        flash(_('Backup-Code verwendet. Es wurden automatisch neue Codes generiert. Bitte sicher aufbewahren.'), 'info')
-        log_action(user['id'], '2fa:backup_used_regenerated', None, None)
-
-        # Nach Backup-Code ggf. ebenfalls Flag auswerten
-        if session.pop('force_profile_after_login', None):
-            return redirect(url_for('profile'))
-        return redirect(url_for('profile'))  # Hier willst du ohnehin ins Profil
-                                             # (zeigt die neuen Codes einmalig an)
-
-    flash(_('Ungültiger 2FA-Code oder Backup-Code.'))
-    return redirect(url_for('login_2fa_get'))
-
-
-@app.post('/profile/2fa/regen')
-@login_required
-@require_csrf
-def regen_backup_codes():
-    uid = session['user_id']
-    codes = generate_and_store_backup_codes(uid)
-    # Einmalige Anzeige im Profil
-    session['new_backup_codes'] = codes
-    flash(_('Neue Backup-Codes wurden generiert. Bitte sicher aufbewahren.'))
-    return redirect(url_for('profile'))
-
-@app.post('/logout')
-@login_required
-@require_csrf
-def logout():
-    uid = session.get('user_id')
-    log_action(uid, 'logout', None, None)
-    session.clear()
-    return redirect(url_for('login'))
 
 
 # -----------------------
@@ -937,7 +705,7 @@ def profile_post():
             """), {'em': email or None, 'id': uid})
 
     flash(_('Profil aktualisiert.'))
-    return redirect(url_for('index'))
+    return redirect(url_for('bbalance_routes.index'))
 
 @app.get('/profile/2fa/enable')
 @login_required
@@ -1166,36 +934,7 @@ def inject_helpers():
 
 
 
-# Reset-Formular (Token-only)
-@app.get('/reset')
-def reset_form():
-    return render_template('reset.html')
 
-@app.post('/reset')
-@require_csrf
-def reset_post():
-    token = (request.form.get('token') or '').strip()
-    pwd   = (request.form.get('password')  or '').strip()
-    pwd2  = (request.form.get('password2') or '').strip()
-    if not token:
-        flash('Reset‑Token fehlt.')
-        return redirect(url_for('reset_form'))
-    if len(pwd) < 8 or pwd != pwd2:
-        flash(_('Passwortanforderungen nicht erfüllt oder stimmen nicht überein.'))
-        return redirect(url_for('reset_form'))
-    with engine.begin() as conn:
-        trow = conn.execute(
-            text("SELECT id, user_id, expires_at, used FROM password_reset_tokens WHERE token=:t"),
-            {'t': token}
-        ).mappings().first()
-        if not trow or trow['used'] or trow['expires_at'] < datetime.utcnow():
-            flash(_('Link ungültig oder abgelaufen.'))
-            return redirect(url_for('login'))
-        conn.execute(text("UPDATE users SET password_hash=:ph, must_change_password=FALSE, updated_at=NOW() WHERE id=:id"),
-                     {'ph': generate_password_hash(pwd), 'id': trow['user_id']})
-        conn.execute(text("UPDATE password_reset_tokens SET used=TRUE WHERE user_id=:uid AND used=FALSE"), {"uid": trow['user_id']})
-    flash(_('Passwort aktualisiert. Bitte einloggen.'))
-    return redirect(url_for('login'))
 
 # -----------------------
 # Admin: Users & Audit
@@ -1249,7 +988,7 @@ def users_toggle_approve(uid: int):
     with engine.begin() as conn:
         conn.execute(text("UPDATE users SET can_approve = NOT can_approve, updated_at=NOW() WHERE id=:id"), {'id': uid})
     flash('Freigabeberechtigung geändert.')
-    return redirect(url_for('users_list'))
+    return redirect(url_for('user_routes.users_list'))
 
 
 
@@ -1296,33 +1035,8 @@ def _parse_csv_file_storage(file_storage):
         })
     return rows
 
-def _fetch_existing_signature_set(conn) -> set[tuple]:
-    existing = conn.execute(text("""
-        SELECT datum, COALESCE(vollgut,0), COALESCE(leergut,0),
-               COALESCE(einnahme,0), COALESCE(ausgabe,0), COALESCE(bemerkung,'')
-        FROM entries
-    """)).fetchall()
 
-    result = set()
-    for d, voll, leer, ein, aus, bem in existing:
-        result.add((
-            d,
-            int(voll),
-            int(leer),
-            str(Decimal(ein or 0).quantize(Decimal('0.01'))),
-            str(Decimal(aus or 0).quantize(Decimal('0.01'))),
-            (bem or '').strip().lower()
-        ))
-    return result
-def _signature(row: dict) -> tuple:
-    return (
-        row['datum'],  # date-Objekt
-        int(row['vollgut']),
-        int(row['leergut']),
-        str(Decimal(row['einnahme'] or 0).quantize(Decimal('0.01'))),
-        str(Decimal(row['ausgabe'] or 0).quantize(Decimal('0.01'))),
-        (row['bemerkung'] or '').strip().lower()
-    )
+
 
 #@app.post('/import/preview')
 #@login_required
@@ -1332,7 +1046,7 @@ def _signature(row: dict) -> tuple:
 #    replace_all = request.form.get('replace_all') == 'on'
 #    if not file or file.filename == '':
 #        flash(_('Bitte eine CSV-Datei auswählen.'))
-#        return redirect(url_for('index'))
+#        return redirect(url_for('bbalance_routes.index'))
 #
 #    try:
 #        rows_to_insert = _parse_csv_file_storage(file)
@@ -1369,7 +1083,7 @@ def _signature(row: dict) -> tuple:
 #    except Exception as e:
 #        logger.exception("Import-Preview fehlgeschlagen: %s", e)
 #        flash(f"{_('Vorschau fehlgeschlagen:')} {e}")
-#        return redirect(url_for('index'))
+#        return redirect(url_for('bbalance_routes.index'))
 
 #@app.post('/import/commit')
 #@login_required
@@ -1379,13 +1093,13 @@ def _signature(row: dict) -> tuple:
 #    mode = (request.form.get('mode') or 'skip_dups').strip()  # 'skip_dups' | 'insert_all'
 #    if not token or 'import_previews' not in session or token not in session['import_previews']:
 #        flash(_('Vorschau abgelaufen oder nicht gefunden.'))
-#        return redirect(url_for('index'))
+#        return redirect(url_for('bbalance_routes.index'))
 
  #   stash = session['import_previews'].pop(token, None)
  #   session.modified = True
  #   if not stash:
  #       flash(_('Vorschau abgelaufen oder bereits verwendet.'))
- #       return redirect(url_for('index'))
+ #       return redirect(url_for('bbalance_routes.index'))
 
   #  rows_to_insert = stash['rows']
   #  replace_all = bool(stash.get('replace_all'))
@@ -1413,11 +1127,11 @@ def _signature(row: dict) -> tuple:
 #        log_action(session.get('user_id'), 'import:csv', None,
 #                   f"commit: inserted={inserted}, replace_all={replace_all}, mode={mode}")
 #        flash(_(f'Import erfolgreich: {inserted} Zeilen übernommen.'))
-#        return redirect(url_for('index'))
+#        return redirect(url_for('bbalance_routes.index'))
 #    except Exception as e:
 #        logger.exception("Import-Commit fehlgeschlagen: %s", e)
 #        flash(f"{_('Import fehlgeschlagen:')} {e}")
-#        return redirect(url_for('index'))
+#        return redirect(url_for('bbalance_routes.index'))
 
 @app.get('/import/sample')
 @login_required
@@ -1479,12 +1193,12 @@ def import_preview():
         stash = session.get('import_previews', {}).get(token)
         if not stash:
             flash(_('Vorschau abgelaufen oder nicht gefunden.'))
-            return redirect(url_for('index'))
+            return redirect(url_for('bbalance_routes.index'))
 
         tmp_path = stash.get('csv_path')
         if not tmp_path or not os.path.exists(tmp_path):
             flash(_('CSV-Datei nicht gefunden.'))
-            return redirect(url_for('index'))
+            return redirect(url_for('bbalance_routes.index'))
 
         # CSV laden
         try:
@@ -1493,7 +1207,7 @@ def import_preview():
         except Exception as e:
             logger.exception("CSV lesen fehlgeschlagen: %s", e)
             flash(_('CSV konnte nicht gelesen werden.'))
-            return redirect(url_for('index'))
+            return redirect(url_for('bbalance_routes.index'))
 
         # Mapping aus Formular übernehmen
         if IMPORT_ALLOW_MAPPING:
@@ -1517,7 +1231,7 @@ def import_preview():
         except Exception as e:
             logger.exception("Import-Preview (remap) fehlgeschlagen: %s", e)
             flash(f"{_('Vorschau fehlgeschlagen:')} {e}")
-            return redirect(url_for('index'))
+            return redirect(url_for('bbalance_routes.index'))
 
         # Stash aktualisieren
         session['import_previews'][token]['mapping'] = mapping
@@ -1540,7 +1254,7 @@ def import_preview():
     file = request.files.get('file')
     if not file or file.filename == '':
         flash(_('Bitte eine CSV-Datei auswählen.'))
-        return redirect(url_for('index'))
+        return redirect(url_for('bbalance_routes.index'))
 
     try:
         # Inhalt einlesen
@@ -1584,7 +1298,7 @@ def import_preview():
     except Exception as e:
         logger.exception("Import-Preview fehlgeschlagen: %s", e)
         flash(f"{_('Vorschau fehlgeschlagen:')} {e}")
-        return redirect(url_for('index'))
+        return redirect(url_for('bbalance_routes.index'))
 
 
 @app.post('/import/commit')
@@ -1598,13 +1312,13 @@ def import_commit():
 
     if not token or 'import_previews' not in session or token not in session['import_previews']:
         flash(_('Vorschau abgelaufen oder nicht gefunden.'))
-        return redirect(url_for('index'))
+        return redirect(url_for('bbalance_routes.index'))
 
     stash = session['import_previews'].pop(token, None)
     session.modified = True
     if not stash:
         flash(_('Vorschau abgelaufen oder bereits verwendet.'))
-        return redirect(url_for('index'))
+        return redirect(url_for('bbalance_routes.index'))
 
     tmp_path = stash.get('csv_path')
     replace_all = bool(stash.get('replace_all'))
@@ -1612,7 +1326,7 @@ def import_commit():
 
     if not tmp_path or not os.path.exists(tmp_path):
         flash(_('CSV-Datei nicht gefunden.'))
-        return redirect(url_for('index'))
+        return redirect(url_for('bbalance_routes.index'))
 
     try:
         with open(tmp_path, 'r', encoding='utf-8-sig') as f:
@@ -1650,49 +1364,20 @@ def import_commit():
         log_action(session.get('user_id'), 'import:csv', None,
                    f"commit: inserted={inserted}, replace_all={replace_all}, mode={mode}, import_invalid={import_invalid}")
         flash(_(f'Import erfolgreich: {inserted} Zeilen übernommen.'))
-        return redirect(url_for('index'))
+        return redirect(url_for('bbalance_routes.index'))
     except Exception as e:
         logger.exception("Import-Commit fehlgeschlagen: %s", e)
         flash(f"{_('Import fehlgeschlagen:')} {e}")
-        return redirect(url_for('index'))
-
-# -----------------------
-# Hilfsfunktionen CSV Import
-# -----------------------
-
-# --- Strikte Parser/Validatoren für die Vorschau ---
-def parse_date_de_strict(s: str) -> date:
-    s = (s or '').strip()
-    if not s:
-        raise ValueError(_('Datum fehlt'))
-    try:
-        return datetime.strptime(s, '%d.%m.%Y').date()
-    except Exception:
-        raise ValueError(_('Ungültiges Datum (erwartet TT.MM.JJJJ): ') + s)
-
-_money_re = re.compile(r'^\s*[+-]?\d{1,3}([.,]\d{3})*([.,]\d{1,2})?\s*(€)?\s*$')
+        return redirect(url_for('bbalance_routes.index'))
 
 
 
 
-# --- CSV Header Normalisierung & Auto-Mapping ---
-def _norm(h: str) -> str:
-    return re.sub(r'[^a-z0-9]', '', (h or '').strip().lower())
 
-# Kanonische Zielfelder
-CANONICAL_FIELDS = ['Datum','Vollgut','Leergut','Einnahme','Ausgabe','Bemerkung']
 
-# Synonyme (frei erweiterbar)
-HEADER_SYNONYMS = {
-    'Datum':     {'datum','date','ttmmjjjj','tt.mm.jjjj','day','tag'},
-    'Vollgut':   {'vollgut','voll','in','eingang','bestandszugang','bottlesin'},
-    'Leergut':   {'leergut','leer','out','ausgang','bestandsabgang','bottlesout','pfand'},
-    'Einnahme':  {'einnahme','einzahlung','revenue','income','cashin'},
-    'Ausgabe':   {'ausgabe','auszahlung','expense','cost','cashout'},
-    'Bemerkung': {'bemerkung','notiz','kommentar','comment','note','description','desc'},
-    # Optional ignorierbare Spalten:
-    # 'Inventar', 'Kassenbestand'
-}
+
+
+
 
 
 
@@ -1895,139 +1580,7 @@ def parse_date_iso_or_today(s: str | None) -> date:
     except Exception:
         return date.today()
 
-@app.post('/zahlungsfreigabe/antrag')
-@login_required
-@require_csrf
-def zahlungsfreigabe_antrag():
-    user = current_user()
-    if not user:
-        abort(403)
 
-    paragraph = (request.form.get('paragraph') or '').strip()
-    verwendungszweck = (request.form.get('zweck') or '').strip()
-    datum_str = (request.form.get('datum') or '').strip()
-    betrag_str = (request.form.get('betrag') or '').strip()
-    lieferant = (request.form.get('lieferant') or '').strip()
-    begruendung = (request.form.get('begruendung') or '').strip()
-
-    # Eingaben validieren
-    try:
-        datum = datetime.strptime(datum_str, '%Y-%m-%d').date()
-        betrag = Decimal(betrag_str.replace(',', '.'))
-    except Exception as e:
-        flash(f'Ungültige Eingabe: {e}', 'danger')
-        return redirect(url_for('zahlungsfreigabe'))
-
-    # Antrag speichern
-    with engine.begin() as conn:
-        res = conn.execute(text("""
-            INSERT INTO zahlungsantraege (
-                antragsteller_id, datum, paragraph, verwendungszweck, betrag,
-                lieferant, begruendung, status, read_only, created_at, updated_at
-            ) VALUES (
-                :uid, :datum, :para, :zweck, :betrag,
-                :lieferant, :begruendung, 'offen', TRUE, NOW(), NOW()
-            ) RETURNING id
-        """), {
-            'uid': user['id'],
-            'datum': datum,
-            'para': paragraph,
-            'zweck': verwendungszweck,
-            'betrag': str(betrag),
-            'lieferant': lieferant,
-            'begruendung': begruendung
-        })
-        antrag_id = res.scalar_one()
-
-        # Audit-Eintrag
-        conn.execute(text("""
-            INSERT INTO zahlungsantrag_audit (antrag_id, user_id, action, timestamp, detail)
-            VALUES (:aid, :uid, 'erstellt', NOW(), NULL)
-        """), {'aid': antrag_id, 'uid': user['id']})
-
-    # Benachrichtigung an Approver (Best-Effort)
-    try:
-        with engine.begin() as conn:
-            approver_emails = conn.execute(text("""
-                SELECT email FROM users
-                WHERE can_approve = TRUE AND active = TRUE AND email IS NOT NULL
-            """)).scalars().all()
-
-        if approver_emails:
-            send_new_request_notifications(antrag_id, approver_emails)
-        else:
-            current_app.logger.warning("Keine Approver-E-Mails gefunden für Antrag %s", antrag_id)
-
-    except Exception:
-        logger.exception("Fehler beim Senden der Benachrichtigungen für neuen Antrag %s", antrag_id)
-
-    flash('Zahlungsantrag erfolgreich erstellt.', 'success')
-    return redirect(url_for('zahlungsfreigabe'))
-
-
-
-def _require_approver(user):
-    if not user or not user.get('can_approve'):
-        abort(403)
-
-
-
-
-
-
-
-
-
-# Eigene Freigabe (des Approvers) zurückziehen
-@app.post('/freigabe_zurueckziehen/<int:antrag_id>', endpoint='freigabe_zurueckziehen')
-@login_required
-@require_csrf
-def freigabe_zurueckziehen(antrag_id):
-    user = current_user()
-    _require_approver(user)
-
-    with engine.begin() as conn:
-        # Status prüfen (abgeschlossen -> keine Rücknahme mehr)
-        curr = conn.execute(text("""
-            SELECT status FROM zahlungsantraege WHERE id=:id
-        """), {'id': antrag_id}).scalar_one_or_none()
-        if curr is None:
-            abort(404)
-        if curr == 'abgeschlossen':
-            flash('Abgeschlossene Anträge können nicht mehr geändert werden.', 'warning')
-            return redirect(url_for('zahlungsfreigabe'))
-
-        # Eigene Freigabe löschen (falls vorhanden)
-        deleted = conn.execute(text("""
-            DELETE FROM zahlungsantrag_audit
-            WHERE antrag_id = :aid AND user_id = :uid AND action = 'freigegeben'
-        """), {'aid': antrag_id, 'uid': user['id']}).rowcount
-
-        if deleted == 0:
-            flash('Keine Freigabe zum Zurückziehen gefunden.', 'warning')
-            return redirect(url_for('zahlungsfreigabe'))
-
-        # Audit-Eintrag protokollieren
-        conn.execute(text("""
-            INSERT INTO zahlungsantrag_audit (antrag_id, user_id, action, timestamp)
-            VALUES (:aid, :uid, 'freigabe_zurueckgezogen', NOW())
-        """), {'aid': antrag_id, 'uid': user['id']})
-
-        # Status ggf. zurück auf 'offen', wenn nicht mehr vollständig
-        done  = _approvals_done(conn, antrag_id)
-        total = _approvals_total(conn)
-        if curr == 'freigegeben' and (total == 0 or done < total):
-            conn.execute(text("""
-                UPDATE zahlungsantraege SET status='offen', updated_at=NOW()
-                WHERE id=:id
-            """), {'id': antrag_id})
-            conn.execute(text("""
-                INSERT INTO zahlungsantrag_audit (antrag_id, user_id, action, timestamp, detail)
-                VALUES (:aid, :uid, 'freigabe_nicht_mehr_vollständig', NOW(), :det)
-            """), {'aid': antrag_id, 'uid': user['id'], 'det': f'{done}/{total} Freigaben'})
-
-    flash('Deine Freigabe wurde zurückgezogen.', 'info')
-    return redirect(url_for('zahlungsfreigabe'))
 
 
 
@@ -2114,124 +1667,23 @@ def admin_tools():
     return render_template("admin_tools.html", status=status, current_options=current_options)
 
 
-@app.route('/zahlungsfreigabe/<int:antrag_id>')
-@login_required
-def zahlungsfreigabe_detail(antrag_id):
-    user = current_user()
-    is_approver = bool(user and user.get('can_approve'))
-
-    antrag_row = None
-    audit = []
-    approvers = []
-
-    with engine.begin() as conn:
-        # Antrag inkl. approver_snapshot laden
-        antrag_row = conn.execute(
-            text("""
-                SELECT z.*, u.username AS antragsteller
-                FROM zahlungsantraege z
-                LEFT JOIN users u ON u.id = z.antragsteller_id
-                WHERE z.id = :id
-            """), {'id': antrag_id}
-        ).mappings().first()
-        if not antrag_row:
-            abort(404)
-
-        # Audit laden
-        audit = conn.execute(text("""
-            SELECT a.id, a.user_id, u.username, a.action, a.timestamp, a.detail
-            FROM zahlungsantrag_audit a
-            LEFT JOIN users u ON u.id = a.user_id
-            WHERE a.antrag_id = :id
-            ORDER BY a.timestamp ASC, a.id ASC
-        """), {'id': antrag_id}).mappings().all()
-
-        # Approver-Liste: Wenn Snapshot vorhanden, diesen verwenden! inkl. approved-Flag
-        if antrag_row.get('approver_snapshot'):
-            snap = antrag_row['approver_snapshot']
-            if isinstance(snap, str):
-                approver_list = json.loads(snap)
-            else:
-                approver_list = snap  # Bereits als Liste (z.B. bei PostgreSQL JSONB)
-            approved_ids = set(
-                a['user_id'] for a in audit if a['action'] == 'freigegeben'
-            )
-            approvers = [
-                {
-                    'id': ap['id'],
-                    'username': ap['username'],
-                    'approved': ap['id'] in approved_ids
-                }
-                for ap in approver_list
-            ]
-        else:
-            # Fallback: aktuelle Liste aus DB
-            approvers = conn.execute(
-                text("""
-                    SELECT u.id, u.username,
-                    EXISTS (
-                        SELECT 1 FROM zahlungsantrag_audit a
-                        WHERE a.antrag_id=:aid AND a.action='freigegeben' AND a.user_id=u.id
-                    ) AS approved
-                    FROM users u
-                    WHERE u.can_approve=TRUE AND u.active=TRUE
-                    ORDER BY u.username ASC
-                """), {'aid': antrag_id}
-            ).mappings().all()
-
-        attachments = conn.execute(text("""    
-            SELECT id, original_name, size_bytes, content_type, created_at
-            FROM antrag_attachments
-            WHERE antrag_id=:aid
-            ORDER BY created_at DESC
-        """), {'aid': antrag_id}).mappings().all()
-
-    # ---- JETZT ausserhalb des with-Blocks auf das Ergebnis zugreifen ----
-    done = sum(1 for a in approvers if a['approved'])
-    total = len(approvers)
-    percent = int(done * 100 / total) if total > 0 else 0
-
-    status = antrag_row.get('status') or ''
-    can_fortsetzen = is_approver and status == 'on_hold'
-    can_on_hold    = is_approver and status == 'offen'
-
-    return render_template(
-        'payment_authorization_detail.html',
-        antrag=antrag_row,
-        audit=audit,
-        approvers=approvers,
-        approvals_done=done,
-        approvals_total=total,
-        approval_percent=percent,
-        can_fortsetzen=can_fortsetzen,
-        can_on_hold=can_on_hold,
-        attachments=attachments
-    )
 
 
 
 
-@app.get('/zahlungsfreigabe/<int:antrag_id>/attachments/list')
-@login_required
-def list_antrag_attachments(antrag_id: int):
-    if not _user_can_view_antrag(antrag_id):
-        abort(403)
-    with engine.begin() as conn:
-        rows = conn.execute(text("""
-            SELECT id, original_name, content_type, size_bytes, created_at
-            FROM antrag_attachments
-            WHERE antrag_id = :aid
-            ORDER BY created_at DESC, id DESC
-        """), {'aid': antrag_id}).mappings().all()
-    data = [{
-        'id': r['id'],
-        'name': r['original_name'],
-        'size': r['size_bytes'],
-        'content_type': r['content_type'],
-        'created_at': r['created_at'].isoformat() if r['created_at'] else None,
-        'url': url_for('download_antrag_attachment', att_id=r['id']),
-    } for r in rows]
-    return jsonify(data), 200
+@app.template_filter('strftime')
+def _jinja2_filter_datetime(value, format='%Y-%m-%d'):
+    """
+    Formatiert ein datetime/date-Objekt mit strftime.
+    Gibt leeren String zurück, wenn value None ist.
+    """
+    if value is None:
+        return ''
+    try:
+        return value.strftime(format)
+    except AttributeError:
+        return str(value)
+
 
 
 

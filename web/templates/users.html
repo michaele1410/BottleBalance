@@ -5,7 +5,7 @@
     <h1 class="h5 mb-3">{{ _('Benutzerverwaltung') }}</h1>
 
     <!-- Neuer Benutzer -->
-    <form method="post" action="{{ url_for('users_add') }}" class="row g-2 align-items-end mb-3">
+    <form method="post" action="{{ url_for('user_routes.users_add') }}" class="row g-2 align-items-end mb-3">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div class="col-12 col-md-3">
         <label class="form-label">{{ _('Benutzername') }}</label>
@@ -61,7 +61,7 @@
 
             <!-- Rollenwechsel -->
             <td>
-              <form method="post" action="{{ url_for('users_change_role', uid=u.id) }}" class="d-flex gap-2">
+              <form method="post" action="{{ url_for('user_routes.users_change_role', uid=u.id) }}" class="d-flex gap-2">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <select class="form-select form-select-sm" name="role">
                   {% for r in ROLES.keys() %}
@@ -76,7 +76,7 @@
 
             <!-- Aktiv-Toggle (mit Icon, i18n-Text) -->
             <td>
-              <form method="post" action="{{ url_for('users_toggle', uid=u.id) }}">
+              <form method="post" action="{{ url_for('user_routes.users_toggle', uid=u.id) }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 {% if u.active %}
                 <button class="btn btn-sm btn-outline-secondary" title="{{ _('Deaktivieren') }}">
@@ -93,6 +93,7 @@
             <!-- Geschäftsführend (can_approve) -->
             <td>
               <form method="post" action="{{ url_for('users_toggle_approve', uid=u.id) }}" class="d-inline">
+
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 {% if u.can_approve %}
                 <button class="btn btn-sm btn-success" title="{{ _('Berechtigung entfernen') }}">
@@ -116,7 +117,7 @@
             <td class="text-end">
               <div class="d-flex gap-2 justify-content-end">
                  <!-- Reset-Link -->
-                <form method="post" action="{{ url_for('users_reset_link', uid=u.id) }}">
+                <form method="post" action="{{ url_for('user_routes.users_reset_link', uid=u.id) }}">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                   <button class="btn btn-sm btn-outline-info" aria-label="{{ _('Reset-Link generieren') }}">
                     <i class="bi bi-envelope me-1"></i>
@@ -124,7 +125,7 @@
                 </form>
 
                 <!-- Löschen -->
-                <form method="post" action="{{ url_for('users_delete', uid=u.id) }}"
+                <form method="post" action="{{ url_for('user_routes.users_delete', uid=u.id) }}"
                   onsubmit="return confirm('{{ _('Benutzer wirklich löschen?') }}');">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button class="btn btn-sm btn-outline-danger" title="{{ _('Benutzer löschen') }}">
@@ -133,7 +134,7 @@
                 </form>
 
                 <!-- Bearbeiten -->
-                <a href="{{ url_for('edit_user', uid=u.id) }}" class="btn btn-sm btn-outline-primary"
+                <a href="{{ url_for('user_routes.edit_user', uid=u.id) }}" class="btn btn-sm btn-outline-primary"
                   title="{{ _('Benutzer bearbeiten') }}">
                   <i class="bi bi-pencil-square"></i>
                 </a>

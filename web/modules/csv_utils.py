@@ -1,6 +1,70 @@
 # -----------------------
 # Utils: Formatting
 # -----------------------
+import re
+import os
+import csv
+import io
+from flask_babel import Babel, gettext as _
+from datetime import datetime, date
+from decimal import Decimal, InvalidOperation
+from sqlalchemy import text
+
+from modules.core_utils import (
+    engine
+)
+
+# -----------------------
+# Feature Switches (ENV)
+# -----------------------
+#IMPORT_USE_PREVIEW   = os.getenv("IMPORT_USE_PREVIEW", "true").lower() in ("1","true","yes","on")
+IMPORT_ALLOW_MAPPING = os.getenv("IMPORT_ALLOW_MAPPING", "true").lower() in ("1","true","yes","on")
+#IMPORT_ALLOW_DRYRUN  = os.getenv("IMPORT_ALLOW_DRYRUN", "true").lower() in ("1","true","yes","on")
+
+# Kanonische Zielfelder
+CANONICAL_FIELDS = ['Datum','Vollgut','Leergut','Einnahme','Ausgabe','Bemerkung']
+
+# Synonyme (frei erweiterbar)
+HEADER_SYNONYMS = {
+    'Datum':     {'datum','date','ttmmjjjj','tt.mm.jjjj','day','tag'},
+    'Vollgut':   {'vollgut','voll','in','eingang','bestandszugang','bottlesin'},
+    'Leergut':   {'leergut','leer','out','ausgang','bestandsabgang','bottlesout','pfand'},
+    'Einnahme':  {'einnahme','einzahlung','revenue','income','cashin'},
+    'Ausgabe':   {'ausgabe','auszahlung','expense','cost','cashout'},
+    'Bemerkung': {'bemerkung','notiz','kommentar','comment','note','description','desc'},
+    # Optional ignorierbare Spalten:
+    # 'Inventar', 'Kassenbestand'
+}
+
+_money_re = re.compile(r'^\s*[+-]?\d{1,3}([.,]\d{3})*([.,]\d{1,2})?\s*(€)?\s*$')
+# -----------------------
+# Hilfsfunktionen CSV Import
+# -----------------------
+
+def _signature(row: dict) -> tuple:
+    return (
+        row['datum'],  # date-Objekt
+        int(row['vollgut']),
+        int(row['leergut']),
+        str(Decimal(row['einnahme'] or 0).quantize(Decimal('0.01'))),
+        str(Decimal(row['ausgabe'] or 0).quantize(Decimal('0.01'))),
+        (row['bemerkung'] or '').strip().lower()
+    )
+
+# --- Strikte Parser/Validatoren für die Vorschau ---
+def parse_date_de_strict(s: str) -> date:
+    s = (s or '').strip()
+    if not s:
+        raise ValueError(_('Datum fehlt'))
+    try:
+        return datetime.strptime(s, '%d.%m.%Y').date()
+    except Exception:
+        raise ValueError(_('Ungültiges Datum (erwartet TT.MM.JJJJ): ') + s)
+    
+# --- CSV Header Normalisierung & Auto-Mapping ---
+def _norm(h: str) -> str:
+    return re.sub(r'[^a-z0-9]', '', (h or '').strip().lower())
+
 def today_ddmmyyyy():
     return date.today().strftime('%d.%m.%Y')
 
@@ -229,3 +293,22 @@ def try_int_strict(s: str, field: str) -> int:
     if not re.fullmatch(r'[+-]?\d+', ss):
         raise ValueError(_(f'Ungültige Ganzzahl für {field}: ') + ss)
     return int(ss)
+
+def _fetch_existing_signature_set(conn) -> set[tuple]:
+    existing = conn.execute(text("""
+        SELECT datum, COALESCE(vollgut,0), COALESCE(leergut,0),
+               COALESCE(einnahme,0), COALESCE(ausgabe,0), COALESCE(bemerkung,'')
+        FROM entries
+    """)).fetchall()
+
+    result = set()
+    for d, voll, leer, ein, aus, bem in existing:
+        result.add((
+            d,
+            int(voll),
+            int(leer),
+            str(Decimal(ein or 0).quantize(Decimal('0.01'))),
+            str(Decimal(aus or 0).quantize(Decimal('0.01'))),
+            (bem or '').strip().lower()
+        ))
+    return result

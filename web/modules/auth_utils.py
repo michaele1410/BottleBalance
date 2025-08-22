@@ -5,7 +5,6 @@ from flask import session, redirect, url_for, request, abort, Blueprint, render_
 from flask_babel import _
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy import text
-from modules.mail_utils import send_mail  # falls du Mails aus dem Profil versendest
 from modules.core_utils import (
     log_action,
     ROLES,
@@ -19,7 +18,7 @@ def login_required(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):
         if not session.get('user_id'):
-            return redirect(url_for('login'))
+            return redirect(url_for('auth_routes.login'))
         return fn(*args, **kwargs)
     return wrapper
 
@@ -41,7 +40,7 @@ def require_perms(*perms):
         def wrapper(*args, **kwargs):
             user = current_user()
             if not user:
-                return redirect(url_for('login'))
+                return redirect(url_for('auth_routes.login'))
             allowed = ROLES.get(user['role'], set())
             if not all(p in allowed for p in perms):
                 abort(403)
@@ -84,7 +83,7 @@ def _finalize_login(user_id: int, role: str):
     session['role'] = role
     with engine.begin() as conn:
         conn.execute(text("UPDATE users SET last_login_at=NOW(), updated_at=NOW() WHERE id=:id"), {'id': user_id})
-    log_action(user_id, 'login', None, None)
+    log_action(user_id, 'auth_routes.login', None, None)
 
 def generate_and_store_backup_codes(uid: int) -> list[str]:
     """Erzeugt 10 Backup-Codes, speichert nur Hashes in DB und liefert die Klartext-Codes zurück (einmalige Anzeige)."""

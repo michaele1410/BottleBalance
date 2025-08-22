@@ -1,24 +1,34 @@
 # -----------------------
 # DB Export url/admin/export-db
 # -----------------------
+from flask import render_template, redirect, url_for, session, send_file, flash, Blueprint
 
+import os
+import subprocess
 from modules.core_utils import (
     DB_HOST,
     DB_NAME,
     DB_USER,
     DB_PASS
 )
-from modules.core_utils import log_action
+from modules.core_utils import (
+    log_action
+)
+from modules.auth_utils import (
+    login_required,
+    require_perms,
+    require_csrf
+)
 
-admin_tools_routes = Blueprint('admin_tools_routes', __name__)
+admin_routes = Blueprint('admin_routes', __name__)
 
-@admin_tools_routes.get('/admin/export-db')
+@admin_routes.get('/admin/export-db')
 @login_required
 @require_perms('users:manage')  # oder eigene Permission wie 'db:export'
 def admin_export_page():
     return render_template('admin_export.html')
 
-@admin_tools_routes.post('/admin/export-db')
+@admin_routes.post('/admin/export-db')
 @login_required
 @require_perms('users:manage')
 @require_csrf

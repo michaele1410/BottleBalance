@@ -6,7 +6,7 @@
       <div class="card-body">
         <h1 class="h5 mb-3">{{ _('Datensatz bearbeiten') }}</h1>
 
-        <form method="post" action="{{ url_for('edit_post', entry_id=data.id) }}" class="row g-3" id="transaction-form"
+        <form method="post" action="{{ url_for('bbalance_routes.edit_post', entry_id=data.id) }}" class="row g-3" id="transaction-form"
           novalidate>
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
@@ -62,7 +62,7 @@
           </div>
 
           <div class="col-12 d-flex gap-2">
-            <a class="btn btn-outline-secondary" href="{{ url_for('index') }}">{{ _('Abbrechen') }}</a>
+            <a class="btn btn-outline-secondary" href="{{ url_for('bbalance_routes.index') }}">{{ _('Abbrechen') }}</a>
             <button class="btn btn-primary">{{ _('Speichern') }}</button>
           </div>
         </form>
@@ -70,7 +70,7 @@
         <hr class="my-4">
         <h3 class="h6 mb-3">{{ _('Anhänge') }}</h3>
 
-        <form action="{{ url_for('attachments_upload', entry_id=data.id) }}" method="post" enctype="multipart/form-data"
+        <form action="{{ url_for('attachments_routes.attachments_upload', entry_id=data.id) }}" method="post" enctype="multipart/form-data"
           class="mb-3">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <div class="input-group">
@@ -95,7 +95,7 @@
               <small class="text-muted">({{ att.size }} Bytes)</small>
               <a href="{{ att.view_url }}" target="_blank" class="btn btn-sm btn-outline-primary">Ansehen</a>
             </div>
-            <form method="post" action="{{ url_for('attachments_delete', att_id=att.id) }}"
+            <form method="post" action="{{ url_for('attachments_routes.attachments_delete', att_id=att.id) }}"
               onsubmit="return confirm('{{ _('Anhang wirklich löschen?') }}');">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <button class="btn btn-sm btn-outline-danger">{{ _('Löschen') }}</button>

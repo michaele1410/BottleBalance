@@ -1,7 +1,28 @@
 # -----------------------
 # SMTP Test Mail via url/admin/smtp
 # -----------------------
+import ssl
 
+from flask import render_template, request, redirect, url_for, flash, Blueprint
+from email.mime.text import MIMEText
+from email.header import Header
+from smtplib import SMTP, SMTP_SSL
+
+from modules.auth_utils import (
+    login_required,
+    require_perms,
+    require_csrf
+)
+
+from modules.mail_utils import (
+    SMTP_HOST,
+    SMTP_PORT,
+    SMTP_USER,
+    SMTP_PASS,
+    SMTP_TLS,
+    SMTP_SSL_ON,
+    SMTP_TIMEOUT
+)
 mail_routes = Blueprint('mail_routes', __name__)
 
 @mail_routes.route("/admin/smtp", methods=["GET", "POST"])

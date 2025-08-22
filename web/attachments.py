@@ -1,8 +1,36 @@
 # -----------------------
 # Document uploads for entries
 # -----------------------
-from modules.core_utils import engine, ROLES, log_action, allowed_file, _entry_dir, _temp_dir, _require_temp_token
-from modules.bbalance_utils import _user_can_edit_entry, _user_can_view_entry
+import os
+from flask_babel import gettext as _
+from flask import request, redirect, url_for, session, send_file, flash, abort, jsonify, Blueprint
+from sqlalchemy import text
+
+from modules.core_utils import (
+    engine, 
+    ROLES, 
+    log_action, 
+    allowed_file, 
+    _entry_dir, 
+    _temp_dir, 
+    _require_temp_token
+)
+from modules.bbalance_utils import (
+    _user_can_edit_entry, 
+    _user_can_view_entry
+)
+
+# Document Upload
+from werkzeug.utils import secure_filename
+from uuid import uuid4
+import mimetypes
+
+
+from modules.auth_utils import (
+    login_required,
+    require_csrf,
+    require_perms
+)
 
 attachments_routes = Blueprint('attachments_routes', __name__)
 
@@ -69,7 +97,7 @@ def attachments_list(entry_id: int):
         'name': r['original_name'],
         'size': r['size_bytes'],
         'content_type': r['content_type'],
-        'url': url_for('attachments_download', att_id=r['id']),
+        'url': url_for('attachments_routes.attachments_download', att_id=r['id']),
         'view_url': url_for('attachments_view', att_id=r['id'])
     } for r in rows]
     return jsonify(data), 200
@@ -168,6 +196,17 @@ def attachments_temp_upload(token: str):
         return ('Keine Dateien akzeptiert.', 400)
     return jsonify({'ok': True, 'saved': saved}), 200
 
+@attachments_routes.get('/attachments/temp/<token>/open/<path:stored_name>')
+@login_required
+def attachments_temp_open(token: str, stored_name: str):
+    _require_temp_token(token)
+    tdir = _temp_dir(token)
+    path = os.path.join(tdir, stored_name)
+    if not os.path.exists(path):
+        abort(404)
+    # Hinweis: Hier kein "as_attachment", um direkt anzusehen
+    guessed = mimetypes.guess_type(stored_name)[0] or 'application/octet-stream'
+    return send_file(path, as_attachment=False, mimetype=guessed)
 
 @attachments_routes.get('/attachments/temp/<token>/list')
 @login_required
@@ -186,23 +225,9 @@ def attachments_temp_list(token: str):
         'name': r['original_name'],
         'size': r['size_bytes'],
         'content_type': r['content_type'],
-        'url': url_for('attachments_temp_open', token=token, stored_name=r['stored_name'])
+        'url': url_for('attachments_routes.attachments_temp_open', token=token, stored_name=r['stored_name'])
     } for r in rows]
     return jsonify(data), 200
-
-
-@attachments_routes.get('/attachments/temp/<token>/open/<path:stored_name>')
-@login_required
-def attachments_temp_open(token: str, stored_name: str):
-    _require_temp_token(token)
-    tdir = _temp_dir(token)
-    path = os.path.join(tdir, stored_name)
-    if not os.path.exists(path):
-        abort(404)
-    # Hinweis: Hier kein "as_attachment", um direkt anzusehen
-    guessed = mimetypes.guess_type(stored_name)[0] or 'application/octet-stream'
-    return send_file(path, as_attachment=False, mimetype=guessed)
-
 
 @attachments_routes.post('/attachments/temp/<int:att_id>/delete')
 @login_required

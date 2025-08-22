@@ -1,9 +1,48 @@
 # -----------------------
 # BottleBalance
 # -----------------------
+import os
+import io
+from flask import render_template, request, redirect, url_for, session, send_file, flash, abort, Blueprint
+from flask_babel import gettext as _
+from sqlalchemy import text
+from datetime import datetime, date
+import csv
+
+from decimal import Decimal, InvalidOperation
+
+from modules.utils import (
+    parse_money
+)
 from modules.core_utils import (
     _entry_dir, 
-    _temp_dir
+    _temp_dir,
+    log_action,
+    ROLES,
+    engine
+)
+from modules.auth_utils import (
+    login_required,
+    require_csrf,
+    require_perms,
+    current_user
+) 
+from modules.bbalance_utils import (
+    _build_index_context,
+    fetch_entries
+) 
+
+from modules.csv_utils import (
+    today_ddmmyyyy
+)
+
+from modules.payment_utils import (
+    get_bemerkungsoptionen
+)
+
+from modules.csv_utils import (
+    parse_date_de_or_today,
+    format_date_de
 )
 
 bbalance_routes = Blueprint('bbalance_routes', __name__)
@@ -133,7 +172,7 @@ def add():
     # Token für diese Seite invalidieren (One-shot)
     session.pop('add_temp_token', None)
 
-    return redirect(url_for('index'))
+    return redirect(url_for('bbalance_routes.index'))
 
 @bbalance_routes.get('/edit/<int:entry_id>')
 @login_required
@@ -156,7 +195,7 @@ def edit(entry_id: int):
 
     if not row:
         flash(_('Eintrag nicht gefunden.'))
-        return redirect(url_for('index'))
+        return redirect(url_for('bbalance_routes.index'))
 
     # Eintragsdaten für das Formular
     data = {
@@ -175,7 +214,7 @@ def edit(entry_id: int):
         'name': r['original_name'],
         'size': r['size_bytes'],
         'content_type': r['content_type'],
-        'url': url_for('attachments_download', att_id=r['id']),
+        'url': url_for('attachments_routes.attachments_download', att_id=r['id']),
         'view_url': url_for('attachments_view', att_id=r['id'])
     } for r in attachments]
     
@@ -211,7 +250,7 @@ def edit_post(entry_id: int):
             WHERE id=:id
         """), {'id': entry_id, 'datum': datum, 'vollgut': vollgut, 'leergut': leergut, 'einnahme': str(einnahme), 'ausgabe': str(ausgabe), 'bemerkung': bemerkung})
     log_action(session.get('user_id'), 'entries:edit', entry_id, None)
-    return redirect(url_for('index'))
+    return redirect(url_for('bbalance_routes.index'))
 
 @bbalance_routes.post('/delete/<int:entry_id>')
 @login_required
@@ -229,7 +268,7 @@ def delete(entry_id: int):
     with engine.begin() as conn:
         conn.execute(text('DELETE FROM entries WHERE id=:id'), {'id': entry_id})
     log_action(session.get('user_id'), 'entries:delete', entry_id, None)
-    return redirect(url_for('index'))
+    return redirect(url_for('bbalance_routes.index'))
 
 # -----------------------
 # Export/Import
@@ -272,7 +311,7 @@ def import_csv():
     replace_all = request.form.get('replace_all') == 'on'
     if not file or file.filename == '':
         flash(_('Bitte eine CSV-Datei auswählen.'))
-        return redirect(url_for('index'))
+        return redirect(url_for('bbalance_routes.index'))
     try:
         content = file.read().decode('utf-8-sig')
         reader = csv.reader(io.StringIO(content), delimiter=';')
@@ -296,7 +335,7 @@ def import_csv():
         if validation_errors:
             for err in validation_errors:
                 flash(err)
-            return redirect(url_for('index'))
+            return redirect(url_for('bbalance_routes.index'))
         expected = ['Datum','Vollgut','Leergut','Inventar','Einnahme','Ausgabe','Kassenbestand','Bemerkung']
         alt_expected = ['Datum','Vollgut','Leergut','Einnahme','Ausgabe','Bemerkung']
         if headers is None or [h.strip() for h in headers] not in (expected, alt_expected):
@@ -326,4 +365,4 @@ def import_csv():
         flash(f"{_('Import successfull:')} {len(rows_to_insert)} {_('rows adopted.')}")
     except Exception as e:
         flash(f"{_('Import fehlgeschlagen:')} {e}")
-    return redirect(url_for('index'))
+    return redirect(url_for('bbalance_routes.index'))

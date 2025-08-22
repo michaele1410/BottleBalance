@@ -3,9 +3,10 @@
 # -----------------------
 
 import os
-from flask import session, abort
+from flask import session,flash, abort, request
 from sqlalchemy import text
-from sqlalchemy.engine import Engine
+from sqlalchemy.engine import Engine, create_engine
+
 
 APP_BASE_URL = os.getenv("APP_BASE_URL") or "http://localhost:5000"
 
@@ -45,7 +46,7 @@ ROLES = {
 # -----------------------
 # Document Upload
 # -----------------------
-UPLOAD_FOLDER = os.getenv("UPLOAD_FOLDER") or os.path.join(app.root_path, "uploads")
+UPLOAD_FOLDER = os.getenv("UPLOAD_FOLDER") or "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 ALLOWED_EXTENSIONS = {
@@ -90,3 +91,11 @@ def log_action(user_id: int | None, action: str, entry_id: int | None, detail: s
             INSERT INTO audit_log (user_id, action, entry_id, detail)
             VALUES (:u, :a, :e, :d)
         """), {'u': user_id, 'a': action, 'e': entry_id, 'd': detail})
+
+def build_base_url():
+    # bevorzuge APP_BASE_URL, fallback auf request.url_root
+    try:
+        base = os.getenv("APP_BASE_URL") or request.url_root
+    except RuntimeError:
+        base = os.getenv("APP_BASE_URL") or "http://localhost:5000/"
+    return base.rstrip("/") + "/"

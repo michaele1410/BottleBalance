@@ -1,10 +1,66 @@
-from flask import Blueprint
+# -----------------------
+# Zahlungsfreigabe
+# -----------------------
+import io
+import os
+import json
+from datetime import date, datetime
+from decimal import Decimal
+from flask_babel import gettext as _
+from flask import render_template, request, redirect, url_for, session, send_file, flash, abort, Blueprint, current_app, jsonify
+from sqlalchemy import text
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak, KeepTogether
 
+
+
+# PDF (ReportLab)
+from reportlab.lib.pagesizes import A4
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.units import mm
+from reportlab.lib import colors  # nur colors lokal importieren
+
+
+# Document Upload
+from werkzeug.utils import secure_filename
+from uuid import uuid4
+import mimetypes
+
+
+from modules.core_utils import (
+    engine
+)
+from modules.auth_utils import (
+    current_user,
+    login_required,
+    require_perms,
+    require_csrf
+)
+from modules.core_utils import (
+    engine,
+    allowed_file,
+    UPLOAD_FOLDER,
+    log_action
+)
+from modules.payment_utils import (
+    _approvals_total,
+    _approved_by_user,
+    _require_approver,
+    _approvals_done,
+    _user_can_edit_antrag,
+    _user_can_view_antrag,
+    get_antrag_email,
+    send_new_request_notifications    
+)
+from modules.mail_utils import (
+    send_status_email
+)
 payment_routes = Blueprint('payment_routes', __name__)
 
 @payment_routes.route('/zahlungsfreigabe')
 @login_required
 def zahlungsfreigabe():
+    today = date.today()
     user = current_user()
     is_approver = bool(user and user.get('can_approve'))
 
@@ -59,6 +115,7 @@ def zahlungsfreigabe():
                 'id': r['id'],
                 'antragsteller': r['antragsteller'],
                 'datum': r['datum'].strftime('%d.%m.%Y') if r['datum'] else '',
+                'today': date.today(),
                 'paragraph': r['paragraph'],
                 'verwendungszweck': r['verwendungszweck'],
                 'betrag': str(r['betrag']),
@@ -81,10 +138,9 @@ def zahlungsfreigabe():
                 'can_ablehnen': is_approver and r['status'] in ('offen', 'on_hold'),
                 'can_zurueckziehen': (user and user['id'] == r['antragsteller_id']
                                     and r['status'] in ('offen', 'on_hold')),
-
             })
 
-    return render_template('payment_authorization.html', antraege=antraege)
+    return render_template('payment_authorization.html', antraege=antraege, today=today)
 
 @payment_routes.post('/freigeben/<int:antrag_id>')
 @login_required
@@ -100,12 +156,12 @@ def freigeben_antrag(antrag_id):
         ).scalar_one_or_none()
         if status != 'offen':
             flash('Nur offene Anträge können freigegeben werden.', 'warning')
-            return redirect(url_for('zahlungsfreigabe'))
+            return redirect(url_for('payment_routes.zahlungsfreigabe'))
 
         # Schon freigegeben? -> idempotent
         if _approved_by_user(conn, antrag_id, user['id']):
             flash('Du hast diesen Antrag bereits freigegeben.', 'info')
-            return redirect(url_for('zahlungsfreigabe'))
+            return redirect(url_for('payment_routes.zahlungsfreigabe'))
 
         # 1) Audit-Eintrag "freigegeben"
         conn.execute(
@@ -156,7 +212,7 @@ def freigeben_antrag(antrag_id):
             flash('Alle erforderlichen Freigaben liegen vor – Antrag ist jetzt freigegeben.', 'success')
         else:
             flash(f'Teilfreigabe erfasst ({done}/{total}).', 'info')
-    return redirect(url_for('zahlungsfreigabe'))
+    return redirect(url_for('payment_routes.zahlungsfreigabe'))
 
 @payment_routes.post('/on_hold/<int:antrag_id>')
 @login_required
@@ -168,14 +224,14 @@ def on_hold_antrag(antrag_id):
         curr = conn.execute(text("SELECT status FROM zahlungsantraege WHERE id=:id"), {'id': antrag_id}).scalar_one_or_none()
         if curr != 'offen':
             flash('Nur offene Anträge können auf On Hold gesetzt werden.', 'warning')
-            return redirect(url_for('zahlungsfreigabe'))
+            return redirect(url_for('payment_routes.zahlungsfreigabe'))
         conn.execute(text("UPDATE zahlungsantraege SET status='on_hold', updated_at=NOW() WHERE id=:id"), {'id': antrag_id})
         conn.execute(text("INSERT INTO zahlungsantrag_audit (antrag_id, user_id, action, timestamp) VALUES (:aid, :uid, 'on_hold', NOW())"),
                      {'aid': antrag_id, 'uid': user['id']})
     if (email := get_antrag_email(antrag_id)):
         send_status_email(email, antrag_id, 'on_hold')
     flash('Antrag wurde auf On Hold gesetzt.', 'info')
-    return redirect(url_for('zahlungsfreigabe'))
+    return redirect(url_for('payment_routes.zahlungsfreigabe'))
 
 @payment_routes.post('/abschliessen/<int:antrag_id>')
 @login_required
@@ -187,14 +243,14 @@ def abschliessen_antrag(antrag_id):
         curr = conn.execute(text("SELECT status FROM zahlungsantraege WHERE id=:id"), {'id': antrag_id}).scalar_one_or_none()
         if curr != 'freigegeben':
             flash('Antrag kann nur nach Freigabe abgeschlossen werden.', 'warning')
-            return redirect(url_for('zahlungsfreigabe'))
+            return redirect(url_for('payment_routes.zahlungsfreigabe'))
         conn.execute(text("UPDATE zahlungsantraege SET status='abgeschlossen', updated_at=NOW() WHERE id=:id"), {'id': antrag_id})
         conn.execute(text("INSERT INTO zahlungsantrag_audit (antrag_id, user_id, action, timestamp) VALUES (:aid, :uid, 'abgeschlossen', NOW())"),
                      {'aid': antrag_id, 'uid': user['id']})
     if (email := get_antrag_email(antrag_id)):
         send_status_email(email, antrag_id, 'abgeschlossen')
     flash('Antrag wurde abgeschlossen.', 'success')
-    return redirect(url_for('zahlungsfreigabe'))
+    return redirect(url_for('payment_routes.zahlungsfreigabe'))
 
 @payment_routes.post('/loeschen/<int:antrag_id>')
 @login_required
@@ -216,7 +272,7 @@ def loeschen_antrag(antrag_id: int):
         # Nur löschen, wenn NICHT abgeschlossen/abgelehnt/freigegeben
         if status in ('abgeschlossen', 'abgelehnt', 'freigegeben'):
             flash('Abgelehnte, freigegebene oder abgeschlossene Anträge können nicht gelöscht werden.', 'warning')
-            return redirect(url_for('zahlungsfreigabe'))
+            return redirect(url_for('payment_routes.zahlungsfreigabe'))
 
         # Löschen durchführen
         conn.execute(text("DELETE FROM zahlungsantraege WHERE id=:id"), {'id': antrag_id})
@@ -229,7 +285,7 @@ def loeschen_antrag(antrag_id: int):
             send_status_email(email, antrag_id, 'geloescht')
 
     flash('Antrag wurde gelöscht.', 'danger')
-    return redirect(url_for('zahlungsfreigabe'))
+    return redirect(url_for('payment_routes.zahlungsfreigabe'))
 
 @payment_routes.post('/ablehnen/<int:antrag_id>')
 @login_required
@@ -243,10 +299,10 @@ def ablehnen_antrag(antrag_id):
         curr = conn.execute(text("SELECT status FROM zahlungsantraege WHERE id=:id"), {'id': antrag_id}).scalar_one_or_none()
         if curr not in ('offen', 'on_hold'):
             flash('Nur offene oder pausierte Anträge können abgelehnt werden.', 'warning')
-            return redirect(url_for('zahlungsfreigabe'))
+            return redirect(url_for('payment_routes.zahlungsfreigabe'))
         if not grund:
             flash('Bitte einen Ablehnungsgrund angeben.', 'warning')
-            return redirect(url_for('zahlungsfreigabe'))
+            return redirect(url_for('payment_routes.zahlungsfreigabe'))
         conn.execute(text("UPDATE zahlungsantraege SET status='abgelehnt', updated_at=NOW() WHERE id=:id"), {'id': antrag_id})
         conn.execute(text("""
             INSERT INTO zahlungsantrag_audit (antrag_id, user_id, action, timestamp, detail)
@@ -257,7 +313,7 @@ def ablehnen_antrag(antrag_id):
         send_status_email(email, antrag_id, 'abgelehnt')
 
     flash('Antrag wurde abgelehnt.', 'danger')
-    return redirect(url_for('zahlungsfreigabe'))
+    return redirect(url_for('payment_routes.zahlungsfreigabe'))
 
 # Antrag durch den Antragsteller zurückziehen
 @payment_routes.post('/zurueckziehen/<int:antrag_id>', endpoint='zurueckziehen_antrag')
@@ -278,7 +334,7 @@ def zurueckziehen_antrag(antrag_id):
         # Nur der Antragsteller und nur in 'offen' oder 'on_hold'
         if row['antragsteller_id'] != user['id'] or row['status'] not in ('offen', 'on_hold'):
             flash('Du kannst nur eigene, offene oder pausierte Anträge zurückziehen.', 'warning')
-            return redirect(url_for('zahlungsfreigabe'))
+            return redirect(url_for('payment_routes.zahlungsfreigabe'))
 
         # Status auf 'zurueckgezogen' setzen
         conn.execute(text("""
@@ -298,7 +354,7 @@ def zurueckziehen_antrag(antrag_id):
         send_status_email(email, antrag_id, 'zurückgezogen')
 
     flash('Antrag wurde zurückgezogen.', 'info')
-    return redirect(url_for('zahlungsfreigabe'))
+    return redirect(url_for('payment_routes.zahlungsfreigabe'))
 
 @payment_routes.post('/fortsetzen/<int:antrag_id>')
 @login_required
@@ -315,7 +371,7 @@ def fortsetzen_antrag(antrag_id: int):
 
         if curr != 'on_hold':
             flash('Nur pausierte Anträge können fortgesetzt werden.', 'warning')
-            return redirect(url_for('zahlungsfreigabe'))
+            return redirect(url_for('payment_routes.zahlungsfreigabe'))
 
         # Status zurück auf 'offen'
         conn.execute(
@@ -335,7 +391,7 @@ def fortsetzen_antrag(antrag_id: int):
             send_status_email(email, antrag_id, 'fortgesetzt')
 
     flash('Antrag wurde fortgesetzt und ist wieder offen.', 'info')
-    return redirect(url_for('zahlungsfreigabe'))
+    return redirect(url_for('payment_routes.zahlungsfreigabe'))
 
 @payment_routes.route('/zahlungsfreigabe/audit')
 @login_required
@@ -409,8 +465,6 @@ def export_einzelantrag_pdf(antrag_id: int):
     story.append(Spacer(1, 4))
 
     # Audit-Tabelle
-    from reportlab.lib import colors  # nur colors lokal importieren
-
     audit_data = [[
         Paragraph("<b>Zeitpunkt</b>", styles['Normal']),
         Paragraph("<b>Aktion</b>", styles['Normal']),
@@ -457,12 +511,13 @@ def export_einzelantrag_pdf(antrag_id: int):
 @require_csrf
 def upload_antrag_attachment(antrag_id: int):
     if not _user_can_edit_antrag(antrag_id):
+        current_app.logger.warning(f"403 bei Antrag {antrag_id} für Benutzer {user['id']}")
         abort(403)
 
     files = request.files.getlist('files') or []
     if not files:
         flash('Bitte Datei(en) auswählen.', 'warning')
-        return redirect(url_for('zahlungsfreigabe_detail', antrag_id=antrag_id))
+        return redirect(url_for('payment_routes.zahlungsfreigabe_detail', antrag_id=antrag_id))
 
     target_dir = _antrag_dir(antrag_id)
     saved = 0
@@ -504,7 +559,7 @@ def upload_antrag_attachment(antrag_id: int):
     else:
         flash('Keine Dateien hochgeladen.', 'warning')
 
-    return redirect(url_for('zahlungsfreigabe_detail', antrag_id=antrag_id))
+    return redirect(url_for('payment_routes.zahlungsfreigabe_detail', antrag_id=antrag_id))
 
 @payment_routes.get('/zahlungsfreigabe/attachments/<int:att_id>/view')
 @login_required
@@ -614,7 +669,85 @@ def delete_antrag_attachment(att_id: int):
         """), {'aid': r['antrag_id'], 'uid': session.get('user_id'),
                'det': f"att_id={att_id}, name={r['original_name']}"})
     flash('Anhang gelöscht.', 'info')
-    return redirect(url_for('zahlungsfreigabe_detail', antrag_id=r['antrag_id']))
+    return redirect(url_for('payment_routes.zahlungsfreigabe_detail', antrag_id=r['antrag_id']))
+
+@payment_routes.post('/zahlungsfreigabe/<int:antrag_id>/edit')
+@login_required
+@require_csrf
+def edit_antrag(antrag_id):
+    user = current_user()
+
+    with engine.begin() as conn:
+        row = conn.execute(text("""
+            SELECT verwendungszweck, betrag, lieferant, begruendung, paragraph, datum,
+                   antragsteller_id, status
+            FROM zahlungsantraege
+            WHERE id=:id
+        """), {'id': antrag_id}).mappings().first()
+
+        if not row:
+            abort(404)
+
+        if row['status'] in ('freigegeben', 'abgeschlossen', 'abgelehnt'):
+            flash('Bearbeitung nicht mehr möglich.', 'warning')
+            return redirect(url_for('payment_routes.zahlungsfreigabe_detail', antrag_id=antrag_id))
+
+        if user['id'] != row['antragsteller_id'] and not user.get('can_approve'):
+            abort(403)
+
+        # Neue Werte aus dem Formular
+        verwendungszweck = (request.form.get('verwendungszweck') or '').strip()
+        betrag_str = (request.form.get('betrag') or '').strip()
+        lieferant = (request.form.get('lieferant') or '').strip()
+        begruendung = (request.form.get('begruendung') or '').strip()
+        paragraph = (request.form.get('paragraph') or '').strip()
+        datum_str = (request.form.get('datum') or '').strip()
+
+        # Validierung
+        try:
+            betrag_decimal = Decimal(betrag_str.replace(',', '.'))
+            datum_obj = datetime.strptime(datum_str, '%Y-%m-%d').date()
+        except Exception as e:
+            flash(f'Ungültige Eingabe: {e}', 'danger')
+            return redirect(url_for('payment_routes.zahlungsfreigabe_detail', antrag_id=antrag_id))
+
+        # Änderungen erkennen und einzeln protokollieren
+        for field, new_value, old_value in [
+            ('verwendungszweck', verwendungszweck, row['verwendungszweck']),
+            ('betrag', betrag_decimal, row['betrag']),
+            ('lieferant', lieferant, row['lieferant']),
+            ('begruendung', begruendung, row['begruendung']),
+            ('paragraph', paragraph, row['paragraph']),
+            ('datum', datum_obj, row['datum']),
+        ]:
+            if new_value != old_value:
+                conn.execute(text("""
+                    INSERT INTO zahlungsantrag_audit (antrag_id, user_id, action, timestamp, detail)
+                    VALUES (:aid, :uid, 'feld_geaendert', NOW(), :detail)
+                """), {
+                    'aid': antrag_id,
+                    'uid': user['id'],
+                    'detail': f"Feld: {field}\nAlt: {old_value}\nNeu: {new_value}"
+                })
+
+        # Update durchführen
+        conn.execute(text("""
+            UPDATE zahlungsantraege
+            SET verwendungszweck=:zweck, betrag=:betrag, lieferant=:lieferant,
+                begruendung=:begruendung, paragraph=:paragraph, datum=:datum, updated_at=NOW()
+            WHERE id=:id
+        """), {
+            'zweck': verwendungszweck,
+            'betrag': str(betrag_decimal),
+            'lieferant': lieferant,
+            'begruendung': begruendung,
+            'paragraph': paragraph,
+            'datum': datum_obj,
+            'id': antrag_id
+        })
+
+        flash('Antrag gespeichert.', 'success')
+    return redirect(url_for('payment_routes.zahlungsfreigabe_detail', antrag_id=antrag_id))
 
 @payment_routes.get('/zahlungsfreigabe/export/pdf')
 @login_required
@@ -766,3 +899,259 @@ def export_alle_antraege_pdf():
     doc.build(story, onFirstPage=_footer, onLaterPages=_footer)
     buffer.seek(0)
     return send_file(buffer, as_attachment=True, download_name='alle_antraege.pdf', mimetype='application/pdf')
+
+# Zahlungsfreigabe
+def _antrag_dir(antrag_id: int) -> str:
+    p = os.path.join(UPLOAD_FOLDER, f"antrag_{antrag_id}")
+    os.makedirs(p, exist_ok=True)
+    return p
+
+@payment_routes.post('/zahlungsfreigabe/antrag')
+@login_required
+@require_csrf
+def zahlungsfreigabe_antrag():
+    user = current_user()
+    if not user:
+        abort(403)
+
+    paragraph = (request.form.get('paragraph') or '').strip()
+    verwendungszweck = (request.form.get('zweck') or '').strip()
+    datum_str = (request.form.get('datum') or '').strip()
+    betrag_str = (request.form.get('betrag') or '').strip()
+    lieferant = (request.form.get('lieferant') or '').strip()
+    begruendung = (request.form.get('begruendung') or '').strip()
+
+    # Eingaben validieren
+    if not datum_str:
+        flash('Bitte ein gültiges Datum angeben.', 'danger')
+        return redirect(url_for('payment_routes.zahlungsfreigabe'))
+
+    if not betrag_str:
+        flash('Bitte einen gültigen Betrag angeben.', 'danger')
+        return redirect(url_for('payment_routes.zahlungsfreigabe'))
+
+    try:
+        datum = datetime.strptime(datum_str, '%Y-%m-%d').date()
+    except ValueError:
+        flash('Ungültiges Datumsformat. Bitte im Format YYYY-MM-DD eingeben.', 'danger')
+        return redirect(url_for('payment_routes.zahlungsfreigabe'))
+
+    try:
+        betrag = Decimal(betrag_str.replace(',', '.'))
+    except Exception:
+        flash('Ungültiger Betrag. Bitte eine Zahl eingeben.', 'danger')
+        return redirect(url_for('payment_routes.zahlungsfreigabe'))
+
+
+    # Antrag speichern
+    with engine.begin() as conn:
+        res = conn.execute(text("""
+            INSERT INTO zahlungsantraege (
+                antragsteller_id, datum, paragraph, verwendungszweck, betrag,
+                lieferant, begruendung, status, read_only, created_at, updated_at
+            ) VALUES (
+                :uid, :datum, :para, :zweck, :betrag,
+                :lieferant, :begruendung, 'offen', TRUE, NOW(), NOW()
+            ) RETURNING id
+        """), {
+            'uid': user['id'],
+            'datum': datum,
+            'para': paragraph,
+            'zweck': verwendungszweck,
+            'betrag': str(betrag),
+            'lieferant': lieferant,
+            'begruendung': begruendung
+        })
+        antrag_id = res.scalar_one()
+
+        # Audit-Eintrag
+        conn.execute(text("""
+            INSERT INTO zahlungsantrag_audit (antrag_id, user_id, action, timestamp, detail)
+            VALUES (:aid, :uid, 'erstellt', NOW(), NULL)
+        """), {'aid': antrag_id, 'uid': user['id']})
+
+    # Benachrichtigung an Approver (Best-Effort)
+    try:
+        with engine.begin() as conn:
+            approver_emails = conn.execute(text("""
+                SELECT email FROM users
+                WHERE can_approve = TRUE AND active = TRUE AND email IS NOT NULL
+            """)).scalars().all()
+
+        if approver_emails:
+            send_new_request_notifications(antrag_id, approver_emails)
+        else:
+            current_app.logger.warning("Keine Approver-E-Mails gefunden für Antrag %s", antrag_id)
+
+    except Exception:
+        logger.exception("Fehler beim Senden der Benachrichtigungen für neuen Antrag %s", antrag_id)
+
+    flash('Zahlungsantrag erfolgreich erstellt.', 'success')
+    return redirect(url_for('payment_routes.zahlungsfreigabe'))
+
+# Eigene Freigabe (des Approvers) zurückziehen
+@payment_routes.post('/freigabe_zurueckziehen/<int:antrag_id>', endpoint='freigabe_zurueckziehen')
+@login_required
+@require_csrf
+def freigabe_zurueckziehen(antrag_id):
+    user = current_user()
+    _require_approver(user)
+
+    with engine.begin() as conn:
+        # Status prüfen (abgeschlossen -> keine Rücknahme mehr)
+        curr = conn.execute(text("""
+            SELECT status FROM zahlungsantraege WHERE id=:id
+        """), {'id': antrag_id}).scalar_one_or_none()
+        if curr is None:
+            abort(404)
+        if curr == 'abgeschlossen':
+            flash('Abgeschlossene Anträge können nicht mehr geändert werden.', 'warning')
+            return redirect(url_for('payment_routes.zahlungsfreigabe'))
+
+        # Eigene Freigabe löschen (falls vorhanden)
+        deleted = conn.execute(text("""
+            DELETE FROM zahlungsantrag_audit
+            WHERE antrag_id = :aid AND user_id = :uid AND action = 'freigegeben'
+        """), {'aid': antrag_id, 'uid': user['id']}).rowcount
+
+        if deleted == 0:
+            flash('Keine Freigabe zum Zurückziehen gefunden.', 'warning')
+            return redirect(url_for('payment_routes.zahlungsfreigabe'))
+
+        # Audit-Eintrag protokollieren
+        conn.execute(text("""
+            INSERT INTO zahlungsantrag_audit (antrag_id, user_id, action, timestamp)
+            VALUES (:aid, :uid, 'freigabe_zurueckgezogen', NOW())
+        """), {'aid': antrag_id, 'uid': user['id']})
+
+        # Status ggf. zurück auf 'offen', wenn nicht mehr vollständig
+        done  = _approvals_done(conn, antrag_id)
+        total = _approvals_total(conn)
+        if curr == 'freigegeben' and (total == 0 or done < total):
+            conn.execute(text("""
+                UPDATE zahlungsantraege SET status='offen', updated_at=NOW()
+                WHERE id=:id
+            """), {'id': antrag_id})
+            conn.execute(text("""
+                INSERT INTO zahlungsantrag_audit (antrag_id, user_id, action, timestamp, detail)
+                VALUES (:aid, :uid, 'freigabe_nicht_mehr_vollständig', NOW(), :det)
+            """), {'aid': antrag_id, 'uid': user['id'], 'det': f'{done}/{total} Freigaben'})
+
+    flash('Deine Freigabe wurde zurückgezogen.', 'info')
+    return redirect(url_for('payment_routes.zahlungsfreigabe'))
+
+@payment_routes.get('/zahlungsfreigabe/<int:antrag_id>/attachments/list')
+@login_required
+def list_antrag_attachments(antrag_id: int):
+    if not _user_can_view_antrag(antrag_id):
+        abort(403)
+    with engine.begin() as conn:
+        rows = conn.execute(text("""
+            SELECT id, original_name, content_type, size_bytes, created_at
+            FROM antrag_attachments
+            WHERE antrag_id = :aid
+            ORDER BY created_at DESC, id DESC
+        """), {'aid': antrag_id}).mappings().all()
+    data = [{
+        'id': r['id'],
+        'name': r['original_name'],
+        'size': r['size_bytes'],
+        'content_type': r['content_type'],
+        'created_at': r['created_at'].isoformat() if r['created_at'] else None,
+        'url': url_for('payment_routes.download_antrag_attachment', att_id=r['id']),
+    } for r in rows]
+    return jsonify(data), 200
+
+@payment_routes.route('/zahlungsfreigabe/<int:antrag_id>')
+@login_required
+def zahlungsfreigabe_detail(antrag_id):
+    user = current_user()
+    is_approver = bool(user and user.get('can_approve'))
+
+    antrag_row = None
+    audit = []
+    approvers = []
+
+    with engine.begin() as conn:
+        # Antrag inkl. approver_snapshot laden
+        antrag_row = conn.execute(
+            text("""
+                SELECT z.*, u.username AS antragsteller
+                FROM zahlungsantraege z
+                LEFT JOIN users u ON u.id = z.antragsteller_id
+                WHERE z.id = :id
+            """), {'id': antrag_id}
+        ).mappings().first()
+        if not antrag_row:
+            abort(404)
+
+        # Audit laden
+        audit = conn.execute(text("""
+            SELECT a.id, a.user_id, u.username, a.action, a.timestamp, a.detail
+            FROM zahlungsantrag_audit a
+            LEFT JOIN users u ON u.id = a.user_id
+            WHERE a.antrag_id = :id
+            ORDER BY a.timestamp ASC, a.id ASC
+        """), {'id': antrag_id}).mappings().all()
+
+        # Approver-Liste: Wenn Snapshot vorhanden, diesen verwenden! inkl. approved-Flag
+        if antrag_row.get('approver_snapshot'):
+            snap = antrag_row['approver_snapshot']
+            if isinstance(snap, str):
+                approver_list = json.loads(snap)
+            else:
+                approver_list = snap  # Bereits als Liste (z.B. bei PostgreSQL JSONB)
+            approved_ids = set(
+                a['user_id'] for a in audit if a['action'] == 'freigegeben'
+            )
+            approvers = [
+                {
+                    'id': ap['id'],
+                    'username': ap['username'],
+                    'approved': ap['id'] in approved_ids
+                }
+                for ap in approver_list
+            ]
+        else:
+            # Fallback: aktuelle Liste aus DB
+            approvers = conn.execute(
+                text("""
+                    SELECT u.id, u.username,
+                    EXISTS (
+                        SELECT 1 FROM zahlungsantrag_audit a
+                        WHERE a.antrag_id=:aid AND a.action='freigegeben' AND a.user_id=u.id
+                    ) AS approved
+                    FROM users u
+                    WHERE u.can_approve=TRUE AND u.active=TRUE
+                    ORDER BY u.username ASC
+                """), {'aid': antrag_id}
+            ).mappings().all()
+
+        attachments = conn.execute(text("""    
+            SELECT id, original_name, size_bytes, content_type, created_at
+            FROM antrag_attachments
+            WHERE antrag_id=:aid
+            ORDER BY created_at DESC
+        """), {'aid': antrag_id}).mappings().all()
+
+    # ---- JETZT ausserhalb des with-Blocks auf das Ergebnis zugreifen ----
+    done = sum(1 for a in approvers if a['approved'])
+    total = len(approvers)
+    percent = int(done * 100 / total) if total > 0 else 0
+
+    status = antrag_row.get('status') or ''
+    can_fortsetzen = is_approver and status == 'on_hold'
+    can_on_hold    = is_approver and status == 'offen'
+
+    return render_template(
+        'payment_authorization_detail.html',
+        antrag=antrag_row,
+        audit=audit,
+        approvers=approvers,
+        approvals_done=done,
+        approvals_total=total,
+        approval_percent=percent,
+        can_fortsetzen=can_fortsetzen,
+        can_on_hold=can_on_hold,
+        attachments=attachments
+    )

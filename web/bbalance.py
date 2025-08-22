@@ -227,8 +227,10 @@ def edit(entry_id: int):
         'url': url_for('attachments_routes.attachments_download', att_id=r['id']),
         'view_url': url_for('attachments_view', att_id=r['id'])
     } for r in attachments]
+
+    bemerkungsoptionen = get_bemerkungsoptionen()
     
-    return render_template('edit.html', data=data, attachments=att_data, audit=audit)
+    return render_template('edit.html', data=data, attachments=att_data, audit=audit, bemerkungsoptionen=bemerkungsoptionen)
 
 
 @bbalance_routes.post('/edit/<int:entry_id>')

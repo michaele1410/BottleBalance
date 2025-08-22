@@ -1,27 +1,34 @@
-
 {% extends "base.html" %}
 {% block content %}
 <div class="card shadow-sm">
   <div class="card-body">
     <h1 class="h5 mb-3">{{ _('Audit-Log') }}</h1>
-    <form method="get" class="row g-2 align-items-end mb-3">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-      <div class="col-12 col-md-4">
-        <label class="form-label">{{ _('Suche') }}</label>
-        <input type="text" name="q" class="form-control" placeholder="{{ _('Aktion/Entry-ID') }}" value="{{ request.args.get('q','') }}">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
+      <div class="w-100">
+        <form method="get" class="row row-cols-1 row-cols-md-auto g-2 align-items-end form-compact" id="filtersForm">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="col">
+            <label class="form-label">{{ _('Suche') }}</label>
+            <input type="text" name="q" class="form-control" placeholder="{{ _('Aktion/Entry-ID') }}" value="{{ request.args.get('q','') }}">
+          </div>
+          <div class="col">
+            <label for="filter_daterange" class="form-label mb-1">{{ _('Zeitraum') }}</label>
+            <input type="text" id="filter_daterange" class="form-control"
+              placeholder="{{ _('TT.MM.JJJJ – TT.MM.JJJJ') }}" autocomplete="off">
+            <input type="hidden" name="from" id="filter_from" value="{{ request.args.get('from','') }}">
+            <input type="hidden" name="to" id="filter_to" value="{{ request.args.get('to','') }}">
+          </div>
+          <div class="col d-flex gap-2">
+            <button class="btn btn-primary" type="submit">
+              <i class="bi-funnel me-1"></i> {{ _('Filtern') }}
+            </button>
+            <a class="btn btn-outline-secondary" href="{{ url_for('audit_list') }}">
+              <i class="bi-x-circle me-1"></i> {{ _('Zurücksetzen') }}
+            </a>
+          </div>
+        </form>
       </div>
-      <div class="col-6 col-md-3">
-        <label class="form-label">{{ _('Von') }}</label>
-        <input type="date" name="from" class="form-control" value="{{ request.args.get('from','') }}">
-      </div>
-      <div class="col-6 col-md-3">
-        <label class="form-label">{{ _('Bis') }}</label>
-        <input type="date" name="to" class="form-control" value="{{ request.args.get('to','') }}">
-      </div>
-      <div class="col-12 col-md-2 d-grid">
-        <button class="btn btn-outline-primary"><i class="bi-search me-1"></i> {{ _('Filtern') }}</button>
-      </div>
-    </form>
+    </div>
 
     <div class="table-responsive">
       <table class="table table-sm table-striped align-middle">
@@ -32,7 +39,6 @@
             <th>{{ _('Aktion') }}</th>
             <th>{{ _('Entry-ID') }}</th>
             <th>{{ _('Details') }}</th>
-
           </tr>
         </thead>
         <tbody>
@@ -45,11 +51,41 @@
             <td>{{ a.detail or '—' }}</td>
           </tr>
         {% else %}
-          <tr><td colspan="5" class="text-center text-muted">{{ _('Keine Einträge.') }}</td></tr>
+          <tr>
+            <td colspan="5" class="text-center text-muted">{{ _('Keine Einträge.') }}</td>
+          </tr>
         {% endfor %}
         </tbody>
       </table>
     </div>
   </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    if (window.flatpickr) {
+      if (flatpickr.l10ns?.de) flatpickr.localize(flatpickr.l10ns.de);
+      flatpickr("#filter_daterange", {
+        mode: "range",
+        dateFormat: "d.m.Y",
+        allowInput: true,
+        onChange: function(selectedDates, dateStr, instance) {
+          if (selectedDates.length === 2) {
+            // Set hidden fields for backend filter
+            document.getElementById('filter_from').value = flatpickr.formatDate(selectedDates[0], "Y-m-d");
+            document.getElementById('filter_to').value = flatpickr.formatDate(selectedDates[1], "Y-m-d");
+          } else if (selectedDates.length === 1) {
+            document.getElementById('filter_from').value = flatpickr.formatDate(selectedDates[0], "Y-m-d");
+            document.getElementById('filter_to').value = "";
+          } else {
+            document.getElementById('filter_from').value = "";
+            document.getElementById('filter_to').value = "";
+          }
+        }
+      });
+    }
+  });
+</script>
 {% endblock %}

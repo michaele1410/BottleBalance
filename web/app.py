@@ -943,10 +943,6 @@ def inject_helpers():
 
 # Userverwaltung
 
-
-
-
-
 @app.get('/audit')
 @login_required
 @require_perms('audit:view')
@@ -959,13 +955,13 @@ def audit_list():
     params = {}
     where = []
     if q:
-        where.append('(action ILIKE :q OR CAST(entry_id AS TEXT) ILIKE :q)')
+        where.append('(a.action ILIKE :q OR CAST(a.entry_id AS TEXT) ILIKE :q)')
         params['q'] = f"%{q}%"
     if df:
-        where.append('DATE(created_at) >= :df')
+        where.append('DATE(a.created_at) >= :df')
         params['df'] = df
     if dt:
-        where.append('DATE(created_at) <= :dt')
+        where.append('DATE(a.created_at) <= :dt')
         params['dt'] = dt
     where_sql = ' WHERE ' + ' AND '.join(where) if where else ''
     with engine.begin() as conn:

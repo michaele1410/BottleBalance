@@ -11,7 +11,8 @@ from werkzeug.security import generate_password_hash
 from modules.auth_utils import (
     login_required,
     require_perms,
-    require_csrf
+    require_csrf,
+    current_user
 )
 
 from modules.core_utils import (
@@ -36,7 +37,6 @@ from modules.mail_utils import (
     send_mail
 )
 
-
 user_routes = Blueprint('user_routes', __name__)
 
 @user_routes.get('/admin/users')
@@ -51,7 +51,7 @@ def users_list():
         """)).mappings().all()
 
     # rows = db.session.execute(stmt).mappings().all()  # liefert RowMapping-Objekte
-    return render_template('users.html', users=rows)
+    return render_template('users.html', users=rows, user=current_user)
 
 @user_routes.post('/admin/users/add')
 @login_required
@@ -230,9 +230,15 @@ def users_reset_link(uid: int):
 @require_perms('users:manage')
 @require_csrf
 def users_toggle(uid: int):
+    current_uid = session.get('user_id')
+    if uid == current_uid:
+        flash(_('Du kannst dich nicht selbst deaktivieren.'))
+        return redirect(url_for('user_routes.users_list'))
+
     with engine.begin() as conn:
         conn.execute(text("UPDATE users SET active = NOT active, updated_at=NOW() WHERE id=:id"), {'id': uid})
     return redirect(url_for('user_routes.users_list'))
+
 
 @user_routes.post('/admin/users/<int:uid>/role')
 @login_required

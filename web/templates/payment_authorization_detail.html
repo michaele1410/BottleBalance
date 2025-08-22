@@ -53,7 +53,7 @@
     </form>
     {% else %}
       <dt class="col-sm-3">Paragraph</dt>
-      <dd class="col-sm-9">§ {{ antrag.paragraph }}</dd>
+      <dd class="col-sm-9">{{ antrag.paragraph }}</dd>
 
       <dt class="col-sm-3">Verwendungszweck</dt>
       <dd class="col-sm-9">{{ antrag.verwendungszweck }}</dd>
@@ -108,7 +108,7 @@
   <h5 class="mt-5">Anhänge</h5>
 
   <!-- Upload-Form -->
-  {% if can_on_hold or can_fortsetzen or antrag.status not in ['abgeschlossen', 'abgelehnt', 'freigegeben'] %}
+  {% if antrag.status not in ['abgeschlossen', 'abgelehnt', 'zurueckgezogen'] %}
   <form action="{{ url_for('payment_routes.upload_antrag_attachment', antrag_id=antrag.id) }}" method="post"
     enctype="multipart/form-data" class="mb-3">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -141,7 +141,7 @@
         <a href="{{ url_for('payment_routes.view_antrag_attachment', att_id=att.id) }}" target="_blank"
           class="btn btn-sm btn-outline-primary">Ansehen</a>
       </div>
-      {% if antrag.status not in ['abgeschlossen', 'abgelehnt', 'freigegeben'] %}
+      {% if antrag.status not in ['abgeschlossen', 'abgelehnt', 'zurueckgezogen'] %}
       <form method="post" action="{{ url_for('payment_routes.delete_antrag_attachment', att_id=att.id) }}"
         onsubmit="return confirm('Anhang wirklich löschen?');">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

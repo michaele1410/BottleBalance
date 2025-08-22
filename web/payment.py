@@ -449,7 +449,7 @@ def export_einzelantrag_pdf(antrag_id: int):
     fields = [
         ('Antragsteller', r['antragsteller']),
         ('Datum', r['datum'].strftime('%d.%m.%Y') if r['datum'] else ''),
-        ('Paragraph', f"§ {r['paragraph']}" if r['paragraph'] else ''),
+        ('Paragraph', f"{r['paragraph']}" if r['paragraph'] else ''),
         ('Verwendungszweck', r['verwendungszweck'] or ''),
         ('Betrag', f"{r['betrag']} EUR" if r['betrag'] is not None else ''),
         ('Lieferant', r['lieferant'] or ''),
@@ -506,12 +506,29 @@ def export_einzelantrag_pdf(antrag_id: int):
                      mimetype='application/pdf')
 
 # ============= Zahlungsantrag-Anhänge =============
+# ============= Zahlungsantrag-Anhänge =============
 @payment_routes.post('/zahlungsfreigabe/<int:antrag_id>/attachments/upload')
 @login_required
 @require_csrf
 def upload_antrag_attachment(antrag_id: int):
-    if not _user_can_edit_antrag(antrag_id):
-        current_app.logger.warning(f"403 bei Antrag {antrag_id} für Benutzer {user['id']}")
+    user = current_user()
+
+    # Status prüfen
+    with engine.begin() as conn:
+        status = conn.execute(
+            text("SELECT status FROM zahlungsantraege WHERE id=:id"),
+            {'id': antrag_id}
+        ).scalar_one_or_none()
+        if status is None:
+            abort(404)
+
+    # Upload nur sperren, wenn abgeschlossen (optional auch abgelehnt)
+    if status in ('abgeschlossen', 'abgelehnt'):
+        flash('Anhänge können nicht mehr hochgeladen werden, da der Antrag abgeschlossen oder abgelehnt ist.', 'warning')
+        return redirect(url_for('payment_routes.zahlungsfreigabe_detail', antrag_id=antrag_id))
+
+    # Berechtigung: Antragsteller oder Approver darf hochladen
+    if not _user_can_view_antrag(antrag_id):
         abort(403)
 
     files = request.files.getlist('files') or []
@@ -521,7 +538,6 @@ def upload_antrag_attachment(antrag_id: int):
 
     target_dir = _antrag_dir(antrag_id)
     saved = 0
-    user = current_user()
 
     with engine.begin() as conn:
         for f in files:
@@ -898,7 +914,7 @@ def export_alle_antraege_pdf():
         details_data = [
             ["Antragsteller/in:", P(r['antragsteller'])],
             ["Datum:", P(r['datum'].strftime('%d.%m.%Y') if r['datum'] else '')],
-            ["Paragraph:", P(f"§ {r['paragraph']}" if r['paragraph'] else '')],
+            ["Paragraph:", P(f"{r['paragraph']}" if r['paragraph'] else '')],
             ["Verwendungszweck:", P(r['verwendungszweck'])],
             ["Betrag:", P(f"{r['betrag']} EUR" if r['betrag'] is not None else '')],
             ["Lieferant:", P(r['lieferant'])],

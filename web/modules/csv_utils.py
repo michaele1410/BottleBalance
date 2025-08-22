@@ -68,10 +68,19 @@ def _norm(h: str) -> str:
 def today_ddmmyyyy():
     return date.today().strftime('%d.%m.%Y')
 
-def parse_date_de_or_today(s: str | None) -> date:
+
+def parse_date_de_or_none(s: str | None) -> date | None:
+    """Parst ein deutsches Datum (dd.mm.yyyy) oder gibt None zurück."""
     if not s or not s.strip():
-        return date.today()
-    return datetime.strptime(s.strip(), '%d.%m.%Y').date()
+        return None
+    try:
+        return datetime.strptime(s.strip(), '%d.%m.%Y').date()
+    except ValueError:
+        return None
+
+def parse_date_de_or_today(s: str | None) -> date:
+    """Parst ein deutsches Datum oder gibt heute zurück (für neue Einträge)."""
+    return parse_date_de_or_none(s) or date.today()
 
 def format_date_de(d: date) -> str:
     return d.strftime('%d.%m.%Y')

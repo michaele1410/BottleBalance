@@ -33,7 +33,8 @@ from modules.bbalance_utils import (
 ) 
 
 from modules.csv_utils import (
-    today_ddmmyyyy
+    today_ddmmyyyy,
+    parse_date_de_or_none
 )
 
 from modules.payment_utils import (
@@ -193,6 +194,15 @@ def edit(entry_id: int):
             ORDER BY created_at DESC
         """), {'id': entry_id}).mappings().all()
 
+        # Lade die Audit-Daten
+        audit = conn.execute(text("""
+            SELECT a.id, a.user_id, u.username, a.action, a.created_at, a.detail
+            FROM audit_log a
+            LEFT JOIN users u ON u.id = a.user_id
+            WHERE a.entry_id = :id
+            ORDER BY a.created_at ASC, a.id ASC
+        """), {'id': entry_id}).mappings().all()
+
     if not row:
         flash(_('Eintrag nicht gefunden.'))
         return redirect(url_for('bbalance_routes.index'))
@@ -218,38 +228,157 @@ def edit(entry_id: int):
         'view_url': url_for('attachments_view', att_id=r['id'])
     } for r in attachments]
     
-    return render_template('edit.html', data=data, attachments=att_data)
+    return render_template('edit.html', data=data, attachments=att_data, audit=audit)
+
 
 @bbalance_routes.post('/edit/<int:entry_id>')
 @login_required
 @require_perms('entries:edit:any')
 @require_csrf
 def edit_post(entry_id: int):
+    # 1) Altwerte laden
     with engine.begin() as conn:
-        row = conn.execute(text('SELECT created_by FROM entries WHERE id=:id'), {'id': entry_id}).mappings().first()
+        row = conn.execute(text("""
+            SELECT id, datum, vollgut, leergut, einnahme, ausgabe, bemerkung, created_by
+            FROM entries
+            WHERE id=:id
+        """), {'id': entry_id}).mappings().first()
     if not row:
         abort(404)
+
+    # 2) RBAC wie gehabt
     allowed = ROLES.get(session.get('role'), set())
     if 'entries:edit:any' not in allowed:
         user = current_user()
         if not user or row['created_by'] != user['id'] or 'entries:edit:own' not in allowed:
             abort(403)
+
+    # 3) Neue Werte parsen
     try:
-        datum = parse_date_de_or_today(request.form.get('datum'))
+        # Datum nur übernehmen, wenn gültig – sonst Altwert behalten
+        parsed_date = parse_date_de_or_none(request.form.get('datum'))
+        if parsed_date:
+            datum = parsed_date
+        else:
+            # row['datum'] kann date oder datetime sein
+            od = row['datum']
+            datum = od.date() if isinstance(od, datetime) else od
+
         vollgut = int((request.form.get('vollgut') or '0').strip() or '0')
         leergut = int((request.form.get('leergut') or '0').strip() or '0')
         einnahme = parse_money(request.form.get('einnahme') or '0')
-        ausgabe = parse_money(request.form.get('ausgabe') or '0')
+        ausgabe  = parse_money(request.form.get('ausgabe')  or '0')
         bemerkung = (request.form.get('bemerkung') or '').strip()
     except Exception as e:
-        flash(f"{_('Eingabefehler:')} {e}")
-        return redirect(url_for('edit', entry_id=entry_id))
+        flash(f"{_('Eingabefehler:')} {e}", 'danger')
+        return redirect(url_for('bbalance_routes.edit', entry_id=entry_id))
+
+    # 4) Änderungen (Diff) ermitteln – identisch zur Philosophie in payment.py
+    def _q2(v: Decimal | None) -> Decimal | None:
+        """Geldwerte auf 2 Nachkommastellen normalisieren (oder None)."""
+        if v is None:
+            return None
+        return Decimal(str(v)).quantize(Decimal('0.01'))
+
+    def _fmt_money(v: Decimal | None) -> str:
+        v = _q2(v)
+        return "" if v is None else f"{v:.2f}"
+
+    def _fmt_date(d) -> str:
+        if not d:
+            return ""
+        if isinstance(d, datetime):
+            d = d.date()
+        return d.strftime('%d.%m.%Y')
+
+    changes: list[tuple[str, str, str, str]] = []  # (feld_key, label, old_str, new_str)
+
+    # Datum
+    old_datum = row['datum'].date() if isinstance(row['datum'], datetime) else row['datum']
+    if old_datum != datum:
+        changes.append(("datum", "Datum", _fmt_date(old_datum), _fmt_date(datum)))
+
+    # Vollgut
+    old_vollgut = int(row['vollgut'] or 0)
+    if old_vollgut != vollgut:
+        changes.append(("vollgut", "Vollgut", str(old_vollgut), str(vollgut)))
+
+    # Leergut
+    old_leergut = int(row['leergut'] or 0)
+    if old_leergut != leergut:
+        changes.append(("leergut", "Leergut", str(old_leergut), str(leergut)))
+
+    # Einnahme
+    old_einnahme = _q2(row['einnahme'])
+    new_einnahme = _q2(einnahme)
+    if old_einnahme != new_einnahme:
+        changes.append(("einnahme", "Einnahme", _fmt_money(old_einnahme), _fmt_money(new_einnahme)))
+
+    # Ausgabe
+    old_ausgabe = _q2(row['ausgabe'])
+    new_ausgabe = _q2(ausgabe)
+    if old_ausgabe != new_ausgabe:
+        changes.append(("ausgabe", "Ausgabe", _fmt_money(old_ausgabe), _fmt_money(new_ausgabe)))
+
+    # Bemerkung (trim vergleichen)
+    old_bemerkung = (row['bemerkung'] or '').strip()
+    if old_bemerkung != bemerkung:
+        changes.append(("bemerkung", "Bemerkung", old_bemerkung, bemerkung))
+
+    # 5) Speichern + Audit (analog zu payment.py: pro Feldänderung eigener Audit-Eintrag)
     with engine.begin() as conn:
         conn.execute(text("""
-            UPDATE entries SET datum=:datum, vollgut=:vollgut, leergut=:leergut, einnahme=:einnahme, ausgabe=:ausgabe, bemerkung=:bemerkung, updated_at=NOW()
+            UPDATE entries
+            SET datum=:datum,
+                vollgut=:vollgut,
+                leergut=:leergut,
+                einnahme=:einnahme,
+                ausgabe=:ausgabe,
+                bemerkung=:bemerkung,
+                updated_at=NOW()
             WHERE id=:id
-        """), {'id': entry_id, 'datum': datum, 'vollgut': vollgut, 'leergut': leergut, 'einnahme': str(einnahme), 'ausgabe': str(ausgabe), 'bemerkung': bemerkung})
-    log_action(session.get('user_id'), 'entries:edit', entry_id, None)
+        """), {
+            'id': entry_id,
+            'datum': datum,
+            'vollgut': vollgut,
+            'leergut': leergut,
+            'einnahme': str(einnahme) if einnahme is not None else None,
+            'ausgabe':  str(ausgabe)  if ausgabe  is not None else None,
+            'bemerkung': bemerkung
+        })
+
+        # a) Einzelne Feldänderungen wie in payment.py
+        #for _key, label, old, new in changes:
+        #    conn.execute(text("""
+        #        INSERT INTO audit_log (user_id, action, entry_id, detail)
+        #        VALUES (:uid, :action, :eid, :detail)
+        #    """), {
+        #        'uid': session.get('user_id'),
+        #        'action': 'feld_geaendert',
+        #        'eid': entry_id,
+        #        'detail': f"Feld: {label}\nAlt: {old}\nNeu: {new}"
+        #    })
+
+        # b) Zusammenfassender Edit-Eintrag
+        now_str = datetime.now().strftime("%d.%m.%Y %H:%M:%S")
+        if changes:
+            summary = "\n".join([f"- {lbl}: {old} → {new}" for _, lbl, old, new in changes])
+            detail_text = f"Bearbeitet am {now_str}\n{summary}"
+        else:
+            detail_text = f"Bearbeitet am {now_str} (keine Feldänderungen)"
+
+        conn.execute(text("""
+            INSERT INTO audit_log (user_id, action, entry_id, detail)
+            VALUES (:uid, 'edit', :eid, :detail)
+        """), {
+            'uid': session.get('user_id'),
+            'eid': entry_id,
+            'detail': detail_text
+        })
+
+    # log_action(session.get('user_id'), 'entries:edit', entry_id, None)
+    flash(_('Eintrag wurde gespeichert.'), 'success')
+
     return redirect(url_for('bbalance_routes.index'))
 
 @bbalance_routes.post('/delete/<int:entry_id>')

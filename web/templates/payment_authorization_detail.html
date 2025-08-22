@@ -167,15 +167,15 @@
         <th>Details</th>
       </tr>
     </thead>
-    <tbody>
-      {% for log in audit %}
-      <tr>
-        <td>{{ log.timestamp.strftime('%d.%m.%Y %H:%M:%S') }}</td>
-        <td>{{ log.action }}</td>
-        <td>{{ log.username or 'Unbekannt' }}</td>
-        <td>{{ log.detail or '' }}</td>
-      </tr>
-      {% endfor %}
+    <tbody>   
+    {% for log in audit %}
+        <tr>
+          <td>{{ log.timestamp.strftime('%d.%m.%Y %H:%M:%S') if log.timestamp else '' }}</td>
+          <td>{{ log.action }}</td>
+          <td>{{ log.username or 'Unbekannt' }}</td>
+          <td>{{ (log.detail or '')|replace('\n','<br>')|safe }}</td>
+        </tr>
+    {% endfor %}
     </tbody>
   </table>
 </div>

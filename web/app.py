@@ -119,7 +119,7 @@ import subprocess
 import json
 
 # PDF (ReportLab)
-from reportlab.lib.pagesizes import A4, landscape
+from reportlab.lib.pagesizes import A4, landscape, portrait
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image as RLImage
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet
@@ -1487,8 +1487,8 @@ def export_pdf():
 
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(
-        buffer, pagesize=landscape(A4),
-        leftMargin=15, rightMargin=15, topMargin=15, bottomMargin=15
+        buffer, pagesize=portrait(A4),
+        leftMargin=10, rightMargin=5, topMargin=20, bottomMargin=20
     )
     styles = getSampleStyleSheet()
     story = []
@@ -1517,7 +1517,7 @@ def export_pdf():
             Paragraph(e['bemerkung'] or '', styles['Normal'])
         ])
 
-    col_widths = [25*mm, 25*mm, 25*mm, 25*mm, 30*mm, 30*mm, 30*mm, 110*mm]
+    col_widths = [21*mm, 17*mm, 17*mm, 17*mm, 20*mm, 20*mm, 30*mm, 31*mm]
     table = Table(data, colWidths=col_widths, repeatRows=1)
     table.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#f1f3f5')),

@@ -27,7 +27,7 @@ mail_routes = Blueprint('mail_routes', __name__)
 
 @mail_routes.route("/admin/smtp", methods=["GET", "POST"])
 @login_required
-@require_perms('users:manage')
+@require_perms('admin:tools')
 @require_csrf
 def admin_smtp():
     status = None

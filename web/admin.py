@@ -24,13 +24,13 @@ admin_routes = Blueprint('admin_routes', __name__)
 
 @admin_routes.get('/admin/export-db')
 @login_required
-@require_perms('users:manage')  # oder eigene Permission wie 'db:export'
+@require_perms('export:db')  # oder eigene Permission wie 'db:export'
 def admin_export_page():
     return render_template('admin_export.html')
 
 @admin_routes.post('/admin/export-db')
 @login_required
-@require_perms('users:manage')
+@require_perms('export:db')
 @require_csrf
 def admin_export_dump():
     dump_file = "/tmp/bottlebalance_dump.sql"

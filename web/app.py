@@ -35,23 +35,22 @@ from mail import mail_routes
 
 # UTILS (def)
 from modules.core_utils import (
+    DB_HOST,
+    DB_NAME,
+    DB_USER,
+    DB_PASS,
     engine, 
     ROLES, 
     SECRET_KEY,
     log_action,
     APP_BASE_URL,
     _entry_dir, 
-    _temp_dir
+    _temp_dir,
+    localize_dt,
+    localize_dt_str
 )
 from modules.system_utils import (
     get_version
-)
-
-from modules.core_utils import (
-    DB_HOST,
-    DB_NAME,
-    DB_USER,
-    DB_PASS
 )
 
 from modules.bbalance_utils import (
@@ -178,9 +177,6 @@ IMPORT_ALLOW_DRYRUN  = os.getenv("IMPORT_ALLOW_DRYRUN", "true").lower() in ("1",
 # Optionaler API-Token für CI/Headless-Dry-Runs (Header: X-Import-Token)
 IMPORT_API_TOKEN     = os.getenv("IMPORT_API_TOKEN")  # leer = kein Token erlaubt
 
-
-
-
 def serialize_attachment(att):
     return {
         "filename": att.original_name,
@@ -189,8 +185,6 @@ def serialize_attachment(att):
         "mime_type": att.mime_type,
         "size_kb": round(att.size_bytes / 1024, 1)
     }
-
-
 
 # -----------------------
 # Antrag
@@ -240,10 +234,6 @@ def get_timezone():
         return user.get('timezone') if isinstance(user, dict) else getattr(user, 'timezone', None)
     return None  # oder ein Default wie 'Europe/Berlin'
 
-
-
-
-
 app = Flask(__name__, static_folder='static')
 # Register Blueprints
 app.register_blueprint(auth_routes)
@@ -271,6 +261,10 @@ app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024  # 10 MB
 
 # ROLES und set() global für Jinja2 verfügbar machen
 #app.jinja_env.globals.update(ROLES=ROLES, set=set, current_user=current_user)
+
+#Zeitstempel
+app.jinja_env.filters['localize_dt'] = localize_dt
+app.jinja_env.filters['localize_dt_str'] = localize_dt_str
 
 # -----------------------
 # DB Init & Migration
@@ -473,7 +467,10 @@ def migrate_columns(conn):
         "Inventur",
         "Kassenzählung",
         "Leerung Kasse GR",
-        "Lieferung Getränke"
+        "Lieferung Getränke",
+        "Einzelkauf Getränke"
+        "Einzahlung Paypal",
+        "Spende"
     ]
     existing = conn.execute(text("SELECT COUNT(*) FROM bemerkungsoptionen")).scalar_one()
     if existing == 0:
@@ -978,7 +975,7 @@ def audit_list():
 
 @app.post('/admin/users/<int:uid>/toggle_approve')
 @login_required
-@require_perms('users:manage')
+@require_perms('users:setApprover')
 @require_csrf
 def users_toggle_approve(uid: int):
     with engine.begin() as conn:
@@ -1587,7 +1584,7 @@ def parse_date_iso_or_today(s: str | None) -> date:
 
 @app.route("/admin/tools", methods=["GET", "POST"])
 @login_required
-@require_perms('users:manage')
+@require_perms('admin:tools')
 @require_csrf
 def admin_tools():
     status = None

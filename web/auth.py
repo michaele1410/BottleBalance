@@ -72,11 +72,16 @@ def login():
     # Kein 2FA: direkt finalisieren
     _finalize_login(user['id'], user['role'])
 
-    # Nach erfolgreichem Login ggf. erzwungen zum Profil umleiten
+   # Nach erfolgreichem Login ggf. erzwungen zum Profil umleiten
     if force_profile:
         session.pop('force_profile_after_login', None)
         return redirect(url_for('profile'))
 
+    # Rollenbasierte Weiterleitung
+    if user['role'] == 'Payment Viewer':
+        return redirect(url_for('payment_routes.zahlungsfreigabe'))
+
+    # Standard-Weiterleitung
     return redirect(url_for('bbalance_routes.index'))
 
 @auth_routes.get('/2fa')

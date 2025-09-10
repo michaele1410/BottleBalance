@@ -3,10 +3,11 @@
 # -----------------------
 
 import os
+import pytz
 from flask import session,flash, abort, request
 from sqlalchemy import text
 from sqlalchemy.engine import Engine, create_engine
-
+from datetime import datetime
 
 APP_BASE_URL = os.getenv("APP_BASE_URL") or "http://localhost:5000"
 
@@ -19,27 +20,60 @@ DATABASE_URL = f"postgresql+psycopg2://{DB_USER}:{DB_PASS}@{DB_HOST}:5432/{DB_NA
 
 engine: Engine = create_engine(DATABASE_URL, future=True, pool_pre_ping=True)
 
+def localize_dt(dt, tz_name=None):
+    if not dt:
+        return ''
+    if not tz_name:
+        tz_name = session.get('timezone', 'Europe/Berlin')
+    tz = pytz.timezone(tz_name)
+    if dt.tzinfo is None:
+        dt = pytz.utc.localize(dt)
+    return dt.astimezone(tz)
+
+def localize_dt_str(dt, tz_name=None, fmt='%Y-%m-%d %H:%M:%S'):
+    """
+    Gibt einen lokalisierten Zeitstempel als formatierten String zurück.
+    Standardformat: '2025-09-10 19:44:47'
+    """
+    if not dt:
+        return ''
+    local_dt = localize_dt(dt, tz_name)
+    return local_dt.strftime(fmt)
+
 # -----------------------
 # Roles
 # -----------------------
 ROLES = {
     'Admin': {
         'entries:view', 'entries:add', 'entries:edit:any', 'entries:delete:any',
-        'export:csv', 'export:pdf', 'import:csv', 'users:manage', 'audit:view'
+        'export:csv', 'export:pdf', 'export:db', 
+        'import:csv', 
+        'users:manage', 'users:setApprover', 
+        'payment:view', 'payment:manage', 'payment:audit',
+        'audit:view',
+        'admin:tools'
     },
     'Manager': {
         'entries:view', 'entries:add', 'entries:edit:any', 'entries:delete:any',
-        'export:csv', 'export:pdf', 'import:csv'
+        'export:csv', 'export:pdf', 
+        'import:csv', 
+        'users:manage', 'users:setApprover', 
+        'payment:view', 'payment:manage'
+    },
+    'Payment Viewer': {
+        'payment:view'
     },
     'Editor': {
         'entries:view', 'entries:add', 'entries:edit:own', 'entries:delete:own',
         'export:csv', 'export:pdf'
     },
     'Viewer': {
-        'entries:view', 'export:csv', 'export:pdf'
+        'entries:view', 
+        'export:csv', 'export:pdf'
     },
     'Auditor': {
-        'entries:view', 'audit:view'
+        'entries:view', 
+        'audit:view'
     }
 }
 

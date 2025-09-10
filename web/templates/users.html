@@ -57,10 +57,16 @@
             </td>
 
             <!-- E-Mail -->
-            <td>{{ u.email or '—' }}</td>
+            <td>
+              {% if u.email %}
+                <i class="bi bi-envelope-fill text-success" title="E-Mail hinterlegt"></i>
+              {% else %}
+                <i class="bi bi-envelope-slash text-muted" title="Keine E-Mail hinterlegt"></i>
+              {% endif %}
+            </td>
 
             <!-- Rollenwechsel -->
-            <td>
+            <!--td>
               <form method="post" action="{{ url_for('user_routes.users_change_role', uid=u.id) }}" class="d-flex gap-2">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <select class="form-select form-select-sm" name="role">
@@ -72,6 +78,9 @@
                   <i class="bi bi-save"></i>
                 </button>
               </form>
+            </td-->
+            <td>
+              <span class="badge bg-secondary">{{ u.role }}</span>
             </td>
 
             <!-- Aktiv-Toggle (mit Icon, i18n-Text) -->
@@ -116,7 +125,13 @@
            <!-- Buttons Aktionen-->
             <td class="text-end">
               <div class="d-flex gap-2 justify-content-end">
-                 <!-- Reset-Link -->
+                <!-- Bearbeiten -->
+                <a href="{{ url_for('user_routes.edit_user', uid=u.id) }}" class="btn btn-sm btn-outline-primary"
+                  title="{{ _('Benutzer bearbeiten') }}">
+                  <i class="bi bi-pencil-square"></i>
+                </a>
+                
+                <!-- Reset-Link -->
                 <form method="post" action="{{ url_for('user_routes.users_reset_link', uid=u.id) }}">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                   <button class="btn btn-sm btn-outline-info" aria-label="{{ _('Reset-Link generieren') }}">
@@ -132,12 +147,6 @@
                   <i class="bi-trash"></i>
                 </button>
                 </form>
-
-                <!-- Bearbeiten -->
-                <a href="{{ url_for('user_routes.edit_user', uid=u.id) }}" class="btn btn-sm btn-outline-primary"
-                  title="{{ _('Benutzer bearbeiten') }}">
-                  <i class="bi bi-pencil-square"></i>
-                </a>
               </div>
             </td>
 

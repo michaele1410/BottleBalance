@@ -53,6 +53,9 @@ bbalance_routes = Blueprint('bbalance_routes', __name__)
 def index():
     ctx = _build_index_context(default_date=today_ddmmyyyy())
     ctx['bemerkungsoptionen'] = get_bemerkungsoptionen()
+    role = session.get('role')
+    if role == 'Payment Viewer':
+        return redirect(url_for('payment_routes.zahlungsfreigabe')) 
     return render_template('index.html', **ctx)
 
 @bbalance_routes.post('/add')

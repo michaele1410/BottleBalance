@@ -1,4 +1,5 @@
 import os
+import ssl
 from flask import session, abort, current_app
 from sqlalchemy import text
 from email.message import EmailMessage

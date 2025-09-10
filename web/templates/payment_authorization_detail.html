@@ -20,7 +20,7 @@
     <dt class="col-sm-3">Datum</dt>
     <dd class="col-sm-9">{{ antrag.datum.strftime('%d.%m.%Y') if antrag.datum else '' }}</dd>
 
-    {% if antrag.status not in ['freigegeben', 'abgeschlossen', 'abgelehnt'] and approvals_done == 0 %}
+    {% if antrag.status not in ['freigegeben', 'abgeschlossen', 'abgelehnt', 'zurueckgezogen'] and approvals_done == 0 %}
     <form method="post" action="{{ url_for('payment_routes.edit_antrag', antrag_id=antrag.id) }}">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div class="mb-2">

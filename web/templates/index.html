@@ -238,12 +238,14 @@
             <td>{{ format_eur_de(e.kassenbestand) }}</td>
             <td>{{ e.bemerkung }}</td>
             <td class="text-end">
+              {% set role = current_user().get('role') %}
+              {% if role in ['Editor', 'Manager', 'Admin'] %}
               <!-- Bearbeiten -->
               <a class="btn btn-sm btn-outline-primary" href="{{ url_for('bbalance_routes.edit', entry_id=e.id) }}"
                 title="{{ _('Bearbeiten') }}">
                 <i class="bi-pencil-square"></i>
               </a>
-
+              {% endif %}
               <!-- Dokumente öffnen (mit Badge) -->
               <button class="btn btn-sm btn-outline-secondary position-relative" type="button"
                 onclick="openAttachments({{ e.id }})" title="{{ _('Dokumente öffnen') }}">
@@ -254,7 +256,8 @@
                 </span>
                 {% endif %}
               </button>
-
+              {% set role = current_user().get('role') %}
+              {% if role in ['Editor', 'Manager', 'Admin'] %}
               <!-- Löschen -->
               <form method="post" action="{{ url_for('bbalance_routes.delete', entry_id=e.id) }}" class="d-inline"
                 onsubmit="return confirm('{{ _('Eintrag wirklich löschen?') }}');">
@@ -263,6 +266,7 @@
                   <i class="bi-trash"></i>
                 </button>
               </form>
+              {% endif %}
             </td>
           </tr>
           {% else %}

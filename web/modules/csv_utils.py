@@ -11,7 +11,8 @@ from decimal import Decimal, InvalidOperation
 from sqlalchemy import text
 
 from modules.core_utils import (
-    engine
+    engine,
+    localize_dt_str
 )
 
 # -----------------------
@@ -321,3 +322,26 @@ def _fetch_existing_signature_set(conn) -> set[tuple]:
             (bem or '').strip().lower()
         ))
     return result
+
+def export_audit_entries_to_csv(audit_entries: list[dict], tz_name: str = 'Europe/Berlin') -> str:
+    """
+    Exportiert Audit-Einträge als CSV mit lokalisierten Zeitstempeln.
+    - audit_entries: Liste von Dicts mit 'timestamp', 'action', 'username', 'detail'
+    - tz_name: Zeitzone für Zeitstempel (z. B. 'Europe/Berlin')
+    - Rückgabe: CSV-Text als String
+    """
+    output = io.StringIO()
+    writer = csv.writer(output, delimiter=';', quoting=csv.QUOTE_MINIMAL)
+
+    writer.writerow(['Zeitpunkt', 'Aktion', 'Benutzer', 'Details'])
+
+    for entry in audit_entries:
+        formatted_time = localize_dt_str(entry.get('timestamp'), tz_name, '%d.%m.%Y %H:%M:%S')
+        writer.writerow([
+            formatted_time,
+            entry.get('action', ''),
+            entry.get('username', 'Unbekannt'),
+            (entry.get('detail') or '').replace('\n', ' ')
+        ])
+
+    return output.getvalue()

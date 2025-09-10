@@ -11,9 +11,11 @@
     <a href="{{ url_for('payment_routes.export_alle_antraege_pdf') }}" class="btn btn-outline-primary">
       <i class="bi bi-filetype-pdf me-1"></i> Alle Anträge als PDF
     </a>
-    <a href="{{ url_for('payment_routes.zahlungsfreigabe') }}" class="btn btn-outline-secondary">
+    {% if 'payment:audit' in (ROLES.get(session.get('role'), [])) %}
+    <a href="{{ url_for('payment_routes.zahlungsfreigabe_audit') }}" class="btn btn-outline-secondary">
       <i class="bi bi-clock-history me-1"></i> Audit-Übersicht
     </a>
+    {% endif %}
   </div>
 
   <!-- Tabelle -->

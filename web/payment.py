@@ -9,13 +9,10 @@ from decimal import Decimal
 from flask_babel import gettext as _
 from flask import render_template, request, redirect, url_for, session, send_file, flash, abort, Blueprint, current_app, jsonify
 from sqlalchemy import text
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak, KeepTogether
-
-
 
 # PDF (ReportLab)
 from reportlab.lib.pagesizes import A4
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.platypus import Image, SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak, KeepTogether
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import mm
 from reportlab.lib import colors  # nur colors lokal importieren
@@ -55,10 +52,18 @@ from modules.payment_utils import (
 from modules.mail_utils import (
     send_status_email
 )
+from modules.pdf_utils import (
+    build_audit_table, 
+    standard_table_style, 
+    footer,
+    embed_pdf_attachments
+)
+
 payment_routes = Blueprint('payment_routes', __name__)
 
 @payment_routes.route('/zahlungsfreigabe')
 @login_required
+@require_perms('payment:view')
 def zahlungsfreigabe():
     today = date.today()
     user = current_user()
@@ -208,7 +213,7 @@ def freigeben_antrag(antrag_id):
                 {'aid': antrag_id, 'uid': user['id'], 'det': f'{done}/{total} Freigaben'}
             )
             if (email := get_antrag_email(antrag_id)):
-                send_status_email(email, antrag_id, 'freigegeben')
+                send_status_email(email, antrag_id, 'freigegeben', cc_approvers=True)
             flash('Alle erforderlichen Freigaben liegen vor – Antrag ist jetzt freigegeben.', 'success')
         else:
             flash(f'Teilfreigabe erfasst ({done}/{total}).', 'info')
@@ -229,7 +234,7 @@ def on_hold_antrag(antrag_id):
         conn.execute(text("INSERT INTO zahlungsantrag_audit (antrag_id, user_id, action, timestamp) VALUES (:aid, :uid, 'on_hold', NOW())"),
                      {'aid': antrag_id, 'uid': user['id']})
     if (email := get_antrag_email(antrag_id)):
-        send_status_email(email, antrag_id, 'on_hold')
+                send_status_email(email, antrag_id, 'on_hold', cc_approvers=True)
     flash('Antrag wurde auf On Hold gesetzt.', 'info')
     return redirect(url_for('payment_routes.zahlungsfreigabe'))
 
@@ -248,7 +253,7 @@ def abschliessen_antrag(antrag_id):
         conn.execute(text("INSERT INTO zahlungsantrag_audit (antrag_id, user_id, action, timestamp) VALUES (:aid, :uid, 'abgeschlossen', NOW())"),
                      {'aid': antrag_id, 'uid': user['id']})
     if (email := get_antrag_email(antrag_id)):
-        send_status_email(email, antrag_id, 'abgeschlossen')
+        send_status_email(email, antrag_id, 'abgeschlossen', cc_approvers=True)
     flash('Antrag wurde abgeschlossen.', 'success')
     return redirect(url_for('payment_routes.zahlungsfreigabe'))
 
@@ -310,7 +315,7 @@ def ablehnen_antrag(antrag_id):
         """), {'aid': antrag_id, 'uid': user['id'], 'detail': grund})
 
     if (email := get_antrag_email(antrag_id)):
-        send_status_email(email, antrag_id, 'abgelehnt')
+        send_status_email(email, antrag_id, 'abgelehnt', cc_approvers=True)
 
     flash('Antrag wurde abgelehnt.', 'danger')
     return redirect(url_for('payment_routes.zahlungsfreigabe'))
@@ -351,7 +356,7 @@ def zurueckziehen_antrag(antrag_id):
 
     # Mail (best effort)
     if (email := get_antrag_email(antrag_id)):
-        send_status_email(email, antrag_id, 'zurückgezogen')
+        send_status_email(email, antrag_id, 'zurückgezogen', cc_approvers=True)
 
     flash('Antrag wurde zurückgezogen.', 'info')
     return redirect(url_for('payment_routes.zahlungsfreigabe'))
@@ -388,7 +393,7 @@ def fortsetzen_antrag(antrag_id: int):
 
         # Best-effort Mail
         if (email := get_antrag_email(antrag_id)):
-            send_status_email(email, antrag_id, 'fortgesetzt')
+            send_status_email(email, antrag_id, 'fortgesetzt', cc_approvers=True)
 
     flash('Antrag wurde fortgesetzt und ist wieder offen.', 'info')
     return redirect(url_for('payment_routes.zahlungsfreigabe'))
@@ -411,101 +416,76 @@ def zahlungsfreigabe_audit():
 def export_einzelantrag_pdf(antrag_id: int):
     with engine.begin() as conn:
         r = conn.execute(text("""
-            SELECT z.id,
-                   u.username AS antragsteller,
-                   z.datum,
-                   z.paragraph,
-                   z.verwendungszweck,
-                   z.betrag,
-                   z.lieferant,
-                   z.begruendung,
-                   z.status
+            SELECT z.*, u.username AS antragsteller
             FROM zahlungsantraege z
             LEFT JOIN users u ON u.id = z.antragsteller_id
-            WHERE z.id=:id
+            WHERE z.id = :id
         """), {'id': antrag_id}).mappings().first()
 
-        if not r:
-            abort(404)
-
         audits = conn.execute(text("""
-            SELECT a.timestamp, a.action, a.detail, COALESCE(u.username, 'Unbekannt') AS username
+            SELECT a.timestamp, a.action, a.detail, u.username
             FROM zahlungsantrag_audit a
             LEFT JOIN users u ON u.id = a.user_id
             WHERE a.antrag_id = :id
-            ORDER BY a.timestamp ASC, a.id ASC
+            ORDER BY a.timestamp ASC
+        """), {'id': antrag_id}).mappings().all()
+
+        attachments = conn.execute(text("""
+            SELECT original_name, stored_name, content_type
+            FROM antrag_attachments
+            WHERE antrag_id = :id
+            ORDER BY created_at ASC
         """), {'id': antrag_id}).mappings().all()
 
     buffer = io.BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=A4)
+    doc = SimpleDocTemplate(buffer, pagesize=A4,
+                            leftMargin=18*mm, rightMargin=18*mm,
+                            topMargin=18*mm, bottomMargin=18*mm)
     styles = getSampleStyleSheet()
     story = []
 
-    # Titel
-    story.append(Paragraph(f"Zahlungsantrag #{r['id']}", styles['Title']))
+    def P(text, style='Normal'):
+        return Paragraph((text or '').replace('\n', '<br/>'), styles[style])
+
+    logo_path = os.path.join("static", "logo.png")
+    if os.path.exists(logo_path):
+        story.append(Image(logo_path, width=40*mm))
+        story.append(Spacer(1, 6))
+
+    story.append(Paragraph(f"Zahlungsantrag #{antrag_id}", styles['Title']))
+    story.append(Spacer(1, 6))
+    story.append(Paragraph(f"Erstellt am {datetime.now().strftime('%d.%m.%Y %H:%M')}", styles['Normal']))
+    story.append(Spacer(1, 12))
+
+    details_data = [
+        ["Antragsteller/in:", P(r['antragsteller'])],
+        ["Datum:", P(r['datum'].strftime('%d.%m.%Y') if r['datum'] else '')],
+        ["Paragraph:", P(r['paragraph'])],
+        ["Verwendungszweck:", P(r['verwendungszweck'])],
+        ["Betrag:", P(f"{r['betrag']} EUR")],
+        ["Lieferant:", P(r['lieferant'])],
+        ["Begründung:", P(r['begruendung'])],
+        ["Status:", P(r['status'])],
+    ]
+    details_table = Table(details_data, colWidths=[42*mm, None])
+    details_table.setStyle(standard_table_style())
+    story.append(details_table)
     story.append(Spacer(1, 10))
 
-    # Stammdaten
-    fields = [
-        ('Antragsteller', r['antragsteller']),
-        ('Datum', r['datum'].strftime('%d.%m.%Y') if r['datum'] else ''),
-        ('Paragraph', f"{r['paragraph']}" if r['paragraph'] else ''),
-        ('Verwendungszweck', r['verwendungszweck'] or ''),
-        ('Betrag', f"{r['betrag']} EUR" if r['betrag'] is not None else ''),
-        ('Lieferant', r['lieferant'] or ''),
-        ('Begründung', r['begruendung'] or ''),
-        ('Status', r['status'] or ''),
-    ]
-    for label, value in fields:
-        story.append(Paragraph(f"<b>{label}:</b> {value}", styles['Normal']))
-        story.append(Spacer(1, 4))
-
-    story.append(Spacer(1, 8))
-    story.append(Paragraph("Audit‑Historie", styles['Heading3']))
+    story.append(Paragraph("Audit-Historie", styles['Heading3']))
     story.append(Spacer(1, 4))
+    story.append(build_audit_table(audits, styles))
+    story.append(Spacer(1, 10))
 
-    # Audit-Tabelle
-    audit_data = [[
-        Paragraph("<b>Zeitpunkt</b>", styles['Normal']),
-        Paragraph("<b>Aktion</b>", styles['Normal']),
-        Paragraph("<b>Benutzer</b>", styles['Normal']),
-        Paragraph("<b>Details</b>", styles['Normal']),
-    ]]
+    # Anhänge inkl. PDF-Seiten
+    story = embed_pdf_attachments(antrag_id, attachments, story, styles)
 
-    if audits:
-        for a in audits:
-            audit_data.append([
-                a['timestamp'].strftime('%d.%m.%Y %H:%M:%S') if a['timestamp'] else '',
-                a['action'] or '',
-                a['username'] or 'Unbekannt',
-                Paragraph((a['detail'] or '').replace('\n', '<br/>'), styles['Normal'])
-            ])
-    else:
-        audit_data.append(['–', '–', '–', 'Keine Audit‑Einträge vorhanden.'])
-
-    table = Table(audit_data, colWidths=[80, 80, 90, None], repeatRows=1)
-    table.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#f1f3f5')),
-        ('TEXTCOLOR',  (0,0), (-1,0), colors.HexColor('#212529')),
-        ('FONTNAME',   (0,0), (-1,0), 'Helvetica-Bold'),
-        ('FONTSIZE',   (0,0), (-1,-1), 9.5),
-        ('VALIGN',     (0,0), (-1,-1), 'TOP'),
-        ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.white, colors.HexColor('#fcfcfd')]),
-        ('GRID',       (0,0), (-1,-1), 0.25, colors.HexColor('#dee2e6')),
-        ('LEFTPADDING',(0,0), (-1,-1), 4),
-        ('RIGHTPADDING',(0,0), (-1,-1), 4),
-        ('TOPPADDING', (0,0), (-1,-1), 3),
-        ('BOTTOMPADDING',(0,0), (-1,-1), 3),
-    ]))
-    story.append(table)
-
-    doc.build(story)
+    doc.build(story, onFirstPage=footer, onLaterPages=footer)
     buffer.seek(0)
     return send_file(buffer, as_attachment=True,
                      download_name=f'antrag_{antrag_id}.pdf',
                      mimetype='application/pdf')
 
-# ============= Zahlungsantrag-Anhänge =============
 # ============= Zahlungsantrag-Anhänge =============
 @payment_routes.post('/zahlungsfreigabe/<int:antrag_id>/attachments/upload')
 @login_required
@@ -704,7 +684,7 @@ def edit_antrag(antrag_id):
         if not row:
             abort(404)
 
-        if row['status'] in ('freigegeben', 'abgeschlossen', 'abgelehnt'):
+        if row['status'] in ('freigegeben', 'abgeschlossen', 'abgelehnt', 'zurueckgezogen'):
             flash('Bearbeitung nicht mehr möglich.', 'warning')
             return redirect(url_for('payment_routes.zahlungsfreigabe_detail', antrag_id=antrag_id))
 
@@ -843,153 +823,96 @@ def edit_antrag(antrag_id):
 @payment_routes.get('/zahlungsfreigabe/export/pdf')
 @login_required
 def export_alle_antraege_pdf():
-    # ---- 1) Daten laden: Anträge + Audit ----
     with engine.begin() as conn:
         antraege = conn.execute(text("""
-            SELECT z.id,
-                   u.username AS antragsteller,
-                   z.datum,
-                   z.paragraph,
-                   z.verwendungszweck,
-                   z.betrag,
-                   z.lieferant,
-                   z.begruendung,
-                   z.status,
-                   z.created_at
+            SELECT z.*, u.username AS antragsteller
             FROM zahlungsantraege z
             LEFT JOIN users u ON u.id = z.antragsteller_id
-            ORDER BY z.created_at DESC, z.id DESC
+            ORDER BY z.created_at ASC
         """)).mappings().all()
 
-        audits = conn.execute(text("""
-            SELECT a.antrag_id,
-                   a.timestamp,
-                   a.action,
-                   a.detail,
-                   u.username
-            FROM zahlungsantrag_audit a
-            LEFT JOIN users u ON u.id = a.user_id
-            ORDER BY a.antrag_id ASC, a.timestamp ASC, a.id ASC
-        """)).mappings().all()
+        audit_by_antrag = {}
+        for a in antraege:
+            audits = conn.execute(text("""
+                SELECT a.timestamp, a.action, a.detail, u.username
+                FROM zahlungsantrag_audit a
+                LEFT JOIN users u ON u.id = a.user_id
+                WHERE a.antrag_id = :id
+                ORDER BY a.timestamp ASC
+            """), {'id': a['id']}).mappings().all()
+            audit_by_antrag[a['id']] = audits
 
-    # Map: antrag_id -> Liste der Audit-Einträge
-    audit_by_antrag: dict[int, list] = {}
-    for row in audits:
-        aid = row['antrag_id']
-        audit_by_antrag.setdefault(aid, []).append(row)
+        attachments_by_antrag = {}
+        for a in antraege:
+            attachments = conn.execute(text("""
+                SELECT original_name, stored_name, content_type
+                FROM antrag_attachments
+                WHERE antrag_id = :id
+                ORDER BY created_at ASC
+            """), {'id': a['id']}).mappings().all()
+            attachments_by_antrag[a['id']] = attachments
 
-    # ---- 2) PDF-Dokument vorbereiten ----
     buffer = io.BytesIO()
-    doc = SimpleDocTemplate(
-        buffer,
-        pagesize=A4,
-        leftMargin=18*mm, rightMargin=18*mm, topMargin=18*mm, bottomMargin=18*mm
-    )
+    doc = SimpleDocTemplate(buffer, pagesize=A4,
+                            leftMargin=18*mm, rightMargin=18*mm,
+                            topMargin=18*mm, bottomMargin=18*mm)
     styles = getSampleStyleSheet()
     story = []
 
-    # Titel / Meta
+    def P(text, style='Normal'):
+        return Paragraph((text or '').replace('\n', '<br/>'), styles[style])
+
+    logo_path = os.path.join("static", "logo.png")
+    if os.path.exists(logo_path):
+        story.append(Image(logo_path, width=40*mm))
+        story.append(Spacer(1, 6))
+
     story.append(Paragraph("Zahlungsanträge – Gesamtdokument", styles['Title']))
     story.append(Spacer(1, 6))
-    story.append(Paragraph(
-        f"Erstellt am {datetime.now().strftime('%d.%m.%Y %H:%M')} – Anzahl Anträge: {len(antraege)}",
-        styles['Normal']
-    ))
+    story.append(Paragraph(f"Erstellt am {datetime.now().strftime('%d.%m.%Y %H:%M')} – Anzahl Anträge: {len(antraege)}", styles['Normal']))
     story.append(Spacer(1, 12))
 
-    # Hilfsfunktion: Text -> Paragraph (mit Zeilenumbruch-Unterstützung)
-    def P(text: str | None, style='Normal'):
-        txt = (text or '').replace('\n', '<br/>')
-        return Paragraph(txt, styles[style])
-
-    # ---- 3) Pro Antrag: Details + Audit ----
     for idx, r in enumerate(antraege):
         blocks = []
 
-        # Kopf je Antrag
+        if os.path.exists(logo_path):
+            blocks.append(Image(logo_path, width=40*mm))
+            blocks.append(Spacer(1, 6))
+
         blocks.append(Paragraph(f"<b>Zahlungsantrag #{r['id']}</b>", styles['Heading2']))
         blocks.append(Spacer(1, 6))
 
-        # Details (2-Spalten-Tabelle: Label / Wert)
         details_data = [
             ["Antragsteller/in:", P(r['antragsteller'])],
             ["Datum:", P(r['datum'].strftime('%d.%m.%Y') if r['datum'] else '')],
-            ["Paragraph:", P(f"{r['paragraph']}" if r['paragraph'] else '')],
+            ["Paragraph:", P(r['paragraph'])],
             ["Verwendungszweck:", P(r['verwendungszweck'])],
-            ["Betrag:", P(f"{r['betrag']} EUR" if r['betrag'] is not None else '')],
+            ["Betrag:", P(f"{r['betrag']} EUR")],
             ["Lieferant:", P(r['lieferant'])],
             ["Begründung:", P(r['begruendung'])],
             ["Status:", P(r['status'])],
         ]
-        details_table = Table(details_data, colWidths=[42*mm, None], hAlign='LEFT')
-        details_table.setStyle(TableStyle([
-            ('VALIGN', (0,0), (-1,-1), 'TOP'),
-            ('FONTNAME', (0,0), (0,-1), 'Helvetica-Bold'),
-            ('TEXTCOLOR', (0,0), (0,-1), colors.HexColor('#212529')),
-            ('TEXTCOLOR', (1,0), (1,-1), colors.HexColor('#212529')),
-            ('FONTSIZE', (0,0), (-1,-1), 10),
-            ('LEFTPADDING', (0,0), (-1,-1), 4),
-            ('RIGHTPADDING', (0,0), (-1,-1), 4),
-            ('TOPPADDING', (0,0), (-1,-1), 3),
-            ('BOTTOMPADDING', (0,0), (-1,-1), 3),
-            ('LINEBELOW', (0,0), (-1,-1), 0.25, colors.HexColor('#e9ecef')),
-        ]))
+        details_table = Table(details_data, colWidths=[42*mm, None])
+        details_table.setStyle(standard_table_style())
         blocks.append(details_table)
         blocks.append(Spacer(1, 10))
 
-        # Audit-Sektion
         blocks.append(Paragraph("Audit-Historie", styles['Heading3']))
-        rows = audit_by_antrag.get(r['id'], [])
-        if rows:
-            audit_data = [[
-                Paragraph("<b>Zeitpunkt</b>", styles['Normal']),
-                Paragraph("<b>Aktion</b>", styles['Normal']),
-                Paragraph("<b>Benutzer</b>", styles['Normal']),
-                Paragraph("<b>Details</b>", styles['Normal']),
-            ]]
-            for a in rows:
-                audit_data.append([
-                    a['timestamp'].strftime('%d.%m.%Y %H:%M:%S') if a['timestamp'] else '',
-                    a['action'] or '',
-                    a['username'] or 'Unbekannt',
-                    P(a['detail']),
-                ])
-            audit_table = Table(audit_data, colWidths=[36*mm, 32*mm, 35*mm, None], repeatRows=1)
-            audit_table.setStyle(TableStyle([
-                ('VALIGN', (0,0), (-1,-1), 'TOP'),
-                ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#f1f3f5')),
-                ('TEXTCOLOR', (0,0), (-1,0), colors.HexColor('#212529')),
-                ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
-                ('FONTSIZE', (0,0), (-1,-1), 9.5),
-                ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.white, colors.HexColor('#fcfcfd')]),
-                ('GRID', (0,0), (-1,-1), 0.25, colors.HexColor('#dee2e6')),
-                ('LEFTPADDING', (0,0), (-1,-1), 4),
-                ('RIGHTPADDING', (0,0), (-1,-1), 4),
-                ('TOPPADDING', (0,0), (-1,-1), 3),
-                ('BOTTOMPADDING', (0,0), (-1,-1), 3),
-            ]))
-            blocks.append(audit_table)
-        else:
-            blocks.append(Paragraph("<i>Keine Audit‑Einträge vorhanden.</i>", styles['Normal']))
+        blocks.append(build_audit_table(audit_by_antrag.get(r['id'], []), styles))
+        blocks.append(Spacer(1, 10))
 
-        # Alles zusammen (falls Blockseitenumbruch zu unschönen Split führt, zusammenhalten)
+        # Anhänge inkl. PDF-Seiten
+        blocks = embed_pdf_attachments(r['id'], attachments_by_antrag.get(r['id'], []), blocks, styles)
+
         story.append(KeepTogether(blocks))
-
-        # Seitenumbruch zwischen Anträgen
         if idx < len(antraege) - 1:
             story.append(PageBreak())
 
-    # ---- 4) Seitenzahlen im Footer ----
-    def _footer(canvas, doc_):
-        canvas.saveState()
-        canvas.setFont("Helvetica", 9)
-        page_txt = f"Seite {doc_.page}"
-        canvas.drawRightString(doc_.pagesize[0] - 18*mm, 12, page_txt)
-        canvas.restoreState()
-
-    doc.build(story, onFirstPage=_footer, onLaterPages=_footer)
+    doc.build(story, onFirstPage=footer, onLaterPages=footer)
     buffer.seek(0)
-    return send_file(buffer, as_attachment=True, download_name='alle_antraege.pdf', mimetype='application/pdf')
+    return send_file(buffer, as_attachment=True,
+                     download_name='alle_antraege.pdf',
+                     mimetype='application/pdf')
 
 # Zahlungsfreigabe
 def _antrag_dir(antrag_id: int) -> str:
@@ -1075,7 +998,7 @@ def zahlungsfreigabe_antrag():
             current_app.logger.warning("Keine Approver-E-Mails gefunden für Antrag %s", antrag_id)
 
     except Exception:
-        logger.exception("Fehler beim Senden der Benachrichtigungen für neuen Antrag %s", antrag_id)
+        current_app.logger.exception("Fehler beim Senden der Benachrichtigungen für neuen Antrag %s", antrag_id)
 
     flash('Zahlungsantrag erfolgreich erstellt.', 'success')
     return redirect(url_for('payment_routes.zahlungsfreigabe'))

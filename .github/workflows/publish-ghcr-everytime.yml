@@ -44,10 +44,17 @@ jobs:
             echo "APP_VERSION=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
           else
             echo "APP_VERSION=dev" >> $GITHUB_ENV
-          fi
-
+          
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+
+      - name: Cache Docker layers
+        uses: actions/cache@v3
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
 
       - name: Build and push Docker image (multi-arch)
         uses: docker/build-push-action@v5
@@ -60,3 +67,5 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             APP_VERSION=${{ env.APP_VERSION }}
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache

@@ -980,7 +980,7 @@ def audit_list():
 def users_toggle_approve(uid: int):
     with engine.begin() as conn:
         conn.execute(text("UPDATE users SET can_approve = NOT can_approve, updated_at=NOW() WHERE id=:id"), {'id': uid})
-    flash('Freigabeberechtigung geändert.')
+    flash(_('Freigabeberechtigung geändert.'))
     return redirect(url_for('user_routes.users_list'))
 
 
@@ -1738,10 +1738,16 @@ def attachments_view(att_id: int):
 
     return resp
 
-@app.route("/version")
-def version_info():
-    version = os.getenv("APP_VERSION", get_version())
-    return render_template_string("<h1>Version: {{ version }}</h1>", version=version)
+def get_version():
+    try:
+        with open("VERSION") as f:
+            return f.read().strip()
+    except Exception:
+        return "dev"
+
+@app.context_processor
+def inject_version():
+    return dict(app_version=os.getenv("APP_VERSION", get_version()))
 
 if __name__ == '__main__':
     os.environ.setdefault('TZ', 'Europe/Berlin')

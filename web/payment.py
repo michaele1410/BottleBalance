@@ -160,12 +160,12 @@ def freigeben_antrag(antrag_id):
             {'id': antrag_id}
         ).scalar_one_or_none()
         if status != 'offen':
-            flash('Nur offene Anträge können freigegeben werden.', 'warning')
+            flash(_('Nur offene Anträge können freigegeben werden.'), 'warning')
             return redirect(url_for('payment_routes.zahlungsfreigabe'))
 
         # Schon freigegeben? -> idempotent
         if _approved_by_user(conn, antrag_id, user['id']):
-            flash('Du hast diesen Antrag bereits freigegeben.', 'info')
+            flash(_('Du hast diesen Antrag bereits freigegeben.'), 'info')
             return redirect(url_for('payment_routes.zahlungsfreigabe'))
 
         # 1) Audit-Eintrag "freigegeben"
@@ -214,7 +214,7 @@ def freigeben_antrag(antrag_id):
             )
             if (email := get_antrag_email(antrag_id)):
                 send_status_email(email, antrag_id, 'freigegeben', cc_approvers=True)
-            flash('Alle erforderlichen Freigaben liegen vor – Antrag ist jetzt freigegeben.', 'success')
+            flash(_('Alle erforderlichen Freigaben liegen vor – Antrag ist jetzt freigegeben.'), 'success')
         else:
             flash(f'Teilfreigabe erfasst ({done}/{total}).', 'info')
     return redirect(url_for('payment_routes.zahlungsfreigabe'))
@@ -228,14 +228,14 @@ def on_hold_antrag(antrag_id):
     with engine.begin() as conn:
         curr = conn.execute(text("SELECT status FROM zahlungsantraege WHERE id=:id"), {'id': antrag_id}).scalar_one_or_none()
         if curr != 'offen':
-            flash('Nur offene Anträge können auf On Hold gesetzt werden.', 'warning')
+            flash(_('Nur offene Anträge können auf On Hold gesetzt werden.'), 'warning')
             return redirect(url_for('payment_routes.zahlungsfreigabe'))
         conn.execute(text("UPDATE zahlungsantraege SET status='on_hold', updated_at=NOW() WHERE id=:id"), {'id': antrag_id})
         conn.execute(text("INSERT INTO zahlungsantrag_audit (antrag_id, user_id, action, timestamp) VALUES (:aid, :uid, 'on_hold', NOW())"),
                      {'aid': antrag_id, 'uid': user['id']})
     if (email := get_antrag_email(antrag_id)):
                 send_status_email(email, antrag_id, 'on_hold', cc_approvers=True)
-    flash('Antrag wurde auf On Hold gesetzt.', 'info')
+    flash(_('Antrag wurde auf On Hold gesetzt.'), 'info')
     return redirect(url_for('payment_routes.zahlungsfreigabe'))
 
 @payment_routes.post('/abschliessen/<int:antrag_id>')
@@ -247,14 +247,14 @@ def abschliessen_antrag(antrag_id):
     with engine.begin() as conn:
         curr = conn.execute(text("SELECT status FROM zahlungsantraege WHERE id=:id"), {'id': antrag_id}).scalar_one_or_none()
         if curr != 'freigegeben':
-            flash('Antrag kann nur nach Freigabe abgeschlossen werden.', 'warning')
+            flash(_('Antrag kann nur nach Freigabe abgeschlossen werden.'), 'warning')
             return redirect(url_for('payment_routes.zahlungsfreigabe'))
         conn.execute(text("UPDATE zahlungsantraege SET status='abgeschlossen', updated_at=NOW() WHERE id=:id"), {'id': antrag_id})
         conn.execute(text("INSERT INTO zahlungsantrag_audit (antrag_id, user_id, action, timestamp) VALUES (:aid, :uid, 'abgeschlossen', NOW())"),
                      {'aid': antrag_id, 'uid': user['id']})
     if (email := get_antrag_email(antrag_id)):
         send_status_email(email, antrag_id, 'abgeschlossen', cc_approvers=True)
-    flash('Antrag wurde abgeschlossen.', 'success')
+    flash(_('Antrag wurde abgeschlossen.'), 'success')
     return redirect(url_for('payment_routes.zahlungsfreigabe'))
 
 @payment_routes.post('/loeschen/<int:antrag_id>')
@@ -276,7 +276,7 @@ def loeschen_antrag(antrag_id: int):
         
         # Nur löschen, wenn NICHT abgeschlossen/abgelehnt/freigegeben
         if status in ('abgeschlossen', 'abgelehnt', 'freigegeben'):
-            flash('Abgelehnte, freigegebene oder abgeschlossene Anträge können nicht gelöscht werden.', 'warning')
+            flash(_('Abgelehnte, freigegebene oder abgeschlossene Anträge können nicht gelöscht werden.'), 'warning')
             return redirect(url_for('payment_routes.zahlungsfreigabe'))
 
         # Löschen durchführen
@@ -289,7 +289,7 @@ def loeschen_antrag(antrag_id: int):
         if (email := get_antrag_email(antrag_id)):
             send_status_email(email, antrag_id, 'geloescht')
 
-    flash('Antrag wurde gelöscht.', 'danger')
+    flash(_('Antrag wurde gelöscht.'), 'danger')
     return redirect(url_for('payment_routes.zahlungsfreigabe'))
 
 @payment_routes.post('/ablehnen/<int:antrag_id>')
@@ -303,10 +303,10 @@ def ablehnen_antrag(antrag_id):
     with engine.begin() as conn:
         curr = conn.execute(text("SELECT status FROM zahlungsantraege WHERE id=:id"), {'id': antrag_id}).scalar_one_or_none()
         if curr not in ('offen', 'on_hold'):
-            flash('Nur offene oder pausierte Anträge können abgelehnt werden.', 'warning')
+            flash(_('Nur offene oder pausierte Anträge können abgelehnt werden.'), 'warning')
             return redirect(url_for('payment_routes.zahlungsfreigabe'))
         if not grund:
-            flash('Bitte einen Ablehnungsgrund angeben.', 'warning')
+            flash(_('Bitte einen Ablehnungsgrund angeben.'), 'warning')
             return redirect(url_for('payment_routes.zahlungsfreigabe'))
         conn.execute(text("UPDATE zahlungsantraege SET status='abgelehnt', updated_at=NOW() WHERE id=:id"), {'id': antrag_id})
         conn.execute(text("""
@@ -317,7 +317,7 @@ def ablehnen_antrag(antrag_id):
     if (email := get_antrag_email(antrag_id)):
         send_status_email(email, antrag_id, 'abgelehnt', cc_approvers=True)
 
-    flash('Antrag wurde abgelehnt.', 'danger')
+    flash(_('Antrag wurde abgelehnt.'), 'danger')
     return redirect(url_for('payment_routes.zahlungsfreigabe'))
 
 # Antrag durch den Antragsteller zurückziehen
@@ -338,7 +338,7 @@ def zurueckziehen_antrag(antrag_id):
 
         # Nur der Antragsteller und nur in 'offen' oder 'on_hold'
         if row['antragsteller_id'] != user['id'] or row['status'] not in ('offen', 'on_hold'):
-            flash('Du kannst nur eigene, offene oder pausierte Anträge zurückziehen.', 'warning')
+            flash(_('Du kannst nur eigene, offene oder pausierte Anträge zurückziehen.'), 'warning')
             return redirect(url_for('payment_routes.zahlungsfreigabe'))
 
         # Status auf 'zurueckgezogen' setzen
@@ -358,7 +358,7 @@ def zurueckziehen_antrag(antrag_id):
     if (email := get_antrag_email(antrag_id)):
         send_status_email(email, antrag_id, 'zurückgezogen', cc_approvers=True)
 
-    flash('Antrag wurde zurückgezogen.', 'info')
+    flash(_('Antrag wurde zurückgezogen.'), 'info')
     return redirect(url_for('payment_routes.zahlungsfreigabe'))
 
 @payment_routes.post('/fortsetzen/<int:antrag_id>')
@@ -375,7 +375,7 @@ def fortsetzen_antrag(antrag_id: int):
         ).scalar_one_or_none()
 
         if curr != 'on_hold':
-            flash('Nur pausierte Anträge können fortgesetzt werden.', 'warning')
+            flash(_('Nur pausierte Anträge können fortgesetzt werden.'), 'warning')
             return redirect(url_for('payment_routes.zahlungsfreigabe'))
 
         # Status zurück auf 'offen'
@@ -395,7 +395,7 @@ def fortsetzen_antrag(antrag_id: int):
         if (email := get_antrag_email(antrag_id)):
             send_status_email(email, antrag_id, 'fortgesetzt', cc_approvers=True)
 
-    flash('Antrag wurde fortgesetzt und ist wieder offen.', 'info')
+    flash(_('Antrag wurde fortgesetzt und ist wieder offen.'), 'info')
     return redirect(url_for('payment_routes.zahlungsfreigabe'))
 
 @payment_routes.route('/zahlungsfreigabe/audit')
@@ -504,7 +504,7 @@ def upload_antrag_attachment(antrag_id: int):
 
     # Upload nur sperren, wenn abgeschlossen (optional auch abgelehnt)
     if status in ('abgeschlossen', 'abgelehnt'):
-        flash('Anhänge können nicht mehr hochgeladen werden, da der Antrag abgeschlossen oder abgelehnt ist.', 'warning')
+        flash(_('Anhänge können nicht mehr hochgeladen werden, da der Antrag abgeschlossen oder abgelehnt ist.'), 'warning')
         return redirect(url_for('payment_routes.zahlungsfreigabe_detail', antrag_id=antrag_id))
 
     # Berechtigung: Antragsteller oder Approver darf hochladen
@@ -513,7 +513,7 @@ def upload_antrag_attachment(antrag_id: int):
 
     files = request.files.getlist('files') or []
     if not files:
-        flash('Bitte Datei(en) auswählen.', 'warning')
+        flash(_('Bitte Datei(en) auswählen.'), 'warning')
         return redirect(url_for('payment_routes.zahlungsfreigabe_detail', antrag_id=antrag_id))
 
     target_dir = _antrag_dir(antrag_id)
@@ -553,7 +553,7 @@ def upload_antrag_attachment(antrag_id: int):
     if saved:
         flash(f'{saved} Datei(en) hochgeladen.', 'success')
     else:
-        flash('Keine Dateien hochgeladen.', 'warning')
+        flash(_('Keine Dateien hochgeladen.'), 'warning')
 
     return redirect(url_for('payment_routes.zahlungsfreigabe_detail', antrag_id=antrag_id))
 
@@ -664,7 +664,7 @@ def delete_antrag_attachment(att_id: int):
             VALUES (:aid, :uid, 'anhang_geloescht', NOW(), :det)
         """), {'aid': r['antrag_id'], 'uid': session.get('user_id'),
                'det': f"att_id={att_id}, name={r['original_name']}"})
-    flash('Anhang gelöscht.', 'info')
+    flash(_('Anhang gelöscht.'), 'info')
     return redirect(url_for('payment_routes.zahlungsfreigabe_detail', antrag_id=r['antrag_id']))
 
 @payment_routes.post('/zahlungsfreigabe/<int:antrag_id>/edit')
@@ -685,7 +685,7 @@ def edit_antrag(antrag_id):
             abort(404)
 
         if row['status'] in ('freigegeben', 'abgeschlossen', 'abgelehnt', 'zurueckgezogen'):
-            flash('Bearbeitung nicht mehr möglich.', 'warning')
+            flash(_('Bearbeitung nicht mehr möglich.'), 'warning')
             return redirect(url_for('payment_routes.zahlungsfreigabe_detail', antrag_id=antrag_id))
 
         if user['id'] != row['antragsteller_id'] and not user.get('can_approve'):
@@ -817,7 +817,7 @@ def edit_antrag(antrag_id):
             ORDER BY a.timestamp ASC, a.id ASC
         """), {'id': antrag_id}).mappings().all()
 
-    flash('Antrag gespeichert.', 'success')
+    flash(_('Antrag gespeichert.'), 'success')
     return redirect(url_for('payment_routes.zahlungsfreigabe_detail', antrag_id=antrag_id))
 
 @payment_routes.get('/zahlungsfreigabe/export/pdf')
@@ -937,23 +937,23 @@ def zahlungsfreigabe_antrag():
 
     # Eingaben validieren
     if not datum_str:
-        flash('Bitte ein gültiges Datum angeben.', 'danger')
+        flash(_('Bitte ein gültiges Datum angeben.'), 'danger')
         return redirect(url_for('payment_routes.zahlungsfreigabe'))
 
     if not betrag_str:
-        flash('Bitte einen gültigen Betrag angeben.', 'danger')
+        flash(_('Bitte einen gültigen Betrag angeben.'), 'danger')
         return redirect(url_for('payment_routes.zahlungsfreigabe'))
 
     try:
         datum = datetime.strptime(datum_str, '%Y-%m-%d').date()
     except ValueError:
-        flash('Ungültiges Datumsformat. Bitte im Format YYYY-MM-DD eingeben.', 'danger')
+        flash(_('Ungültiges Datumsformat. Bitte im Format YYYY-MM-DD eingeben.'), 'danger')
         return redirect(url_for('payment_routes.zahlungsfreigabe'))
 
     try:
         betrag = Decimal(betrag_str.replace(',', '.'))
     except Exception:
-        flash('Ungültiger Betrag. Bitte eine Zahl eingeben.', 'danger')
+        flash(_('Ungültiger Betrag. Bitte eine Zahl eingeben.'), 'danger')
         return redirect(url_for('payment_routes.zahlungsfreigabe'))
 
 
@@ -1000,7 +1000,7 @@ def zahlungsfreigabe_antrag():
     except Exception:
         current_app.logger.exception("Fehler beim Senden der Benachrichtigungen für neuen Antrag %s", antrag_id)
 
-    flash('Zahlungsantrag erfolgreich erstellt.', 'success')
+    flash(_('Zahlungsantrag erfolgreich erstellt.'), 'success')
     return redirect(url_for('payment_routes.zahlungsfreigabe'))
 
 # Eigene Freigabe (des Approvers) zurückziehen
@@ -1019,7 +1019,7 @@ def freigabe_zurueckziehen(antrag_id):
         if curr is None:
             abort(404)
         if curr == 'abgeschlossen':
-            flash('Abgeschlossene Anträge können nicht mehr geändert werden.', 'warning')
+            flash(_('Abgeschlossene Anträge können nicht mehr geändert werden.'), 'warning')
             return redirect(url_for('payment_routes.zahlungsfreigabe'))
 
         # Eigene Freigabe löschen (falls vorhanden)
@@ -1029,7 +1029,7 @@ def freigabe_zurueckziehen(antrag_id):
         """), {'aid': antrag_id, 'uid': user['id']}).rowcount
 
         if deleted == 0:
-            flash('Keine Freigabe zum Zurückziehen gefunden.', 'warning')
+            flash(_('Keine Freigabe zum Zurückziehen gefunden.'), 'warning')
             return redirect(url_for('payment_routes.zahlungsfreigabe'))
 
         # Audit-Eintrag protokollieren
@@ -1051,7 +1051,7 @@ def freigabe_zurueckziehen(antrag_id):
                 VALUES (:aid, :uid, 'freigabe_nicht_mehr_vollständig', NOW(), :det)
             """), {'aid': antrag_id, 'uid': user['id'], 'det': f'{done}/{total} Freigaben'})
 
-    flash('Deine Freigabe wurde zurückgezogen.', 'info')
+    flash(_('Deine Freigabe wurde zurückgezogen.'), 'info')
     return redirect(url_for('payment_routes.zahlungsfreigabe'))
 
 @payment_routes.get('/zahlungsfreigabe/<int:antrag_id>/attachments/list')

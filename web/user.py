@@ -98,7 +98,7 @@ def edit_user(uid):
         password = (request.form.get('password') or '').strip()
 
         if role not in ROLES.keys():
-            flash('Ungültige Rolle.')
+            flash(_('Ungültige Rolle.'))
             return redirect(url_for('edit_user', uid=uid))
 
         with engine.begin() as conn:
@@ -146,7 +146,7 @@ def edit_user(uid):
                     'id': uid
                 })
 
-        flash('Benutzer aktualisiert.')
+        flash(_('Benutzer aktualisiert.'))
         return redirect(url_for('user_routes.users_list'))
 
     # GET-Teil

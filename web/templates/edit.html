@@ -120,7 +120,7 @@
               <i class="bi bi-paperclip me-1"></i>
               <a href="{{ att.url }}" target="_blank">{{ att.name }}</a>
               <small class="text-muted">({{ att.size }} Bytes)</small>
-              <a href="{{ att.view_url }}" target="_blank" class="btn btn-sm btn-outline-primary">Ansehen</a>
+              <a href="{{ att.view_url }}" target="_blank" class="btn btn-sm btn-outline-primary">{{ _('Ansehen') }}</a>
             </div>
             <form method="post" action="{{ url_for('attachments_routes.attachments_delete', att_id=att.id) }}"
               onsubmit="return confirm('{{ _('Anhang wirklich löschen?') }}');">
@@ -204,43 +204,43 @@
 <script>
   document.addEventListener('DOMContentLoaded', async () => {
     const entryId = {{ data.id }};
-  const listGroup = document.getElementById('editAttachmentsList');
-  try {
-    const resp = await fetch(`/attachments/${entryId}/list`);
-    const attachments = await resp.json();
+    const listGroup = document.getElementById('editAttachmentsList');
+    try {
+      const resp = await fetch(`/attachments/${entryId}/list`);
+      const attachments = await resp.json();
 
-    listGroup.innerHTML = '';
+      listGroup.innerHTML = '';
 
-    if (!attachments || attachments.length === 0) {
-      listGroup.innerHTML = `<div class="list-group-item text-muted">Keine Anhänge vorhanden.</div>`;
-      return;
+      if (!attachments || attachments.length === 0) {
+        listGroup.innerHTML = `<div class="list-group-item text-muted">{{ _('Keine Anhänge vorhanden.') }}</div>`;
+        return;
+      }
+
+      attachments.forEach(att => {
+        const item = document.createElement('div');
+        item.className = 'list-group-item d-flex justify-content-between align-items-center';
+
+        const deleteUrl = `/attachments/${att.id}/delete`;
+
+        item.innerHTML = `
+          <div class="text-truncate" style="max-width: 70%;">
+            <i class="bi bi-paperclip me-1"></i>
+            <a href="${att.url}" target="_blank">${att.name}</a>
+            <small class="text-muted">(${att.size} Bytes)</small>
+            <a href="${att.view_url}" target="_blank" class="btn btn-sm btn-outline-primary">{{ _('Ansehen') }}</a>
+          </div>
+          <form method="post" action="${deleteUrl}" onsubmit="return confirm('{{ _('Anhang wirklich löschen?') }}');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn btn-sm btn-outline-danger">{{ _('Löschen') }}</button>
+          </form>
+        `;
+
+        listGroup.appendChild(item);
+      });
+    } catch (e) {
+      console.error('{{ _("Fehler beim Laden der Anhänge:") }}', e);
+      listGroup.innerHTML = `<div class="list-group-item text-danger">{{ _('Fehler beim Laden der Anhänge.') }}</div>`;
     }
-
-    attachments.forEach(att => {
-      const item = document.createElement('div');
-      item.className = 'list-group-item d-flex justify-content-between align-items-center';
-
-      const deleteUrl = `/attachments/${att.id}/delete`;
-
-      item.innerHTML = `
-        <div class="text-truncate" style="max-width: 70%;">
-          <i class="bi bi-paperclip me-1"></i>
-          <a href="${att.url}" target="_blank">${att.name}</a>
-          <small class="text-muted">(${att.size} Bytes)</small>
-          <a href="${att.view_url}" target="_blank" class="btn btn-sm btn-outline-primary">Ansehen</a>
-        </div>
-        <form method="post" action="${deleteUrl}" onsubmit="return confirm('Anhang wirklich löschen?');">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <button class="btn btn-sm btn-outline-danger">Löschen</button>
-        </form>
-      `;
-
-      listGroup.appendChild(item);
-    });
-  } catch (e) {
-    console.error('Fehler beim Laden der Anhänge:', e);
-    listGroup.innerHTML = `<div class="list-group-item text-danger">Fehler beim Laden der Anhänge.</div>`;
-  }
-});
+  });
 </script>
 {% endblock %}

@@ -169,7 +169,7 @@ def add():
 
     log_action(user['id'], 'entries:add', new_id, f'attachments_moved={moved}')
     if moved:
-        flash(_(f'Datensatz gespeichert, {moved} Datei(en) übernommen.'), 'success')
+        flash(_('Datensatz gespeichert, {count} Datei(en) übernommen.').format(count=moved), 'success')
     else:
         flash(_('Datensatz wurde gespeichert.'), 'success')
 

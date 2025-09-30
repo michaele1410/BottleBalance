@@ -188,7 +188,7 @@ def reset_post():
     pwd   = (request.form.get('password')  or '').strip()
     pwd2  = (request.form.get('password2') or '').strip()
     if not token:
-        flash('Reset‑Token fehlt.')
+        flash(_('Reset‑Token fehlt.'))
         return redirect(url_for('reset_form'))
     if len(pwd) < 8 or pwd != pwd2:
         flash(_('Passwortanforderungen nicht erfüllt oder stimmen nicht überein.'))

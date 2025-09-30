@@ -11,25 +11,33 @@
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
           <!-- Datum -->
-          <div class="form-floating mb-3">
-            <input type="text" name="datum" id="datum" class="form-control" placeholder="Datum"
-            value="{{ data.datum.strftime('%d.%m.%Y') if data.datum else '' }}"
-            required autofocus>
-            <label for="datum">{{ _('Datum') }}</label>
+          <div class="input-group mb-3">
+            <span class="input-group-text">{{ _('Datum') }}</span>
+            <div class="form-floating flex-grow-1">
+              <input type="text" name="datum"  inputmode="decimal" class="form-control"
+                placeholder="Datum" id="datum" value="{{ data.datum.strftime('%d.%m.%Y') if data.datum else '' }}" required autofocus>
+                <label for="datum">{{ _('Datum') }}</label>
+            </div>
           </div>
 
           <!-- Vollgut -->
-          <div class="form-floating mb-3">
-            <input id="vollgut" name="vollgut" type="number" inputmode="numeric" min="0" step="1" class="form-control"
-              placeholder="0" autocomplete="off" value="{{ data.vollgut if data.vollgut is not none else '' }}">
-            <label for="vollgut">{{ _('Vollgut') }}</label>
+          <div class="input-group mb-3">
+            <span class="input-group-text">{{ _('Fl.') }}</span>
+            <div class="form-floating flex-grow-1">
+              <input name="vollgut" type="number" inputmode="numeric" min="0" step="1" class="form-control"
+                placeholder="0" id="vollgut" autocomplete="off" value="{{ data.vollgut if data.vollgut is not none else '' }}">
+              <label for="vollgut">{{ _('Vollgut') }}</label>
+            </div>
           </div>
 
           <!-- Leergut -->
-          <div class="form-floating mb-3">
-            <input id="leergut" name="leergut" type="number" inputmode="numeric" min="0" step="1" class="form-control"
-              placeholder="0" autocomplete="off" value="{{ data.leergut if data.leergut is not none else '' }}">
-            <label for="leergut">{{ _('Leergut') }}</label>
+          <div class="input-group mb-3">
+            <span class="input-group-text">{{ _('Fl.') }}</span>
+            <div class="form-floating flex-grow-1">
+              <input name="leergut" type="number" inputmode="numeric" min="0" step="1" class="form-control"
+                placeholder="0" id="leergut" autocomplete="off" value="{{ data.leergut if data.leergut is not none else '' }}">
+              <label for="leergut">{{ _('Leergut') }}</label>
+            </div>
           </div>
 
           <!-- Einnahme -->
@@ -61,21 +69,24 @@
             <label for="bemerkung">{{ _('Bemerkung') }}</label>
           </div-->
           <!-- Bemerkung als Dropdown -->
-          <div class="form-floating mb-3">
-          <select id="bemerkung" name="bemerkung" class="form-select">
-            {% set found = false %}
-            {% for option in bemerkungsoptionen %}
-              {% if data.bemerkung == option %}
-                {% set found = true %}
-              {% endif %}
-              <option value="{{ option }}" {% if data.bemerkung == option %}selected{% endif %}>{{ option }}</option>
-            {% endfor %}
-            {% if data.bemerkung and not found %}
-              <option value="{{ data.bemerkung }}" selected>{{ data.bemerkung }}</option>
-            {% endif %}
-          </select>
-          <label for="bemerkung">{{ _('Bemerkung') }}</label>
-        </div>
+           <div class="input-group mb-3">
+            <span class="input-group-text">{{ _('Bemerkung') }}</span>
+            <div class="form-floating flex-grow-1">
+              <select id="bemerkung" name="bemerkung" class="form-select">
+                {% set found = false %}
+                {% for option in bemerkungsoptionen %}
+                  {% if data.bemerkung == option %}
+                    {% set found = true %}
+                  {% endif %}
+                  <option value="{{ option }}" {% if data.bemerkung == option %}selected{% endif %}>{{ option }}</option>
+                {% endfor %}
+                {% if data.bemerkung and not found %}
+                  <option value="{{ data.bemerkung }}" selected>{{ data.bemerkung }}</option>
+                {% endif %}
+              </select>
+              <label for="bemerkung">{{ _('Bemerkung') }}</label>
+            </div>
+          </div>
 
           <div class="col-12 d-flex gap-2">
             <a class="btn btn-outline-secondary" href="{{ url_for('bbalance_routes.index') }}">{{ _('Abbrechen') }}</a>
@@ -126,10 +137,10 @@
         <table class="table table-sm table-striped align-middle">
           <thead>
             <tr>
-              <th>Zeitpunkt</th>
-              <th>Aktion</th>
-              <th>Benutzer</th>
-              <th>Details</th>
+              <th>{{ _('Zeitpunkt') }}</th>
+              <th>{{ _('Aktion') }}</th>
+              <th>{{ _('Benutzer') }}</th>
+              <th>{{ _('Details') }}</th>
             </tr>
           </thead>
           <tbody>

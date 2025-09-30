@@ -14,7 +14,7 @@ def parse_money(s: str | None) -> Decimal:
     s = s.replace(currency_symbol, '')
 
     # Weitere bekannte Symbole entfernen (optional)
-    s = s.replace('€', '').replace('EUR', '')
+    s = s.replace("_('waehrung')", '').replace("_('waehrung')", '')
 
     # Whitespace entfernen (inkl. NBSP, NNBSP, Narrow NBSP)
     s = re.sub(r'[\s\u00A0\u202F]', '', s)

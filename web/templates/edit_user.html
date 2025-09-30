@@ -1,24 +1,24 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="container mt-4">
-  <h2>Benutzer bearbeiten: {{ user.username }}</h2>
+  <h2>{{ _('Benutzer bearbeiten') }}: {{ user.username }}</h2>
   <form method="post">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
     <div class="mb-3">
-      <label class="form-label">E-Mail</label>
+      <label class="form-label">{{ _('E-Mail') }}</label>
       <input type="email" name="email" class="form-control" value="{{ user.email or '' }}">
     </div>
 
 
     <div class="mb-3">
-      <label for="password">Neues Passwort (optional)</label>
-      <input type="password" class="form-control" id="password" name="password" placeholder="Neues Passwort eingeben">
-      <small class="form-text text-muted">Leer lassen, wenn das Passwort nicht geändert werden soll.</small>
+      <label for="password">{{ _('Neues Passwort (optional)') }}</label>
+      <input type="password" class="form-control" id="password" name="password" placeholder="{{ _('Neues Passwort eingeben') }}">
+      <small class="form-text text-muted">{{ _('Leer lassen, wenn das Passwort nicht geändert werden soll') }}.</small>
     </div>
 
     <div class="mb-3">
-      <label class="form-label">Rolle</label>
+      <label class="form-label">{{ _('Rolle') }}</label>
       <select name="role" class="form-select" required>
         {% for r in roles %}
         <option value="{{ r }}" {% if user.role==r %}selected{% endif %}>{{ r }}</option>
@@ -36,17 +36,17 @@
 
     <div class="form-check mb-2">
       <input class="form-check-input" type="checkbox" name="active" id="active" {% if user.active %}checked{% endif %}>
-      <label class="form-check-label" for="active">Aktiv</label>
+      <label class="form-check-label" for="active">{{ _('Aktiv') }}</label>
     </div>
 
     <div class="form-check mb-3">
       <input class="form-check-input" type="checkbox" name="can_approve" id="can_approve" {% if user.can_approve
         %}checked{% endif %}>
-      <label class="form-check-label" for="can_approve">Darf Zahlungsfreigaben erteilen</label>
+      <label class="form-check-label" for="can_approve">{{ _('Darf Zahlungsfreigaben erteilen') }}</label>
     </div>
 
-    <button type="submit" class="btn btn-primary">Speichern</button>
-    <a href="{{ url_for('user_routes.users_list') }}" class="btn btn-secondary">Abbrechen</a>
+    <button type="submit" class="btn btn-primary">{{ _('Speichern') }}</button>
+    <a href="{{ url_for('user_routes.users_list') }}" class="btn btn-secondary">{{ _('Abbrechen') }}</a>
   </form>
 </div>
 {% endblock %}

@@ -1,17 +1,17 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="container mt-4">
-  <h2 class="mb-4">Audit-Übersicht</h2>
+  <h2 class="mb-4">{{ _('Audit-Übersicht') }}</h2>
   <div class="table-responsive">
     <table class="table table-striped align-middle">
       <thead>
         <tr>
-          <th>ID</th>
-          <th>Antrag</th>
-          <th>Benutzer</th>
-          <th>Aktion</th>
-          <th>Zeitpunkt</th>
-          <th>Details</th>
+          <th>{{ _('ID') }}</th>
+          <th>{{ _('Antrag') }}</th>
+          <th>{{ _('Benutzer') }}</th>
+          <th>{{ _('Aktion') }}</th>
+          <th>{{ _('Zeitpunkt') }}</th>
+          <th>{{ _('Details') }}</th>
         </tr>
       </thead>
       <tbody>
@@ -29,7 +29,7 @@
     </table>
   </div>
   <a href="{{ url_for('payment_routes.zahlungsfreigabe') }}" class="btn btn-secondary mt-3">
-    <i class="bi bi-arrow-left"></i> Zurück
+    <i class="bi bi-arrow-left"></i> {{ _('Zurück') }}
   </a>
 </div>
 {% endblock %}

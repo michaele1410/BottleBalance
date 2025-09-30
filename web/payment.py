@@ -452,31 +452,31 @@ def export_einzelantrag_pdf(antrag_id: int):
         story.append(Image(logo_path, width=40*mm))
         story.append(Spacer(1, 6))
 
-    story.append(Paragraph(f"Zahlungsantrag #{antrag_id}", styles['Title']))
+    story.append(Paragraph(f"{_('Zahlungsantrag')} #{antrag_id}", styles['Title']))
     story.append(Spacer(1, 6))
-    story.append(Paragraph(f"Erstellt am {datetime.now().strftime('%d.%m.%Y %H:%M')}", styles['Normal']))
+    story.append(Paragraph(f"{_('Erstellt am')} {datetime.now().strftime('%d.%m.%Y %H:%M')}", styles['Normal']))
     story.append(Spacer(1, 12))
 
     details_data = [
-        ["Antragsteller/in:", P(r['antragsteller'])],
-        ["Datum:", P(r['datum'].strftime('%d.%m.%Y') if r['datum'] else '')],
-        ["Paragraph:", P(r['paragraph'])],
-        ["Verwendungszweck:", P(r['verwendungszweck'])],
-        ["Betrag:", P(f"{r['betrag']} EUR")],
-        ["Lieferant:", P(r['lieferant'])],
-        ["Begründung:", P(r['begruendung'])],
-        ["Status:", P(r['status'])],
+        [_("Antragsteller/in:"), P(r['antragsteller'])],
+        [_("Datum:"), P(r['datum'].strftime('%d.%m.%Y') if r['datum'] else '')],
+        [_("Paragraph:"), P(r['paragraph'])],
+        [_("Verwendungszweck:"), P(r['verwendungszweck'])],
+        [_("Betrag:"), P(f"{r['betrag']} {_('waehrung')}")],
+        [_("Lieferant:"), P(r['lieferant'])],
+        [_("Begründung:"), P(r['begruendung'])],
+        [_("Status:"), P(r['status'])],
     ]
     details_table = Table(details_data, colWidths=[42*mm, None])
     details_table.setStyle(standard_table_style())
     story.append(details_table)
     story.append(Spacer(1, 10))
 
-    story.append(Paragraph("Audit-Historie", styles['Heading3']))
+    story.append(Paragraph(_("Audit-Historie"), styles['Heading3']))
     story.append(Spacer(1, 4))
     story.append(build_audit_table(audits, styles))
     story.append(Spacer(1, 10))
-
+    
     # Anhänge inkl. PDF-Seiten
     story = embed_pdf_attachments(antrag_id, attachments, story, styles)
 
@@ -867,9 +867,9 @@ def export_alle_antraege_pdf():
         story.append(Image(logo_path, width=40*mm))
         story.append(Spacer(1, 6))
 
-    story.append(Paragraph("Zahlungsanträge – Gesamtdokument", styles['Title']))
+    story.append(Paragraph(f"{_('Zahlungsantrag - Gesamtdokument')}", styles['Title']))
     story.append(Spacer(1, 6))
-    story.append(Paragraph(f"Erstellt am {datetime.now().strftime('%d.%m.%Y %H:%M')} – Anzahl Anträge: {len(antraege)}", styles['Normal']))
+    story.append(Paragraph(f"{_('Erstellt am')} {datetime.now().strftime('%d.%m.%Y %H:%M')} – {_('Anzahl Anträge')}: {len(antraege)}", styles['Normal']))
     story.append(Spacer(1, 12))
 
     for idx, r in enumerate(antraege):
@@ -879,25 +879,26 @@ def export_alle_antraege_pdf():
             blocks.append(Image(logo_path, width=40*mm))
             blocks.append(Spacer(1, 6))
 
-        blocks.append(Paragraph(f"<b>Zahlungsantrag #{r['id']}</b>", styles['Heading2']))
+        blocks.append(Paragraph(f"<b>{_('Zahlungsantrag')} #{r['id']}</b>", styles['Heading2']))
         blocks.append(Spacer(1, 6))
 
         details_data = [
-            ["Antragsteller/in:", P(r['antragsteller'])],
-            ["Datum:", P(r['datum'].strftime('%d.%m.%Y') if r['datum'] else '')],
-            ["Paragraph:", P(r['paragraph'])],
-            ["Verwendungszweck:", P(r['verwendungszweck'])],
-            ["Betrag:", P(f"{r['betrag']} EUR")],
-            ["Lieferant:", P(r['lieferant'])],
-            ["Begründung:", P(r['begruendung'])],
-            ["Status:", P(r['status'])],
-        ]
+                [_("Antragsteller/in:"), P(r['antragsteller'])],
+                [_("Datum:"), P(r['datum'].strftime('%d.%m.%Y') if r['datum'] else '')],
+                [_("Paragraph:"), P(r['paragraph'])],
+                [_("Verwendungszweck:"), P(r['verwendungszweck'])],
+                [_("Betrag:"), P(f"{r['betrag']} {_('waehrung')}")],
+                [_("Lieferant:"), P(r['lieferant'])],
+                [_("Begründung:"), P(r['begruendung'])],
+                [_("Status:"), P(r['status'])],
+            ]
+
         details_table = Table(details_data, colWidths=[42*mm, None])
         details_table.setStyle(standard_table_style())
         blocks.append(details_table)
         blocks.append(Spacer(1, 10))
 
-        blocks.append(Paragraph("Audit-Historie", styles['Heading3']))
+        blocks.append(Paragraph(_("Audit-Historie"), styles['Heading3']))
         blocks.append(build_audit_table(audit_by_antrag.get(r['id'], []), styles))
         blocks.append(Spacer(1, 10))
 

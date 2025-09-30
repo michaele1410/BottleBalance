@@ -4,6 +4,7 @@ import os
 from reportlab.platypus import Table, TableStyle, Paragraph, Image, PageBreak, Spacer
 from reportlab.lib.units import mm
 from reportlab.lib import colors
+from flask_babel import gettext as _
 
 from modules.core_utils import (
     localize_dt,
@@ -14,11 +15,12 @@ UPLOAD_FOLDER = os.getenv("UPLOAD_FOLDER") or "uploads"
 
 def build_audit_table(audits, styles, tz_name=None):
     audit_data = [[
-        Paragraph("<b>Zeitpunkt</b>", styles['Normal']),
-        Paragraph("<b>Aktion</b>", styles['Normal']),
-        Paragraph("<b>Benutzer</b>", styles['Normal']),
-        Paragraph("<b>Details</b>", styles['Normal']),
-    ]]
+            Paragraph(f"<b>{_('Zeitpunkt')}</b>", styles['Normal']),
+            Paragraph(f"<b>{_('Aktion')}</b>", styles['Normal']),
+            Paragraph(f"<b>{_('Benutzer')}</b>", styles['Normal']),
+            Paragraph(f"<b>{_('Details')}</b>", styles['Normal']),
+        ]]
+
 
     for a in audits:
         # Lokalisierter Zeitstempel

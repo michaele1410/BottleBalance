@@ -59,10 +59,13 @@ def login():
     # Falls Passwort geändert werden muss: Info + Flag für spätere Weiterleitung setzen
     force_profile = False
     if user['must_change_password'] and user['role'] != 'admin':
-        flash(_('Bitte das Passwort <a href="{0}" class="alert-link">im Profil</a> ändern.')
-              .format(url_for('profile')), 'warning')
+        flash(
+            _('Bitte das Passwort {profile_url}im Profil</a> ändern.')
+            .format(profile_url=url_for('profile')),
+            'warning'
+        )
         force_profile = True
-        session['force_profile_after_login'] = True  # <<--- nur Flag, keine Session-Authentifizierung!
+        session['force_profile_after_login'] = True # <<--- nur Flag, keine Session-Authentifizierung!
 
     if user['totp_enabled']:
         # 2FA-Flow starten; force_profile wird nach erfolgreicher 2FA ausgewertet

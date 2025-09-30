@@ -43,24 +43,33 @@
         <form method="post" action="{{ url_for('bbalance_routes.add') }}" id="transaction-form" novalidate>
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <!-- Datum -->
-          <div class="form-floating mb-3">
-            <input type="text" name="datum" id="datum" class="form-control" placeholder="Datum"
-              value="{{ default_date }}" required autofocus>
-            <label for="datum">{{ _('Datum') }}</label>
+          <div class="input-group mb-3">
+            <span class="input-group-text">{{ _('Datum') }}</span>
+            <div class="form-floating flex-grow-1">
+              <input type="text" name="datum"  inputmode="decimal" class="form-control"
+                placeholder="Datum" id="datum" value="{{ default_date }}" required autofocus>
+                <label for="datum">{{ _('Datum') }}</label>
+            </div>
           </div>
 
           <!-- Vollgut -->
-          <div class="form-floating mb-3">
-            <input id="vollgut" name="vollgut" type="number" inputmode="numeric" min="0" step="1" class="form-control"
-              placeholder="0" autocomplete="off">
-            <label for="vollgut">{{ _('Vollgut') }}</label>
+          <div class="input-group mb-3">
+            <span class="input-group-text">{{ _('Fl.') }}</span>
+            <div class="form-floating flex-grow-1">
+              <input name="vollgut" type="number" inputmode="numeric" min="0" step="1" class="form-control"
+                placeholder="0" id="vollgut" autocomplete="off">
+              <label for="vollgut">{{ _('Vollgut') }}</label>
+            </div>
           </div>
 
           <!-- Leergut -->
-          <div class="form-floating mb-3">
-            <input id="leergut" name="leergut" type="number" inputmode="numeric" min="0" step="1" class="form-control"
-              placeholder="0" autocomplete="off">
-            <label for="leergut">{{ _('Leergut') }}</label>
+          <div class="input-group mb-3">
+            <span class="input-group-text">{{ _('Fl.') }}</span>
+            <div class="form-floating flex-grow-1">
+              <input name="leergut" type="number" inputmode="numeric" min="0" step="1" class="form-control"
+                placeholder="0" id="leergut" autocomplete="off">
+              <label for="leergut">{{ _('Leergut') }}</label>
+            </div>
           </div>
 
           <!-- Einnahme -->
@@ -84,14 +93,17 @@
           </div>
 
           <!-- Bemerkung als Dropdown -->
-          <div class="form-floating mb-3">
-          <select id="bemerkung" name="bemerkung" class="form-select">
-            {% for option in bemerkungsoptionen %}
-              <option value="{{ option }}">{{ option }}</option>
-            {% endfor %}
-          </select>
-          <label for="bemerkung">{{ _('Bemerkung') }}</label>
-        </div>
+          <div class="input-group mb-3">
+            <span class="input-group-text">{{ _('Bemerkung') }}</span>
+            <div class="form-floating flex-grow-1">
+              <select id="bemerkung" name="bemerkung" class="form-select">
+                {% for option in bemerkungsoptionen %}
+                  <option value="{{ option }}">{{ option }}</option>
+                {% endfor %}
+              </select>
+              <label for="bemerkung">{{ _('Bemerkung') }}</label>
+            </div>
+          </div>
 
           <!-- Upload -->
           <input type="hidden" name="temp_token" id="temp_token" value="{{ temp_token }}">
@@ -421,7 +433,7 @@
           label: (ctx) => {
             const val = ctx.parsed.y;
             if (ctx.dataset.label === 'Kassenbestand') {
-              return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(val);
+              return new Intl.NumberFormat('de-DE', { style: 'currency', currency: "_('waehrung')" }).format(val);
             }
             return `${val} {{ _('Flaschen') }}`;
           }

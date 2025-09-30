@@ -1491,11 +1491,13 @@ def export_pdf():
     story = []
 
     logo_path = os.path.join(app.root_path, 'static', 'images/logo.png')
+
+    waehrung = _("waehrung")
     if os.path.exists(logo_path):
         story.append(RLImage(logo_path, width=40*mm, height=12*mm))
         story.append(Spacer(1, 6))
 
-    story.append(Paragraph(f"<b>{_('BottleBalance – Export')}</b>", styles['Title']))
+    story.append(Paragraph(f"<b>{_('BottleBalanceTitle')}{_(' - Export')}</b>", styles['Title']))
     story.append(Spacer(1, 6))
 
     data = [[
@@ -1508,9 +1510,9 @@ def export_pdf():
             str(e['vollgut']),
             str(e['leergut']),
             str(e['inventar']),
-            str(e['einnahme']).replace('.', ',') + " " + _('waehrung'),
-            str(e['ausgabe']).replace('.', ',') + " " + _('waehrung'),
-            str(e['kassenbestand']).replace('.', ',') + " " + _('waehrung'),
+            str(e['einnahme']).replace('.', ',') + " " + waehrung,
+            str(e['ausgabe']).replace('.', ',') + " " + waehrung,
+            str(e['kassenbestand']).replace('.', ',') + " " + waehrung,
             Paragraph(e['bemerkung'] or '', styles['Normal'])
         ])
 

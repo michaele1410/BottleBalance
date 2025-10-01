@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2025-10-01 10:31+0200\n"
+"POT-Creation-Date: 2025-10-01 10:40+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -222,7 +222,7 @@ msgstr "Please select file(s)."
 #: attachments.py:58 payment.py:529
 #, python-format
 msgid "Ungültiger Dateityp: %(filename)s"
-msgstr Invalid file type: %(filename)s"
+msgstr "Invalid file type: %(filename)s"
 
 #: attachments.py:78
 #, python-format
@@ -467,7 +467,7 @@ msgstr ""
 #, python-format
 msgid "%(count)d Datei hochgeladen."
 msgid_plural "%(count)d Dateien hochgeladen."
-msgstr[0] "%(count)d" file uploaded.
+msgstr[0] "%(count)d" file uploaded."
 msgstr[1] "%(count)d files uploaded."
 
 #: payment.py:695

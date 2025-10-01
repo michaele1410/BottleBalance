@@ -5,6 +5,7 @@ import secrets
 from datetime import datetime, timedelta
 from flask import render_template, request, redirect, url_for, session, flash, abort, Blueprint
 from flask_babel import gettext as _
+from markupsafe import escape
 from sqlalchemy import text, bindparam, Boolean
 from werkzeug.security import generate_password_hash
 
@@ -79,7 +80,7 @@ def users_add():
             """), {'u': username, 'e': email, 'ph': generate_password_hash(pwd), 'r': role})
         flash(_('Benutzer angelegt.'))
     except Exception as e:
-        flash(f"{_('Fehler:')} {e}")
+        flash(_('Fehler: %(error)s', error=escape(str(e))))
     return redirect(url_for('user_routes.users_list'))
 
 @user_routes.route('/admin/users/<int:uid>/edit', methods=['GET', 'POST'])
@@ -205,23 +206,23 @@ def users_reset_link(uid: int):
         conn.execute(text("INSERT INTO password_reset_tokens (user_id, token, expires_at) VALUES (:u,:t,:e)"),
                      {'u': uid, 't': token, 'e': expires})
         email = conn.execute(text("SELECT email FROM users WHERE id=:id"), {'id': uid}).scalar_one()
-    body = f"""
-    Dein Passwort-Reset-Token lautet:
-
-    {token}
-
-    Dieser Token ist 30 Minuten gültig.
-    Bitte gib ihn auf der Reset-Seite ein: {APP_BASE_URL}/reset
-    """
+    body = _(
+        "Dein Passwort-Reset-Token lautet:\n\n"
+        "%(token)s\n\n"
+        "Dieser Token ist 30 Minuten gültig.\n"
+        "Bitte gib ihn auf der Reset-Seite ein: %(url)s",
+        token=token,
+        url=f"{APP_BASE_URL}/reset"
+    )
     if email and SMTP_HOST:
-        sent = send_mail(email, 'Passwort zurücksetzen', body)
+        sent = send_mail(email, _("Passwort zurücksetzen"), body)
         if sent:
             flash(_('Reset-Link per E-Mail versendet.'))
         else:
-            flash(f"{_('Reset-Link:')} {reset_url}")
+            flash(_('Reset-Link: %(url)s', url=escape(reset_url)))
             logger.warning("E-Mail-Versand fehlgeschlagen – Token im UI angezeigt (user_id=%s).", uid)
     else:
-        flash(f"{_('Reset-Link:')} {reset_url}")
+        flash(_('Reset-Link: %(url)s', url=escape(reset_url)))
         logger.warning("Keine E-Mail-Adresse oder kein SMTP_HOST – Token im UI angezeigt (user_id=%s).", uid)
     return redirect(url_for('user_routes.users_list'))
 

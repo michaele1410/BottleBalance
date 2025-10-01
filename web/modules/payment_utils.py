@@ -2,6 +2,7 @@ import os
 import ssl
 from flask import session, abort, current_app
 from sqlalchemy import text
+from flask_babel import _
 from email.message import EmailMessage
 from smtplib import SMTP
 
@@ -105,12 +106,14 @@ def send_new_request_notifications(antrag_id: int, approver_emails: list[str]) -
     base_url = os.getenv("APP_BASE_URL", "http://localhost:5000")
     link = f"{base_url}/zahlungsfreigabe/{antrag_id}"
 
-    subject = f"Neuer Zahlungsfreigabe-Antrag #{antrag_id}"
-    body = (
-        f"Hallo,\n\n"
-        f"es wurde soeben ein neuer Zahlungsfreigabe-Antrag (#{antrag_id}) erstellt.\n"
-        f"Zur Prüfung/Freigabe:\n{link}\n\n"
-        f"Viele Grüße\nBottleBalance"
+    subject = _('Neuer Zahlungsfreigabe-Antrag #%(id)d', id=antrag_id)
+    body = _(
+        "Hallo,\n\n"
+        "es wurde soeben ein neuer Zahlungsfreigabe-Antrag (#%(id)d) erstellt.\n"
+        "Zur Prüfung/Freigabe:\n%(link)s\n\n"
+        "Viele Grüße\nBottleBalance",
+        id=antrag_id,
+        link=link
     )
 
     host = os.getenv("SMTP_HOST")

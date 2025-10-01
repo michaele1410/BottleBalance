@@ -5,6 +5,7 @@
 import os
 import pytz
 from flask import session,flash, abort, request
+from flask_babel import _
 from sqlalchemy import text
 from sqlalchemy.engine import Engine, create_engine
 from datetime import datetime
@@ -99,7 +100,7 @@ def allowed_file(filename: str) -> bool:
 
 def validate_file(file):
     if file.content_length > MAX_FILE_SIZE:
-        flash("Datei zu groß. Maximal erlaubt: 10 MB.", "danger")
+        flash(_("Datei zu groß. Maximal erlaubt: 10 MB."), "danger")
         return False
     return True
 

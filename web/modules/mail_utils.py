@@ -8,7 +8,8 @@ from smtplib import SMTP, SMTP_SSL, SMTPException
 from email.message import EmailMessage
 from modules.core_utils import APP_BASE_URL, engine
 from sqlalchemy import text
-
+from flask_babel import _
+from smtplib import SMTP, SMTP_SSL
 
 # Konfiguration aus Umgebungsvariablen
 SMTP_HOST = os.getenv("SMTP_HOST")
@@ -68,10 +69,13 @@ def send_mail(to_email: str, subject: str, body: str) -> bool:
 
 
 def send_status_email(to_email: str, antrag_id: int, status: str, cc_approvers: bool = False):
-    subject = f"Zahlungsantrag #{antrag_id} – Status: {status.capitalize()}"
-    body = (
-        f"Ihr Zahlungsantrag #{antrag_id} wurde auf '{status}' gesetzt.\n\n"
-        f"Link: {APP_BASE_URL}/zahlungsfreigabe/{antrag_id}"
+    subject = _('Zahlungsantrag #%(id)d – Status: %(status)s', id=antrag_id, status=status.capitalize())
+    body = _(
+        "Ihr Zahlungsantrag #%(id)d wurde auf '%(status)s' gesetzt.\n\n"
+        "Link: %(link)s",
+        id=antrag_id,
+        status=status,
+        link=f"{APP_BASE_URL}/zahlungsfreigabe/{antrag_id}"
     )
 
     msg = EmailMessage()
@@ -80,7 +84,7 @@ def send_status_email(to_email: str, antrag_id: int, status: str, cc_approvers: 
     msg["Subject"] = subject
     msg.set_content(body)
 
-    # Optional: CC an alle geschäftsführenden Benutzer
+    # Optional CC to approvers
     if cc_approvers:
         try:
             with engine.begin() as conn:
@@ -93,6 +97,7 @@ def send_status_email(to_email: str, antrag_id: int, status: str, cc_approvers: 
         except Exception as e:
             logger.warning("Fehler beim Abrufen der Approver-E-Mails: %s", e)
 
+    # Send email
     try:
         if SMTP_SSL_ON:
             context = ssl.create_default_context()

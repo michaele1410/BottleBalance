@@ -55,7 +55,7 @@ def attachments_upload(entry_id: int):
             if not f or not f.filename:
                 continue
             if not allowed_file(f.filename):
-                flash(_(f'Ungültiger Dateityp: {f.filename}'))
+                flash(_('Ungültiger Dateityp: %(filename)s', filename=f.filename))
                 continue
 
             ext = f.filename.rsplit('.', 1)[1].lower()
@@ -75,7 +75,7 @@ def attachments_upload(entry_id: int):
 
     if saved:
         log_action(session.get('user_id'), 'attachments:upload', entry_id, f'files={saved}')
-        flash(_(f'{saved} Datei(en) hochgeladen.'))
+        flash(_('%(num)d Datei(en) hochgeladen.', num=saved))
     else:
         flash(_('Keine Dateien hochgeladen.'))
 

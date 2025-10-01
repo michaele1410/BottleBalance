@@ -14,6 +14,8 @@ from datetime import datetime, date, timedelta
 from decimal import Decimal
 from flask_babel import Babel, gettext as _, gettext as translate
 from flask import Flask, render_template, request, redirect, url_for, session, send_file, send_from_directory, flash, abort, current_app, render_template_string
+from flask_mail import Message, Mail
+mail = Mail()
 from sqlalchemy import text
 from sqlalchemy.exc import OperationalError
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -190,24 +192,23 @@ def serialize_attachment(att):
 # Antrag
 # -----------------------
 def notify_managing_users(antrag_id, antragsteller, betrag, datum):
-    from flask_mail import Message
-    from app import mail  # falls Flask-Mail verwendet wird
-
-
     # Liste geschäftsführender Benutzer abrufen
     managing_users = User.query.filter_by(role='manager', is_active=True).all()
 
-    subject = f"Neuer Zahlungsfreigabeantrag von {antragsteller}"
-    body = f"""
-    Es wurde ein neuer Zahlungsfreigabeantrag erstellt.
+    subject = _('Neuer Zahlungsfreigabeantrag von %(requester)s', requester=antragsteller)
 
-    Antragsteller: {antragsteller}
-    Betrag: {betrag} EUR
-    Datum: {datum}
-    Antrag-ID: {antrag_id}
-
-    Bitte prüfen Sie den Antrag im System.
-    """
+    body = _(
+        "Es wurde ein neuer Zahlungsfreigabeantrag erstellt.\n\n"
+        "Antragsteller: %(requester)s\n"
+        "Betrag: %(amount).2f EUR\n"
+        "Datum: %(date)s\n"
+        "Antrag-ID: %(id)d\n\n"
+        "Bitte prüfen Sie den Antrag im System.",
+        requester=antragsteller,
+        amount=betrag,
+        date=datum,
+        id=antrag_id
+    )
 
     for user in managing_users:
         msg = Message(subject=subject,
@@ -1354,25 +1355,22 @@ def import_commit():
         except Exception:
             pass
 
-        log_action(session.get('user_id'), 'import:csv', None,
-                   f"commit: inserted={inserted}, replace_all={replace_all}, mode={mode}, import_invalid={import_invalid}")
-        flash(_(f'Import erfolgreich: {inserted} Zeilen übernommen.'))
+        log_action(
+            session.get('user_id'),
+            'import:csv',
+            None,
+            f"commit: inserted={inserted}, replace_all={replace_all}, mode={mode}, import_invalid={import_invalid}"
+        )
+
+        # Success message with placeholder
+        flash(_('Import erfolgreich: %(rows)d Zeilen übernommen.', rows=inserted))
         return redirect(url_for('bbalance_routes.index'))
+
     except Exception as e:
         logger.exception("Import-Commit fehlgeschlagen: %s", e)
-        flash(f"{_('Import fehlgeschlagen:')} {e}")
+        # Error message with placeholder
+        flash(_('Import fehlgeschlagen: %(error)s', error=str(e)))
         return redirect(url_for('bbalance_routes.index'))
-
-
-
-
-
-
-
-
-
-
-
 
 @app.post('/api/import/dry-run')
 def api_import_dry_run():
@@ -1626,11 +1624,13 @@ def admin_tools():
                         "-h", DB_HOST,
                         DB_NAME
                     ], stdout=f, env=env, check=True)
+
                 log_action(session.get('user_id'), 'db:export', None, f'Dump von {DB_NAME} erzeugt')
                 flash(_('Database dump successfully generated.'), "success")
                 return send_file(dump_file, as_attachment=True, download_name="bottlebalance_dump.sql")
+
             except subprocess.CalledProcessError as e:
-                flash(_('Error during database dump: ') + str(e), "error")
+                flash(_('Error during database dump: %(error)s', error=str(e)), "error")
                 log_action(session.get('user_id'), 'db:export:error', None, f'Dump failed: {e}')
 
         elif action == "update_bemerkungen":
@@ -1640,10 +1640,13 @@ def admin_tools():
                 with engine.begin() as conn:
                     conn.execute(text("DELETE FROM bemerkungsoptionen"))
                     for line in lines:
-                        conn.execute(text("INSERT INTO bemerkungsoptionen (text) VALUES (:t)"), {'t': line})
+                        conn.execute(
+                            text("INSERT INTO bemerkungsoptionen (text) VALUES (:t)"),
+                            {'t': line}
+                        )
                 flash(_("Bemerkungsoptionen aktualisiert."), "success")
             except Exception as e:
-                flash(_("Fehler beim Speichern der Bemerkungsoptionen: ") + str(e), "error")
+                flash(_("Fehler beim Speichern der Bemerkungsoptionen: %(error)s", error=str(e)), "error")
 
         return redirect(url_for("admin_tools"))  # ✅ Nur nach POST redirecten
 

@@ -8,6 +8,8 @@ from datetime import date, datetime
 from decimal import Decimal
 from flask_babel import gettext as _
 from flask import render_template, request, redirect, url_for, session, send_file, flash, abort, Blueprint, current_app, jsonify
+from markupsafe import escape
+from flask_babel import ngettext
 from sqlalchemy import text
 
 # PDF (ReportLab)
@@ -216,7 +218,7 @@ def freigeben_antrag(antrag_id):
                 send_status_email(email, antrag_id, 'freigegeben', cc_approvers=True)
             flash(_('Alle erforderlichen Freigaben liegen vor – Antrag ist jetzt freigegeben.'), 'success')
         else:
-            flash(f'Teilfreigabe erfasst ({done}/{total}).', 'info')
+            flash(_('Teilfreigabe erfasst: %(done)d/%(total)d.', done=done, total=total), 'info')
     return redirect(url_for('payment_routes.zahlungsfreigabe'))
 
 @payment_routes.post('/on_hold/<int:antrag_id>')
@@ -524,7 +526,7 @@ def upload_antrag_attachment(antrag_id: int):
             if not f or not f.filename:
                 continue
             if not allowed_file(f.filename):
-                flash(f'Ungültiger Dateityp: {f.filename}', 'danger')
+                flash(_('Ungültiger Dateityp: %(filename)s', filename=escape(f.filename)), 'danger')
                 continue
 
             ext = f.filename.rsplit('.', 1)[-1].lower() if '.' in f.filename else 'bin'
@@ -551,7 +553,12 @@ def upload_antrag_attachment(antrag_id: int):
             """), {'aid': antrag_id, 'uid': user['id'], 'det': f'files={saved}'})
 
     if saved:
-        flash(f'{saved} Datei(en) hochgeladen.', 'success')
+        flash(ngettext(
+            '%(count)d Datei hochgeladen.',
+            '%(count)d Dateien hochgeladen.',
+            saved,
+            count=saved
+        ), 'success')
     else:
         flash(_('Keine Dateien hochgeladen.'), 'warning')
 
@@ -705,7 +712,7 @@ def edit_antrag(antrag_id):
         betrag_decimal = Decimal(betrag_str.replace(',', '.'))
         datum_obj      = datetime.strptime(datum_str, '%Y-%m-%d').date()
     except Exception as e:
-        flash(f'Ungültige Eingabe: {e}', 'danger')
+        flash(_('Ungültige Eingabe: %(error)s', error=escape(str(e))), 'danger')
         return redirect(url_for('payment_routes.zahlungsfreigabe_detail', antrag_id=antrag_id))
 
     

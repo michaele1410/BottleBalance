@@ -14,6 +14,8 @@ from datetime import datetime, date, timedelta
 from decimal import Decimal
 from flask_babel import Babel, gettext as _, gettext as translate
 from flask import Flask, render_template, request, redirect, url_for, session, send_file, send_from_directory, flash, abort, current_app, render_template_string
+from flask_mail import Message, Mail
+mail = Mail()
 from sqlalchemy import text
 from sqlalchemy.exc import OperationalError
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -190,24 +192,23 @@ def serialize_attachment(att):
 # Antrag
 # -----------------------
 def notify_managing_users(antrag_id, antragsteller, betrag, datum):
-    from flask_mail import Message
-    from app import mail  # falls Flask-Mail verwendet wird
-
-
     # Liste geschäftsführender Benutzer abrufen
     managing_users = User.query.filter_by(role='manager', is_active=True).all()
 
-    subject = f"Neuer Zahlungsfreigabeantrag von {antragsteller}"
-    body = f"""
-    Es wurde ein neuer Zahlungsfreigabeantrag erstellt.
+    subject = _('Neuer Zahlungsfreigabeantrag von %(requester)s', requester=antragsteller)
 
-    Antragsteller: {antragsteller}
-    Betrag: {betrag} EUR
-    Datum: {datum}
-    Antrag-ID: {antrag_id}
-
-    Bitte prüfen Sie den Antrag im System.
-    """
+    body = _(
+        "Es wurde ein neuer Zahlungsfreigabeantrag erstellt.\n\n"
+        "Antragsteller: %(requester)s\n"
+        "Betrag: %(amount).2f EUR\n"
+        "Datum: %(date)s\n"
+        "Antrag-ID: %(id)d\n\n"
+        "Bitte prüfen Sie den Antrag im System.",
+        requester=antragsteller,
+        amount=betrag,
+        date=datum,
+        id=antrag_id
+    )
 
     for user in managing_users:
         msg = Message(subject=subject,

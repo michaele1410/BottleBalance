@@ -59,6 +59,6 @@ def admin_export_dump():
         return send_file(dump_file, as_attachment=True, download_name="bottlebalance_dump.sql")
 
     except subprocess.CalledProcessError as e:
-        flash(_('Fehler beim Datenbank-Dump: ') + str(e))
+        flash(_('Fehler beim Datenbank-Dump: %(error)s', error=str(e)))
         log_action(session.get('user_id'), 'db:export:error', None, f'Dump fehlgeschlagen: {e}')
         return redirect(url_for('admin_export_page'))

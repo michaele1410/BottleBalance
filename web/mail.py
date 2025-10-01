@@ -4,6 +4,8 @@
 import ssl
 
 from flask import render_template, request, redirect, url_for, flash, Blueprint
+from flask_babel import _
+from markupsafe import escape
 from email.mime.text import MIMEText
 from email.header import Header
 from smtplib import SMTP, SMTP_SSL
@@ -34,7 +36,7 @@ def admin_smtp():
     if request.method == "POST":
         try:
             if not SMTP_HOST or not SMTP_PORT or not SMTP_USER or not SMTP_PASS:
-                flash("SMTP configuration incomplete.", "error")
+                flash(_("SMTP-Konfiguration unvollständig."), "error")
                 return redirect(url_for("admin_smtp"))
 
             # Verbindung aufbauen
@@ -59,9 +61,9 @@ def admin_smtp():
             server.sendmail(FROM_EMAIL, SMTP_USER, message.as_string())
             server.quit()
 
-            flash("SMTP test successful – test email sent.", "success")
+            flash(_("SMTP-Test erfolgreich – Test-E-Mail gesendet."), "success")
         except Exception as e:
-            flash(f"SMTP test failed: {e}", "error")
+            flash(_('SMTP-Test fehlgeschlagen: %(error)s', error=escape(str(e))), "error")
         return redirect(url_for("admin_smtp"))
 
     if not SMTP_HOST or not SMTP_PORT or not SMTP_USER or not SMTP_PASS:

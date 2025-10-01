@@ -1354,25 +1354,22 @@ def import_commit():
         except Exception:
             pass
 
-        log_action(session.get('user_id'), 'import:csv', None,
-                   f"commit: inserted={inserted}, replace_all={replace_all}, mode={mode}, import_invalid={import_invalid}")
-        flash(_(f'Import erfolgreich: {inserted} Zeilen übernommen.'))
+        log_action(
+            session.get('user_id'),
+            'import:csv',
+            None,
+            f"commit: inserted={inserted}, replace_all={replace_all}, mode={mode}, import_invalid={import_invalid}"
+        )
+
+        # Success message with placeholder
+        flash(_('Import erfolgreich: %(rows)d Zeilen übernommen.', rows=inserted))
         return redirect(url_for('bbalance_routes.index'))
+
     except Exception as e:
         logger.exception("Import-Commit fehlgeschlagen: %s", e)
-        flash(f"{_('Import fehlgeschlagen:')} {e}")
+        # Error message with placeholder
+        flash(_('Import fehlgeschlagen: %(error)s', error=str(e)))
         return redirect(url_for('bbalance_routes.index'))
-
-
-
-
-
-
-
-
-
-
-
 
 @app.post('/api/import/dry-run')
 def api_import_dry_run():
@@ -1626,11 +1623,13 @@ def admin_tools():
                         "-h", DB_HOST,
                         DB_NAME
                     ], stdout=f, env=env, check=True)
+
                 log_action(session.get('user_id'), 'db:export', None, f'Dump von {DB_NAME} erzeugt')
                 flash(_('Database dump successfully generated.'), "success")
                 return send_file(dump_file, as_attachment=True, download_name="bottlebalance_dump.sql")
+
             except subprocess.CalledProcessError as e:
-                flash(_('Error during database dump: ') + str(e), "error")
+                flash(_('Error during database dump: %(error)s', error=str(e)), "error")
                 log_action(session.get('user_id'), 'db:export:error', None, f'Dump failed: {e}')
 
         elif action == "update_bemerkungen":
@@ -1640,10 +1639,13 @@ def admin_tools():
                 with engine.begin() as conn:
                     conn.execute(text("DELETE FROM bemerkungsoptionen"))
                     for line in lines:
-                        conn.execute(text("INSERT INTO bemerkungsoptionen (text) VALUES (:t)"), {'t': line})
+                        conn.execute(
+                            text("INSERT INTO bemerkungsoptionen (text) VALUES (:t)"),
+                            {'t': line}
+                        )
                 flash(_("Bemerkungsoptionen aktualisiert."), "success")
             except Exception as e:
-                flash(_("Fehler beim Speichern der Bemerkungsoptionen: ") + str(e), "error")
+                flash(_("Fehler beim Speichern der Bemerkungsoptionen: %(error)s", error=str(e)), "error")
 
         return redirect(url_for("admin_tools"))  # ✅ Nur nach POST redirecten
 

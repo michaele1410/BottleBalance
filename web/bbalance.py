@@ -5,6 +5,8 @@ import os
 import io
 from flask import render_template, request, redirect, url_for, session, send_file, flash, abort, Blueprint
 from flask_babel import gettext as _
+from flask_babel import ngettext
+from markupsafe import escape
 from sqlalchemy import text
 from datetime import datetime, date
 import csv
@@ -78,7 +80,7 @@ def add():
         ausgabe  = parse_money(request.form.get('ausgabe') or '0')
         bemerkung = (request.form.get('bemerkung') or '').strip()
     except Exception as e:
-        flash(f"{_('Eingabefehler:')} {e}", "danger")
+        flash(_("Eingabefehler: %(error)s", error=str(e)), "danger")
         # ⬇️ bei Fehler: gleiche Seite rendern, temp_token beibehalten
         ctx = _build_index_context(default_date=(datum_s or today_ddmmyyyy()),
                                    temp_token=temp_token)
@@ -496,7 +498,16 @@ def import_csv():
                     INSERT INTO entries (datum, vollgut, leergut, einnahme, ausgabe, bemerkung)
                     VALUES (:datum,:vollgut,:leergut,:einnahme,:ausgabe,:bemerkung)
                 """), r)
-        flash(f"{_('Import successfull:')} {len(rows_to_insert)} {_('rows adopted.')}")
+
+        # Success message with pluralization
+        flash(ngettext(
+            'Import erfolgreich: %(count)d Zeile übernommen.',
+            'Import erfolgreich: %(count)d Zeilen übernommen.',
+            len(rows_to_insert),
+            count=len(rows_to_insert)
+        ), "success")
+
     except Exception as e:
-        flash(f"{_('Import fehlgeschlagen:')} {e}")
+        flash(_('Import fehlgeschlagen: %(error)s', error=escape(str(e))), "danger")
+
     return redirect(url_for('bbalance_routes.index'))

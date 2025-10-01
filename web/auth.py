@@ -4,6 +4,7 @@ import re
 
 from flask_babel import gettext as _
 from flask import render_template, request, redirect, url_for, session, flash, Blueprint
+from markupsafe import Markup
 from sqlalchemy import text
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
@@ -59,13 +60,14 @@ def login():
     # Falls Passwort geändert werden muss: Info + Flag für spätere Weiterleitung setzen
     force_profile = False
     if user['must_change_password'] and user['role'] != 'admin':
-        flash(
-            _('Bitte das Passwort {profile_url}im Profil</a> ändern.')
-            .format(profile_url=url_for('profile')),
-            'warning'
-        )
+        message = _(
+            'Bitte das Passwort <a href="%(link)s" class="alert-link">im Profil</a> ändern.',
+        ) % {'link': url_for('profile')}  # Babel-style substitution
+        flash(Markup(message), 'warning')  # Mark message as safe HTML
+
         force_profile = True
-        session['force_profile_after_login'] = True # <<--- nur Flag, keine Session-Authentifizierung!
+        session['force_profile_after_login'] = True  # <<--- nur Flag, keine Session-Authentifizierung!
+
 
     if user['totp_enabled']:
         # 2FA-Flow starten; force_profile wird nach erfolgreicher 2FA ausgewertet

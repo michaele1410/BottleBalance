@@ -131,7 +131,7 @@
 <!-- Footer -->
 <footer class="border-top py-3">
   <div class="container text-muted small">
-    © <a href="mailto:webmaster@michaeleitdorf.de" class="link-secondary text-decoration-none">Michael Eitdorf</a>
+    © <a id="developer-email-link" class="link-secondary text-decoration-none">Michael Eitdorf</a>
     &nbsp;|&nbsp; Version: <a href="#" data-bs-toggle="modal" data-bs-target="#aboutModal"> {{ app_version }} </a>
   </div>
 </footer>
@@ -181,6 +181,30 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 </script>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const encoded = "{{ developer_email_encoded }}";
+  const decoded = atob(encoded);
+
+  const developerLink = document.getElementById("developer-email-link");
+  if (developerLink) {
+    developerLink.href = "mailto:" + decoded;
+  }
+});
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const encodedSupport = "{{ support_email_encoded }}";
+  const decodedSupport = atob(encodedSupport);
+
+  const supportLink = document.getElementById("support-email-link");
+  if (supportLink) {
+    supportLink.href = "mailto:" + decodedSupport;
+  }
+});
+</script>
 {% endblock %}
 
 <!-- Über-Modal -->
@@ -195,7 +219,8 @@ document.addEventListener('DOMContentLoaded', () => {
         <p><strong>{{ _('Name:') }}</strong> {{ _('BottleBalanceTitle') }}</p>
         <p><strong>{{ _('Version:') }}</strong> {{ app_version }}</p>
         <p><strong>{{ _('Entwickler:') }}</strong> Michael Eitdorf</p>
-        <p><strong>{{ _('Kontakt:') }}</strong> <a href="mailto:webmaster@michaeleitdorf.de">webmaster@michaeleitdorf.de</a></p>
+        <p><strong>{{ _('Kontakt:') }}</strong> <a id="developer-email-link">{{ _('Entwickler kontaktieren') }}</a></p>
+        <p><strong>{{ _('Webseite:') }}</strong> <a href="{{ developer_url }}" target="_blank" rel="noopener noreferrer">GitHub-Projekt</a></p>
         <hr>
         <p class="small text-muted">
           {{ _('BottleBalanceTitle') }}{{ _(' ist eine Webanwendung zur Verwaltung von Getränkekassen und Zahlungsanträgen. Für Support oder Feedback wenden Sie sich bitte an den Entwickler.') }}

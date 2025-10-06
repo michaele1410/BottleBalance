@@ -10,22 +10,27 @@
   </div>
 
     <div class="card-body p-4">
-      <p class="mb-4">{{ _("Du musst angemeldet sein, um diese Seite zu sehen.") }}</p>
+      <p class="mb-4">{{ _("Ein unerwarteter Fehler ist aufgetreten") }}.</p>
       <div class="d-flex flex-column gap-2">
-        {% if home_url %}
-          <a href="{{ home_url }}" class="btn btn-primary w-100">
-            <i class="bi bi-house-door-fill me-1"></i> {{ _("Zur Startseite") }}
-          </a>
-        {% endif %}
-        {% if support_url %}
-          <a href="{{ support_url }}" class="btn btn-outline-secondary w-100">
-            <i class="bi bi-life-preserver me-1"></i> {{ _("Zum Support-Portal") }}
-          </a>
-        {% endif %}
-        {% if support_email %}
-          <a href="mailto:{{ support_email }}" class="btn btn-outline-secondary w-100">
-            <i class="bi bi-envelope-fill me-1"></i> {{ _("Support kontaktieren") }}
-          </a>
+        {% if session.get('user_id') %}
+            <a href="{{ url_for('bbalance_routes.index') }}" class="btn btn-primary w-100">
+              <i class="bi bi-house-door-fill me-1"></i> {{ _("Zur Startseite") }}
+            </a>
+          {% if support_url %}
+            <a href="{{ support_url }}" class="btn btn-outline-secondary w-100">
+              <i class="bi bi-life-preserver me-1"></i> {{ _("Zum Support-Portal") }}
+            </a>
+          {% endif %}
+          {% if support_email_encoded %}
+            <a id="support-email-link" class="btn btn-outline-secondary w-100">
+              <i class="bi bi-envelope-fill me-1"></i> {{ _("Support kontaktieren") }}
+            </a>
+          {% endif %}
+        
+        {% else %}
+            <a href="{{ url_for('bbalance_routes.index') }}" class="btn btn-primary w-100">
+              <i class="bi bi-house-door-fill me-1"></i> {{ _("Zum Login") }}
+            </a>
         {% endif %}
       </div>
     </div>

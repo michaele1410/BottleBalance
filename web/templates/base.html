@@ -131,7 +131,7 @@
 <!-- Footer -->
 <footer class="border-top py-3">
   <div class="container text-muted small">
-    © <a href="mailto:webmaster@michaeleitdorf.de" class="link-secondary text-decoration-none">Michael Eitdorf</a>
+    © <a id="developer-email-link" class="link-secondary text-decoration-none">Michael Eitdorf</a>
     &nbsp;|&nbsp; Version: <a href="#" data-bs-toggle="modal" data-bs-target="#aboutModal"> {{ app_version }} </a>
   </div>
 </footer>
@@ -181,6 +181,28 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 </script>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const encoded = "{{ developer_email_encoded }}";
+  const decoded = atob(encoded);
+
+  const footerLink = document.getElementById("developer-email-link");
+  if (footerLink) {
+    footerLink.href = "mailto:" + decoded;
+  }
+
+  const aboutLink = document.getElementById("about-email-link");
+  if (aboutLink) {
+    aboutLink.href = "mailto:" + decoded;
+  }
+
+  const supportLink = document.getElementById("support-email-link");
+  if (supportLink) {
+    supportLink.href = "mailto:" + decoded;
+  }
+});
+</script>
 {% endblock %}
 
 <!-- Über-Modal -->
@@ -188,14 +210,15 @@ document.addEventListener('DOMContentLoaded', () => {
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="aboutModalLabel">{{ _('Über') }} {{ _('BottleBalanceTitle') }}</h5>
+        <h5 class="modal-title" id="aboutModalLabel">{{ _('Über') }} {{ _('BalanceTitle') }}</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
       </div>
       <div class="modal-body">
         <p><strong>{{ _('Name:') }}</strong> {{ _('BottleBalanceTitle') }}</p>
         <p><strong>{{ _('Version:') }}</strong> {{ app_version }}</p>
         <p><strong>{{ _('Entwickler:') }}</strong> Michael Eitdorf</p>
-        <p><strong>{{ _('Kontakt:') }}</strong> <a href="mailto:webmaster@michaeleitdorf.de">webmaster@michaeleitdorf.de</a></p>
+        <p><strong>{{ _('Kontakt:') }}</strong> <a id="about-email-link">{{ _('Entwickler kontaktieren') }}</a></p>
+        <p><strong>{{ _('Webseite:') }}</strong> {{ developer_url }}</p>
         <hr>
         <p class="small text-muted">
           {{ _('BottleBalanceTitle') }}{{ _(' ist eine Webanwendung zur Verwaltung von Getränkekassen und Zahlungsanträgen. Für Support oder Feedback wenden Sie sich bitte an den Entwickler.') }}

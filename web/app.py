@@ -7,6 +7,7 @@ import secrets
 import ssl
 import logging
 import re
+import base64
 from logging.handlers import RotatingFileHandler
 from smtplib import SMTP, SMTP_SSL
 from email.message import EmailMessage
@@ -113,7 +114,6 @@ import io
 import time
 import pyotp
 import qrcode
-import base64
 
 import subprocess
 
@@ -167,11 +167,16 @@ def setup_logger(name):
     logger.addHandler(handler)
     return logger
 
-
+app = Flask(__name__, static_folder='static')
 
 # -----------------------
 # Feature Switches (ENV)
 # -----------------------
+
+# Developer Information
+DEVELOPER_EMAIL = "webmaster@michaeleitdorf.de"
+DEVELOPER_URL = "https://github.com/michaele1410/BottleBalance"
+
 IMPORT_USE_PREVIEW   = os.getenv("IMPORT_USE_PREVIEW", "true").lower() in ("1","true","yes","on")
 IMPORT_ALLOW_MAPPING = os.getenv("IMPORT_ALLOW_MAPPING", "true").lower() in ("1","true","yes","on")
 IMPORT_ALLOW_DRYRUN  = os.getenv("IMPORT_ALLOW_DRYRUN", "true").lower() in ("1","true","yes","on")
@@ -235,7 +240,6 @@ def get_timezone():
         return user.get('timezone') if isinstance(user, dict) else getattr(user, 'timezone', None)
     return None  # oder ein Default wie 'Europe/Berlin'
 
-app = Flask(__name__, static_folder='static')
 # Register Blueprints
 app.register_blueprint(auth_routes)
 app.register_blueprint(bbalance_routes)
@@ -253,8 +257,8 @@ app.secret_key = SECRET_KEY
 
 
 # For Error Pages
-app.config["SUPPORT_EMAIL"] = os.getenv("SUPPORT_EMAIL", "support@example.com")
-app.config["SUPPORT_URL"]   = os.getenv("SUPPORT_URL", "https://support.example.com")
+app.config["SUPPORT_EMAIL"] = os.getenv("SUPPORT_EMAIL", "webmaster@michaeleitdorf.de")
+app.config["SUPPORT_URL"]   = os.getenv("SUPPORT_URL", "https://github.com/michaele1410/BottleBalance")
 
 # CSV Upload Limit
 app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024  # 10 MB
@@ -922,6 +926,13 @@ def inject_helpers():
         return urlencode(current, doseq=True)
     return dict(qs=qs)
 
+app.context_processor
+def inject_developer_info():
+    encoded_email = base64.b64encode(DEVELOPER_EMAIL.encode()).decode()
+    return {
+        'developer_email_encoded': encoded_email,
+        'developer_url': DEVELOPER_URL
+    }
 
 # -----------------------
 # Password reset tokens

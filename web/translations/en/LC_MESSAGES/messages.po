@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2025-10-01 10:56+0200\n"
+"POT-Creation-Date: 2025-10-02 09:47+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -420,7 +420,8 @@ msgstr "The request was rejected"
 
 #: payment.py:343
 msgid "Du kannst nur eigene, offene oder pausierte Anträge zurückziehen."
-msgstr "You can only withdraw your own requests, or those that are open or on "
+msgstr ""
+"You can only withdraw your own requests, or those that are open or on "
 "hold."
 
 #: payment.py:363

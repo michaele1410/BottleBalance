@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2025-10-06 14:00+0200\n"
+"POT-Creation-Date: 2025-10-06 14:33+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -1577,12 +1577,11 @@ msgstr "No users available"
 
 #: templates/errors/401.html:2 templates/errors/401.html:9
 msgid "Nicht autorisiert"
-msgstr "Not authorised"
+msgstr "Not authorized"
 
-#: templates/errors/401.html:12 templates/errors/403.html:13
-#: templates/errors/404.html:13 templates/errors/500.html:13
-msgid "Du musst angemeldet sein, um diese Seite zu sehen."
-msgstr "You must be logged in to view this page."
+#: templates/errors/401.html:12
+msgid "Du bist nicht authorisiert diesen Bereich zu sehen"
+msgstr "You are not authorized to view this area"
 
 #: templates/errors/401.html:16 templates/errors/403.html:17
 #: templates/errors/404.html:17 templates/errors/500.html:17
@@ -1592,15 +1591,20 @@ msgstr "To the home page"
 #: templates/errors/401.html:20 templates/errors/403.html:21
 #: templates/errors/404.html:21 templates/errors/500.html:21
 msgid "Zum Support-Portal"
-msgstr "To the support portal"
+msgstr "Support-Portal"
 
 #: templates/errors/401.html:25 templates/errors/403.html:26
 #: templates/errors/404.html:26 templates/errors/500.html:26
 msgid "Support kontaktieren"
 msgstr "Contact support"
 
-#: templates/errors/401.html:33 templates/errors/403.html:34
-#: templates/errors/404.html:34 templates/errors/500.html:34
+#: templates/errors/401.html:31 templates/errors/403.html:32
+#: templates/errors/404.html:32 templates/errors/500.html:32
+msgid "Zum Login"
+msgstr "Login page"
+
+#: templates/errors/401.html:38 templates/errors/403.html:39
+#: templates/errors/404.html:39 templates/errors/500.html:39
 msgid "Referenz"
 msgstr "Reference"
 
@@ -1608,92 +1612,22 @@ msgstr "Reference"
 msgid "Zugriff verweigert"
 msgstr "Access denied"
 
+#: templates/errors/403.html:13
+msgid "Der Zugriff auf diesen Bereich wurde verweigert"
+msgstr "Access to this area has been denied"
+
 #: templates/errors/404.html:2 templates/errors/404.html:9
 msgid "Seite nicht gefunden"
 msgstr "Page not found"
+
+#: templates/errors/404.html:13
+msgid "Die angeforderte Seite wurde nicht gefunden"
+msgstr "The requested page was not found"
 
 #: templates/errors/500.html:2 templates/errors/500.html:9
 msgid "Unerwarteter Fehler"
 msgstr "Unexpected error"
 
-#~ msgid "Im Filter:"
-#~ msgstr "In the filter:"
-
-#~ msgid "waehrung"
-#~ msgstr "$"
-
-#~ msgid "z.B. 12,34"
-#~ msgstr "e.g. 12,34"
-
-#~ msgid "z.B. 5,00"
-#~ msgstr "e.g. 5,00"
-
-#~ msgid "PDF"
-#~ msgstr "PDF"
-
-#~ msgid "CSV"
-#~ msgstr "CSV"
-
-#~ msgid "Dies ist eine Testnachricht zur Überprüfung der SMTP-Konfiguration."
-#~ msgstr "This is a test message to check the SMTP configuration."
-
-#~ msgid "SMTP-Test von BottleBalance"
-#~ msgstr "Welcome to BottleBalance"
-
-#~ msgid "SMTP-Test fehlgeschlagen: "
-#~ msgstr "SMTP test failed:"
-
-#~ msgid "Test-E-Mail senden"
-#~ msgstr "Send test email"
-
-#~ msgid "Layout"
-#~ msgstr "Layout"
-
-#~ msgid "z.B."
-#~ msgstr "e.g."
-
-#~ msgid "Bitte Passwort ändern (erforderlich)."
-#~ msgstr "Please change your password (required)."
-
-#~ msgid "Backup-Code verwendet. Bitte neue Codes generieren."
-#~ msgstr "Backup code used. Please generate new codes."
-
-#~ msgid "optional"
-#~ msgstr "optional"
-
-#~ msgid "Inventar (aktuell):"
-#~ msgstr "Inventory (current):"
-
-#~ msgid "Kassenbestand (aktuell):"
-#~ msgstr "Cash balance (current):"
-
-#~ msgid "Backup-Codes"
-#~ msgstr "Backup codes"
-
-#~ msgid "Diese Codes können einmalig beim Login verwendet werden:"
-#~ msgstr "These codes can be used once when logging in:"
-
-#~ msgid "Neue Backup-Codes generieren"
-#~ msgstr "Generate new backup codes"
-
-#~ msgid "Von"
-#~ msgstr "From"
-
-#~ msgid "Bis"
-#~ msgstr "To"
-
-#~ msgid "CSV Import"
-#~ msgstr "CSV Import"
-
-#~ msgid "Passwort setzen"
-#~ msgstr "Reset password"
-
-#~ msgid "Reset-Link"
-#~ msgstr "Reset-Link"
-
-#~ msgid "Anmeldung"
-#~ msgstr "Login"
-
-#~ msgid "Zahlungsantrag"
-#~ msgstr "Payment request"
-
+#: templates/errors/500.html:13
+msgid "Ein unerwarteter Fehler ist aufgetreten"
+msgstr "An unexpected error has occurred"

@@ -187,19 +187,21 @@ document.addEventListener('DOMContentLoaded', () => {
   const encoded = "{{ developer_email_encoded }}";
   const decoded = atob(encoded);
 
-  const footerLink = document.getElementById("developer-email-link");
-  if (footerLink) {
-    footerLink.href = "mailto:" + decoded;
+  const developerLink = document.getElementById("developer-email-link");
+  if (developerLink) {
+    developerLink.href = "mailto:" + decoded;
   }
+});
+</script>
 
-  const aboutLink = document.getElementById("about-email-link");
-  if (aboutLink) {
-    aboutLink.href = "mailto:" + decoded;
-  }
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const encodedSupport = "{{ support_email_encoded }}";
+  const decodedSupport = atob(encodedSupport);
 
   const supportLink = document.getElementById("support-email-link");
   if (supportLink) {
-    supportLink.href = "mailto:" + decoded;
+    supportLink.href = "mailto:" + decodedSupport;
   }
 });
 </script>
@@ -210,15 +212,15 @@ document.addEventListener('DOMContentLoaded', () => {
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="aboutModalLabel">{{ _('Über') }} {{ _('BalanceTitle') }}</h5>
+        <h5 class="modal-title" id="aboutModalLabel">{{ _('Über') }} {{ _('BottleBalanceTitle') }}</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
       </div>
       <div class="modal-body">
         <p><strong>{{ _('Name:') }}</strong> {{ _('BottleBalanceTitle') }}</p>
         <p><strong>{{ _('Version:') }}</strong> {{ app_version }}</p>
         <p><strong>{{ _('Entwickler:') }}</strong> Michael Eitdorf</p>
-        <p><strong>{{ _('Kontakt:') }}</strong> <a id="about-email-link">{{ _('Entwickler kontaktieren') }}</a></p>
-        <p><strong>{{ _('Webseite:') }}</strong> {{ developer_url }}</p>
+        <p><strong>{{ _('Kontakt:') }}</strong> <a id="developer-email-link">{{ _('Entwickler kontaktieren') }}</a></p>
+        <p><strong>{{ _('Webseite:') }}</strong> <a href="{{ developer_url }}" target="_blank" rel="noopener noreferrer">GitHub-Projekt</a></p>
         <hr>
         <p class="small text-muted">
           {{ _('BottleBalanceTitle') }}{{ _(' ist eine Webanwendung zur Verwaltung von Getränkekassen und Zahlungsanträgen. Für Support oder Feedback wenden Sie sich bitte an den Entwickler.') }}

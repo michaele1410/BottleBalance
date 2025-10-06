@@ -926,12 +926,15 @@ def inject_helpers():
         return urlencode(current, doseq=True)
     return dict(qs=qs)
 
-app.context_processor
-def inject_developer_info():
-    encoded_email = base64.b64encode(DEVELOPER_EMAIL.encode()).decode()
+@app.context_processor
+def inject_developer_and_support_info():
+    encoded_developer_email = base64.b64encode(DEVELOPER_EMAIL.encode()).decode()
+    encoded_support_email = base64.b64encode(app.config["SUPPORT_EMAIL"].encode()).decode()
     return {
-        'developer_email_encoded': encoded_email,
-        'developer_url': DEVELOPER_URL
+        'developer_email_encoded': encoded_developer_email,
+        'developer_url': DEVELOPER_URL,
+        'support_email_encoded': encoded_support_email,
+        'support_url': app.config["SUPPORT_URL"]
     }
 
 # -----------------------

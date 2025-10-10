@@ -148,7 +148,15 @@
         <p><strong>{{ _('Name:') }}</strong> {{ _('BottleBalanceTitle') }}</p>
         <p><strong>{{ _('Version:') }}</strong> {{ app_version }}</p>
         <p><strong>{{ _('Entwickler:') }}</strong> Michael Eitdorf</p>
-        <p><strong>{{ _('Kontakt:') }}</strong> <a id="developer-email-modal">{{ _('Entwickler kontaktieren') }}</a></p>
+        <p><strong>{{ _('Kontakt:') }}</strong>
+          {% if session.get('user_id') %}
+              <a href="mailto:{{ DEVELOPER_EMAIL }}">
+                  {{ _('Entwickler kontaktieren') }}
+              </a>
+          {% else %}
+              <a id="developer-email-modal">{{ _('Entwickler kontaktieren') }}</a>
+          {% endif %}
+        </p>
         <p><strong>{{ _('Webseite:') }}</strong> <a href="{{ developer_url }}" target="_blank" rel="noopener noreferrer">GitHub-Projekt</a></p>
         <hr>
         <p class="small text-muted">

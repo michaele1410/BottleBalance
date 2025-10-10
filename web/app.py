@@ -933,6 +933,7 @@ def inject_developer_and_support_info():
     return {
         'developer_email_encoded': encoded_developer_email,
         'developer_url': DEVELOPER_URL,
+        'developer_email': DEVELOPER_EMAIL,
         'support_email_encoded': encoded_support_email,
         'support_url': app.config["SUPPORT_URL"]
     }

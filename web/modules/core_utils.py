@@ -55,8 +55,7 @@ ROLES = {
         'admin:tools'
     },
     'Manager': {
-        'entries:view', 'entries:add', 'entries:edit:any', 'entries:delete:any',
-        'export:csv', 'export:pdf', 
+        'entries:view', 'entries:add', 'entries:edit:any', 'entries:delete:any','export:pdf', 
         'import:csv', 
         'users:manage', 'users:setApprover', 
         'payment:view', 'payment:manage'
@@ -65,8 +64,7 @@ ROLES = {
         'payment:view'
     },
     'Editor': {
-        'entries:view', 'entries:add', 'entries:edit:own', 'entries:delete:own',
-        'export:csv', 'export:pdf'
+        'entries:view', 'entries:add', 'entries:edit:own', 'entries:delete:own', 'export:pdf'
     },
     'Viewer': {
         'entries:view', 

@@ -29,7 +29,7 @@ def current_user():
     with engine.begin() as conn:
         row = conn.execute(text("""
                     SELECT id, username, email, role, active, must_change_password, totp_enabled,
-                        backup_codes, locale, timezone, theme_preference, can_approve, last_login_at
+                        backup_codes, locale, timezone, theme_preference, sort_order_desc, can_approve, last_login_at
                     FROM users WHERE id=:id
                 """), {'id': uid}).mappings().first()
     return dict(row) if row else None

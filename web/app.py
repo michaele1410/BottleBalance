@@ -2,6 +2,7 @@
 # Checked: auth, bbalance, 
 # -----------------
 
+
 import os
 import secrets
 import ssl
@@ -9,7 +10,7 @@ import logging
 import re
 import base64
 from logging.handlers import RotatingFileHandler
-from smtplib import SMTP, SMTP_SSL
+from smtplib import SMTP, SMTP_SSL as SMTP_SSL_CLASS  # ← alias gegen Konflikt
 from email.message import EmailMessage
 from datetime import datetime, date, timedelta
 from decimal import Decimal
@@ -26,6 +27,7 @@ from functools import wraps
 from typing import Tuple
 from urllib.parse import urlencode
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image as RLImage, PageBreak, KeepTogether
+
 from types import SimpleNamespace
 
 from auth import auth_routes
@@ -62,17 +64,16 @@ from modules.bbalance_utils import (
     format_eur_de,
     _user_can_view_entry
 )
+
 from modules.mail_utils import (
-    SMTP_HOST,
-    SMTP_PORT,
-    SMTP_USER,
+    SMTP_HOST, 
+    SMTP_PORT, 
+    SMTP_USER, 
     SMTP_PASS,
-    SMTP_TLS,
-    SMTP_SSL,
-    SMTP_SSL_ON,
-    SMTP_TIMEOUT,
-    FROM_EMAIL,
-    logger
+    SMTP_TLS, 
+    SMTP_SSL_ON, 
+    SMTP_TIMEOUT, 
+    FROM_EMAIL
 )
 
 from modules.auth_utils import (
@@ -121,7 +122,6 @@ import json
 
 # PDF (ReportLab)
 from reportlab.lib.pagesizes import A4, landscape, portrait
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image as RLImage
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import mm
@@ -168,6 +168,13 @@ def setup_logger(name):
     return logger
 
 app = Flask(__name__, static_folder='static')
+# Flask-Mail initialisieren
+mail.init_app(app)
+# Upload-Ordner sicherstellen
+app.config.setdefault('UPLOAD_FOLDER', os.path.join(app.instance_path, 'uploads'))
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
+
 
 # -----------------------
 # Feature Switches (ENV)
@@ -197,11 +204,7 @@ def serialize_attachment(att):
 # Antrag
 # -----------------------
 def notify_managing_users(antrag_id, antragsteller, betrag, datum):
-    # Liste geschäftsführender Benutzer abrufen
-    managing_users = User.query.filter_by(role='manager', is_active=True).all()
-
     subject = _('Neuer Zahlungsfreigabeantrag von %(requester)s', requester=antragsteller)
-
     body = _(
         "Es wurde ein neuer Zahlungsfreigabeantrag erstellt.\n\n"
         "Antragsteller: %(requester)s\n"
@@ -209,17 +212,20 @@ def notify_managing_users(antrag_id, antragsteller, betrag, datum):
         "Datum: %(date)s\n"
         "Antrag-ID: %(id)d\n\n"
         "Bitte prüfen Sie den Antrag im System.",
-        requester=antragsteller,
-        amount=betrag,
-        date=datum,
-        id=antrag_id
+        requester=antragsteller, amount=betrag, date=datum, id=antrag_id
     )
 
-    for user in managing_users:
-        msg = Message(subject=subject,
-                      recipients=[user.email],
-                      body=body)
+    with engine.begin() as conn:
+        emails = conn.execute(text("""
+            SELECT email
+            FROM users
+            WHERE role = 'manager' AND active = TRUE AND email IS NOT NULL
+        """)).scalars().all()
+
+    for to_addr in emails:
+        msg = Message(subject=subject, recipients=[to_addr], body=body, sender=FROM_EMAIL)
         mail.send(msg)
+
 
 def get_locale():
     user = current_user()
@@ -297,6 +303,7 @@ CREATE TABLE IF NOT EXISTS users (
     password_hash TEXT NOT NULL,
     role TEXT NOT NULL,
     active BOOLEAN NOT NULL DEFAULT TRUE,
+    sort_order_desc BOOLEAN DEFAULT FALSE,
     must_change_password BOOLEAN NOT NULL DEFAULT FALSE,
     totp_secret TEXT,
     totp_enabled BOOLEAN NOT NULL DEFAULT FALSE,
@@ -449,6 +456,7 @@ def migrate_columns(conn):
     conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS theme_preference TEXT DEFAULT 'system'"))
     conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login_at TIMESTAMP"))
     conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS can_approve BOOLEAN NOT NULL DEFAULT FALSE"))
+    conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS sort_order_desc BOOLEAN DEFAULT FALSE"))
     conn.execute(text("ALTER TABLE zahlungsantraege ADD COLUMN IF NOT EXISTS approver_snapshot JSONB"))
     
     try:
@@ -473,7 +481,7 @@ def migrate_columns(conn):
         "Kassenzählung",
         "Leerung Kasse GR",
         "Lieferung Getränke",
-        "Einzelkauf Getränke"
+        "Einzelkauf Getränke",
         "Einzahlung Paypal",
         "Spende"
     ]
@@ -838,7 +846,7 @@ def update_preferences():
     uid = session.get('user_id')
     language = request.form.get('language')
     theme = request.form.get('theme') or 'system'
-
+    sort_order_desc = (request.form.get('sort_order_desc') == 'on')
 
     if language not in ['de', 'en']:
         flash(_('Ungültige Sprache.'))
@@ -850,8 +858,18 @@ def update_preferences():
 
     with engine.begin() as conn:
         conn.execute(text("""
-            UPDATE users SET locale=:lang, theme_preference=:theme, updated_at=NOW() WHERE id=:id
-        """), {'lang': language, 'theme': theme, 'id': uid})
+            UPDATE users
+            SET locale=:lang,
+                theme_preference=:theme,
+                sort_order_desc=:desc,
+                updated_at=NOW()
+            WHERE id=:id
+        """), {
+            'lang': language,
+            'theme': theme,
+            'desc': sort_order_desc,
+            'id': uid
+    })
 
     flash(_('Einstellungen gespeichert.'))
     return redirect(url_for('profile'))
@@ -1190,8 +1208,9 @@ def import_preview():
     - Remap: Mapping-Indices aus dem Formular übernehmen, CSV aus /tmp erneut parsen.
     """
     # Falls Vorschau via Feature-Switch deaktiviert ist -> Legacy-Import verwenden
-    if not IMPORT_USE_PREVIEW:
-        return import_csv()
+    if not IMPORT_USE_PREVIEW: 
+        flash(_('CSV-Preview ist deaktiviert.'))
+        return redirect(url_for('bbalance_routes.index'))
 
     replace_all = request.form.get('replace_all') == 'on'
     token = (request.form.get('token') or '').strip()
@@ -1480,7 +1499,6 @@ def api_import_dry_run():
 # -----------------------
 # PDF Export with optional logo
 # -----------------------
-
 @app.get('/export/pdf')
 @login_required
 @require_perms('export:pdf')
@@ -1490,22 +1508,40 @@ def export_pdf():
     dt = request.args.get('to')
     attachments_filter = request.args.get('attachments')
 
+    # Zeitraum
     date_from = datetime.strptime(df, '%Y-%m-%d').date() if df else None
     date_to   = datetime.strptime(dt, '%Y-%m-%d').date() if dt else None
 
-    entries = fetch_entries(q or None, date_from, date_to, attachments_filter=attachments_filter)
+    # Jahr (''/all => None; sonst int; keine Default-Erzwingung)
+    year_raw = (request.args.get('year') or '').strip().lower()
+    year_val = None
+    if year_raw not in ('', 'all'):
+        try:
+            year_val = int(year_raw)
+        except ValueError:
+            year_val = None
+
+    # Alle Filter anwenden
+    entries = fetch_entries(
+        search=q or None,
+        date_from=date_from,
+        date_to=date_to,
+        attachments_filter=attachments_filter,
+        year=year_val
+    )
 
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(
-        buffer, pagesize=portrait(A4),
+        buffer,
+        pagesize=portrait(A4),
         leftMargin=10, rightMargin=5, topMargin=20, bottomMargin=20
     )
     styles = getSampleStyleSheet()
     story = []
 
-    logo_path = os.path.join(app.root_path, 'static', 'images/logo.png')
-
+    logo_path = os.path.join(app.root_path, 'static', 'images', 'logo.png')
     waehrung = _("waehrung")
+
     if os.path.exists(logo_path):
         story.append(RLImage(logo_path, width=40*mm, height=12*mm))
         story.append(Spacer(1, 6))
@@ -1513,23 +1549,38 @@ def export_pdf():
     story.append(Paragraph(f"<b>{_('BottleBalanceTitle')}{_(' - Export')}</b>", styles['Title']))
     story.append(Spacer(1, 6))
 
+    # Optional: sichtbare Filterzusammenfassung im PDF-Header
+    filters = []
+    if q:
+        filters.append(f"{_('Suche')}: {q}")
+    if date_from or date_to:
+        df_disp = date_from.strftime('%d.%m.%Y') if date_from else '—'
+        dt_disp = date_to.strftime('%d.%m.%Y') if date_to else '—'
+        filters.append(f"{_('Zeitraum')}: {df_disp} – {dt_disp}")
+    if year_val is not None:
+        filters.append(f"{_('Jahr')}: {year_val}")
+    if attachments_filter == 'only':
+        filters.append(f"{_('Anhänge')}: {_('Nur mit Anhang')}")
+    elif attachments_filter == 'none':
+        filters.append(f"{_('Anhänge')}: {_('Ohne Anhang')}")
+    if filters:
+        story.append(Paragraph(", ".join(filters), styles['Normal']))
+        story.append(Spacer(1, 6))
+
     data = [[
-        _('Datum'), _('Vollgut'), _('Leergut'), _('Inventar'),
-        _('Einnahme'), _('Ausgabe'), _('Kassenbestand'), _('Bemerkung')
+        _('Datum'), _('Vollgut'), _('Leergut'), _('Einnahme'), _('Ausgabe'), _('Bemerkung')
     ]]
     for e in entries:
         data.append([
             format_date_de(e['datum']),
             str(e['vollgut']),
             str(e['leergut']),
-            str(e['inventar']),
             str(e['einnahme']).replace('.', ',') + " " + waehrung,
             str(e['ausgabe']).replace('.', ',') + " " + waehrung,
-            str(e['kassenbestand']).replace('.', ',') + " " + waehrung,
             Paragraph(e['bemerkung'] or '', styles['Normal'])
         ])
 
-    col_widths = [21*mm, 17*mm, 17*mm, 17*mm, 20*mm, 20*mm, 30*mm, 31*mm]
+    col_widths = [25*mm, 35*mm, 35*mm, 35*mm, 35*mm, 40*mm]
     table = Table(data, colWidths=col_widths, repeatRows=1)
     table.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#f1f3f5')),
@@ -1550,8 +1601,11 @@ def export_pdf():
 
     doc.build(story)
     buffer.seek(0)
+
     filename = f"bottlebalance_{date.today().strftime('%Y%m%d')}.pdf"
     return send_file(buffer, as_attachment=True, download_name=filename, mimetype='application/pdf')
+
+
 
 @app.post('/profile/lang')
 @login_required
@@ -1596,50 +1650,82 @@ def parse_date_iso_or_today(s: str | None) -> date:
 # -----------------------
 # SMTP Test Mail if paraam SEND_TEST_MAIL is set to true
 # -----------------------
-
 @app.route("/admin/tools", methods=["GET", "POST"])
 @login_required
 @require_perms('admin:tools')
-@require_csrf
 def admin_tools():
+    """
+    Admin-Werkzeuge:
+      - SMTP-Testmail senden
+      - Datenbank-Dump erzeugen und herunterladen
+      - Bemerkungsoptionen vollständig überschreiben
+
+    Sicherheit:
+      - Login + Rollenberechtigung (admin:tools) sind Pflicht.
+      - CSRF-Schutz nur für POST-Aktionen.
+    """
     status = None
     current_options = []
 
+    # --- POST-AKTIONEN ---
     if request.method == "POST":
-        action = request.form.get("action")
+        # CSRF nur bei POST prüfen
+        require_csrf(lambda: None)()
 
+        action = (request.form.get("action") or "").strip()
+
+        # 1) SMTP-Test
         if action == "smtp":
             try:
                 if not SMTP_HOST or not SMTP_PORT or not SMTP_USER or not SMTP_PASS:
                     flash(_("SMTP configuration incomplete."), "error")
                 else:
-                    server = SMTP_SSL(SMTP_HOST, SMTP_PORT, timeout=SMTP_TIMEOUT) if SMTP_SSL_ON else SMTP(SMTP_HOST, SMTP_PORT, timeout=SMTP_TIMEOUT)
-                    if SMTP_TLS:
+                    # SSL oder Plain
+                    server = (
+                        SMTP_SSL_CLASS(SMTP_HOST, SMTP_PORT, timeout=SMTP_TIMEOUT)
+                        if SMTP_SSL_ON
+                        else SMTP(SMTP_HOST, SMTP_PORT, timeout=SMTP_TIMEOUT)
+                    )
+
+                    # TLS nur starten, wenn keine SSL-Verbindung genutzt wird
+                    if SMTP_TLS and not SMTP_SSL_ON:
                         server.starttls(context=ssl.create_default_context())
+
                     server.login(SMTP_USER, SMTP_PASS)
-                    message = MIMEText("This is a test message to check the SMTP configuration.", "plain", "utf-8")
+
+                    # Testmail vorbereiten
+                    message = MIMEText(
+                        "This is a test message to check the SMTP configuration.",
+                        "plain",
+                        "utf-8"
+                    )
                     message["Subject"] = Header("SMTP test by BottleBalance", "utf-8")
                     message["From"] = FROM_EMAIL
                     message["To"] = SMTP_USER
-                    server.sendmail(FROM_EMAIL, SMTP_USER, message.as_string())
+
+                    server.sendmail(FROM_EMAIL, [SMTP_USER], message.as_string())
                     server.quit()
+
                     flash(_("SMTP test successful – test email sent."), "success")
             except Exception as e:
                 flash(_("SMTP test failed: ") + str(e), "error")
 
+        # 2) Datenbank-Dump
         elif action == "dump":
             dump_file = "/tmp/bottlebalance_dump.sql"
             env = os.environ.copy()
             env["PGPASSWORD"] = DB_PASS
             try:
+                # Dump erzeugen
                 with open(dump_file, "w") as f:
-                    subprocess.run([
-                        "pg_dump",
-                        "-U", DB_USER,
-                        "-h", DB_HOST,
-                        DB_NAME
-                    ], stdout=f, env=env, check=True)
+                    subprocess.run(
+                        ["pg_dump", "-U", DB_USER, "-h", DB_HOST, DB_NAME],
+                        stdout=f,
+                        env=env,
+                        check=True
+                    )
 
+                # Audit + Download
                 log_action(session.get('user_id'), 'db:export', None, f'Dump von {DB_NAME} erzeugt')
                 flash(_('Database dump successfully generated.'), "success")
                 return send_file(dump_file, as_attachment=True, download_name="bottlebalance_dump.sql")
@@ -1648,6 +1734,7 @@ def admin_tools():
                 flash(_('Error during database dump: %(error)s', error=str(e)), "error")
                 log_action(session.get('user_id'), 'db:export:error', None, f'Dump failed: {e}')
 
+        # 3) Bemerkungsoptionen überschreiben
         elif action == "update_bemerkungen":
             raw = request.form.get("options") or ""
             lines = [line.strip() for line in raw.splitlines() if line.strip()]
@@ -1663,9 +1750,14 @@ def admin_tools():
             except Exception as e:
                 flash(_("Fehler beim Speichern der Bemerkungsoptionen: %(error)s", error=str(e)), "error")
 
-        return redirect(url_for("admin_tools"))  # ✅ Nur nach POST redirecten
+        # Fallback bei unbekannter Aktion
+        else:
+            flash(_("Unbekannte Aktion."), "error")
 
-    # ---------- GET: Status & Optionen laden ----------
+        # Nach jeder POST-Aktion Redirect, um Doppeleinreichungen zu vermeiden
+        return redirect(url_for("admin_tools"))
+
+    # --- GET: Status & aktuelle Optionen anzeigen ---
     if not SMTP_HOST or not SMTP_PORT or not SMTP_USER or not SMTP_PASS:
         status = _("SMTP configuration incomplete.")
     else:
@@ -1673,9 +1765,11 @@ def admin_tools():
 
     try:
         with engine.begin() as conn:
-            current_options = conn.execute(text("SELECT text FROM bemerkungsoptionen ORDER BY text ASC")).scalars().all()
+            current_options = conn.execute(
+                text("SELECT text FROM bemerkungsoptionen ORDER BY text ASC")
+            ).scalars().all()
     except Exception:
-        current_options = []
+        current_options = []   # ← deine Zeile hatte Tippfehler („current        current_options“)
 
     return render_template("admin_tools.html", status=status, current_options=current_options)
 

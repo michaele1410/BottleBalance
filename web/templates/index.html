@@ -1,14 +1,16 @@
 {% extends "base.html" %}
 {% block content %}
-
-
 <div class="row g-3 mb-4">
   <!-- Inventar -->
   <div class="col-6 col-md-4">
     <div class="card shadow-sm h-100">
       <div class="card-header d-flex justify-content-between align-items-center">
         <span>{{ _('Inventar:') }}</span>
-        <span class="badge bg-primary">{{ inv_aktuell }} {{ _('Fl.') }}</span>
+        <span class="badge bg-primary">{{ inv_aktuell }} {{ _('Fl.') }}
+          {% if delta_inv and (from or to) %}
+            <small class="text-muted">(Δ {{ delta_inv }} im Zeitraum)</small>
+          {% endif %}
+        </span>
       </div>
       <div class="card-body sparkline-container">
         <div class="ratio sparkline-ratio">
@@ -23,15 +25,21 @@
     <div class="card shadow-sm h-100">
       <div class="card-header d-flex justify-content-between align-items-center">
         <span>{{ _('Kasse:') }}</span>
-        <span class="badge bg-success">{{ format_eur_de(kas_aktuell) }}</span>
+        <span class="badge bg-success">
+          {{ format_eur_de(kas_aktuell) }}
+          {% if delta_kas and (from or to) %}
+            <small class="text-muted">(Δ {{ format_eur_de(delta_kas) }} im Zeitraum)</small>
+          {% endif %}
+        </span>
       </div>
       <div class="card-body sparkline-container">
         <div class="ratio sparkline-ratio">
           <canvas id="sparklineKas"></canvas>
+          </div>
         </div>
       </div>
     </div>
-  </div>
+
 
   <!-- Formular für neuen Datensatz -->
 
@@ -219,7 +227,7 @@
             <a class="btn btn-outline-success"
               href="{{ url_for('bbalance_routes.export_csv') }}?{{ request.query_string.decode() if request.query_string else '' }}"
               title="{{ _('CSV exportieren') }}">
-              <i class="bi-filetype-csv me-1 text-success    <i class="bi-filetype-csv me-1 text-success"></i> CSV
+              <i class="bi-filetype-csv me-1 text-success"></i> CSV
             </a>
             {% endif %}
 
@@ -236,10 +244,10 @@
             </th>
             <th>{{ _('Vollgut') }}</th>
             <th>{{ _('Leergut') }}</th>
-            <th>{{ _('Inventar') }}</th>
+            <!--th>{{ _('Inventar') }}</th-->
             <th>{{ _('Einnahme') }}</th>
             <th>{{ _('Ausgabe') }}</th>
-            <th>{{ _('Kassenbestand') }}</th>
+            <!--th>{{ _('Kassenbestand') }}</th-->
             <th>{{ _('Bemerkung') }}</th>
             <th class="text-end">{{ _('Aktionen') }}</th>
           </tr>
@@ -250,10 +258,10 @@
             <td>{{ format_date_de(e.datum) }}</td>
             <td>{{ e.vollgut }}</td>
             <td>{{ e.leergut }}</td>
-            <td>{{ e.inventar }}</td>
+            <!--td>{{ e.inventar }}</td-->
             <td>{{ format_eur_de(e.einnahme) }}</td>
             <td>{{ format_eur_de(e.ausgabe) }}</td>
-            <td>{{ format_eur_de(e.kassenbestand) }}</td>
+            <!--td>{{ format_eur_de(e.kassenbestand) }}</td-->
             <td>{{ e.bemerkung }}</td>
             <td class="text-end">
               {% set role = current_user().get('role') %}

@@ -1,3 +1,4 @@
+
 # -----------------------
 # Data Access
 # -----------------------
@@ -9,23 +10,17 @@ from datetime import datetime, date
 from uuid import uuid4
 
 from modules.core_utils import (
-    engine
+    engine, 
+    ROLES
 )
-
 from modules.csv_utils import (
     today_ddmmyyyy,
     format_eur_de,
     format_date_de
 )
-from modules.core_utils import (
-    engine, 
-    ROLES
-)
 from modules.auth_utils import (
     current_user
 )
-
-
 
 def fetch_entries(search=None, date_from=None, date_to=None, attachments_filter=None, year=None):
     where = []
@@ -50,11 +45,9 @@ def fetch_entries(search=None, date_from=None, date_to=None, attachments_filter=
 
     where_sql = ("WHERE " + " AND ".join(where)) if where else ""
 
-    # ✅ Sortierung aus Profil
+    # Sortierung aus Profil
     user = current_user()
-    sort_order_desc = False
-    if user and 'sort_order_desc' in user:
-        sort_order_desc = bool(user['sort_order_desc'])
+    sort_order_desc = bool(user.get('sort_order_desc')) if user else False
     order_dir = 'DESC' if sort_order_desc else 'ASC'
 
     sql = f"""
@@ -72,7 +65,7 @@ def fetch_entries(search=None, date_from=None, date_to=None, attachments_filter=
         ORDER BY e.datum {order_dir}, e.id {order_dir}
     """
 
-    with engine.begin() as conn:       
+    with engine.begin() as conn:
         rows = conn.execute(text(sql), params).mappings().all()
 
     inventar = 0
@@ -102,16 +95,38 @@ def fetch_entries(search=None, date_from=None, date_to=None, attachments_filter=
         })
     return result
 
-def current_totals():
-    with engine.begin() as conn:
-        rows = conn.execute(text("SELECT vollgut, leergut, einnahme, ausgabe FROM entries ORDER BY datum ASC, id ASC")).fetchall()
-    inv = 0
-    kas = Decimal('0.00')
-    for (voll, leer, ein, aus) in rows:
-        inv += (voll or 0) - (leer or 0)
-        kas = (kas + Decimal(ein or 0) - Decimal(aus or 0)).quantize(Decimal('0.01'))
-    return inv, kas
 
+def get_global_totals():
+    """Berechnet Inventar und Kassenbestand aus der gesamten Historie."""
+    with engine.begin() as conn:
+        row = conn.execute(text("""
+            SELECT
+                COALESCE(SUM(vollgut) - SUM(leergut), 0) AS inventar,
+                COALESCE(SUM(einnahme) - SUM(ausgabe), 0) AS kassenbestand
+            FROM entries
+        """)).mappings().first()
+    return row['inventar'], row['kassenbestand']
+
+
+def get_delta_for_filter(date_from=None, date_to=None):
+    """Berechnet die Veränderung im gewählten Zeitraum (optional für Anzeige)."""
+    query = """
+        SELECT
+            COALESCE(SUM(vollgut) - SUM(leergut), 0) AS delta_inv,
+            COALESCE(SUM(einnahme) - SUM(ausgabe), 0) AS delta_kas
+        FROM entries
+        WHERE 1=1
+    """
+    params = {}
+    if date_from:
+        query += " AND datum >= :df"
+        params['df'] = date_from
+    if date_to:
+        query += " AND datum <= :dt"
+        params['dt'] = date_to
+    with engine.begin() as conn:
+        row = conn.execute(text(query), params).mappings().first()
+    return row['delta_inv'], row['delta_kas']
 def _user_can_edit_entry(entry_id: int) -> bool:
     """RBAC-Check: edit:any oder edit:own wenn created_by = current_user."""
     allowed = ROLES.get(session.get('role'), set())
@@ -129,8 +144,6 @@ def _user_can_view_entry(entry_id: int) -> bool:
     allowed = ROLES.get(session.get('role'), set())
     return 'entries:view' in allowed
 
-
-
 def _build_index_context(default_date: str | None = None, temp_token: str | None = None):
     q = (request.args.get('q') or '').strip()
     date_from_s = request.args.get('from')
@@ -140,38 +153,25 @@ def _build_index_context(default_date: str | None = None, temp_token: str | None
 
     filter_attachments = request.args.get('attachments')
 
-    # ➕ Jahresfilter
+    # Jahresfilter
     year_raw = (request.args.get('year') or '').strip().lower()
-    has_range = bool(df or dt)
     year_val: int | None = None
-
-    # '': Alle (None), 'all': Alle (None), Zahl: int
-    if year_raw in ('', 'all'):
-        year_val = None
-    else:
+    if year_raw not in ('', 'all'):
         try:
             year_val = int(year_raw)
         except ValueError:
             year_val = None
 
-    # ❌ Entfernt:
-    # if not has_range and year_val is None:
-    #     year_val = date.today().year
-
-    # Einträge holen inkl. Jahr
+    # Einträge für Tabelle
     entries = fetch_entries(q or None, df, dt, attachments_filter=filter_attachments, year=year_val)
 
     years = get_available_years()
 
-    totals_mode = (request.args.get('totals') or 'all').strip().lower()
-    if totals_mode not in ('all', 'filtered'):
-        totals_mode = 'all'
+    # Gesamtwerte unabhängig vom Filter
+    inv_aktuell, kas_aktuell = get_global_totals()
 
-    if totals_mode == 'filtered':
-        inv_aktuell = entries[-1]['inventar'] if entries else 0
-        kas_aktuell = entries[-1]['kassenbestand'] if entries else Decimal('0.00')
-    else:
-        inv_aktuell, kas_aktuell = current_totals()
+    # Optional: Veränderung im Filterbereich
+    delta_inv, delta_kas = get_delta_for_filter(df, dt)
 
     series_inv = [e['inventar'] for e in entries]
     series_kas = [float(e['kassenbestand']) for e in entries]
@@ -189,6 +189,8 @@ def _build_index_context(default_date: str | None = None, temp_token: str | None
         'entries': entries,
         'inv_aktuell': inv_aktuell,
         'kas_aktuell': kas_aktuell,
+        'delta_inv': delta_inv,
+        'delta_kas': delta_kas,
         'filter_inv': finv,
         'filter_kas': fkas,
         'default_date': default_date or today_ddmmyyyy(),
@@ -202,15 +204,13 @@ def _build_index_context(default_date: str | None = None, temp_token: str | None
         'series_inv': series_inv,
         'series_kas': series_kas,
         'temp_token': token,
-        'totals_mode': totals_mode,
-        # Für Template:
         'years': years,
-        'selected_year': str(year_val) if year_val is not None else '',  # '' => Alle
+        'selected_year': str(year_val) if year_val is not None else '',
         'from': date_from_s or '',
         'to': date_to_s or '',
     }
 
-#filter years
+
 def get_available_years() -> list[int]:
     """Liefert alle vorhandenen Jahre aus entries.datum aufsteigend sortiert."""
     with engine.begin() as conn:
@@ -219,5 +219,5 @@ def get_available_years() -> list[int]:
             FROM entries
             WHERE datum IS NOT NULL
             ORDER BY year ASC
-               """)).mappings().all()
+        """)).mappings().all()
     return [r['year'] for r in rows]

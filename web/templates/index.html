@@ -136,7 +136,7 @@
 <div class="card shadow-sm">
   <div class="card-body">
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
-      <h2 class="h5 m-0">{{ _('Einträge') }}</h2>
+      <!--h2 class="h5 m-0">{{ _('Einträge') }}</h2-->
 
       <div class="w-100">
         <form method="get" class="row row-cols-1 row-cols-md-auto g-2 align-items-end form-compact" id="filtersForm"
@@ -161,6 +161,7 @@
             <input type="hidden" name="to" id="filter_to" value="{{ request.args.get('to','') }}">
           </div>
 
+          <!-- Jahr-Filter als Select -->
           <div class="col">
             <label for="filter_year" class="form-label mb-1">{{ _('Jahr') }}</label>
             <select id="filter_year" name="year" class="form-select">
@@ -183,19 +184,15 @@
             </select>
           </div>
 
-          {# Aktionen links: Filtern / Zurücksetzen #}
-          <div class="col d-flex gap-2">
-            <button class="btn btn-primary" type="submit">
-              <i class="bi-funnel me-1"></i> {{ _('Filtern') }}
-            </button>
+          
+          <div class="col d-flex flex-wrap gap-2">
+            <!-- Zurücksetzen -->
             <a class="btn btn-outline-secondary" href="{{ url_for('bbalance_routes.index') }}">
               <i class="bi-x-circle me-1"></i> {{ _('Zurücksetzen') }}
             </a>
-          </div>
 
-          {# Aktionen rechts: Export / Import (Dropdown für Export) #}
-          <div class="col ms-md-auto d-flex flex-wrap gap-2">
-            <!-- Export-Button mit Dropdown -->
+            <!-- PDF -->
+             <!-- Export-Button mit Dropdown -->
             <div class="btn-group">
               <a class="btn btn-outline-danger"
                 href="{{ url_for('export_pdf') }}?{{ request.query_string.decode() if request.query_string else '' }}"
@@ -216,15 +213,16 @@
                 </li>
                 {% endif %}
               </ul>
-            </div>
 
-            {% if can_import %}
-            <button type="button" class="btn btn-outline-success" data-bs-toggle="modal"
-              data-bs-target="#csvImportModal">
-              <i class="bi-upload me-1"></i> CSV Import
-            </button>
+            <!-- CSV -->
+            {% if can_export_csv %}
+            <a class="btn btn-outline-success"
+              href="{{ url_for('bbalance_routes.export_csv') }}?{{ request.query_string.decode() if request.query_string else '' }}"
+              title="{{ _('CSV exportieren') }}">
+              <i class="bi-filetype-csv me-1 text-success    <i class="bi-filetype-csv me-1 text-success"></i> CSV
+            </a>
             {% endif %}
-          </div>
+
         </form>
       </div>
     </div>
@@ -776,15 +774,76 @@
   });
 </script>
 
+
 <script>
-
-  
 document.addEventListener('DOMContentLoaded', () => {
-  const form = document.getElementById('filtersForm');
+  const form    = document.getElementById('filtersForm');
   const elRange = document.getElementById('filter_daterange');
-  const elFrom = document.getElementById('filter_from');
-  const elTo = document.getElementById('filter_to');
+  const elFrom  = document.getElementById('filter_from');
+  const elTo    = document.getElementById('filter_to');
 
+  // -----------------------------
+  // Auto-Submit: Anhänge
+  // -----------------------------
+  const attachmentsSelect = document.getElementById('filter_attachments');
+  if (attachmentsSelect && form) {
+    attachmentsSelect.addEventListener('change', () => {
+      form.requestSubmit();
+    });
+  }
+
+  // -----------------------------
+  // Auto-Submit: Jahr
+  // -----------------------------
+  const yearSelect = document.getElementById('filter_year');
+  if (yearSelect && form) {
+    yearSelect.addEventListener('change', () => {
+      form.requestSubmit();
+    });
+  }
+
+  // -----------------------------
+  // Suche (filter_q):
+  // submit bei change/blur + optional Debounce beim Tippen
+  // -----------------------------
+  const searchInput = document.getElementById('filter_q');
+
+  // Debounce-Helfer
+  function debounce(fn, wait = 500) {
+    let t = null;
+    return function (...args) {
+      clearTimeout(t);
+      t = setTimeout(() => fn.apply(this, args), wait);
+    };
+  }
+
+  // letzter erfolgreich übermittelter q-Wert (Loop-/Doppel-Submit-Schutz)
+  let lastSubmittedQ = (searchInput?.value || '').trim();
+
+  // Submits nur, wenn sich der Wert wirklich geändert hat
+  const submitIfQChanged = () => {
+    if (!form || !searchInput) return;
+    const q = searchInput.value.trim();
+    if (q === lastSubmittedQ) return;
+    lastSubmittedQ = q;
+    form.requestSubmit();
+  };
+
+  if (searchInput && form) {
+    // 1) CHANGE: Nutzer bestätigt/verlässt Feld mit geändertem Wert
+    searchInput.addEventListener('change', submitIfQChanged);
+
+    // 2) BLUR: Beim Verlassen des Feldes (nur wenn Wert anders)
+    searchInput.addEventListener('blur', submitIfQChanged);
+
+    // 3) (OPTIONAL) Debounce beim Tippen: nach 500ms Inaktivität filtern
+    //    Wenn du KEIN Live-Filtering willst, kommentiere die nächste Zeile aus.
+    searchInput.addEventListener('input', debounce(submitIfQChanged, 500));
+  }
+
+  // -----------------------------
+  // Zeitraum / Flatpickr
+  // -----------------------------
   // Lokales YYYY-MM-DD (kein UTC-Shift)
   const fmtLocal = (d) => {
     if (!d) return '';
@@ -794,32 +853,18 @@ document.addEventListener('DOMContentLoaded', () => {
     return `${y}-${m}-${day}`;
   };
 
-  // Re-Submit nur bei echter Änderung (Loop-Schutz)
-  const submitIfChanged = (() => {
-    let lastKey = `${elFrom.value}|${elTo.value}`;
+  // Re-Submit nur bei echter Änderung von from/to (Loop-Schutz)
+  const submitIfDateChanged = (() => {
+    let lastKey = `${elFrom?.value || ''}|${elTo?.value || ''}`;
     return () => {
-      const key = `${elFrom.value}|${elTo.value}`;
+      const key = `${elFrom?.value || ''}|${elTo?.value || ''}`;
       if (key === lastKey) return;
       lastKey = key;
       form?.requestSubmit();
     };
   })();
 
-  // Auto-Submit für Anhänge und Suche
-  document.getElementById('filter_attachments')?.addEventListener('change', submitIfChanged);
-  document.getElementById('filter_q')?.addEventListener('keydown', e => {
-    if (e.key === 'Enter') submitIfChanged();
-  });
-
-  // ✅ Auto-Submit für Jahresfilter
-  const yearSelect = document.getElementById('filter_year');
-  if (yearSelect && form) {
-    yearSelect.addEventListener('change', () => {
-      form.requestSubmit();
-    });
-  }
-
-  // Flatpickr für Zeitraum
+  // Flatpickr für Zeitraum initialisieren
   if (!window.flatpickr || !elRange) return;
   if (flatpickr.l10ns?.de) flatpickr.localize(flatpickr.l10ns.de);
   const isDark = () => document.documentElement.getAttribute('data-bs-theme') === 'dark';
@@ -837,8 +882,8 @@ document.addEventListener('DOMContentLoaded', () => {
     onChange: (dates) => {
       const [from, to] = dates;
       elFrom.value = fmtLocal(from);
-      elTo.value = fmtLocal(to);
-      if (!hydrating && from && to) submitIfChanged();
+      elTo.value   = fmtLocal(to);
+      if (!hydrating && from && to) submitIfDateChanged();
     }
   });
 
@@ -849,7 +894,7 @@ document.addEventListener('DOMContentLoaded', () => {
   new MutationObserver(() => {
     document.querySelectorAll('.flatpickr-calendar')
       .forEach(c => c.classList.toggle('flatpickr-dark', isDark()));
-  }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-bs-theme'] });
+  }).observe(document.documentElement, { attributes  }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-bs-theme'] });
 });
 
 </script>

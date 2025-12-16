@@ -26,15 +26,10 @@ from modules.auth_utils import (
 )
 
 
-def fetch_entries(
-    search: str | None = None,
-    date_from: date | None = None,
-    date_to: date | None = None,
-    attachments_filter: str | None = None,  # 'only' | 'none' | None
-    year: int | None = None                 # ➕ NEU
-):
+
+def fetch_entries(search=None, date_from=None, date_to=None, attachments_filter=None, year=None):
     where = []
-    params: dict[str, object] = {}
+    params = {}
 
     if search:
         where.append("(e.bemerkung ILIKE :q OR to_char(e.datum, 'DD.MM.YYYY') ILIKE :q)")
@@ -45,17 +40,22 @@ def fetch_entries(
     if date_to:
         where.append("e.datum <= :dt")
         params['dt'] = date_to
-
     if year is not None:
         where.append("EXTRACT(YEAR FROM e.datum) = :year")
         params['year'] = year
-
     if attachments_filter == 'only':
         where.append("COALESCE(a.cnt, 0) > 0")
     elif attachments_filter == 'none':
         where.append("COALESCE(a.cnt, 0) = 0")
 
     where_sql = ("WHERE " + " AND ".join(where)) if where else ""
+
+    # ✅ Sortierung aus Profil
+    user = current_user()
+    sort_order_desc = False
+    if user and 'sort_order_desc' in user:
+        sort_order_desc = bool(user['sort_order_desc'])
+    order_dir = 'DESC' if sort_order_desc else 'ASC'
 
     sql = f"""
         WITH att AS (
@@ -69,12 +69,11 @@ def fetch_entries(
         FROM entries e
         LEFT JOIN att a ON a.entry_id = e.id
         {where_sql}
-        ORDER BY e.datum ASC, e.id ASC
+        ORDER BY e.datum {order_dir}, e.id {order_dir}
     """
 
-    with engine.begin() as conn:
+    with engine.begin() as conn:       
         rows = conn.execute(text(sql), params).mappings().all()
-
 
     inventar = 0
     kassenbestand = Decimal('0.00')
@@ -131,6 +130,7 @@ def _user_can_view_entry(entry_id: int) -> bool:
     return 'entries:view' in allowed
 
 
+
 def _build_index_context(default_date: str | None = None, temp_token: str | None = None):
     q = (request.args.get('q') or '').strip()
     date_from_s = request.args.get('from')
@@ -145,6 +145,7 @@ def _build_index_context(default_date: str | None = None, temp_token: str | None
     has_range = bool(df or dt)
     year_val: int | None = None
 
+    # '': Alle (None), 'all': Alle (None), Zahl: int
     if year_raw in ('', 'all'):
         year_val = None
     else:
@@ -153,17 +154,15 @@ def _build_index_context(default_date: str | None = None, temp_token: str | None
         except ValueError:
             year_val = None
 
-    # Default: aktuelles Jahr, wenn kein Zeitraum und kein Jahr gesetzt
-    if not has_range and year_val is None:
-        year_val = date.today().year
+    # ❌ Entfernt:
+    # if not has_range and year_val is None:
+    #     year_val = date.today().year
 
     # Einträge holen inkl. Jahr
     entries = fetch_entries(q or None, df, dt, attachments_filter=filter_attachments, year=year_val)
 
-    # Jahresliste für Dropdown
     years = get_available_years()
 
-    # Totals-Modus
     totals_mode = (request.args.get('totals') or 'all').strip().lower()
     if totals_mode not in ('all', 'filtered'):
         totals_mode = 'all'
@@ -204,15 +203,14 @@ def _build_index_context(default_date: str | None = None, temp_token: str | None
         'series_kas': series_kas,
         'temp_token': token,
         'totals_mode': totals_mode,
-        # ➕ Für Template:
+        # Für Template:
         'years': years,
-        'selected_year': str(year_val) if year_val else '',
+        'selected_year': str(year_val) if year_val is not None else '',  # '' => Alle
         'from': date_from_s or '',
         'to': date_to_s or '',
     }
 
 #filter years
-
 def get_available_years() -> list[int]:
     """Liefert alle vorhandenen Jahre aus entries.datum aufsteigend sortiert."""
     with engine.begin() as conn:

@@ -67,6 +67,15 @@
         <h2 class="h6 mb-3">{{ _('System') }}</h2>
         <form method="post" action="{{ url_for('update_preferences') }}" class="row g-3">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <!-- Sort order DESC-->
+          <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" id="sort_order_desc" name="sort_order_desc"
+                  {% if current_user().get('sort_order_desc') %}checked{% endif %}>
+            <label class="form-check-label" for="sort_order_desc">
+              {{ _('Einträge absteigend sortieren (neueste zuerst)') }}
+            </label>
+          </div>
+
           <!-- Sprache -->
           <div class="col-12 col-md-6">
             <label for="language" class="form-label">{{ _('Sprache:') }}</label>

@@ -161,6 +161,16 @@
             <input type="hidden" name="to" id="filter_to" value="{{ request.args.get('to','') }}">
           </div>
 
+          <div class="col">
+            <label for="filter_year" class="form-label mb-1">{{ _('Jahr') }}</label>
+            <select id="filter_year" name="year" class="form-select">
+              <option value="" {% if not selected_year %}selected{% endif %}>{{ _('Alle') }}</option>
+              {% for y in years %}
+                <option value="{{ y }}" {% if selected_year == y|string %}selected{% endif %}>{{ y }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
           {# Anhänge-Filter als Select (statt 3 Buttons) #}
           <div class="col">
             <label for="filter_attachments" class="form-label mb-1">{{ _('Anhänge') }}</label>
@@ -768,71 +778,79 @@
 
 <script>
 
-  document.addEventListener('DOMContentLoaded', () => {
-    const form = document.getElementById('filtersForm');
-    const elRange = document.getElementById('filter_daterange');
-    const elFrom = document.getElementById('filter_from');
-    const elTo = document.getElementById('filter_to');
+  
+document.addEventListener('DOMContentLoaded', () => {
+  const form = document.getElementById('filtersForm');
+  const elRange = document.getElementById('filter_daterange');
+  const elFrom = document.getElementById('filter_from');
+  const elTo = document.getElementById('filter_to');
 
-    // Lokales YYYY-MM-DD (kein UTC-Shift)
-    const fmtLocal = (d) => {
-      if (!d) return '';
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
-      return `${y}-${m}-${day}`;
+  // Lokales YYYY-MM-DD (kein UTC-Shift)
+  const fmtLocal = (d) => {
+    if (!d) return '';
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
+
+  // Re-Submit nur bei echter Änderung (Loop-Schutz)
+  const submitIfChanged = (() => {
+    let lastKey = `${elFrom.value}|${elTo.value}`;
+    return () => {
+      const key = `${elFrom.value}|${elTo.value}`;
+      if (key === lastKey) return;
+      lastKey = key;
+      form?.requestSubmit();
     };
+  })();
 
-    // Re-Submit nur bei echter Änderung (Loop-Schutz)
-    const submitIfChanged = (() => {
-      let lastKey = `${elFrom.value}|${elTo.value}`;
-      return () => {
-        const key = `${elFrom.value}|${elTo.value}`;
-        if (key === lastKey) return;
-        lastKey = key;
-        form?.requestSubmit();
-      };
-    })();
-
-    // Auto-Submit für Anhänge  Enter im Suchfeld
-    document.getElementById('filter_attachments')?.addEventListener('change', submitIfChanged);
-    document.getElementById('filter_q')?.addEventListener('keydown', e => { if (e.key === 'Enter') submitIfChanged(); });
-
-    if (!window.flatpickr || !elRange) return;
-    if (flatpickr.l10ns?.de) flatpickr.localize(flatpickr.l10ns.de);
-    const isDark = () => document.documentElement.getAttribute('data-bs-theme') === 'dark';
-
-    let hydrating = true; // verhindert Submit beim Initialisieren
-    const fp = flatpickr(elRange, {
-      mode: 'range',
-      dateFormat: 'Y-m-d',  // intern
-      altInput: true,
-      altFormat: 'd.m.Y',   // Anzeige
-      allowInput: true,
-      clickOpens: true,
-      locale: { rangeSeparator: ' – ', firstDayOfWeek: 1 },
-      onOpen: (_, __, i) => i.calendarContainer.classList.toggle('flatpickr-dark', isDark()),
-      onChange: (dates) => {
-        const [from, to] = dates;
-        elFrom.value = fmtLocal(from);
-        elTo.value = fmtLocal(to);
-        if (!hydrating && from && to) submitIfChanged();
-      }
-    });
-
-    // Vorbelegung aus Query OHNE Events → kein First-Load-Submit
-    const preset = [elFrom.value, elTo.value].filter(Boolean);
-    if (preset.length) {
-      fp.setDate(preset, false, 'Y-m-d'); // false = keine Events
-    }
-    hydrating = false;
-
-    // Dark/Light live nachziehen
-    new MutationObserver(() => {
-      document.querySelectorAll('.flatpickr-calendar')
-        .forEach(c => c.classList.toggle('flatpickr-dark', isDark()));
-    }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-bs-theme'] });
+  // Auto-Submit für Anhänge und Suche
+  document.getElementById('filter_attachments')?.addEventListener('change', submitIfChanged);
+  document.getElementById('filter_q')?.addEventListener('keydown', e => {
+    if (e.key === 'Enter') submitIfChanged();
   });
+
+  // ✅ Auto-Submit für Jahresfilter
+  const yearSelect = document.getElementById('filter_year');
+  if (yearSelect && form) {
+    yearSelect.addEventListener('change', () => {
+      form.requestSubmit();
+    });
+  }
+
+  // Flatpickr für Zeitraum
+  if (!window.flatpickr || !elRange) return;
+  if (flatpickr.l10ns?.de) flatpickr.localize(flatpickr.l10ns.de);
+  const isDark = () => document.documentElement.getAttribute('data-bs-theme') === 'dark';
+
+  let hydrating = true;
+  const fp = flatpickr(elRange, {
+    mode: 'range',
+    dateFormat: 'Y-m-d',
+    altInput: true,
+    altFormat: 'd.m.Y',
+    allowInput: true,
+    clickOpens: true,
+    locale: { rangeSeparator: ' – ', firstDayOfWeek: 1 },
+    onOpen: (_, __, i) => i.calendarContainer.classList.toggle('flatpickr-dark', isDark()),
+    onChange: (dates) => {
+      const [from, to] = dates;
+      elFrom.value = fmtLocal(from);
+      elTo.value = fmtLocal(to);
+      if (!hydrating && from && to) submitIfChanged();
+    }
+  });
+
+  const preset = [elFrom.value, elTo.value].filter(Boolean);
+  if (preset.length) fp.setDate(preset, false, 'Y-m-d');
+  hydrating = false;
+
+  new MutationObserver(() => {
+    document.querySelectorAll('.flatpickr-calendar')
+      .forEach(c => c.classList.toggle('flatpickr-dark', isDark()));
+  }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-bs-theme'] });
+});
 
 </script>
 

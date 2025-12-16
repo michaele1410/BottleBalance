@@ -135,71 +135,66 @@
 <!-- Tabelle -->
 <div class="card shadow-sm">
   <div class="card-body">
-    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
-      <!--h2 class="h5 m-0">{{ _('Einträge') }}</h2-->
-
-      <div class="w-100">
-        <form method="get" class="row row-cols-1 row-cols-md-auto g-2 align-items-end form-compact" id="filtersForm"
+    <!-- Filter-Formular -->
+    <form method="get" class="row row-cols-1 row-cols-md-auto g-2 align-items-end form-compact" id="filtersForm"
           aria-label="{{ _('Filter für Einträge') }}">
 
-          {# Suche #}
-          <div class="col">
-            <label for="filter_q" class="form-label mb-1">{{ _('Suche') }}</label>
-            <div class="input-group">
-              <span class="input-group-text"><i class="bi-search"></i></span>
-              <input type="text" id="filter_q" name="q" class="form-control" placeholder="{{ _('Datum/Bemerkung') }}"
-                value="{{ request.args.get('q','') }}" autocomplete="off">
-            </div>
-          </div>
+      <!-- Suche -->
+      <div class="col">
+        <label for="filter_q" class="form-label mb-1">{{ _('Suche') }}</label>
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi-search"></i></span>
+          <input type="text" id="filter_q" name="q" class="form-control" placeholder="{{ _('Datum/Bemerkung') }}"
+                 value="{{ request.args.get('q','') }}" autocomplete="off">
+        </div>
+      </div>
 
-          <!-- Zeitraum (Date Range Picker) -->
-          <div class="col">
-            <label for="filter_daterange" class="form-label mb-1">{{ _('Zeitraum') }}</label>
-            <input type="text" id="filter_daterange" class="form-control"
-              placeholder="{{ _('TT.MM.JJJJ – TT.MM.JJJJ') }}" autocomplete="off">
-            <input type="hidden" name="from" id="filter_from" value="{{ request.args.get('from','') }}">
-            <input type="hidden" name="to" id="filter_to" value="{{ request.args.get('to','') }}">
-          </div>
+      <!-- Zeitraum -->
+      <div class="col">
+        <label for="filter_daterange" class="form-label mb-1">{{ _('Zeitraum') }}</label>
+        <input type="text" id="filter_daterange" class="form-control"
+               placeholder="{{ _('TT.MM.JJJJ – TT.MM.JJJJ') }}" autocomplete="off">
+        <input type="hidden" name="from" id="filter_from" value="{{ request.args.get('from','') }}">
+        <input type="hidden" name="to" id="filter_to" value="{{ request.args.get('to','') }}">
+      </div>
 
-          <!-- Jahr-Filter als Select -->
-          <div class="col">
-            <label for="filter_year" class="form-label mb-1">{{ _('Jahr') }}</label>
-            <select id="filter_year" name="year" class="form-select">
-              <option value="" {% if not selected_year %}selected{% endif %}>{{ _('Alle') }}</option>
-              {% for y in years %}
-                <option value="{{ y }}" {% if selected_year == y|string %}selected{% endif %}>{{ y }}</option>
-              {% endfor %}
-            </select>
-          </div>
+      <!-- Jahr -->
+      <div class="col">
+        <label for="filter_year" class="form-label mb-1">{{ _('Jahr') }}</label>
+        <select id="filter_year" name="year" class="form-select">
+          <option value="" {% if not selected_year %}selected{% endif %}>{{ _('Alle') }}</option>
+          {% for y in years %}
+            <option value="{{ y }}" {% if selected_year == y|string %}selected{% endif %}>{{ y }}</option>
+          {% endfor %}
+        </select>
+      </div>
 
-          {# Anhänge-Filter als Select (statt 3 Buttons) #}
-          <div class="col">
-            <label for="filter_attachments" class="form-label mb-1">{{ _('Anhänge') }}</label>
-            <select id="filter_attachments" name="attachments" class="form-select">
-              <option value="" {{ '' if request.args.get('attachments') else 'selected' }}> {{ _('Alle') }} </option>
-              <option value="only" {{ 'selected' if request.args.get('attachments')=='only' else '' }}> {{ _('Nur mit
-                Anhang') }} </option>
-              <option value="none" {{ 'selected' if request.args.get('attachments')=='none' else '' }}> {{ _('Ohne
-                Anhang') }} </option>
-            </select>
-          </div>
+      <!-- Anhänge -->
+      <div class="col">
+        <label for="filter_attachments" class="form-label mb-1">{{ _('Anhänge') }}</label>
+        <select id="filter_attachments" name="attachments" class="form-select">
+          <option value="" {{ '' if request.args.get('attachments') else 'selected' }}> {{ _('Alle') }} </option>
+          <option value="only" {{ 'selected' if request.args.get('attachments')=='only' else '' }}> {{ _('Nur mit Anhang') }} </option>
+          <option value="none" {{ 'selected' if request.args.get('attachments')=='none' else '' }}> {{ _('Ohne Anhang') }} </option>
+        </select>
+      </div>
 
-          
-          <div class="col d-flex flex-wrap gap-2">
-            <!-- Zurücksetzen -->
-            <a class="btn btn-outline-secondary" href="{{ url_for('bbalance_routes.index') }}">
-              <i class="bi-x-circle me-1"></i> {{ _('Zurücksetzen') }}
-            </a>
+      <!-- Buttons in eigener Zeile -->
+      <div class="col-12 mt-3">
+        <div class="d-flex flex-wrap gap-2 justify-content-start">
+          <!-- Zurücksetzen -->
+          <a class="btn btn-outline-secondary" href="{{ url_for('bbalance_routes.index') }}">
+            <i class="bi-x-circle me-1"></i> {{ _('Zurücksetzen') }}
+          </a>
 
-            <!-- PDF -->
-             <!-- Export-Button mit Dropdown -->
-            <div class="btn-group">
-              <a class="btn btn-outline-danger"
-                href="{{ url_for('export_pdf') }}?{{ request.query_string.decode() if request.query_string else '' }}"
-                title="{{ _('PDF exportieren') }}">
-                <i class="bi-file-earmark-pdf me-1 text-danger"></i> PDF
-              </a>
-              <button type="button" class="btn btn-outline-danger dropdown-toggle dropdown-toggle-split"
+          <!-- PDF -->
+           <div class="btn-group"></div>
+          <a class="btn btn-outline-danger"
+             href="{{ url_for('export_pdf') }}?{{ request.query_string.decode() if request.query_string else '' }}"
+             title="{{ _('PDF exportieren') }}">
+            <i class="bi-file-earmark-pdf me-1 text-danger"></i> PDF
+          </a>
+          <button type="button" class="btn btn-outline-danger dropdown-toggle dropdown-toggle-split"
                 data-bs-toggle="dropdown" aria-expanded="false" aria-label="{{ _('Weitere Exportoptionen') }}">
                 <span class="visually-hidden">{{ _('Weitere Exportoptionen') }}</span>
               </button>
@@ -214,86 +209,69 @@
                 {% endif %}
               </ul>
 
-            <!-- CSV -->
-            {% if can_export_csv %}
-            <a class="btn btn-outline-success"
-              href="{{ url_for('bbalance_routes.export_csv') }}?{{ request.query_string.decode() if request.query_string else '' }}"
-              title="{{ _('CSV exportieren') }}">
-              <i class="bi-filetype-csv me-1 text-success    <i class="bi-filetype-csv me-1 text-success"></i> CSV
-            </a>
-            {% endif %}
-
-        </form>
+          <!-- CSV -->
+          {% if can_export_csv %}
+          <a class="btn btn-outline-success"
+             href="{{ url_for('bbalance_routes.export_csv') }}?{{ request.query_string.decode() if request.query_string else '' }}"
+             title="{{ _('CSV exportieren') }}">
+            <i class="bi-filetype-csv me-1 text-success"></i> CSV
+          </a>
+          {% endif %}
+        </div>
       </div>
-    </div>
+    </form>
+  </div>
+</div>
 
-    <!-- Tabelle -->
-    <div class="table-responsive">
-      <table class="table table-sm align-middle table-striped">
-        <thead class="table-light">
-          <tr>
-            <th style="cursor:pointer;" onclick="sortTableByDate()">{{ _('Datum') }}<i class="bi bi-arrow-down-up"></i>
-            </th>
-            <th>{{ _('Vollgut') }}</th>
-            <th>{{ _('Leergut') }}</th>
-            <th>{{ _('Inventar') }}</th>
-            <th>{{ _('Einnahme') }}</th>
-            <th>{{ _('Ausgabe') }}</th>
-            <th>{{ _('Kassenbestand') }}</th>
-            <th>{{ _('Bemerkung') }}</th>
-            <th class="text-end">{{ _('Aktionen') }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for e in entries %}
-          <tr>
-            <td>{{ format_date_de(e.datum) }}</td>
-            <td>{{ e.vollgut }}</td>
-            <td>{{ e.leergut }}</td>
-            <td>{{ e.inventar }}</td>
-            <td>{{ format_eur_de(e.einnahme) }}</td>
-            <td>{{ format_eur_de(e.ausgabe) }}</td>
-            <td>{{ format_eur_de(e.kassenbestand) }}</td>
-            <td>{{ e.bemerkung }}</td>
-            <td class="text-end">
-              {% set role = current_user().get('role') %}
-              {% if role in ['Editor', 'Manager', 'Admin'] %}
-              <!-- Bearbeiten -->
-              <a class="btn btn-sm btn-outline-primary" href="{{ url_for('bbalance_routes.edit', entry_id=e.id) }}"
-                title="{{ _('Bearbeiten') }}">
-                <i class="bi-pencil-square"></i>
-              </a>
-              {% endif %}
-              <!-- Dokumente öffnen (mit Badge) -->
-              <button class="btn btn-sm btn-outline-secondary position-relative" type="button"
-                onclick="openAttachments({{ e.id }})" title="{{ _('Dokumente öffnen') }}">
-                <i class="bi-paperclip"></i>
-                {% if e.attachment_count and e.attachment_count > 0 %}
-                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-secondary">
-                  {{ e.attachment_count }}
-                </span>
-                {% endif %}
-              </button>
-              {% set role = current_user().get('role') %}
-              {% if role in ['Editor', 'Manager', 'Admin'] %}
-              <!-- Löschen -->
-              <form method="post" action="{{ url_for('bbalance_routes.delete', entry_id=e.id) }}" class="d-inline"
+<!-- Tabelle -->
+<div class="table-responsive mt-3">
+  <table class="table table-sm align-middle table-striped">
+    <thead class="table-light">
+      <tr>
+        <th style="cursor:pointer;" onclick="sortTableByDate()">{{ _('Datum') }} <i class="bi bi-arrow-down-up"></i></th>
+        <th>{{ _('Vollgut') }}</th>
+        <th>{{ _('Leergut') }}</th>
+        <th>{{ _('Inventar') }}</th>
+        <th>{{ _('Einnahme') }}</th>
+        <th>{{ _('Ausgabe') }}</th>
+        <th>{{ _('Kassenbestand') }}</th>
+        <th>{{ _('Bemerkung') }}</th>
+        <th class="text-end">{{ _('Aktionen') }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for e in entries %}
+      <tr>
+        <td>{{ format_date_de(e.datum) }}</td>
+        <td>{{ e.vollgut }}</td>
+        <td>{{ e.leergut }}</td>
+        <td>{{ e.inventar }}</td>
+        <td>{{ format_eur_de(e.einnahme) }}</td>
+        <td>{{ format_eur_de(e.ausgabe) }}</td>
+        <td>{{ format_eur_de(e.kassenbestand) }}</td>
+        <td>{{ e.bemerkung }}</td>
+        <td class="text-end">
+          {% if current_user().get('role') in ['Editor', 'Manager', 'Admin'] %}
+          <a class="btn btn-sm btn-outline-primary" href="{{ url_for('bbalance_routes.edit', entry_id=e.id) }}" title="{{ _('Bearbeiten') }}">
+            <i class="bi-pencil-square"></i>
+          </a>
+          <form method="post" action="{{ url_for('bbalance_routes.delete', entry_id=e.id) }}" class="d-inline"
                 onsubmit="return confirm('{{ _('Eintrag wirklich löschen?') }}');">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button class="btn btn-sm btn-outline-danger" title="{{ _('Löschen') }}">
-                  <i class="bi-trash"></i>
-                </button>
-              </form>
-              {% endif %}
-            </td>
-          </tr>
-          {% else %}
-          <tr>
-            <td colspan="9" class="text-center text-muted">{{ _('Keine Einträge vorhanden.') }}</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn btn-sm btn-outline-danger" title="{{ _('Löschen') }}">
+              <i class="bi-trash"></i>
+            </button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="9" class="text-center text-muted">{{ _('Keine Einträge vorhanden.') }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
     </div>
   </div>
 </div>

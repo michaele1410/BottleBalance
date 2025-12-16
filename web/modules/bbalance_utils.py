@@ -25,20 +25,14 @@ from modules.auth_utils import (
     current_user
 )
 
+
 def fetch_entries(
     search: str | None = None,
     date_from: date | None = None,
     date_to: date | None = None,
-    attachments_filter: str | None = None  # 'only' | 'none' | None
+    attachments_filter: str | None = None,  # 'only' | 'none' | None
+    year: int | None = None                 # ➕ NEU
 ):
-    """
-    Holt Einträge inkl. fortlaufend berechnetem Inventar/Kassenbestand.
-    - Zählt Attachments via LEFT JOIN auf eine Aggregation (performanter als korrelierte Subqueries).
-    - attachments_filter:
-        'only'  -> nur Einträge mit mind. 1 Anhang
-        'none'  -> nur Einträge ohne Anhang
-        None    -> keine Einschränkung
-    """
     where = []
     params: dict[str, object] = {}
 
@@ -52,42 +46,35 @@ def fetch_entries(
         where.append("e.datum <= :dt")
         params['dt'] = date_to
 
-    # Anhangsfilter direkt in WHERE aufnehmen (Alias 'a' ist durch den JOIN vorhanden)
+    if year is not None:
+        where.append("EXTRACT(YEAR FROM e.datum) = :year")
+        params['year'] = year
+
     if attachments_filter == 'only':
         where.append("COALESCE(a.cnt, 0) > 0")
     elif attachments_filter == 'none':
         where.append("COALESCE(a.cnt, 0) = 0")
 
-
     where_sql = ("WHERE " + " AND ".join(where)) if where else ""
 
-    # Aggregation für Attachments einmalig bilden und joinen
-    
     sql = f"""
-         WITH att AS (
-             SELECT entry_id, COUNT(*) AS cnt
-             FROM attachments
-             GROUP BY entry_id
-         )
-         SELECT
-             e.id,
-             e.datum,
-             e.vollgut,
-             e.leergut,
-             e.einnahme,
-             e.ausgabe,
-             e.bemerkung,
-             e.created_by,
-             COALESCE(a.cnt, 0) AS attachment_count
-         FROM entries e
-         LEFT JOIN att a ON a.entry_id = e.id
-         {where_sql}
-
+        WITH att AS (
+            SELECT entry_id, COUNT(*) AS cnt
+            FROM attachments
+            GROUP BY entry_id
+        )
+        SELECT
+            e.id, e.datum, e.vollgut, e.leergut, e.einnahme, e.ausgabe, e.bemerkung,
+            e.created_by, COALESCE(a.cnt, 0) AS attachment_count
+        FROM entries e
+        LEFT JOIN att a ON a.entry_id = e.id
+        {where_sql}
         ORDER BY e.datum ASC, e.id ASC
     """
 
     with engine.begin() as conn:
         rows = conn.execute(text(sql), params).mappings().all()
+
 
     inventar = 0
     kassenbestand = Decimal('0.00')
@@ -143,44 +130,50 @@ def _user_can_view_entry(entry_id: int) -> bool:
     allowed = ROLES.get(session.get('role'), set())
     return 'entries:view' in allowed
 
+
 def _build_index_context(default_date: str | None = None, temp_token: str | None = None):
-    """
-    Bereitet alle Variablen für index.html auf – mit stabilem temp_token.
-    - totals-Modus via ?totals=filtered | all
-      * 'filtered': inv_aktuell/kas_aktuell aus der gefilterten Liste
-      * 'all' (Default): Gesamtstände aus der gesamten Tabelle
-    """
-    # Filter aus Query
     q = (request.args.get('q') or '').strip()
     date_from_s = request.args.get('from')
     date_to_s = request.args.get('to')
     df = datetime.strptime(date_from_s, '%Y-%m-%d').date() if date_from_s else None
     dt = datetime.strptime(date_to_s, '%Y-%m-%d').date() if date_to_s else None
 
-    # Anhänge: 'only' | 'none' | None
     filter_attachments = request.args.get('attachments')
 
-    # Einträge DB-seitig mit allen Filtern holen
-    entries = fetch_entries(q or None, df, dt, attachments_filter=filter_attachments)
+    # ➕ Jahresfilter
+    year_raw = (request.args.get('year') or '').strip().lower()
+    has_range = bool(df or dt)
+    year_val: int | None = None
 
-    # Totals-Modus: 'all' (Default) oder 'filtered'
+    if year_raw in ('', 'all'):
+        year_val = None
+    else:
+        try:
+            year_val = int(year_raw)
+        except ValueError:
+            year_val = None
+
+    # Default: aktuelles Jahr, wenn kein Zeitraum und kein Jahr gesetzt
+    if not has_range and year_val is None:
+        year_val = date.today().year
+
+    # Einträge holen inkl. Jahr
+    entries = fetch_entries(q or None, df, dt, attachments_filter=filter_attachments, year=year_val)
+
+    # Jahresliste für Dropdown
+    years = get_available_years()
+
+    # Totals-Modus
     totals_mode = (request.args.get('totals') or 'all').strip().lower()
     if totals_mode not in ('all', 'filtered'):
         totals_mode = 'all'
 
     if totals_mode == 'filtered':
-        # Aus gefilterten Daten ableiten
-        if entries:
-            inv_aktuell = entries[-1]['inventar']
-            kas_aktuell = entries[-1]['kassenbestand']
-        else:
-            inv_aktuell = 0
-            kas_aktuell = Decimal('0.00')
+        inv_aktuell = entries[-1]['inventar'] if entries else 0
+        kas_aktuell = entries[-1]['kassenbestand'] if entries else Decimal('0.00')
     else:
-        # Gesamtsystemstände
         inv_aktuell, kas_aktuell = current_totals()
 
-    # Serien für Sparklines (bewusst auf Basis der gefilterten Liste)
     series_inv = [e['inventar'] for e in entries]
     series_kas = [float(e['kassenbestand']) for e in entries]
 
@@ -190,9 +183,8 @@ def _build_index_context(default_date: str | None = None, temp_token: str | None
     role = session.get('role')
     allowed = ROLES.get(role, set())
 
-    # temp_token beibehalten oder anlegen (NICHT überschreiben, wenn übergeben)
     token = temp_token or session.get('add_temp_token') or uuid4().hex
-    session['add_temp_token'] = token  # Session soll denselben Token kennen
+    session['add_temp_token'] = token
 
     return {
         'entries': entries,
@@ -211,7 +203,23 @@ def _build_index_context(default_date: str | None = None, temp_token: str | None
         'series_inv': series_inv,
         'series_kas': series_kas,
         'temp_token': token,
-        # Optional im Template verwenden, falls du den Modus anzeigen willst:
         'totals_mode': totals_mode,
+        # ➕ Für Template:
+        'years': years,
+        'selected_year': str(year_val) if year_val else '',
+        'from': date_from_s or '',
+        'to': date_to_s or '',
     }
-    
+
+#filter years
+
+def get_available_years() -> list[int]:
+    """Liefert alle vorhandenen Jahre aus entries.datum aufsteigend sortiert."""
+    with engine.begin() as conn:
+        rows = conn.execute(text("""
+            SELECT DISTINCT EXTRACT(YEAR FROM datum)::int AS year
+            FROM entries
+            WHERE datum IS NOT NULL
+            ORDER BY year ASC
+               """)).mappings().all()
+    return [r['year'] for r in rows]

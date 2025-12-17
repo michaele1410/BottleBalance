@@ -846,7 +846,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 3) (OPTIONAL) Debounce beim Tippen: nach 500ms Inaktivität filtern
     //    Wenn du KEIN Live-Filtering willst, kommentiere die nächste Zeile aus.
-    searchInput.addEventListener('input', debounce(submitIfQChanged, 500));
+    searchInput.addEventListener('input', debounce(submitIfQChanged, 1500));
   }
 
   // -----------------------------

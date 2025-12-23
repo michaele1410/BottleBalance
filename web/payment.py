@@ -520,6 +520,7 @@ def upload_antrag_attachment(antrag_id: int):
 
     target_dir = _antrag_dir(antrag_id)
     saved = 0
+    os.makedirs(target_dir, exist_ok=True) 
 
     with engine.begin() as conn:
         for f in files:

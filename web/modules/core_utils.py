@@ -64,7 +64,7 @@ ROLES = {
         'payment:view'
     },
     'Editor': {
-        'entries:view', 'entries:add', 'entries:edit:own', 'entries:delete:own', 'export:pdf'
+        'entries:view', 'entries:add', 'entries:edit:own', 'entries:delete:own', 'export:pdf', 'entries:edit:any'
     },
     'Viewer': {
         'entries:view', 

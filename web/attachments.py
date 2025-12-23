@@ -45,10 +45,11 @@ def attachments_upload(entry_id: int):
     files = request.files.getlist('files')  # name="files" (multiple)
     if not files:
         flash(_('Bitte Datei(en) auswählen.'))
-        return redirect(request.referrer or url_for('edit', entry_id=entry_id))
+        return redirect(request.referrer or url_for('bbalance_routes.edit', entry_id=entry_id))
 
     saved = 0
     target_dir = _entry_dir(entry_id)
+    os.makedirs(target_dir, exist_ok=True) 
 
     with engine.begin() as conn:
         for f in files:
@@ -62,7 +63,7 @@ def attachments_upload(entry_id: int):
             stored_name = f"{uuid4().hex}.{ext}"
             original_name = secure_filename(f.filename) or f"file.{ext}"
             path = os.path.join(target_dir, stored_name)
-
+            
             f.save(path)
             size = os.path.getsize(path)
             ctype = mimetypes.guess_type(original_name)[0] or 'application/octet-stream'
@@ -79,7 +80,7 @@ def attachments_upload(entry_id: int):
     else:
         flash(_('Keine Dateien hochgeladen.'))
 
-    return redirect(request.referrer or url_for('edit', entry_id=entry_id))
+    return redirect(request.referrer or url_for('bbalance_routes.edit', entry_id=entry_id))
 
 @attachments_routes.get('/attachments/<int:entry_id>/list')
 @login_required
@@ -151,7 +152,7 @@ def attachments_delete(att_id: int):
         conn.execute(text("DELETE FROM attachments WHERE id=:id"), {'id': att_id})
     log_action(session.get('user_id'), 'attachments:delete', r['entry_id'], f"att_id={att_id}")
     flash(_('Anhang gelöscht.'))
-    return redirect(request.referrer or url_for('edit', entry_id=r['entry_id']))
+    return redirect(request.referrer or url_for('bbalance_routes.edit', entry_id=r['entry_id']))
 
 # -----------------------
 # Temporäre Attachments für "Datensatz hinzufügen"

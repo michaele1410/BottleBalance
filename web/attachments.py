@@ -49,7 +49,6 @@ def attachments_upload(entry_id: int):
 
     saved = 0
     target_dir = _entry_dir(entry_id)
-    os.makedirs(target_dir, exist_ok=True) 
 
     with engine.begin() as conn:
         for f in files:
@@ -58,15 +57,16 @@ def attachments_upload(entry_id: int):
             if not allowed_file(f.filename):
                 flash(_('Ungültiger Dateityp: %(filename)s', filename=f.filename))
                 continue
-
-            ext = f.filename.rsplit('.', 1)[1].lower()
+   
+            name = f.filename or ''
+            ext = name.rsplit('.', 1)[1].lower() if '.' in name else 'bin'
             stored_name = f"{uuid4().hex}.{ext}"
             original_name = secure_filename(f.filename) or f"file.{ext}"
             path = os.path.join(target_dir, stored_name)
             
             f.save(path)
             size = os.path.getsize(path)
-            ctype = mimetypes.guess_type(original_name)[0] or 'application/octet-stream'
+            ctype = f.mimetype or mimetypes.guess_type(original_name)[0] or 'application/octet-stream'
 
             conn.execute(text("""
                 INSERT INTO attachments (entry_id, stored_name, original_name, content_type, size_bytes, uploaded_by)
@@ -129,7 +129,6 @@ def attachments_download(att_id: int):
 # app.py
 @attachments_routes.post('/attachments/<int:att_id>/delete')
 @login_required
-@require_perms('entries:edit:any')
 @require_csrf
 def attachments_delete(att_id: int):
     with engine.begin() as conn:
@@ -185,7 +184,7 @@ def attachments_temp_upload(token: str):
             path = os.path.join(tdir, stored_name)
             f.save(path)
             size = os.path.getsize(path)
-            ctype = mimetypes.guess_type(original_name)[0] or 'application/octet-stream'
+            ctype = f.mimetype or mimetypes.guess_type(original_name)[0] or 'application/octet-stream'
 
             conn.execute(text("""
                 INSERT INTO attachments_temp (temp_token, stored_name, original_name, content_type, size_bytes, uploaded_by)

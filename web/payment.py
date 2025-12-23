@@ -520,7 +520,6 @@ def upload_antrag_attachment(antrag_id: int):
 
     target_dir = _antrag_dir(antrag_id)
     saved = 0
-    os.makedirs(target_dir, exist_ok=True) 
 
     with engine.begin() as conn:
         for f in files:
@@ -536,7 +535,7 @@ def upload_antrag_attachment(antrag_id: int):
             path = os.path.join(target_dir, stored_name)
             f.save(path)
             size = os.path.getsize(path)
-            ctype = mimetypes.guess_type(original_name)[0] or 'application/octet-stream'
+            ctype = f.mimetype or mimetypes.guess_type(original_name)[0] or 'application/octet-stream'
 
             conn.execute(text("""
                 INSERT INTO antrag_attachments

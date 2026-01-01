@@ -9,6 +9,7 @@ from flask_babel import _
 from sqlalchemy import text
 from sqlalchemy.engine import Engine, create_engine
 from datetime import datetime
+import secrets
 
 APP_BASE_URL = os.getenv("APP_BASE_URL") or "http://localhost:5000"
 
@@ -55,7 +56,7 @@ ROLES = {
         'admin:tools'
     },
     'Manager': {
-        'entries:view', 'entries:add', 'entries:edit:any', 'entries:delete:any','export:pdf', 
+        'entries:view', 'entries:add', 'entries:edit:any', 'entries:delete:any','export:csv', 'export:pdf',
         'import:csv', 
         'users:manage', 'users:setApprover', 
         'payment:view', 'payment:manage'

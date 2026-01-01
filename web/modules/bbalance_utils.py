@@ -162,19 +162,39 @@ def _build_index_context(default_date: str | None = None, temp_token: str | None
         except ValueError:
             year_val = None
 
-    # Einträge für Tabelle
-    entries = fetch_entries(q or None, df, dt, attachments_filter=filter_attachments, year=year_val)
+    # Einträge für Tabelle (mit Profil-Sortierung)
+    entries = fetch_entries(
+        q or None,
+        df,
+        dt,
+        attachments_filter=filter_attachments,
+        year=year_val
+    )
 
     years = get_available_years()
 
     # Gesamtwerte unabhängig vom Filter
     inv_aktuell, kas_aktuell = get_global_totals()
 
-    # Optional: Veränderung im Filterbereich
+    # Optional: Veränderung im Filterbereich (nur by date-range)
     delta_inv, delta_kas = get_delta_for_filter(df, dt)
 
-    series_inv = [e['inventar'] for e in entries]
-    series_kas = [float(e['kassenbestand']) for e in entries]
+    # --- Sparklines: Jahr berücksichtigen, aber immer chronologisch (ASC) ---
+    entries_for_chart = fetch_entries(
+        None,                                   # keine Suche
+        None if year_val is not None else df,   # Zeitraum nur wenn KEIN Jahr gesetzt
+        None if year_val is not None else dt,
+        attachments_filter=None,
+        year=year_val
+    )
+    entries_for_chart.sort(key=lambda e: (e['datum'] or date.min, e['id']))
+
+    series_inv = [e['inventar'] for e in entries_for_chart]
+    series_kas = [float(e['kassenbestand']) for e in entries_for_chart]
+    labels_all = [
+        e['datum'].isoformat() if e['datum'] else ''
+        for e in entries_for_chart
+    ]
 
     finv = entries[-1]['inventar'] if entries else 0
     fkas = entries[-1]['kassenbestand'] if entries else Decimal('0')
@@ -203,6 +223,7 @@ def _build_index_context(default_date: str | None = None, temp_token: str | None
         'role': role,
         'series_inv': series_inv,
         'series_kas': series_kas,
+        'labels_all': labels_all,   # fürs Template
         'temp_token': token,
         'years': years,
         'selected_year': str(year_val) if year_val is not None else '',

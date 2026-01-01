@@ -398,45 +398,31 @@
 {% endblock %}
 
 {% block scripts %}
+
 <script>
-  function showToast(message, variant = 'danger') {
-    // variant: 'primary'|'success'|'warning'|'danger'|...
-    const container = document.getElementById('bbToastContainer');
-    if (!container) return alert(message); // Fallback
+  // Daten aus Flask (Jinja rendert nur die Werte)
+  const labelsRaw = {{ labels_all | tojson | safe }};
+  const dataInv   = {{ series_inv | tojson | safe }};
+  const dataKas   = {{ series_kas | tojson | safe }};
 
-    const toastEl = document.createElement('div');
-    toastEl.className = `toast align-items-center text-bg-${variant} border-0`;
-    toastEl.setAttribute('role', 'alert');
-    toastEl.setAttribute('aria-live', 'assertive');
-    toastEl.setAttribute('aria-atomic', 'true');
-    toastEl.innerHTML = `
-    <div class="d-flex">
-      <div class="toast-body">${message}</div>
-      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-    </div>`;
-    container.appendChild(toastEl);
-    const toast = new bootstrap.Toast(toastEl, { delay: 4000 });
-    toast.show();
-    toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
-  }
+  // Optional: ISO-Währung aus Kontext (Fallback EUR)
+  const CURRENCY_CODE = "{{ currency_code | default('EUR') }}";
 
-
-  (function () {
-    // Daten aus Flask
-    const labelsRaw = {{ entries| map(attribute = 'datum') | list | tojson
-  }};
-  const dataInv = {{ series_inv| tojson }};
-  const dataKas = {{ series_kas| tojson }};
-
-  const labels = labelsRaw.map(d => {
-    try { return new Date(d).toLocaleDateString('de-DE'); } catch { return String(d); }
+  // Labels stabil gegen UTC-Shift: interpretier Datum als lokale Mitternacht
+  const labels = (Array.isArray(labelsRaw) ? labelsRaw : []).map(d => {
+      if (!d) return '';                          // leer → kein Datum
+      const parsed = new Date(`${d}T00:00:00`);   // lokale Mitternacht
+      return isNaN(parsed) ? '' : parsed.toLocaleDateString('de-DE');
   });
 
+
+  // Bootstrap-Farben aus CSS-Variablen
   const css = getComputedStyle(document.documentElement);
   const colorPrimary = (css.getPropertyValue('--bs-primary') || '#0d6efd').trim();
   const colorSuccess = (css.getPropertyValue('--bs-success') || '#198754').trim();
-  const gridColor = (css.getPropertyValue('--bs-border-color') || '#dee2e6').trim();
+  const gridColor    = (css.getPropertyValue('--bs-border-color') || '#dee2e6').trim();
 
+  // Gemeinsame Chart-Optionen (ohne Legende, kompakt)
   const baseOptions = {
     responsive: true,
     maintainAspectRatio: false,
@@ -447,9 +433,16 @@
         callbacks: {
           title: (items) => items[0]?.label ?? '',
           label: (ctx) => {
-            const val = ctx.parsed.y;
-            if (ctx.dataset.label === 'Kassenbestand') {
-              return new Intl.NumberFormat('de-DE', { style: 'currency', currency: "_('waehrung')" }).format(val);
+            const val = ctx.parsed?.y ?? 0;
+            if (ctx.dataset?.label === 'Kassenbestand') {
+              try {
+                return new Intl.NumberFormat('de-DE', {
+                  style: 'currency', currency: CURRENCY_CODE
+                }).format(val);
+              } catch {
+                // Fallback ohne Intl oder falscher Code
+                return `${val.toFixed?.(2) ?? val} {{ _('waehrung') }}`;
+              }
             }
             return `${val} {{ _('Flaschen') }}`;
           }
@@ -462,33 +455,64 @@
     }
   };
 
+  // Sanfte Flächenfüllung
   function makeGradient(ctx, baseColor) {
-    const g = ctx.createLinearGradient(0, 0, 0, ctx.canvas.height || 80);
-    g.addColorStop(0, baseColor + '33');
-    g.addColorStop(1, baseColor + '00');
+    const h = ctx?.canvas?.height || 80;
+    const g = ctx.createLinearGradient(0, 0, 0, h);
+    g.addColorStop(0, baseColor + '33'); // ~20% Deckkraft
+    g.addColorStop(1, baseColor + '00'); // 0% Deckkraft
     return g;
   }
 
-  const invCanvas = document.getElementById('sparklineInv');
-  if (invCanvas && window.Chart) {
+  // Inventar-Sparkline
+  (function renderInv() {
+    const invCanvas = document.getElementById('sparklineInv');
+    if (!invCanvas || !window.Chart) return;
     const invCtx = invCanvas.getContext('2d');
     new Chart(invCtx, {
       type: 'line',
-      data: { labels, datasets: [{ label: 'Inventar', data: dataInv, borderColor: colorPrimary, backgroundColor: makeGradient(invCtx, colorPrimary), borderWidth: 2, fill: true, tension: 0.35, pointRadius: 3, pointBackgroundColor: colorPrimary }] },
+      data: {
+        labels,
+        datasets: [{
+          label: 'Inventar',
+          data: dataInv || [],
+          borderColor: colorPrimary,
+          backgroundColor: makeGradient(invCtx, colorPrimary),
+          borderWidth: 2,
+          fill: true,
+          tension: 0.35,
+          pointRadius: 3,
+          pointBackgroundColor: colorPrimary
+        }]
+      },
       options: baseOptions
     });
-  }
+  })();
 
-  const kasCanvas = document.getElementById('sparklineKas');
-  if (kasCanvas && window.Chart) {
+  // Kassenbestand-Sparkline
+  (function renderKas() {
+    const kasCanvas = document.getElementById('sparklineKas');
+    if (!kasCanvas || !window.Chart) return;
     const kasCtx = kasCanvas.getContext('2d');
     new Chart(kasCtx, {
       type: 'line',
-      data: { labels, datasets: [{ label: 'Kassenbestand', data: dataKas, borderColor: colorSuccess, backgroundColor: makeGradient(kasCtx, colorSuccess), borderWidth: 2, fill: true, tension: 0.35, pointRadius: 3, pointBackgroundColor: colorSuccess }] },
+      data: {
+        labels,
+        datasets: [{
+          label: 'Kassenbestand',
+          data: dataKas || [],
+          borderColor: colorSuccess,
+          backgroundColor: makeGradient(kasCtx, colorSuccess),
+          borderWidth: 2,
+          fill: true,
+          tension: 0.35,
+          pointRadius: 3,
+          pointBackgroundColor: colorSuccess
+        }]
+      },
       options: baseOptions
     });
-  }
-}) ();
+  })();
 </script>
 
 <script>

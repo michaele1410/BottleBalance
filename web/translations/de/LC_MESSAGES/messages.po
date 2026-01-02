@@ -767,7 +767,7 @@ msgstr ""
 
 #: templates/audit.html:17 templates/index.html:167
 msgid "TT.MM.JJJJ – TT.MM.JJJJ"
-msgstr ""
+msgstr "TT.MM.JJJJ"
 
 #: templates/audit.html:23
 msgid "Filtern"
@@ -1102,7 +1102,7 @@ msgstr ""
 
 #: templates/index.html:158
 msgid "Datum/Bemerkung"
-msgstr ""
+msgstr "Bemerkung"
 
 #: templates/index.html:174
 msgid "Jahr"

@@ -800,7 +800,7 @@ msgstr "Time period"
 
 #: templates/audit.html:17 templates/index.html:167
 msgid "TT.MM.JJJJ – TT.MM.JJJJ"
-msgstr "TT.MM.JJJJ – TT.MM.JJJJ"
+msgstr "DD.MM.YYYY"
 
 #: templates/audit.html:23
 msgid "Filtern"
@@ -1137,7 +1137,7 @@ msgstr "Filter for entries"
 
 #: templates/index.html:158
 msgid "Datum/Bemerkung"
-msgstr "Date/Note"
+msgstr "Note"
 
 #: templates/index.html:174
 msgid "Jahr"

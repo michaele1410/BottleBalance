@@ -22,7 +22,7 @@ from modules.auth_utils import (
     current_user
 )
 
-def fetch_entries(search=None, date_from=None, date_to=None, attachments_filter=None, year=None):
+def fetch_entries(search=None, date_from=None, date_to=None, attachments_filter=None, year=None, force_order_dir: str | None = None):
     where = []
     params = {}
 
@@ -49,7 +49,11 @@ def fetch_entries(search=None, date_from=None, date_to=None, attachments_filter=
     user = current_user()
     sort_order_desc = bool(user.get('sort_order_desc')) if user else False
     order_dir = 'DESC' if sort_order_desc else 'ASC'
-
+    # Override für spezielle Abrufe (z. B. Sparklines immer ASC)
+    if force_order_dir:
+        od = str(force_order_dir).upper()
+        order_dir = 'ASC' if od == 'ASC' else 'DESC'
+        
     sql = f"""
         WITH att AS (
             SELECT entry_id, COUNT(*) AS cnt
@@ -185,7 +189,8 @@ def _build_index_context(default_date: str | None = None, temp_token: str | None
         None if year_val is not None else df,   # Zeitraum nur wenn KEIN Jahr gesetzt
         None if year_val is not None else dt,
         attachments_filter=None,
-        year=year_val
+        year=year_val,
+        force_order_dir='ASC'                  # Sortierung in SQL aufsteigend erzwingen
     )
     entries_for_chart.sort(key=lambda e: (e['datum'] or date.min, e['id']))
 
@@ -219,7 +224,7 @@ def _build_index_context(default_date: str | None = None, temp_token: str | None
         'can_add': ('entries:add' in allowed),
         'can_export_csv': ('export:csv' in allowed),
         'can_export_pdf': ('export:pdf' in allowed),
-        'can_import': ('import:csv' in allowed),
+        'can_import_csv': ('import:csv' in allowed),
         'role': role,
         'series_inv': series_inv,
         'series_kas': series_kas,

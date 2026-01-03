@@ -154,31 +154,30 @@
   {% endif %}
 </div>
 
-<!-- Tabelle -->
-<div class="card shadow-sm">
-  <div class="card-body">
+<!-- Tabellenfilter-->
 
-    <!-- Filterzeile: oben, volle Breite -->
-    <div class="mb-3">
-      <div class="card shadow-sm">
-        <div class="card-header d-flex justify-content-between align-items-center">
-          <span>{{ _('Filter') }}</span>
-          <!-- Toggle-Button nur auf Mobil -->
-          <button class="btn btn-sm btn-outline-secondary d-md-none"
-                  type="button"
-                  data-bs-toggle="collapse"
-                  data-bs-target="#collapseFilters"
-                  aria-expanded="false"
-                  aria-controls="collapseFilters">
-            <i class="bi-chevron-down"></i>
-          </button>
-        </div>
-        <div id="collapseFilters" class="collapse show">
-          <div class="card-body">
-            <form method="get"
-                  class="row row-cols-1 row-cols-md-auto g-2 align-items-end form-compact"
-                  id="filtersForm"
-                  aria-label="{{ _('Filter für Einträge') }}">
+<!-- Filter: eigener vollbreiter Container über der Tabelle -->
+<div class="col-12">
+  <div class="card shadow-sm mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <span>{{ _('Filter') }}</span>
+      <!-- Toggle-Button nur auf Mobil -->
+      <button class="btn btn-sm btn-outline-secondary d-md-none"
+              type="button"
+              data-bs-toggle="collapse"
+              data-bs-target="#collapseFilters"
+              aria-expanded="false"
+              aria-controls="collapseFilters">
+        <i class="bi-chevron-down"></i>
+      </button>
+    </div>
+    <!-- default offen; für Mobil kannst du per JS initial schließen -->
+    <div id="collapseFilters" class="collapse show">
+      <div class="card-body">
+        <form method="get"
+              class="row row-cols-1 row-cols-md-auto g-2 align-items-end form-compact"
+              id="filtersForm"
+              aria-label="{{ _('Filter für Einträge') }}">
 
           <!-- Suche -->
           <div class="col">
@@ -235,7 +234,6 @@
             <!-- Export-Gruppe -->
             <div class="btn-group">
               {% if can_export_pdf %}
-              <!-- PDF -->
               <a class="btn btn-outline-danger"
                  href="{{ url_for('export_pdf') }}?{{ request.query_string.decode() if request.query_string else '' }}"
                  title="{{ _('PDF exportieren') }}">
@@ -274,6 +272,12 @@
         </form>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- Tabelle -->
+<div class="card shadow-sm">
+  <div class="card-body">
     <!-- Tabelle: eigener Block unter der Filterzeile -->
     <div class="table-responsive mt-2">
       <table class="table table-sm align-middle table-striped">
@@ -436,6 +440,26 @@
 {% endblock %}
 
 {% block scripts %}
+<!-- Neuen Datensatz hinzufügen zugeklappt -->
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const el = document.getElementById('collapseNewEntry');
+    if (el && window.matchMedia('(max-width: 767.98px)').matches) {
+      const c = new bootstrap.Collapse(el, { toggle: false });
+      c.hide();
+    }
+});
+</script>
+<!-- Filter zugeklappt-->
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const el = document.getElementById('collapseFilters');
+    if (el && window.matchMedia('(max-width: 767.98px)').matches) {
+      const c = new bootstrap.Collapse(el, { toggle: false });
+      c.hide();
+    }
+});
+</script>
 <!-- Plugin für gestrichelte Nullinie -->
 <script>
   // Einfache gestrichelte Nulllinie für Y=0
@@ -638,8 +662,11 @@
       new MutationObserver(() => {
         const dark = isDark();
         document.querySelectorAll('.flatpickr-calendar').forEach(c => toggleCalendarDark(c, dark));
-      }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-bs-theme'] });
-    }
+    }).observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-bs-theme']
+    });
+
 
     // Haptik
     function hapticFeedback() { if (navigator.vibrate) navigator.vibrate(10); }

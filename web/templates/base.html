@@ -103,7 +103,7 @@
 </nav>
 
   <!-- Main -->
-<main class="container my-4">
+<main class="container-fluid my-4">
 
   {% if current_user() and current_user().get('role') == 'admin' and current_user().get('must_change_password') %}
     <div class="alert alert-warning">

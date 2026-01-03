@@ -51,13 +51,13 @@
           {% for u in users %}
           <tr>
             <!-- Benutzername + ID -->
-            <td class="text-nowrap">
+            <td data-label="{{ _('Benutzername') }}" class="text-nowrap">
               {{ u.username }}<br>
               <!--small class="text-muted">ID: {{ u.id }}</small-->
             </td>
 
             <!-- E-Mail -->
-            <td>
+            <td data-label="{{ _('E-Mail') }}">
               {% if u.email %}
                 <i class="bi bi-envelope-fill text-success" title="E-Mail hinterlegt"></i>
               {% else %}
@@ -79,12 +79,12 @@
                 </button>
               </form>
             </td-->
-            <td>
+            <td data-label="{{ _('Rolle') }}">
               <span class="badge bg-secondary">{{ u.role }}</span>
             </td>
 
             <!-- Aktiv-Toggle (mit Icon, i18n-Text) -->
-            <td>
+            <td data-label="{{ _('Aktiv') }}">
               <form method="post" action="{{ url_for('user_routes.users_toggle', uid=u.id) }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 {% if u.active and user.id != u.id%}
@@ -100,7 +100,7 @@
             </td>
 
             <!-- Geschäftsführend (can_approve) -->
-            <td>
+            <td data-label="{{ _('Geschäftsführend') }}">
               <form method="post" action="{{ url_for('users_toggle_approve', uid=u.id) }}" class="d-inline">
 
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -117,13 +117,13 @@
             </td>
 
             <!-- Erstellt -->
-            <td class="text-nowrap">{{ u.created_at and u.created_at.strftime('%d.%m.%Y %H:%M') or '—' }}</td>
+            <td data-label="{{ _('Erstellt') }}" class="text-nowrap">{{ u.created_at and u.created_at.strftime('%d.%m.%Y %H:%M') or '—' }}</td>
 
             <!-- Aktualisiert-->
-            <td class="text-nowrap">{{ u.updated_at and u.updated_at.strftime('%d.%m.%Y %H:%M') or '—' }}</td>
+            <td data-label="{{ _('Aktualisiert') }}" class="text-nowrap">{{ u.updated_at and u.updated_at.strftime('%d.%m.%Y %H:%M') or '—' }}</td>
 
            <!-- Buttons Aktionen-->
-            <td class="text-end">
+            <td data-label="{{ _('Aktionen') }}" class="text-end">
               <div class="d-flex gap-2 justify-content-end">
                 <!-- Bearbeiten -->
                 <a href="{{ url_for('user_routes.edit_user', uid=u.id) }}" class="btn btn-sm btn-outline-primary"
@@ -153,7 +153,7 @@
           </tr>
           {% else %}
           <tr>
-            <td colspan="8" class="text-center text-muted">{{ _('Keine Benutzer vorhanden') }}.</td>
+            <td data-label="{{ _('Keine Benutzer vorhanden') }}" colspan="8" class="text-center text-muted">{{ _('Keine Benutzer vorhanden') }}.</td>
           </tr>
           {% endfor %}
         </tbody>

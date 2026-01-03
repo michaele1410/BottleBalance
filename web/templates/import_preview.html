@@ -87,14 +87,14 @@
               {% set row_class = '' %}
             {% endif %}
             <tr class="{{ row_class }}">
-              <td>{{ r.line_no }}</td>
-              <td>{{ r.datum and format_date_de(r.datum) or '–' }}</td>
-              <td class="text-end">{{ r.vollgut }}</td>
-              <td class="text-end">{{ r.leergut }}</td>
-              <td class="text-end">{{ r.einnahme }}</td>
-              <td class="text-end">{{ r.ausgabe }}</td>
-              <td>{{ r.bemerkung }}</td>
-              <td>
+              <td data-label="#">{{ r.line_no }}</td>
+              <td data-label="{{ _('Datum') }}">{{ r.datum and format_date_de(r.datum) or '–' }}</td>
+              <td data-label="{{ _('Vollgut') }}" class="text-end">{{ r.vollgut }}</td>
+              <td data-label="{{ _('Leergut') }}"  class="text-end">{{ r.leergut }}</td>
+              <td data-label="{{ _('Einnahme') }}"  class="text-end">{{ r.einnahme }}</td>
+              <td data-label="{{ _('Ausgabe') }}"  class="text-end">{{ r.ausgabe }}</td>
+              <td data-label="{{ _('Bemerkung') }}">{{ r.bemerkung }}</td>
+              <td data-label="{{ _('Status') }}">
                 {% if r.errors|length > 0 %}
                   <div><strong>{{ _('Fehler:') }}</strong></div>
                   <ul class="mb-0 ps-3">

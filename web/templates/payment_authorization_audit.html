@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="container mt-4">
+<div class="container-fluid px-2 px-md-3">
   <h2 class="mb-4">{{ _('Audit-Übersicht') }}</h2>
   <div class="table-responsive">
     <table class="table table-striped align-middle">
@@ -17,12 +17,12 @@
       <tbody>
         {% for log in logs %}
         <tr>
-          <td>{{ log.id }}</td>
-          <td>{{ log.antrag_id }}</td>
-          <td>{{ log.username or 'Unbekannt' }}</td>
-          <td>{{ log.action }}</td>
-          <td>{{ log.timestamp.strftime('%d.%m.%Y %H:%M:%S') }}</td>
-          <td>{{ log.detail or '' }}</td>
+          <td data-label="{{ _('ID') }}">{{ log.id }}</td>
+          <td data-label="{{ _('Antrag') }}">{{ log.antrag_id }}</td>
+          <td data-label="{{ _('Benutzer') }}">{{ log.username or 'Unbekannt' }}</td>
+          <td data-label="{{ _('Aktion') }}">{{ log.action }}</td>
+          <td data-label="{{ _('Zeitpunkt') }}">{{ log.timestamp.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+          <td data-label="{{ _('Details') }}">{{ log.detail or '' }}</td>
         </tr>
         {% endfor %}
       </tbody>

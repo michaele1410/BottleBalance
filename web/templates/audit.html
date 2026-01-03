@@ -44,15 +44,15 @@
         <tbody>
         {% for a in logs %}
           <tr>
-            <td class="text-nowrap">{{ a.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
-            <td>{{ a.username or ('#'+(a.user_id|string)) }}</td>
-            <td>{{ a.action }}</td>
-            <td>{{ a.entry_id or '—' }}</td>
-            <td>{{ a.detail or '—' }}</td>
+            <td data-label="{{ _('Zeitpunkt') }}" class="text-nowrap">{{ a.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+            <td data-label="{{ _('User') }}">{{ a.username or ('#'+(a.user_id|string)) }}</td>
+            <td data-label="{{ _('Aktion') }}">{{ a.action }}</td>
+            <td data-label="{{ _('Entry-ID') }}">{{ a.entry_id or '—' }}</td>
+            <td data-label="{{ _('Details') }}">{{ a.detail or '—' }}</td>
           </tr>
         {% else %}
           <tr>
-            <td colspan="5" class="text-center text-muted">{{ _('Keine Einträge.') }}</td>
+            <td data-label="{{ _('Keine Einträge.') }}" colspan="5" class="text-center text-muted">{{ _('Keine Einträge.') }}</td>
           </tr>
         {% endfor %}
         </tbody>

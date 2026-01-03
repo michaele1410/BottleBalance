@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="container mt-4">
+<div class="container-fluid px-2 px-md-3">
   <h2 class="mb-4">{{ _('Zahlungsfreigabe') }}</h2>
 
   <!-- Aktionen -->
@@ -34,7 +34,7 @@
       <tbody>
         {% for a in antraege %}
         <tr>
-          <td colspan="5">
+          <td data-label="{{ _('Antragsteller/in') }}" colspan="5">
             <div class="mb-2">
               <strong>{{ _('Freigabe-Fortschritt') }}:</strong>
               {{ a.freigaben_count }} {{ _('von') }} {{ a.freigaben_gesamt }} {{ _('freigegeben') }}
@@ -53,13 +53,13 @@
         </tr>
 
         <tr>
-          <td>{{ a.antragsteller }}</td>
-          <td>{{ a.datum }}</td>
-          <td>{{ a.betrag }} €</td>
-          <td>
+          <td data-label="{{ _('Antragsteller/in') }}">{{ a.antragsteller }}</td>
+          <td data-label="{{ _('Datum') }}">{{ a.datum }}</td>
+          <td data-label="{{ _('Betrag') }}">{{ a.betrag }} €</td>
+          <td data-label="{{ _('Status') }}">
             <span class="badge badge-status-{{ a.status|replace(' ', '_') }}">{{ a.status }}</span>
           </td>
-          <td class="text-nowrap">
+          <td data-label="{{ _('Aktionen') }}" class="text-nowrap">
 
             <!-- Details -->
             <a href="{{ url_for('payment_routes.zahlungsfreigabe_detail', antrag_id=a.id) }}"

@@ -767,14 +767,14 @@ msgstr ""
 
 #: templates/audit.html:17 templates/index.html:167
 msgid "TT.MM.JJJJ – TT.MM.JJJJ"
-msgstr ""
+msgstr "TT.MM.JJJJ"
 
 #: templates/audit.html:23
 msgid "Filtern"
 msgstr ""
 
 #: templates/audit.html:26 templates/index.html:199
-msgid "Zurücksetzen"
+msgid "Filter zurücksetzen"
 msgstr ""
 
 #: templates/audit.html:37 templates/edit.html:140
@@ -1102,7 +1102,7 @@ msgstr ""
 
 #: templates/index.html:158
 msgid "Datum/Bemerkung"
-msgstr ""
+msgstr "Bemerkung"
 
 #: templates/index.html:174
 msgid "Jahr"
@@ -1125,7 +1125,11 @@ msgid ""
 msgstr ""
 
 #: templates/index.html:207
-msgid "PDF exportieren"
+msgid "PDF export"
+msgstr ""
+
+#: templates/index.html:268
+msgid "CSV import"
 msgstr ""
 
 #: templates/index.html:212 templates/index.html:213
@@ -1133,7 +1137,7 @@ msgid "Weitere Exportoptionen"
 msgstr ""
 
 #: templates/index.html:229
-msgid "CSV exportieren"
+msgid "CSV export"
 msgstr ""
 
 #: templates/index.html:247

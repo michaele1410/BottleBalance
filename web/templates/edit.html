@@ -146,10 +146,10 @@
           <tbody>
             {% for a in audit %}
             <tr>
-              <td>{{ a.created_at|localize_dt_str }}</td>
-              <td>{{ a.action }}</td>
-              <td>{{ a.username or 'Unbekannt' }}</td>
-              <td>{{ (a.detail or '')|replace('\n', '<br>')|safe }}</td>
+              <td data-label="{{ _('Zeitpunkt') }}">{{ a.created_at|localize_dt_str }}</td>
+              <td data-label="{{ _('Aktion') }}">{{ a.action }}</td>
+              <td data-label="{{ _('Benutzer') }}">{{ a.username or 'Unbekannt' }}</td>
+              <td data-label="{{ _('Details') }}">{{ (a.detail or '')|replace('\n', '<br>')|safe }}</td>
             </tr>
             {% endfor %}
           </tbody>

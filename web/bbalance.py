@@ -13,6 +13,8 @@ import csv
 
 from decimal import Decimal, InvalidOperation
 
+from time import time
+
 from modules.utils import (
     parse_money
 )
@@ -58,7 +60,7 @@ def index():
     role = session.get('role')
     if role == 'Payment Viewer':
         return redirect(url_for('payment_routes.zahlungsfreigabe')) 
-    return render_template('index.html', **ctx)
+    return render_template('index.html', **ctx, now=int(time()))
 
 @bbalance_routes.post('/add')
 @login_required
@@ -84,7 +86,7 @@ def add():
         # ⬇️ bei Fehler: gleiche Seite rendern, temp_token beibehalten
         ctx = _build_index_context(default_date=(datum_s or today_ddmmyyyy()),
                                    temp_token=temp_token)
-        return render_template('index.html', **ctx), 400
+        return render_template('index.html', **ctx, now=int(time())), 400
 
     # 🔐 Optional: Härtung gegen DevTools-Manipulation (Front-End min=0 serverseitig durchsetzen)
     vollgut  = max(0, vollgut)
@@ -106,7 +108,7 @@ def add():
         # ⬇️ KEIN redirect – render mit identischem temp_token, sonst gehen Tempfiles verloren
         ctx = _build_index_context(default_date=(datum_s or today_ddmmyyyy()),
                                    temp_token=temp_token)
-        return render_template('index.html', **ctx), 400
+        return render_template('index.html', **ctx, now=int(time())), 400
 
     # Datensatz speichern
     with engine.begin() as conn:

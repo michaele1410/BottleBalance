@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="container mt-4">
+<div class="container-fluid px-2 px-md-3">
   <h2>{{ _('Benutzer bearbeiten') }}: {{ user.username }}</h2>
   <form method="post">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

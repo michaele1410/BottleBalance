@@ -800,15 +800,15 @@ msgstr "Time period"
 
 #: templates/audit.html:17 templates/index.html:167
 msgid "TT.MM.JJJJ – TT.MM.JJJJ"
-msgstr "TT.MM.JJJJ – TT.MM.JJJJ"
+msgstr "DD.MM.YYYY"
 
 #: templates/audit.html:23
 msgid "Filtern"
 msgstr "Filter"
 
 #: templates/audit.html:26 templates/index.html:199
-msgid "Zurücksetzen"
-msgstr "Reset"
+msgid "Filter zurücksetzen"
+msgstr "Reset filter"
 
 #: templates/audit.html:37 templates/edit.html:140
 #: templates/payment_authorization_audit.html:13
@@ -1137,7 +1137,7 @@ msgstr "Filter for entries"
 
 #: templates/index.html:158
 msgid "Datum/Bemerkung"
-msgstr "Date/Note"
+msgstr "Note"
 
 #: templates/index.html:174
 msgid "Jahr"
@@ -1164,15 +1164,19 @@ msgstr ""
 "                attachment"
 
 #: templates/index.html:207
-msgid "PDF exportieren"
+msgid "PDF export"
 msgstr "Export PDF"
+
+#: templates/index.html:268
+msgid "CSV import"
+msgstr "Import CSV"
 
 #: templates/index.html:212 templates/index.html:213
 msgid "Weitere Exportoptionen"
 msgstr "Additional export options"
 
 #: templates/index.html:229
-msgid "CSV exportieren"
+msgid "CSV export"
 msgstr "Export CSV"
 
 #: templates/index.html:247

@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="container mt-4">
+<div class="container-fluid px-2 px-md-3">
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h2 class="mb-0">{{ _('Zahlungsantrag') }} #{{ antrag.id }}</h2>
     <div class="d-flex gap-2">
@@ -170,10 +170,10 @@
     <tbody>   
     {% for log in audit %}
         <tr>
-          <td>{{ log.timestamp.strftime('%d.%m.%Y %H:%M:%S') if log.timestamp else '' }}</td>
-          <td>{{ log.action }}</td>
-          <td>{{ log.username or 'Unbekannt' }}</td>
-          <td>{{ (log.detail or '')|replace('\n','<br>')|safe }}</td>
+          <td data-label="{{ _('Zeitpunkt') }}">{{ log.timestamp.strftime('%d.%m.%Y %H:%M:%S') if log.timestamp else '' }}</td>
+          <td data-label="{{ _('Aktion') }}">{{ log.action }}</td>
+          <td data-label="{{ _('Benutzer') }}">{{ log.username or 'Unbekannt' }}</td>
+          <td data-label="{{ _('Details') }}">{{ (log.detail or '')|replace('\n','<br>')|safe }}</td>
         </tr>
     {% endfor %}
     </tbody>

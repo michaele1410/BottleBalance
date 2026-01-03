@@ -1,3 +1,14 @@
+/*=========================================
+   Haupt-Container Anpassungen
+   ========================================= */
+
+/* Nur für Tablets (Bootstrap md-Bereich: 768px–991px) */
+@media (min-width: 768px) and (max-width: 991px) {
+  main.container {
+    max-width: 90%; /* statt fester Pixelbreite, prozentual für Flexibilität */
+  }
+}
+
 /* =========================================
    Allgemeine Tabellen & Layout
    ========================================= */
@@ -144,10 +155,14 @@ body {
    ========================================= */
 .form-compact .form-label { font-size: .9rem; margin-bottom: .25rem; }
 .form-compact .input-group-text { padding: .375rem .5rem; }
-@media (min-width: 768px) {
-  .form-compact .form-control, .form-compact .form-select { min-width: 12rem; }
-}
 
+@media (min-width: 768px) {
+  .form-compact .form-control,
+  .form-compact .form-select {
+    min-width: 8em;   /* Mindestbreite */
+    max-width: 12rem;  /* maximale Breite */
+  }
+}
 /* =========================================
    Flatpickr Dark Mode
    ========================================= */
@@ -275,3 +290,112 @@ textarea#options {
 /* Button/Tabellen-Feinschliff bei Aktionsleisten */
 .table td .btn { margin: 2px; }
 .table th, .table td { white-space: nowrap; }
+
+@media (max-width: 576px) {
+  .table td .btn {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.35rem;
+    white-space: normal;
+    word-break: break-word;
+
+  }
+}
+
+/* =========================================
+   Responsive Tabellen
+   ========================================= */
+.table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch; /* sanftes Scrollen auf iOS */
+}
+
+/* Stacked Layout für Smartphones */
+@media (max-width: 576px) {
+  table.table thead {
+    display: none; /* Kopf ausblenden */
+
+  }
+  table.table tr {
+    display: block;
+    margin-bottom: 1rem;
+    border: 1px solid #dee2e6;
+    border-radius: .5rem;
+    padding: .5rem;
+    background: var(--bg-color);
+  }
+  table.table td {
+    display: flex;
+    justify-content: space-between;
+    padding: .25rem .5rem;
+    font-size: .9rem;
+    border-bottom: 1px solid #eee;
+    white-space: normal;
+    word-break: break-word;
+
+  }
+  table.table td:last-child {  
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+
+  }
+  table.table td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: var(--text-color);
+    margin-right: .5rem;
+  }
+
+  /* Zellen mit Defaultwert im Stacked Layout ausblenden */
+  table.table td[data-default="true"] {
+      display: none;
+  }
+
+}
+
+/* Stacked Layout für Tablets */
+@media (max-width: 768px) {
+  .table-stacked thead { display: none !important; }
+  .table-stacked tbody, .table-stacked tr { display: block !important; }
+  .table-stacked tr {
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 1rem;
+    border: 1px solid #dee2e6;
+    border-radius: .5rem;
+    padding: .75rem;
+    background: var(--bg-color);
+  }
+
+  .table-stacked td {
+    display: flex;
+    justify-content: space-between;
+    padding: .25rem .5rem;
+    font-size: .9rem;
+    border-bottom: 1px solid #eee;
+    white-space: normal;
+    word-break: break-word;
+  }
+  
+  .table-stacked td.text-end {
+      display: flex !important;
+      justify-content: space-between !important; /* Label links, Buttons rechts */
+      gap: .5rem;
+      border-bottom: 0;
+  }
+
+  /* Buttons in Aktionen rechtsbündig */
+  .table-stacked td.text-end .btn {
+    margin-left: auto; /* schiebt Buttons nach rechts */
+  }
+
+  .table-stacked td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: var(--text-color);
+    margin-right: .5rem;
+  }
+  .table-stacked td[data-default="true"] {
+    display: none !important;
+  }
+}

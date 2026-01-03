@@ -1568,7 +1568,7 @@ def export_pdf():
         story.append(Spacer(1, 6))
 
     data = [[
-        _('Datum'), _('Vollgut'), _('Leergut'), _('Einnahme'), _('Ausgabe'), _('Bemerkung')
+        _('Datum'), _('Vollgut'), _('Leergut'), _('Einnahme'), _('Ausgabe'), _('Kassenbestand'), _('Bemerkung')
     ]]
     for e in entries:
         data.append([
@@ -1577,10 +1577,11 @@ def export_pdf():
             str(e['leergut']),
             str(e['einnahme']).replace('.', ',') + " " + waehrung,
             str(e['ausgabe']).replace('.', ',') + " " + waehrung,
+            str(e['kassenbestand']).replace('.', ',') + " " + waehrung,
             Paragraph(e['bemerkung'] or '', styles['Normal'])
         ])
 
-    col_widths = [25*mm, 35*mm, 35*mm, 35*mm, 35*mm, 40*mm]
+    col_widths = [25*mm, 30*mm, 30*mm, 30*mm, 30*mm, 30*mm, 30*mm]
     table = Table(data, colWidths=col_widths, repeatRows=1)
     table.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#f1f3f5')),

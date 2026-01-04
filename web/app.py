@@ -177,6 +177,7 @@ app.config.update({
         "MAIL_PASSWORD": SMTP_PASS,    
         "MAIL_DEFAULT_SENDER": FROM_EMAIL,    
         "MAIL_TIMEOUT": SMTP_TIMEOUT, # Flask-Mail unterstützt timeout ab neueren Versionen teils via kwargs})
+})
 # Flask-Mail initialisieren
 mail.init_app(app)
 # Upload-Ordner sicherstellen

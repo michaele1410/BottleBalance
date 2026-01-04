@@ -16,12 +16,69 @@
   vertical-align: middle;
 }
 
+
+
+/* Chart-Canvas – nur für Sparklines gezielt */
+.sparkline-container canvas {
+  width: 100% !important;
+  height: 100% !important;    /* volle Höhe der Box */
+  max-height: none !important;
+}
+
+/* Karte streckbar machen und Card-Body den Rest einnehmen lassen */
+.card.h-100 { 
+  display: flex; 
+  flex-direction: column; 
+}
+.card.h-100 .card-body { 
+  flex: 1 1 auto; 
+  display: flex;            /* damit der Chart-Container sich strecken kann */
+}
+
+/* Sparkline-Container füllt Card-Body */
+.sparkline-container { 
+  flex: 1 1 auto; 
+  display: flex; 
+  min-height: 140px;        /* Basishöhe; nach Bedarf anpassen */
+}
+
+/* Bootstrap .ratio für volle Höhe statt aspektbasiertem Padding nutzen */
+.sparkline-ratio { 
+  --bs-aspect-ratio: auto;  /* Aspect-Ratio aus */
+  height: 100%; 
+  width: 100%;
+}
+/* Absicherung: Canvas soll die Ratio-Box komplett füllen */
+.sparkline-ratio > * {
+  position: absolute;
+  inset: 0;
+}
+
+/* Entferne die harte Mobile-Höhe – erlaubt volles Ausbreiten */
+@media (max-width: 768px) {
+  .sparkline-ratio { --bs-aspect-ratio: auto; }
+  /* Falls du eine Mindesthöhe auf Mobile willst, nutze min-height statt height: */
+  /* .sparkline-container { min-height: 120px; } */
+  /* Entfernen / Überschreiben der bisherigen fixen Höhe: */
+  #sparklineInv, #sparklineKas { height: 100% !important; }
+}
+
+/* --- Korrigiere außerdem die bisherigen fehlerhaften Regeln --- */
+
+/* Vorher: globaler canvas-Selector
+canvas { width: 100%; height: auto; max-height: 100% !important!; }
+→ Entferne ihn oder ersetze ihn durch die gezielte Regel oben */
+
+/* Vorher in deiner Datei (Syntaxfehler):
+max-height: 100% !important!;
+→ korrekt wäre: max-height: 100% !important; (ohne zweites !) */
+
 /* Chart-Canvas */
-canvas {
+/*canvas {
   width: 100%;
   height: auto;
-  max-height: 100% !important!;
-}
+  max-height: 100% !important;
+}*/
 
 /* =========================================
    Farbvariablen (Light/Dark)
@@ -90,13 +147,13 @@ body {
 }
 
 /* Sparkline-Höhensteuerung über Bootstrap .ratio */
-.sparkline-ratio { --bs-aspect-ratio: 100%; }
+/*.sparkline-ratio { --bs-aspect-ratio: 100%; } */
 
 /* Mobile: Charts flacher */
-@media (max-width: 768px) {
+/*@media (max-width: 768px) {
   .sparkline-ratio { --bs-aspect-ratio: 100%; }
   #sparklineInv, #sparklineKas { height: 80px !important; }
-}
+}*/
 
 /* =========================================
    Formular-Buttons (BottleBalance)

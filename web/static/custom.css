@@ -45,6 +45,7 @@
 /* Bootstrap .ratio für volle Höhe statt aspektbasiertem Padding nutzen */
 .sparkline-ratio { 
   --bs-aspect-ratio: auto;  /* Aspect-Ratio aus */
+  position: relative;
   height: 100%; 
   width: 100%;
 }

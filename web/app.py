@@ -1601,15 +1601,23 @@ def export_pdf():
 
     col_widths = [23*mm, 16*mm, 16*mm, 16*mm, 28*mm, 28*mm, 29*mm, 40*mm]
     table = Table(data, colWidths=col_widths, repeatRows=1)
+
     table.setStyle(TableStyle([
+        # Kopfzeile zentrieren
+        ('ALIGN', (0,0), (-1,0), 'CENTER'),
+
+        # Datenzeilen:
+        # Spalten 0 bis 6 (Datum, Vollgut, Leergut, Inventar, Einnahme, Ausgabe, Kassenbestand) → rechtsbündig
+        ('ALIGN', (0,1), (6,-1), 'RIGHT'),
+
+        # Bemerkung (Spalte 7) → linksbündig
+        ('ALIGN', (7,1), (7,-1), 'LEFT'),
+
+        # Hintergrund und Schrift für Kopfzeile
         ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#f1f3f5')),
         ('TEXTCOLOR', (0,0), (-1,0), colors.HexColor('#212529')),
         ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
         ('FONTSIZE', (0,0), (-1,0), 10),
-
-        # Zahlen rechtsbündig
-        ('ALIGN', (1,1), (2,-1), 'RIGHT'),   # Vollgut, Leergut
-        ('ALIGN', (3,1), (6,-1), 'RIGHT'),   # Inventar, Einnahme, Ausgabe, Kassenbestand
 
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
         ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.white, colors.HexColor('#fcfcfd')]),
@@ -1619,6 +1627,7 @@ def export_pdf():
         ('TOPPADDING', (0,0), (-1,-1), 4),
         ('BOTTOMPADDING', (0,0), (-1,-1), 4),
     ]))
+
     story.append(table)
 
     doc.build(story)

@@ -71,11 +71,9 @@ def fetch_entries(
                 e.bemerkung,
                 e.created_by,
                 SUM(e.einnahme - e.ausgabe)
-                    OVER (ORDER BY e.datum, e.id
-                          ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS kassenbestand,
+                    OVER (ORDER BY e.datum, e.id  ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS kassenbestand,
                 SUM(e.vollgut - e.leergut)
-                    OVER (ORDER BY e.datum, e.id
-                          ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS inventar
+                    OVER (ORDER BY e.datum, e.id ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS inventar
             FROM entries e
         )
         SELECT

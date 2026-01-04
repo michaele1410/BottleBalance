@@ -291,13 +291,13 @@
                 <th style="cursor:pointer;" onclick="sortTableByDate()">
                   {{ _('Datum') }} <i class="bi bi-arrow-down-up"></i>
                 </th>
-                <th>{{ _('Vollgut') }}</th>
-                <th>{{ _('Leergut') }}</th>
-                <th>{{ _('Inventar') }}</th>
-                <th>{{ _('Einnahme') }}</th>
-                <th>{{ _('Ausgabe') }}</th>
-                <th>{{ _('Kassenbestand') }}</th>
-                <th>{{ _('Bemerkung') }}</th>
+                <th class="text-center">{{ _('Vollgut') }}</th>
+                <th class="text-center">{{ _('Leergut') }}</th>
+                <th class="text-center">{{ _('Inventar') }}</th>
+                <th class="text-center">{{ _('Einnahme') }}</th>
+                <th class="text-center">{{ _('Ausgabe') }}</th>
+                <th class="text-center">{{ _('Kassenbestand') }}</th>
+                <th class="text-start">{{ _('Bemerkung') }}</th>
                 <th class="text-end">{{ _('Aktionen') }}</th>
               </tr>
             </thead>
@@ -311,17 +311,17 @@
 
               <tr>
                 <!-- immer anzeigen -->
-                <td data-label="{{ _('Datum') }}"     data-default="false">{{ format_date_de(e.datum) }}</td>
+                <td class="text-end" data-label="{{ _('Datum') }}"     data-default="false">{{ format_date_de(e.datum) }}</td>
                 <!-- nur anzeigen, wenn ≠ default value -->
-                <td data-label="{{ _('Vollgut') }}"   data-default="{{ 'false' if has_vg else 'true' }}">{{ e.vollgut }}</td>
-                <td data-label="{{ _('Leergut') }}"   data-default="{{ 'false' if has_lg else 'true' }}">{{ e.leergut }}</td>
-                <td data-label="{{ _('Inventar') }}"  data-default="false">{{ e.inventar }} {{ _('Fl.') }}</td>
-                <td data-label="{{ _('Einnahme') }}"  data-default="{{ 'false' if has_in else 'true' }}">{{ format_eur_de(e.einnahme) }}</td>
-                <td data-label="{{ _('Ausgabe') }}"   data-default="{{ 'false' if has_au else 'true' }}">{{ format_eur_de(e.ausgabe) }}</td>
-                <td data-label="{{ _('Kassenbestand') }}" data-default="false">{{ format_eur_de(e.kassenbestand) }}</td>
+                <td class="text-end" data-label="{{ _('Vollgut') }}"   data-default="{{ 'false' if has_vg else 'true' }}">{{ e.vollgut }} {{ _('Fl.') }}</td>
+                <td class="text-end" data-label="{{ _('Leergut') }}"   data-default="{{ 'false' if has_lg else 'true' }}">{{ e.leergut }} {{ _('Fl.') }}</td>
+                <td class="text-end" data-label="{{ _('Inventar') }}"  data-default="false">{{ e.inventar }} {{ _('Fl.') }}</td>
+                <td class="text-end" data-label="{{ _('Einnahme') }}"  data-default="{{ 'false' if has_in else 'true' }}">{{ format_eur_de(e.einnahme) }}</td>
+                <td class="text-end" data-label="{{ _('Ausgabe') }}"   data-default="{{ 'false' if has_au else 'true' }}">{{ format_eur_de(e.ausgabe) }}</td>
+                <td class="text-end" data-label="{{ _('Kassenbestand') }}" data-default="false">{{ format_eur_de(e.kassenbestand) }}</td>
                 <!-- immer anzeigen -->
-                <td data-label="{{ _('Bemerkung') }}">{{ e.bemerkung }}</td>
-                <td data-label="{{ _('Aktionen') }}" class="text-end">
+                <td class="text-start" data-label="{{ _('Bemerkung') }}">{{ e.bemerkung }}</td>
+                <td class="text-end" data-label="{{ _('Aktionen') }}">
                   {% set role = current_user().get('role') %}
                   {% if role in ['Editor', 'Manager', 'Admin'] %}
                   <a class="btn btn-sm btn-outline-primary"

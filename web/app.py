@@ -432,6 +432,10 @@ CREATE TABLE IF NOT EXISTS status_transitions (
 );
 """
 
+CREATE_INDEX_ENTRIES_DATUM = """
+CREATE INDEX IF NOT EXISTS idx_entries_datum_id ON entries(datum, id);
+"""
+
 def migrate_columns(conn):
     # Best-effort migrations for added columns
     conn.execute(text(CREATE_TABLE_ATTACHMENTS))
@@ -443,6 +447,8 @@ def migrate_columns(conn):
     conn.execute(text("CREATE INDEX IF NOT EXISTS idx_za_antrag_action_user " "ON zahlungsantrag_audit(antrag_id, action, user_id)"))
     conn.execute(text(CREATE_TABLE_ZAHLUNGSFREIGABE_ATTACHMENTS))
     conn.execute(text(CREATE_TABLE_ZAHLUNGSFREIGABE_TRANSITIONS))
+    conn.execute(text(CREATE_INDEX_ENTRIES_DATUM))
+
 
     conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS email TEXT"))
     conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS totp_secret TEXT"))
@@ -1499,6 +1505,7 @@ def api_import_dry_run():
 # -----------------------
 # PDF Export with optional logo
 # -----------------------
+
 @app.get('/export/pdf')
 @login_required
 @require_perms('export:pdf')
@@ -1508,11 +1515,9 @@ def export_pdf():
     dt = request.args.get('to')
     attachments_filter = request.args.get('attachments')
 
-    # Zeitraum
     date_from = datetime.strptime(df, '%Y-%m-%d').date() if df else None
     date_to   = datetime.strptime(dt, '%Y-%m-%d').date() if dt else None
 
-    # Jahr (''/all => None; sonst int; keine Default-Erzwingung)
     year_raw = (request.args.get('year') or '').strip().lower()
     year_val = None
     if year_raw not in ('', 'all'):
@@ -1521,7 +1526,6 @@ def export_pdf():
         except ValueError:
             year_val = None
 
-    # Alle Filter anwenden
     entries = fetch_entries(
         search=q or None,
         date_from=date_from,
@@ -1549,7 +1553,7 @@ def export_pdf():
     story.append(Paragraph(f"<b>{_('BottleBalanceTitle')}{_(' - Export')}</b>", styles['Title']))
     story.append(Spacer(1, 6))
 
-    # Optional: sichtbare Filterzusammenfassung im PDF-Header
+    # Filterzusammenfassung
     filters = []
     if q:
         filters.append(f"{_('Suche')}: {q}")
@@ -1567,29 +1571,34 @@ def export_pdf():
         story.append(Paragraph(", ".join(filters), styles['Normal']))
         story.append(Spacer(1, 6))
 
+    # Tabelle
     data = [[
-        _('Datum'), _('Vollgut'), _('Leergut'), _('Einnahme'), _('Ausgabe'), _('Kassenbestand'), _('Bemerkung')
+        _('Datum'), _('Vollgut'), _('Leergut'),
+        _('Einnahme'), _('Ausgabe'), _('Kassenbestand'), _('Bemerkung')
     ]]
+
     for e in entries:
         data.append([
             format_date_de(e['datum']),
             str(e['vollgut']),
             str(e['leergut']),
-            str(e['einnahme']).replace('.', ',') + " " + waehrung,
-            str(e['ausgabe']).replace('.', ',') + " " + waehrung,
-            str(e['kassenbestand']).replace('.', ',') + " " + waehrung,
+            format_eur_de(e['einnahme']),
+            format_eur_de(e['ausgabe']),
+            format_eur_de(e['kassenbestand']),
             Paragraph(e['bemerkung'] or '', styles['Normal'])
         ])
 
-    col_widths = [25*mm, 30*mm, 30*mm, 30*mm, 30*mm, 30*mm, 30*mm]
+    col_widths = [25*mm, 30*mm, 30*mm, 30*mm, 30*mm, 30*mm, 40*mm]
     table = Table(data, colWidths=col_widths, repeatRows=1)
     table.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#f1f3f5')),
         ('TEXTCOLOR', (0,0), (-1,0), colors.HexColor('#212529')),
         ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
         ('FONTSIZE', (0,0), (-1,0), 10),
-        ('ALIGN', (1,1), (3,-1), 'RIGHT'),
-        ('ALIGN', (4,1), (6,-1), 'RIGHT'),
+
+        ('ALIGN', (1,1), (2,-1), 'RIGHT'),   # Vollgut, Leergut
+        ('ALIGN', (3,1), (5,-1), 'RIGHT'),   # Einnahme, Ausgabe, Kassenbestand
+
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
         ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.white, colors.HexColor('#fcfcfd')]),
         ('GRID', (0,0), (-1,-1), 0.25, colors.HexColor('#dee2e6')),
@@ -1605,8 +1614,6 @@ def export_pdf():
 
     filename = f"bottlebalance_{date.today().strftime('%Y%m%d')}.pdf"
     return send_file(buffer, as_attachment=True, download_name=filename, mimetype='application/pdf')
-
-
 
 @app.post('/profile/lang')
 @login_required

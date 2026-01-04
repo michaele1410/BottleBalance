@@ -1,42 +1,42 @@
-
 # -----------------------
 # Data Access
 # -----------------------
+
+# modules/bbalance_utils.py
 from decimal import Decimal
 from flask import request, session
-from flask_babel import gettext as _
 from sqlalchemy import text
 from datetime import datetime, date
 from uuid import uuid4
 
-from modules.core_utils import (
-    engine, 
-    ROLES
-)
-from modules.csv_utils import (
-    today_ddmmyyyy,
-    format_eur_de,
-    format_date_de
-)
-from modules.auth_utils import (
-    current_user
-)
+from modules.core_utils import engine, ROLES
+from modules.csv_utils import today_ddmmyyyy, format_eur_de, format_date_de
+from modules.auth_utils import current_user
 
-def fetch_entries(search=None, date_from=None, date_to=None, attachments_filter=None, year=None, force_order_dir: str | None = None):
+
+def fetch_entries(
+    search=None,
+    date_from=None,
+    date_to=None,
+    attachments_filter=None,
+    year=None,
+    force_order_dir: str | None = None
+):
     where = []
     params = {}
 
+    # Filter (außen, Alias "ar")
     if search:
-        where.append("(e.bemerkung ILIKE :q OR to_char(e.datum, 'DD.MM.YYYY') ILIKE :q)")
+        where.append("(ar.bemerkung ILIKE :q OR to_char(ar.datum, 'DD.MM.YYYY') ILIKE :q)")
         params['q'] = f"%{search}%"
     if date_from:
-        where.append("e.datum >= :df")
+        where.append("ar.datum >= :df")
         params['df'] = date_from
     if date_to:
-        where.append("e.datum <= :dt")
+        where.append("ar.datum <= :dt")
         params['dt'] = date_to
     if year is not None:
-        where.append("EXTRACT(YEAR FROM e.datum) = :year")
+        where.append("EXTRACT(YEAR FROM ar.datum) = :year")
         params['year'] = year
     if attachments_filter == 'only':
         where.append("COALESCE(a.cnt, 0) > 0")
@@ -45,57 +45,74 @@ def fetch_entries(search=None, date_from=None, date_to=None, attachments_filter=
 
     where_sql = ("WHERE " + " AND ".join(where)) if where else ""
 
-    # Sortierung aus Profil
+    # Sortierung (Profil) + Override
     user = current_user()
     sort_order_desc = bool(user.get('sort_order_desc')) if user else False
     order_dir = 'DESC' if sort_order_desc else 'ASC'
-    # Override für spezielle Abrufe (z. B. Sparklines immer ASC)
     if force_order_dir:
         od = str(force_order_dir).upper()
         order_dir = 'ASC' if od == 'ASC' else 'DESC'
-        
+
+    # CTE: Window-Functions über *alle* Zeilen (kein WHERE hier!)
     sql = f"""
         WITH att AS (
             SELECT entry_id, COUNT(*) AS cnt
             FROM attachments
             GROUP BY entry_id
+        ),
+        all_rows AS (
+            SELECT
+                e.id,
+                e.datum,
+                e.vollgut,
+                e.leergut,
+                e.einnahme,
+                e.ausgabe,
+                e.bemerkung,
+                e.created_by,
+                SUM(e.einnahme - e.ausgabe)
+                    OVER (ORDER BY e.datum, e.id
+                          ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS kassenbestand,
+                SUM(e.vollgut - e.leergut)
+                    OVER (ORDER BY e.datum, e.id
+                          ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS inventar
+            FROM entries e
         )
         SELECT
-            e.id, e.datum, e.vollgut, e.leergut, e.einnahme, e.ausgabe, e.bemerkung,
-            e.created_by, COALESCE(a.cnt, 0) AS attachment_count
-        FROM entries e
-        LEFT JOIN att a ON a.entry_id = e.id
+            ar.id,
+            ar.datum,
+            ar.vollgut,
+            ar.leergut,
+            ar.einnahme,
+            ar.ausgabe,
+            ar.bemerkung,
+            ar.created_by,
+            ar.kassenbestand,
+            ar.inventar,
+            COALESCE(a.cnt, 0) AS attachment_count
+        FROM all_rows ar
+        LEFT JOIN att a ON a.entry_id = ar.id
         {where_sql}
-        ORDER BY e.datum {order_dir}, e.id {order_dir}
+        ORDER BY ar.datum {order_dir}, ar.id {order_dir}
     """
 
     with engine.begin() as conn:
         rows = conn.execute(text(sql), params).mappings().all()
 
-    inventar = 0
-    kassenbestand = Decimal('0.00')
     result = []
     for r in rows:
-        voll = r['vollgut'] or 0
-        leer = r['leergut'] or 0
-        ein = Decimal(r['einnahme'] or 0)
-        aus = Decimal(r['ausgabe'] or 0)
-
-        inventar += (voll - leer)
-        kassenbestand = (kassenbestand + ein - aus).quantize(Decimal('0.01'))
-
         result.append({
             'id': r['id'],
             'datum': r['datum'],
-            'vollgut': voll,
-            'leergut': leer,
-            'einnahme': ein,
-            'ausgabe': aus,
+            'vollgut': int(r['vollgut'] or 0),
+            'leergut': int(r['leergut'] or 0),
+            'einnahme': Decimal(r['einnahme'] or 0),
+            'ausgabe': Decimal(r['ausgabe'] or 0),
             'bemerkung': r['bemerkung'] or '',
-            'inventar': inventar,
-            'kassenbestand': kassenbestand,
+            'inventar': int(r['inventar'] or 0),  # Inventar in Flaschen
+            'kassenbestand': Decimal(r['kassenbestand'] or 0).quantize(Decimal('0.01')),
             'created_by': r['created_by'],
-            'attachment_count': r['attachment_count'],
+            'attachment_count': int(r['attachment_count'] or 0),
         })
     return result
 
@@ -131,6 +148,8 @@ def get_delta_for_filter(date_from=None, date_to=None):
     with engine.begin() as conn:
         row = conn.execute(text(query), params).mappings().first()
     return row['delta_inv'], row['delta_kas']
+
+
 def _user_can_edit_entry(entry_id: int) -> bool:
     """RBAC-Check: edit:any oder edit:own wenn created_by = current_user."""
     allowed = ROLES.get(session.get('role'), set())
@@ -138,15 +157,21 @@ def _user_can_edit_entry(entry_id: int) -> bool:
         return True
     if 'entries:edit:own' in allowed:
         user = current_user()
-        if not user: return False
+        if not user:
+            return False
         with engine.begin() as conn:
-            owner = conn.execute(text("SELECT created_by FROM entries WHERE id=:id"), {'id': entry_id}).scalar_one_or_none()
+            owner = conn.execute(
+                text("SELECT created_by FROM entries WHERE id=:id"),
+                {'id': entry_id}
+            ).scalar_one_or_none()
         return owner == user['id']
     return False
+
 
 def _user_can_view_entry(entry_id: int) -> bool:
     allowed = ROLES.get(session.get('role'), set())
     return 'entries:view' in allowed
+
 
 def _build_index_context(default_date: str | None = None, temp_token: str | None = None):
     q = (request.args.get('q') or '').strip()
@@ -168,9 +193,7 @@ def _build_index_context(default_date: str | None = None, temp_token: str | None
 
     # Einträge für Tabelle (mit Profil-Sortierung)
     entries = fetch_entries(
-        q or None,
-        df,
-        dt,
+        q or None, df, dt,
         attachments_filter=filter_attachments,
         year=year_val
     )
@@ -180,29 +203,31 @@ def _build_index_context(default_date: str | None = None, temp_token: str | None
     # Gesamtwerte unabhängig vom Filter
     inv_aktuell, kas_aktuell = get_global_totals()
 
-    # Optional: Veränderung im Filterbereich (nur by date-range)
+    # Veränderung im Filterbereich (nur by date-range)
     delta_inv, delta_kas = get_delta_for_filter(df, dt)
 
-    # --- Sparklines: Jahr berücksichtigen, aber immer chronologisch (ASC) ---
+    # Sparklines: Jahr berücksichtigen, aber immer chronologisch (ASC)
     entries_for_chart = fetch_entries(
-        None,                                   # keine Suche
-        None if year_val is not None else df,   # Zeitraum nur wenn KEIN Jahr gesetzt
+        None,
+        None if year_val is not None else df,
         None if year_val is not None else dt,
         attachments_filter=None,
         year=year_val,
-        force_order_dir='ASC'                  # Sortierung in SQL aufsteigend erzwingen
+        force_order_dir='ASC'
     )
     entries_for_chart.sort(key=lambda e: (e['datum'] or date.min, e['id']))
 
     series_inv = [e['inventar'] for e in entries_for_chart]
     series_kas = [float(e['kassenbestand']) for e in entries_for_chart]
-    labels_all = [
-        e['datum'].isoformat() if e['datum'] else ''
-        for e in entries_for_chart
-    ]
+    labels_all = [e['datum'].isoformat() if e['datum'] else '' for e in entries_for_chart]
 
-    finv = entries[-1]['inventar'] if entries else 0
-    fkas = entries[-1]['kassenbestand'] if entries else Decimal('0')
+    # Filterstände (chronologisch letzter Eintrag)
+    if entries:
+        last = max(entries, key=lambda e: (e['datum'], e['id']))
+        finv = last['inventar']
+        fkas = last['kassenbestand']
+    else:
+        finv, fkas = 0, Decimal('0')
 
     role = session.get('role')
     allowed = ROLES.get(role, set())
@@ -228,7 +253,7 @@ def _build_index_context(default_date: str | None = None, temp_token: str | None
         'role': role,
         'series_inv': series_inv,
         'series_kas': series_kas,
-        'labels_all': labels_all,   # fürs Template
+        'labels_all': labels_all,
         'temp_token': token,
         'years': years,
         'selected_year': str(year_val) if year_val is not None else '',

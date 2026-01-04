@@ -293,8 +293,10 @@
                 </th>
                 <th>{{ _('Vollgut') }}</th>
                 <th>{{ _('Leergut') }}</th>
+                <th>{{ _('Inventar') }}</th>
                 <th>{{ _('Einnahme') }}</th>
                 <th>{{ _('Ausgabe') }}</th>
+                <th>{{ _('Kassenbestand') }}</th>
                 <th>{{ _('Bemerkung') }}</th>
                 <th class="text-end">{{ _('Aktionen') }}</th>
               </tr>
@@ -313,8 +315,10 @@
                 <!-- nur anzeigen, wenn ≠ default value -->
                 <td data-label="{{ _('Vollgut') }}"   data-default="{{ 'false' if has_vg else 'true' }}">{{ e.vollgut }}</td>
                 <td data-label="{{ _('Leergut') }}"   data-default="{{ 'false' if has_lg else 'true' }}">{{ e.leergut }}</td>
+                <td data-label="{{ _('Inventar') }}"  data-default="false">{{ e.inventar }} {{ _('Fl.') }}</td>
                 <td data-label="{{ _('Einnahme') }}"  data-default="{{ 'false' if has_in else 'true' }}">{{ format_eur_de(e.einnahme) }}</td>
                 <td data-label="{{ _('Ausgabe') }}"   data-default="{{ 'false' if has_au else 'true' }}">{{ format_eur_de(e.ausgabe) }}</td>
+                <td data-label="{{ _('Kassenbestand') }}" data-default="false">{{ format_eur_de(e.kassenbestand) }}</td>
                 <!-- immer anzeigen -->
                 <td data-label="{{ _('Bemerkung') }}">{{ e.bemerkung }}</td>
                 <td data-label="{{ _('Aktionen') }}" class="text-end">

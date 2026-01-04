@@ -168,6 +168,16 @@ def setup_logger(name):
     return logger
 
 app = Flask(__name__, static_folder='static')
+app.config.update({
+        "MAIL_SERVER": SMTP_HOST,    
+        "MAIL_PORT": SMTP_PORT,    
+        "MAIL_USE_TLS": bool(SMTP_TLS) and not bool(SMTP_SSL_ON),    
+        "MAIL_USE_SSL": bool(SMTP_SSL_ON),    
+        "MAIL_USERNAME": SMTP_USER,    
+        "MAIL_PASSWORD": SMTP_PASS,    
+        "MAIL_DEFAULT_SENDER": FROM_EMAIL,    
+        "MAIL_TIMEOUT": SMTP_TIMEOUT, # Flask-Mail unterstützt timeout ab neueren Versionen teils via kwargs})
+})
 # Flask-Mail initialisieren
 mail.init_app(app)
 # Upload-Ordner sicherstellen
@@ -1573,22 +1583,23 @@ def export_pdf():
 
     # Tabelle
     data = [[
-        _('Datum'), _('Vollgut'), _('Leergut'),
+        _('Datum'), _('Vollgut'), _('Leergut'), _('Inventar'),
         _('Einnahme'), _('Ausgabe'), _('Kassenbestand'), _('Bemerkung')
     ]]
 
     for e in entries:
         data.append([
             format_date_de(e['datum']),
-            str(e['vollgut']),
-            str(e['leergut']),
+            f"{e['vollgut']} Fl.",
+            f"{e['leergut']} Fl.",
+            f"{e['inventar']} Fl.",
             format_eur_de(e['einnahme']),
             format_eur_de(e['ausgabe']),
             format_eur_de(e['kassenbestand']),
             Paragraph(e['bemerkung'] or '', styles['Normal'])
         ])
 
-    col_widths = [25*mm, 30*mm, 30*mm, 30*mm, 30*mm, 30*mm, 40*mm]
+    col_widths = [25*mm, 14*mm, 14*mm, 14*mm, 29*mm, 29*mm, 29*mm, 45*mm]
     table = Table(data, colWidths=col_widths, repeatRows=1)
     table.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#f1f3f5')),

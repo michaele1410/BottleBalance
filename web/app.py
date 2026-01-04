@@ -168,6 +168,15 @@ def setup_logger(name):
     return logger
 
 app = Flask(__name__, static_folder='static')
+app.config.update({
+        "MAIL_SERVER": SMTP_HOST,    
+        "MAIL_PORT": SMTP_PORT,    
+        "MAIL_USE_TLS": bool(SMTP_TLS) and not bool(SMTP_SSL_ON),    
+        "MAIL_USE_SSL": bool(SMTP_SSL_ON),    
+        "MAIL_USERNAME": SMTP_USER,    
+        "MAIL_PASSWORD": SMTP_PASS,    
+        "MAIL_DEFAULT_SENDER": FROM_EMAIL,    
+        "MAIL_TIMEOUT": SMTP_TIMEOUT, # Flask-Mail unterstützt timeout ab neueren Versionen teils via kwargs})
 # Flask-Mail initialisieren
 mail.init_app(app)
 # Upload-Ordner sicherstellen

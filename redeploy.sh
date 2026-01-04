@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Name des Volumes
-VOLUME_NAME="bottlebalance_bottlebalance-app"
+VOLUME_NAME="bottlebalance-dev_bottlebalance-dev-app"
 
 echo ">>> Container stoppen (aber Volumes behalten)..."
 docker compose down

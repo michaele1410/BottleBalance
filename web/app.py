@@ -1599,7 +1599,7 @@ def export_pdf():
             Paragraph(e['bemerkung'] or '', styles['Normal'])
         ])
 
-    col_widths = [25*mm, 15*mm, 15*mm, 15*mm, 30*mm, 30*mm, 30*mm, 40*mm]
+    col_widths = [25*mm, 14*mm, 14*mm, 14*mm, 29*mm, 29*mm, 29*mm, 45*mm]
     table = Table(data, colWidths=col_widths, repeatRows=1)
     table.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#f1f3f5')),

@@ -37,12 +37,13 @@ RUN if [ -f ./scripts/update_translations.sh ]; then \
 
 # Compile translation files if translation directory exists and has .po files
 # This avoids failing the build when translations are not yet created.
+
 RUN if [ -d translations ] && find translations -type f -name '*.po' | grep -q .; then \
       pybabel compile -d translations || (echo 'pybabel compile failed' && exit 1); \
     else \
       echo 'No translations to compile, skipping pybabel'; \
-    fi
-
+    fi \
+ && chown -R app:app /app/translations
 
 # Expose port
 EXPOSE 5000

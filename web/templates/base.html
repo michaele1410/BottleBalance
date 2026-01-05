@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="de" data-bs-theme="{{ theme_preference|default('system') }}">
 <head>
@@ -25,7 +26,7 @@
 </head>
 <body>
 
-  <!-- Navbar -->
+<!-- Navbar -->
 <nav class="navbar navbar-expand-lg bg-body-tertiary border-bottom">
   <div class="container">
     <a class="navbar-brand fw-semibold d-flex align-items-center gap-2"
@@ -35,7 +36,6 @@
                 {{ url_for('bbalance_routes.index') }}
               {% endif %}">
       <span class="logo-wrapper">
-        <!--img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" class="logo-img"-->
         <img src="{{ brand_logo_url }}" alt="Logo" class="logo-img">
       </span>
       <span>{{ _('Greeting') }}{% if session.get('user_id') %}, {{ current_user().username|capitalize }}{% endif %}</span>
@@ -86,8 +86,7 @@
         {% endif %}  
 
         <!-- About -->
-        <a class="btn btn-outline-secondary btn-sm" href="#" data-bs-toggle="modal"
-              data-bs-target="#aboutModal">
+        <a class="btn btn-outline-secondary btn-sm" href="#" data-bs-toggle="modal" data-bs-target="#aboutModal">
           <i class="bi-info-circle me-1"></i> {{ _('Über') }}
         </a>
 
@@ -97,74 +96,56 @@
             <i class="bi-box-arrow-right me-1"></i> {{ _('Logout') }}
           </button>
         </form>
-
       </div>
     </div>
     {% endif %}
   </div>
 </nav>
 
-  <!-- Main -->
+<!-- Main -->
 <main class="container-fluid my-4 px-2 px-md-3">
-
-  {% if current_user() and current_user().get('role') == 'admin' and current_user().get('must_change_password') %}
-    <div class="alert alert-warning">
-      {{ _('Admin-Passwort noch nicht geändert.') }}
-      <a href="{{ url_for('profile') }}" class="alert-link">{{ _('Bitte im Profil aktualisieren.') }}</a>
-    </div>
-  {% endif %}
-
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        {% for category, message in messages %}
-          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-            {{ message|safe }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-          </div>
-        {% endfor %}
-      {% endif %}
-    {% endwith %}
-
-
   {% block content %}{% endblock %}
 </main>
 
-  
 <!-- Footer -->
 <footer class="border-top py-3">
   <div class="container text-muted small">
-    © Michael Eitdorf | Version: {{ app_version }} |
-    <a href="https://buymeacoffee.com/michaeleitdorf" target="_blank" rel="noopener noreferrer">
+    © <a id="developer-email-footer" class="link-secondary text-decoration-none">Michael Eitdorf</a>
+    &nbsp;|&nbsp; Version: <a href="#" data-bs-toggle="modal" data-bs-target="#aboutModal"> {{ app_version }} </a>
+    &nbsp;|&nbsp; <a href="https://buymeacoffee.com/michaeleitdorf" target="_blank" rel="noopener noreferrer">
       ☕ Buy me a coffee
     </a>
   </div>
 </footer>
 
-
 <!-- Über-Modal -->
-<div class="modal-body">
-  <p><strong>{{ _('Name:') }}</strong> {{ _('BottleBalanceTitle') }}</p>
-  <p><strong>{{ _('Version:') }}</strong> {{ app_version }}</p>
-  <p><strong>{{ _('Entwickler:') }}</strong> Michael Eitdorf</p>
-  <p><strong>{{ _('Kontakt:') }}</strong>
-    <a href="mailto:{{ DEVELOPER_EMAIL }}">{{ _('Entwickler kontaktieren') }}</a>
-  </p>
-  <p><strong>{{ _('Webseite:') }}</strong>
-    <a href="{{ developer_url }}" target="_blank" rel="noopener noreferrer">GitHub-Projekt</a>
-  </p>
-  <hr>
-  <p class="small text-muted">
-    {{ _('BottleBalanceTitle') }}{{ _(' ist eine Webanwendung zur Verwaltung von Getränkekassen und Zahlungsanträgen.') }}
-  </p>
-
-  <!-- Buy Me a Coffee -->
-  <p class="mt-3">
-    ☕ <a href="https://buymeacoffee.com/michaeleitdorf" target="_blank" rel="noopener noreferrer">
-      {{ _('Buy me a coffee') }}
-    </a>
-  </p>
-</div>
-
+<div class="modal fade" id="aboutModal" tabindex="-1" aria-labelledby="aboutModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="aboutModalLabel">{{ _('Über') }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
+      </div>
+      <div class="modal-body">
+        <p><strong>{{ _('Name:') }}</strong> {{ _('BottleBalanceTitle') }}</p>
+        <p><strong>{{ _('Version:') }}</strong> {{ app_version }}</p>
+        <p><strong>{{ _('Entwickler:') }}</strong> Michael Eitdorf</p>
+        <p><strong>{{ _('Kontakt:') }}</strong>
+          <a href="mailto:{{ DEVELOPER_EMAIL }}">{{ _('Entwickler kontaktieren') }}</a>
+        </p>
+        <p><strong>{{ _('Webseite:') }}</strong>
+          <a href="{{ developer_url }}" target="_blank" rel="noopener noreferrer">GitHub-Projekt</a>
+        </p>
+        <hr>
+        <p class="small text-muted">
+          {{ _('BottleBalanceTitle') }}{{ _(' ist eine Webanwendung zur Verwaltung von Getränkekassen und Zahlungsanträgen.') }}
+        </p>
+        <p class="mt-3">
+          ☕ <a href="https://buymeacoffee.com/michaeleitdorf" target="_blank" rel="noopener noreferrer">
+            {{ _('Buy me a coffee') }}
+          </a>
+        </p>
+      </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Schließen') }}</button>
       </div>
@@ -177,75 +158,6 @@
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/de.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-
-{% block scripts %}
-  <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const mq = window.matchMedia('(prefers-color-scheme: dark)');
-    function applyTheme(mode) {
-      const effective = mode === 'system' ? (mq.matches ? 'dark' : 'light') : mode;
-      localStorage.setItem('theme', mode);
-      document.documentElement.setAttribute('data-bs-theme', effective);
-    }
-    document.querySelectorAll('input[name="theme"]').forEach(radio => {
-      radio.addEventListener('change', e => applyTheme(e.target.value));
-    });
-    mq.addEventListener('change', () => {
-      if ((localStorage.getItem('theme') || '{{ theme_preference|default("system") }}') === 'system') {
-        applyTheme('system');
-      }
-    });
-  });
-  </script>
-
-  <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    // Flatpickr für Datum
-      if (document.querySelector('#datum')) {
-    flatpickr("#datum", {
-      dateFormat: "d.m.Y",
-      locale: "de"
-    });
-      }
-
-    // Haptisches Feedback für iOS
-    function hapticFeedback() {
-      if (navigator.vibrate) navigator.vibrate(10);
-    }
-    document.querySelectorAll('#transaction-form input').forEach(el => {
-      el.addEventListener('focus', hapticFeedback);
-    });
-  });
-  </script>
-
-  <script>
-  document.addEventListener('DOMContentLoaded', () => {
-  const encoded = "{{ developer_email_encoded }}";
-  const decoded = atob(encoded);
-
-  const footerLink = document.getElementById("developer-email-footer");
-  if (footerLink) {
-    footerLink.href = "mailto:" + decoded;
-  }
-
-  const modalLink = document.getElementById("developer-email-modal");
-  if (modalLink) {
-    modalLink.href = "mailto:" + decoded;
-  }
-});
-  </script>
-
-  <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const encodedSupport = "{{ support_email_encoded }}";
-    const decodedSupport = atob(encodedSupport);
-
-    const supportLink = document.getElementById("support-email-link");
-    if (supportLink) {
-      supportLink.href = "mailto:" + decodedSupport;
-    }
-  });
-  </script>
-{% endblock %}
+{% block scripts %}{% endblock %}
 </body>
 </html>

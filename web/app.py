@@ -1625,13 +1625,13 @@ def export_pdf():
     table_width = doc.width
     col_widths = [table_width * w for w in [
         0.10,  # Datum
-        0.09,  # Vollgut
-        0.09,  # Leergut
+        0.08,  # Vollgut
+        0.08,  # Leergut
         0.09,  # Inventar
-        0.11,  # Einnahme
-        0.11,  # Ausgabe
-        0.11,  # Kassenbestand
-        0.20,  # Bemerkung
+        0.10,  # Einnahme
+        0.10,  # Ausgabe
+        0.14,  # Kassenbestand
+        0.21,  # Bemerkung
     ]]
 
     table = Table(data, colWidths=col_widths, repeatRows=1)

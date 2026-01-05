@@ -291,14 +291,14 @@
                 <th class="text-center" style="cursor:pointer;" onclick="sortTableByDate()">
                   {{ _('Datum') }} <i class="bi bi-arrow-down-up"></i>
                 </th>
-                <th class="text-center">{{ _('Vollgut') }}</th>
-                <th class="text-center">{{ _('Leergut') }}</th>
-                <th class="text-center">{{ _('Inventar') }}</th>
-                <th class="text-center">{{ _('Einnahme') }}</th>
-                <th class="text-center">{{ _('Ausgabe') }}</th>
-                <th class="text-center">{{ _('Kassenbestand') }}</th>
-                <th class="text-center">{{ _('Bemerkung') }}</th>
-                <th class="text-center">{{ _('Aktionen') }}</th>
+                <th class="text-end">{{ _('Vollgut') }}</th>
+                <th class="text-end">{{ _('Leergut') }}</th>
+                <th class="text-end">{{ _('Inventar') }}</th>
+                <th class="text-end">{{ _('Einnahme') }}</th>
+                <th class="text-end">{{ _('Ausgabe') }}</th>
+                <th class="text-end">{{ _('Kassenbestand') }}</th>
+                <th class="text-start">{{ _('Bemerkung') }}</th>
+                <th class="text-start">{{ _('Aktionen') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -307,12 +307,12 @@
               <td class="text-end">{{ format_date_de(e.datum) }}</td>
 
               <!-- Nur anzeigen, wenn Wert != 0 -->
-              <td class="text-end" data-label="{{ _('Vollgut') }}">{{ e.vollgut if e.vollgut != 0 else '' }}</td>
-              <td class="text-end" data-label="{{ _('Leergut') }}">{{ e.leergut if e.leergut != 0 else '' }}</td>
+              <td class="text-end" data-label="{{ _('Vollgut') }}">{{ e.vollgut ~ ' ' ~ _('Fl.') if e.vollgut != 0 else '' }}</td>
+              <td class="text-end" data-label="{{ _('Leergut') }}">{{ e.leergut ~ ' ' ~ _('Fl.') if e.leergut != 0 else '' }}</td>
 
               <!-- Inventar: immer anzeigen oder optional ausblenden -->
               {% set changed = (e.vollgut != 0 or e.leergut != 0 or e.einnahme != 0 or e.ausgabe != 0) %}
-              <td class="text-end" data-label="{{ _('Inventar') }}">{{ e.inventar if changed else '' }}</td>
+              <td class="text-end" data-label="{{ _('Inventar') }}">{{ e.inventar ~ ' ' ~ _('Fl.') if changed else '' }}</td>
 
               <!-- Einnahme/Ausgabe: nur anzeigen, wenn != 0 -->
               <td class="text-end" data-label="{{ _('Einnahme') }}">{{ format_eur_de(e.einnahme) if e.einnahme != 0 else '' }}</td>

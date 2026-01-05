@@ -1,36 +1,94 @@
+
 {% extends "base.html" %}
 {% block content %}
 <div class="card shadow-sm">
   <div class="card-body">
     <h1 class="h5 mb-3">{{ _('Benutzerverwaltung') }}</h1>
 
-    <!-- Neuer Benutzer -->
-    <form method="post" action="{{ url_for('user_routes.users_add') }}" class="row g-2 align-items-end mb-3">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-      <div class="col-12 col-md-3">
-        <label class="form-label">{{ _('Benutzername') }}</label>
-        <input name="username" class="form-control" required>
+    <!-- Button für Modal -->
+    <div class="mb-3 text-start">
+      <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addUserModal">
+        <i class="bi bi-plus-lg me-1"></i> {{ _('User hinzufügen') }}
+      </button>
+    </div>
+
+    
+    <!-- Modal für neuen Benutzer -->
+    <div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <form method="post" action="{{ url_for('user_routes.users_add') }}" id="addUserForm" novalidate>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="modal-header">
+              <h5 class="modal-title" id="addUserModalLabel">{{ _('Neuen Benutzer anlegen') }}</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Schließen') }}"></button>
+            </div>
+            <div class="modal-body">
+              <div class="row g-3">
+                <!-- Benutzername -->
+                <!--div class="col-12">
+                  <label class="form-label">{{ _('Benutzername') }}</label>
+                  <input name="username" class="form-control" required minlength="3">
+                </div-->
+                <div class="input-group mb-3">
+                  <span class="input-group-text">{{ _('Benutzername') }}</span>
+                  <div class="form-floating flex-grow-1">
+                    <input name="username" type="text" class="form-control" required minlength="3">
+                    <label for="vollgut">{{ _('Benutzername') }}</label>
+                  </div>
+                </div>
+                <!-- E-Mail -->
+                <!--div class="col-12">
+                  <label class="form-label">{{ _('E-Mail') }}</label>
+                  <input name="email" type="email" class="form-control">
+                </div-->
+                 <div class="input-group mb-3">
+                  <span class="input-group-text">{{ _('E-Mail') }}</span>
+                  <div class="form-floating flex-grow-1">
+                    <input name="email" type="text" class="form-control" required>
+                    <label for="vollgut">{{ _('E-Mail') }}</label>
+                  </div>
+                </div>
+                <!-- Rolle -->
+                <!--div class="col-12">
+                  <label class="form-label">{{ _('Rolle') }}</label>
+                  <select class="form-select" name="role" required>
+                    {% for r in ROLES.keys() %}
+                      <option value="{{ r }}">{{ r }}</option>
+                    {% endfor %}
+                  </select>
+                </div-->
+                <div class="input-group mb-3">
+                  <span class="input-group-text">{{ _('Rolle') }}</span>
+                  <div class="form-floating flex-grow-1">
+                    <input name="role" type="text" class="form-control" required>
+                    <label for="vollgut">{{ _('Rolle') }}</label>
+                  </div>
+                </div>
+                <!-- Passwort -->
+                <!--div class="col-12">
+                  <label class="form-label">{{ _('Passwort') }}</label>
+                  <input type="password" name="password" minlength="8" class="form-control" required>
+                </div-->
+                <div class="input-group mb-3">
+                  <span class="input-group-text">{{ _('Passwort') }}</span>
+                  <div class="form-floating flex-grow-1">
+                    <input name="password" type="password" class="form-control" required>
+                    <label for="vollgut">{{ _('Passwort') }}</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer d-flex justify-content-between">
+              <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ _('Abbrechen') }}</button>
+              <button class="btn btn-primary" type="submit">
+                <i class="bi bi-check-lg me-1"></i> {{ _('Hinzufügen') }}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
-      <div class="col-12 col-md-3">
-        <label class="form-label">{{ _('E-Mail') }}</label>
-        <input name="email" type="email" class="form-control">
-      </div>
-      <div class="col-12 col-md-2">
-        <label class="form-label">{{ _('Rolle') }}</label>
-        <select class="form-select" name="role">
-          {% for r in ROLES.keys() %}<option value="{{ r }}">{{ r }}</option>{% endfor %}
-        </select>
-      </div>
-      <div class="col-12 col-md-2">
-        <label class="form-label">{{ _('Passwort') }}</label>
-        <input type="password" name="password" minlength="8" class="form-control" required>
-      </div>
-      <div class="col-12 col-md-2">
-        <button class="btn btn-success w-100">
-          <i class="bi bi-plus-lg me-1"></i> {{ _('Anlegen') }}
-        </button>
-      </div>
-    </form>
+    </div>
 
     <!-- Liste der Benutzer -->
     <div class="table-responsive">

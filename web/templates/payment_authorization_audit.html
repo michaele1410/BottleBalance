@@ -1,35 +1,40 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="container-fluid px-2 px-md-3">
-  <h2 class="mb-4">{{ _('Audit-Übersicht') }}</h2>
-  <div class="table-responsive">
-    <table class="table table-striped align-middle">
-      <thead>
-        <tr>
-          <th>{{ _('ID') }}</th>
-          <th>{{ _('Antrag') }}</th>
-          <th>{{ _('Benutzer') }}</th>
-          <th>{{ _('Aktion') }}</th>
-          <th>{{ _('Zeitpunkt') }}</th>
-          <th>{{ _('Details') }}</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for log in logs %}
-        <tr>
-          <td data-label="{{ _('ID') }}">{{ log.id }}</td>
-          <td data-label="{{ _('Antrag') }}">{{ log.antrag_id }}</td>
-          <td data-label="{{ _('Benutzer') }}">{{ log.username or 'Unbekannt' }}</td>
-          <td data-label="{{ _('Aktion') }}">{{ log.action }}</td>
-          <td data-label="{{ _('Zeitpunkt') }}">{{ log.timestamp.strftime('%d.%m.%Y %H:%M:%S') }}</td>
-          <td data-label="{{ _('Details') }}">{{ log.detail or '' }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+<div class="card shadow-sm">
+  <div class="card-body">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h1 class="h5 mb-3">{{ _('Audit-Übersicht') }}</h1>
+      <div class="d-flex gap-2">
+        <a href="{{ url_for('payment_routes.zahlungsfreigabe') }}" class="btn btn-outline-secondary">{{ _('Zurück') }}</a>
+      </div>
+    </div>
+  <!--div class="container-fluid px-2 px-md-3"-->
+    <div class="table-responsive">
+      <table class="table table-striped align-middle">
+        <thead>
+          <tr>
+            <th>{{ _('ID') }}</th>
+            <th>{{ _('Antrag') }}</th>
+            <th>{{ _('Benutzer') }}</th>
+            <th>{{ _('Aktion') }}</th>
+            <th>{{ _('Zeitpunkt') }}</th>
+            <th>{{ _('Details') }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for log in logs %}
+          <tr>
+            <td data-label="{{ _('ID') }}">{{ log.id }}</td>
+            <td data-label="{{ _('Antrag') }}">{{ log.antrag_id }}</td>
+            <td data-label="{{ _('Benutzer') }}">{{ log.username or 'Unbekannt' }}</td>
+            <td data-label="{{ _('Aktion') }}">{{ log.action }}</td>
+            <td data-label="{{ _('Zeitpunkt') }}">{{ log.timestamp.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+            <td data-label="{{ _('Details') }}">{{ log.detail or '' }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </div>
-  <a href="{{ url_for('payment_routes.zahlungsfreigabe') }}" class="btn btn-secondary mt-3">
-    <i class="bi bi-arrow-left"></i> {{ _('Zurück') }}
-  </a>
 </div>
 {% endblock %}

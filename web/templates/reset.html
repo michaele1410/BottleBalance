@@ -5,23 +5,47 @@
     <div class="card shadow-sm">
       <div class="card-body">
         <h1 class="h5 mb-3">{{ _('Passwort zurücksetzen') }}</h1>
-        <form method="post" action="{{ url_for('reset_post', token=token) }}" class="row g-3">
+        <form method="post" action="{{ url_for('auth_routes.reset_post', token=token) }}" class="row g-3">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <!--div class="col-12"-->
+            <!--label class="form-label">Reset-Token</label>
+            <input type="text" name="token" placeholder="Reset-Token" required-->
+            <!--div class="input-group mb-3">
+              <span class="input-group-text">{{ _('Reset-Token') }}</span>
+              <div class="form-floating flex-grow-1">
+                <input type="text" name="token" class="form-control" placeholder="Reset-Token" required>
+                  <label for="token">{{ _('Reset-Token') }}</label>
+              </div>
+            </div>
+          </div-->
           <div class="col-12">
-            <label class="form-label">Reset-Token</label>
-            <input type="text" name="token" placeholder="Reset-Token" required>
+            <!--label class="form-label">{{ _('Neues Passwort') }}</label>
+            <input type="password" name="password" class="form-control" required-->
+            <div class="input-group mb-3">
+              <span class="input-group-text">{{ _('Neues Passwort') }}</span>
+              <div class="form-floating flex-grow-1">
+                <input type="password" name="password"  inputmode="text" class="form-control"
+                  placeholder="{{ _('Neues Passwort eingeben') }}" required>
+                  <label for="password">{{ _('Neues Passwort') }}</label>
+              </div>
+            </div>
           </div>
+          
           <div class="col-12">
-            <label class="form-label">{{ _('Neues Passwort') }}</label>
-            <input type="password" name="password" class="form-control" required>
-          </div>
-          <div class="col-12">
-            <label class="form-label">{{ _('Neues Passwort (Wiederholen)') }}</label>
-            <input type="password" name="password2" class="form-control" required>
+            <!--label class="form-label">{{ _('Neues Passwort (Wiederholen)') }}</label>
+            <input type="password" name="password2" class="form-control" required-->
+            <div class="input-group mb-3">
+              <span class="input-group-text">{{ _('Passwort wiederholen') }}</span>
+              <div class="form-floating flex-grow-1">
+                <input type="password" name="password2"  inputmode="text" class="form-control"
+                  placeholder="{{ _('Neues Passwort eingeben') }}" required>
+                  <label for="password2">{{ _('Passwort wiederholen') }}</label>
+              </div>
+            </div>
           </div>
           <div class="col-12 d-flex gap-2">
-            <a class="btn btn-outline-secondary" href="{{ url_for('auth_routes.login') }}">{{ _('Abbrechen') }}</a>
-            <button class="btn btn-primary">{{ _('Speichern') }}</button>
+            <a href="{{ url_for('user_routes.users_list') }}" class="btn btn-secondary">{{ _('Abbrechen') }}</a>
+            <button type="submit" class="btn btn-primary">{{ _('Speichern') }}</button>
           </div>
         </form>
       </div>

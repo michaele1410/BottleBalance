@@ -1,62 +1,89 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="card shadow-sm">
-  <div class="card-body">
-    <h1 class="h5 mb-3">{{ _('Audit-Log') }}</h1>
-    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
-      <div class="w-100">
-        <form method="get" class="row row-cols-1 row-cols-md-auto g-2 align-items-end form-compact" id="filtersForm">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <div class="col">
-            <label class="form-label">{{ _('Suche') }}</label>
-            <input type="text" name="q" class="form-control" placeholder="{{ _('Aktion/Entry-ID') }}" value="{{ request.args.get('q','') }}">
-          </div>
-          <div class="col">
-            <label for="filter_daterange" class="form-label mb-1">{{ _('Zeitraum') }}</label>
-            <input type="text" id="filter_daterange" class="form-control"
-              placeholder="{{ _('TT.MM.JJJJ – TT.MM.JJJJ') }}" autocomplete="off">
-            <input type="hidden" name="from" id="filter_from" value="{{ request.args.get('from','') }}">
-            <input type="hidden" name="to" id="filter_to" value="{{ request.args.get('to','') }}">
-          </div>
-          <div class="col d-flex gap-2">
-            <button class="btn btn-primary" type="submit">
-              <i class="bi-funnel me-1"></i> {{ _('Filtern') }}
-            </button>
-            <a class="btn btn-outline-secondary" href="{{ url_for('audit_list') }}">
-              <i class="bi-x-circle me-1"></i> {{ _('Filter zurücksetzen') }}
-            </a>
-          </div>
-        </form>
+<!-- Filter: eigener vollbreiter Container über der Tabelle -->
+<div class="row g-3 mb-3">
+  <div class="col-12">
+    <div class="card shadow-sm mb-2">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span>{{ _('Filter') }}</span>
+        <!-- Toggle-Button nur auf Mobil -->
+        <button class="btn btn-sm btn-outline-secondary d-md-none"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#collapseFilters"
+                aria-expanded="false"
+                aria-controls="collapseFilters">
+          <i class="bi-chevron-down"></i>
+        </button>
+      </div>
+      <!-- default offen; für Mobil kannst du per JS initial schließen -->
+      <div id="collapseFilters" class="collapse show">
+        <div class="card-body">
+          <form method="get" class="row row-cols-1 row-cols-md-auto g-2 align-items-end form-compact" id="filtersForm">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <div class="col">
+                <label class="form-label">{{ _('Suche') }}</label>
+                <input type="text" name="q" class="form-control" placeholder="{{ _('Aktion/Entry-ID') }}" value="{{ request.args.get('q','') }}">
+              </div>
+              <div class="col">
+                <label for="filter_daterange" class="form-label mb-1">{{ _('Zeitraum') }}</label>
+                <input type="text" id="filter_daterange" class="form-control"
+                  placeholder="{{ _('TT.MM.JJJJ – TT.MM.JJJJ') }}" autocomplete="off">
+                <input type="hidden" name="from" id="filter_from" value="{{ request.args.get('from','') }}">
+                <input type="hidden" name="to" id="filter_to" value="{{ request.args.get('to','') }}">
+              </div>
+              <div class="col d-flex gap-2">
+                <button class="btn btn-primary" type="submit">
+                  <i class="bi-funnel me-1"></i> {{ _('Filtern') }}
+                </button>
+                <a class="btn btn-outline-secondary" href="{{ url_for('bbalance_routes.index') }}">
+                <i class="bi-x-circle me-1"></i>{{ _('Filter zurücksetzen') }}
+              </a>
+              </div>
+            </form>
+        </div>
       </div>
     </div>
+  </div>
+</div>
+<!-- Ende Filter -->
 
-    <div class="table-responsive">
-      <table class="table table-sm table-striped align-middle">
-        <thead class="table-light">
-          <tr>
-            <th>{{ _('Zeitpunkt') }}</th>
-            <th>{{ _('User') }}</th>
-            <th>{{ _('Aktion') }}</th>
-            <th>{{ _('Entry-ID') }}</th>
-            <th>{{ _('Details') }}</th>
-          </tr>
-        </thead>
-        <tbody>
-        {% for a in logs %}
-          <tr>
-            <td data-label="{{ _('Zeitpunkt') }}" class="text-nowrap">{{ a.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
-            <td data-label="{{ _('User') }}">{{ a.username or ('#'+(a.user_id|string)) }}</td>
-            <td data-label="{{ _('Aktion') }}">{{ a.action }}</td>
-            <td data-label="{{ _('Entry-ID') }}">{{ a.entry_id or '—' }}</td>
-            <td data-label="{{ _('Details') }}">{{ a.detail or '—' }}</td>
-          </tr>
-        {% else %}
-          <tr>
-            <td data-label="{{ _('Keine Einträge.') }}" colspan="5" class="text-center text-muted">{{ _('Keine Einträge.') }}</td>
-          </tr>
-        {% endfor %}
-        </tbody>
-      </table>
+<div class="row g-3 mb-3">
+  <div class="col-12">
+    <div class="card shadow-sm mb-2">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span>{{ _('Audit-Log') }}</span>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-sm table-striped align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>{{ _('Zeitpunkt') }}</th>
+                <th>{{ _('User') }}</th>
+                <th>{{ _('Aktion') }}</th>
+                <th>{{ _('Entry-ID') }}</th>
+                <th>{{ _('Details') }}</th>
+              </tr>
+            </thead>
+            <tbody>
+            {% for a in logs %}
+              <tr>
+                <td data-label="{{ _('Zeitpunkt') }}" class="text-nowrap">{{ a.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+                <td data-label="{{ _('User') }}">{{ a.username or ('#'+(a.user_id|string)) }}</td>
+                <td data-label="{{ _('Aktion') }}">{{ a.action }}</td>
+                <td data-label="{{ _('Entry-ID') }}">{{ a.entry_id or '—' }}</td>
+                <td data-label="{{ _('Details') }}">{{ a.detail or '—' }}</td>
+              </tr>
+            {% else %}
+              <tr>
+                <td data-label="{{ _('Keine Einträge.') }}" colspan="5" class="text-center text-muted">{{ _('Keine Einträge.') }}</td>
+              </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </div>
 </div>

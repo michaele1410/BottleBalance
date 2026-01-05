@@ -193,6 +193,7 @@ def users_reset_pw(uid: int):
     flash(_('Passwort gesetzt.'))
     return redirect(url_for('user_routes.users_list'))
 
+
 @user_routes.post('/admin/users/<int:uid>/resetlink')
 @login_required
 @require_perms('users:manage')
@@ -200,20 +201,23 @@ def users_reset_pw(uid: int):
 def users_reset_link(uid: int):
     token = secrets.token_urlsafe(32)
     expires = datetime.utcnow() + timedelta(minutes=30)
-    base = build_base_url()
+    base = build_base_url()  # endet mit /
     reset_url = f"{base}reset/{token}"
+
     with engine.begin() as conn:
         conn.execute(text("INSERT INTO password_reset_tokens (user_id, token, expires_at) VALUES (:u,:t,:e)"),
                      {'u': uid, 't': token, 'e': expires})
         email = conn.execute(text("SELECT email FROM users WHERE id=:id"), {'id': uid}).scalar_one()
+
     body = _(
         "Dein Passwort-Reset-Token lautet:\n\n"
         "%(token)s\n\n"
         "Dieser Token ist 30 Minuten gültig.\n"
-        "Bitte gib ihn auf der Reset-Seite ein: %(url)s",
+        "Bitte nutze den folgenden Link: %(url)s",
         token=token,
-        url=f"{APP_BASE_URL}/reset"
+        url=reset_url
     )
+
     if email and SMTP_HOST:
         sent = send_mail(email, _("Passwort zurücksetzen"), body)
         if sent:
@@ -224,6 +228,7 @@ def users_reset_link(uid: int):
     else:
         flash(_('Reset-Link: %(url)s', url=escape(reset_url)))
         logger.warning("Keine E-Mail-Adresse oder kein SMTP_HOST – Token im UI angezeigt (user_id=%s).", uid)
+
     return redirect(url_for('user_routes.users_list'))
 
 @user_routes.post('/admin/users/<int:uid>/toggle')

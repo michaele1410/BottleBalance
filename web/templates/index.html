@@ -302,25 +302,27 @@
               </tr>
             </thead>
             <tbody>
-              {% for e in entries %}
-              <!-- Defaul values für Eintries -->
-              {% set has_vg = (e.vollgut or 0)|int != 0 %}
-              {% set has_lg = (e.leergut or 0)|int != 0 %}
-              {% set has_in = (e.einnahme or 0)|float != 0.0 %}
-              {% set has_au = (e.ausgabe or 0)|float != 0.0 %}
+            {% for e in entries %}
+            <tr>
+              <td class="text-end">{{ format_date_de(e.datum) }}</td>
 
-              <tr>
-                <!-- immer anzeigen -->
-                <td class="text-end" data-label="{{ _('Datum') }}"     data-default="false">{{ format_date_de(e.datum) }}</td>
-                <!-- nur anzeigen, wenn ≠ default value -->
-                <td class="text-end" data-label="{{ _('Vollgut') }}"   data-default="{{ 'false' if has_vg else 'true' }}">{{ e.vollgut }} {{ _('Fl.') }}</td>
-                <td class="text-end" data-label="{{ _('Leergut') }}"   data-default="{{ 'false' if has_lg else 'true' }}">{{ e.leergut }} {{ _('Fl.') }}</td>
-                <td class="text-end" data-label="{{ _('Inventar') }}"  data-default="false">{{ e.inventar }} {{ _('Fl.') }}</td>
-                <td class="text-end" data-label="{{ _('Einnahme') }}"  data-default="{{ 'false' if has_in else 'true' }}">{{ format_eur_de(e.einnahme) }}</td>
-                <td class="text-end" data-label="{{ _('Ausgabe') }}"   data-default="{{ 'false' if has_au else 'true' }}">{{ format_eur_de(e.ausgabe) }}</td>
-                <td class="text-end" data-label="{{ _('Kassenbestand') }}" data-default="false">{{ format_eur_de(e.kassenbestand) }}</td>
-                <!-- immer anzeigen -->
-                <td class="text-start" data-label="{{ _('Bemerkung') }}">{{ e.bemerkung }}</td>
+              <!-- Nur anzeigen, wenn Wert != 0 -->
+              <td class="text-end" data-label="{{ _('Vollgut') }}">{{ e.vollgut if e.vollgut != 0 else '' }}</td>
+              <td class="text-end" data-label="{{ _('Leergut') }}">{{ e.leergut if e.leergut != 0 else '' }}</td>
+
+              <!-- Inventar: immer anzeigen oder optional ausblenden -->
+              {% set changed = (e.vollgut != 0 or e.leergut != 0 or e.einnahme != 0 or e.ausgabe != 0) %}
+              <td class="text-end" data-label="{{ _('Inventar') }}">{{ e.inventar if changed else '' }}</td>
+
+              <!-- Einnahme/Ausgabe: nur anzeigen, wenn != 0 -->
+              <td class="text-end" data-label="{{ _('Einnahme') }}">{{ format_eur_de(e.einnahme) if e.einnahme != 0 else '' }}</td>
+              <td class="text-end" data-label="{{ _('Ausgabe') }}">{{ format_eur_de(e.ausgabe) if e.ausgabe != 0 else '' }}</td>
+
+              <!-- Kassenbestand: immer anzeigen oder optional ausblenden -->
+              <td class="text-end" data-label="{{ _('Kassenbestand') }}">{{ format_eur_de(e.kassenbestand) if changed else '' }}</td>
+
+              <!-- Bemerkung: immer anzeigen -->
+              <td class="text-start" data-label="{{ _('Bemerkung') }}">{{ e.bemerkung }}</td>
                 <td class="text-end" data-label="{{ _('Aktionen') }}">
                   {% set role = current_user().get('role') %}
                   {% if role in ['Editor', 'Manager', 'Admin'] %}
@@ -688,7 +690,7 @@
       attributes: true,
       attributeFilter: ['data-bs-theme']
     });
-
+    }
 
     // Haptik
     function hapticFeedback() { if (navigator.vibrate) navigator.vibrate(10); }

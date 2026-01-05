@@ -1560,60 +1560,89 @@ def export_pdf():
         story.append(RLImage(logo_path, width=40*mm, height=12*mm))
         story.append(Spacer(1, 6))
 
+
+    # --- Titel (echtes Markup, keine HTML-Entities) ---
     story.append(Paragraph(f"<b>{_('BottleBalanceTitle')}{_(' - Export')}</b>", styles['Title']))
     story.append(Spacer(1, 6))
 
-    # Filterzusammenfassung
-    filters = []
-    if q:
-        filters.append(f"{_('Suche')}: {q}")
-    if date_from or date_to:
-        df_disp = date_from.strftime('%d.%m.%Y') if date_from else '—'
-        dt_disp = date_to.strftime('%d.%m.%Y') if date_to else '—'
-        filters.append(f"{_('Zeitraum')}: {df_disp} – {dt_disp}")
-    if year_val is not None:
-        filters.append(f"{_('Jahr')}: {year_val}")
-    if attachments_filter == 'only':
-        filters.append(f"{_('Anhänge')}: {_('Nur mit Anhang')}")
-    elif attachments_filter == 'none':
-        filters.append(f"{_('Anhänge')}: {_('Ohne Anhang')}")
-    if filters:
-        story.append(Paragraph(", ".join(filters), styles['Normal']))
-        story.append(Spacer(1, 6))
+    # ---- HILFSFORMATIERER: nur geänderte Zellen anzeigen ----
+    def fmt_fl(n: int | None) -> str:
+        """Flaschen-Anzahl; leer wenn 0/None, sonst 'N Fl.'"""
+        n = int(n or 0)
+        return '' if n == 0 else f"{n} Fl."
 
-    # Tabelle
+    def fmt_money(d: Decimal | None) -> str:
+        """Währung; leer wenn 0/None, sonst formatiert."""
+        d = d if d is not None else Decimal('0')
+        return '' if d == 0 else format_eur_de(d)
+
+    # ---- Optionales Verhalten: Inventar/Kassenbestand ausblenden,
+    #      wenn die Zeile keine Änderungen aufweist (Vollgut, Leergut, Einnahme, Ausgabe alle 0)
+    HIDE_CUMULATIVE_WHEN_UNCHANGED = True
+
+    # ---- Tabelle aufbauen ----
     data = [[
         _('Datum'), _('Vollgut'), _('Leergut'), _('Inventar'),
         _('Einnahme'), _('Ausgabe'), _('Kassenbestand'), _('Bemerkung')
     ]]
 
     for e in entries:
+        # „geändert“-Kriterium
+        changed = any([
+            int(e['vollgut'] or 0) != 0,
+            int(e['leergut'] or 0) != 0,
+            Decimal(e['einnahme'] or 0) != 0,
+            Decimal(e['ausgabe'] or 0) != 0
+        ])
+
+        # Zellenwerte (mit optionalem Ausblenden)
+        inv_cell = '' if (HIDE_CUMULATIVE_WHEN_UNCHANGED and not changed) else str(int(e['inventar'] or 0))
+        kas_cell = '' if (HIDE_CUMULATIVE_WHEN_UNCHANGED and not changed) else format_eur_de(e['kassenbestand'])
+
         data.append([
+            # Datum immer anzeigen
             format_date_de(e['datum']),
-            f"{e['vollgut']} Fl.",
-            f"{e['leergut']} Fl.",
-            f"{e['inventar']} Fl.",
-            format_eur_de(e['einnahme']),
-            format_eur_de(e['ausgabe']),
-            format_eur_de(e['kassenbestand']),
+
+            # nur geänderte Felder (0 -> leer)
+            fmt_fl(e['vollgut']),
+            fmt_fl(e['leergut']),
+
+            # Inventar: optional leeren, wenn Zeile unverändert
+            inv_cell,
+
+            fmt_money(e['einnahme']),
+            fmt_money(e['ausgabe']),
+
+            # Kassenbestand: optional leeren, wenn Zeile unverändert
+            kas_cell,
+
+            # Bemerkung: leer wenn None/''; linksbündig
             Paragraph(e['bemerkung'] or '', styles['Normal'])
         ])
 
-    col_widths = [23*mm, 16*mm, 16*mm, 16*mm, 28*mm, 28*mm, 29*mm, 40*mm]
-    table = Table(data, colWidths=col_widths, repeatRows=1)
+    # Dynamische Spaltenbreiten (passen sicher in den Satzspiegel)
+    table_width = doc.width
+    col_widths = [table_width * w for w in [
+        0.12,  # Datum
+        0.10,  # Vollgut
+        0.10,  # Leergut
+        0.12,  # Inventar
+        0.13,  # Einnahme
+        0.13,  # Ausgabe
+        0.13,  # Kassenbestand
+        0.17,  # Bemerkung
+    ]]
 
+    table = Table(data, colWidths=col_widths, repeatRows=1)
     table.setStyle(TableStyle([
         # Kopfzeile zentrieren
         ('ALIGN', (0,0), (-1,0), 'CENTER'),
 
-        # Datenzeilen:
-        # Spalten 0 bis 6 (Datum, Vollgut, Leergut, Inventar, Einnahme, Ausgabe, Kassenbestand) → rechtsbündig
+        # Datenzeilen: alles rechtsbündig, außer Bemerkung links
         ('ALIGN', (0,1), (6,-1), 'RIGHT'),
-
-        # Bemerkung (Spalte 7) → linksbündig
         ('ALIGN', (7,1), (7,-1), 'LEFT'),
 
-        # Hintergrund und Schrift für Kopfzeile
+        # Kopfzeilen-Styling
         ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#f1f3f5')),
         ('TEXTCOLOR', (0,0), (-1,0), colors.HexColor('#212529')),
         ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),

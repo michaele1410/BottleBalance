@@ -1,182 +1,238 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="container-fluid px-2 px-md-3">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h2 class="mb-0">{{ _('Zahlungsantrag') }} #{{ antrag.id }}</h2>
-    <div class="d-flex gap-2">
-      <a href="{{ url_for('payment_routes.export_einzelantrag_pdf', antrag_id=antrag.id) }}"
-        class="btn btn-outline-dark">
-        <i class="bi bi-filetype-pdf me-1"></i> {{ _('Als PDF exportieren') }}
-      </a>
-      <a href="{{ url_for('payment_routes.zahlungsfreigabe') }}" class="btn btn-secondary">{{ _('Zurück') }}</a>
-    </div>
-  </div>
-
-  <!-- ANTRAG -->
-  <dl class="row">
-    <dt class="col-sm-3">{{ _('Antragsteller/in') }}</dt>
-    <dd class="col-sm-9">{{ antrag.antragsteller }}</dd>
-
-    <dt class="col-sm-3">{{ _('Datum') }}</dt>
-    <dd class="col-sm-9">{{ antrag.datum.strftime('%d.%m.%Y') if antrag.datum else '' }}</dd>
-
-    {% if antrag.status not in ['freigegeben', 'abgeschlossen', 'abgelehnt', 'zurueckgezogen'] and approvals_done == 0 %}
-    <form method="post" action="{{ url_for('payment_routes.edit_antrag', antrag_id=antrag.id) }}">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-      <div class="mb-2">
-        <label>{{ _('Paragraph') }}:</label>
-        <input type="text" name="paragraph" value="{{ antrag.paragraph or '' }}" class="form-control">
-      </div>
-      <div class="mb-2">
-        <label>{{ _('Verwendungszweck') }}:</label>
-        <input type="text" name="verwendungszweck" value="{{ antrag.verwendungszweck or '' }}" class="form-control">
-      </div>
-      <div class="mb-2">
-        <label>{{ _('Betrag') }}:</label>
-        <input type="text" name="betrag" value="{{ antrag.betrag or '' }}" class="form-control">
-      </div>
-      <div class="mb-2">
-        <label>{{ _('Lieferant') }}:</label>
-        <input type="text" name="lieferant" value="{{ antrag.lieferant or '' }}" class="form-control">
-      </div>
-      <div class="mb-2">
-        <label>{{ _('Begründung') }}:</label>
-        <textarea name="begruendung" class="form-control">{{ antrag.begruendung or '' }}</textarea>
-      </div>
-
-      <div class="mb-2">
-        <label>{{ _('Datum') }}:</label>
-        <input type="date" name="datum" value="{{ antrag.datum|strftime('%Y-%m-%d') if antrag.datum else '' }}"
-          class="form-control">
-      </div>
-      <button type="submit" class="btn btn-primary">{{ _('Speichern') }}</button>
-    </form>
-    {% else %}
-      <dt class="col-sm-3">{{ _('Paragraph') }}</dt>
-      <dd class="col-sm-9">{{ antrag.paragraph }}</dd>
-
-      <dt class="col-sm-3">{{ _('Verwendungszweck') }}</dt>
-      <dd class="col-sm-9">{{ antrag.verwendungszweck }}</dd>
-
-      <dt class="col-sm-3">{{ _('Betrag') }}</dt>
-      <dd class="col-sm-9">{{ antrag.betrag }} {{ _('waehrung') }}</dd>
-
-      <dt class="col-sm-3">{{ _('Lieferant') }}</dt>
-      <dd class="col-sm-9">{{ antrag.lieferant }}</dd>
-
-      <dt class="col-sm-3">{{ _('Begründung') }}</dt>
-      <dd class="col-sm-9">{{ antrag.begruendung }}</dd>
-
-      <dt class="col-sm-3">{{ _('Status') }}</dt>
-      <dd class="col-sm-9">
-        <span class="badge badge-status-{{ antrag.status|replace(' ', '_') }}">{{ antrag.status }}</span>
-      </dd>
-    {% endif %}
-  </dl>
-
-  <!-- PROGRESS BAR-->
-  <h5 class="mt-5">{{ _('Freigabe-Fortschritt') }}</h5>
-  <div class="mb-2" style="max-width: 520px;">
-    <div class="progress" style="height: 8px;">
-      <div class="progress-bar bg-success" role="progressbar" style="width: {{ approval_percent }}%;"
-        aria-valuenow="{{ approvals_done }}" aria-valuemin="0" aria-valuemax="{{ approvals_total }}"></div>
-    </div>
-    <small class="text-muted">{{ approvals_done }}/{{ approvals_total }} {{ _('Freigaben') }}</small>
-  </div>
-
-  <!-- APPROVERS-->
-  <h5 class="mt-5">{{ _('Geschäftsführende') }}</h5>
-  <div class="row row-cols-1 row-cols-md-2 g-2 mb-3" style="max-width: 720px;">
-    {% for ap in approvers %}
-    <div class="col">
-      <div class="d-flex align-items-center gap-2 p-2 border rounded">
-        {% if ap.approved %}
-        <i class="bi bi-check-circle-fill text-success"></i>
-        <span>{{ ap.username }}</span>
-        <span class="badge bg-success-subtle text-success border border-success-subtle">{{ _('freigegeben') }}</span>
-        {% else %}
-        <i class="bi bi-clock text-muted"></i>
-        <span>{{ ap.username }}</span>
-        <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">{{ _('ausstehend') }}</span>
-        {% endif %}
-      </div>
-    </div>
-    {% endfor %}
-  </div>
-
-  <!-- ATTACHMENTS-->
-  <h5 class="mt-5">{{ _('Anhänge') }}</h5>
-
-  <!-- Upload-Form -->
-  {% if antrag.status not in ['abgeschlossen', 'abgelehnt', 'zurueckgezogen'] %}
-  <form action="{{ url_for('payment_routes.upload_antrag_attachment', antrag_id=antrag.id) }}" method="post"
-    enctype="multipart/form-data" class="mb-3">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <div class="input-group">
-      <input class="form-control form-control-sm" type="file" name="files" multiple
-        accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.heic,.heif,.svg,.txt,.csv,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.xml,.json">
-      <button class="btn btn-outline-primary" type="submit">
-        <i class="bi-upload me-1"></i> {{ _('Hochladen') }}
-      </button>
-    </div>
-    <div class="form-text">
-      {{ _('Zulässige Formate:') }} PDF, Bilder, Office, Text. {{ _('Mehrere Dateien möglich.') }}
-    </div>
-  </form>
-  {% endif %}
-
-  <!-- Liste der Anhänge -->
-  {% if attachments and attachments|length > 0 %}
-  <ul class="list-group">
-    {% for att in attachments %}
-    <li class="list-group-item d-flex justify-content-between align-items-center">
-      <div>
-        <a href="{{ url_for('payment_routes.download_antrag_attachment', att_id=att.id) }}" target="_blank">
-          {{ att.original_name }}
+<div class="card shadow-sm">
+  <div class="card-body">
+  <!--div class="container-fluid px-2 px-md-3"-->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h2 class="mb-0">{{ _('Zahlungsantrag') }} #{{ antrag.id }}</h2>
+      <div class="d-flex gap-2">
+        <a href="{{ url_for('payment_routes.export_einzelantrag_pdf', antrag_id=antrag.id) }}"
+          class="btn btn-outline-dark">
+          <i class="bi bi-filetype-pdf me-1"></i> {{ _('Als PDF exportieren') }}
         </a>
-        <small class="text-muted ms-2">
-          {{ (att.size_bytes or 0) // 1024 }} KB
-          {% if att.created_at %} · {{ att.created_at.strftime('%d.%m.%Y %H:%M') }}{% endif %}
-        </small>
-        <a href="{{ url_for('payment_routes.view_antrag_attachment', att_id=att.id) }}" target="_blank"
-          class="btn btn-sm btn-outline-primary">{{ _('Ansehen') }}</a>
+        <a href="{{ url_for('payment_routes.zahlungsfreigabe') }}" class="btn btn-secondary">{{ _('Zurück') }}</a>
       </div>
-      {% if antrag.status not in ['abgeschlossen', 'abgelehnt', 'zurueckgezogen'] %}
-      <form method="post" action="{{ url_for('payment_routes.delete_antrag_attachment', att_id=att.id) }}"
-        onsubmit="return confirm('{{ _('Anhang wirklich löschen?') }}');">
+    </div>
+
+    <!-- ANTRAG -->
+    <dl class="row">
+      <dt class="col-sm-3">{{ _('Antragsteller/in') }}</dt>
+      <dd class="col-sm-9">{{ antrag.antragsteller }}</dd>
+
+      <dt class="col-sm-3">{{ _('Datum') }}</dt>
+      <dd class="col-sm-9">{{ antrag.datum.strftime('%d.%m.%Y') if antrag.datum else '' }}</dd>
+
+      {% if antrag.status not in ['freigegeben', 'abgeschlossen', 'abgelehnt', 'zurueckgezogen'] and approvals_done == 0 %}
+      <form method="post" action="{{ url_for('payment_routes.edit_antrag', antrag_id=antrag.id) }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <!--div class="mb-2">
+          <label>{{ _('Paragraph') }}:</label>
+          <input type="text" name="paragraph" value="{{ antrag.paragraph or '' }}" class="form-control">
+        </div-->
+        <div class="input-group mb-3">
+          <span class="input-group-text">{{ _('Paragraph') }}</span>
+          <div class="form-floating flex-grow-1">
+            <input type="text" name="paragraph"  inputmode="text" class="form-control"
+              placeholder="{{ _('Paragraph') }}" value="{{ antrag.paragraph or '' }}">
+              <label for="paragraph">{{ _('Paragraph') }}</label>
+          </div>
+        </div>
+        
+        <!--div class="mb-2">
+          <label>{{ _('Verwendungszweck') }}:</label>
+          <input type="text" name="verwendungszweck" value="{{ antrag.verwendungszweck or '' }}" class="form-control">
+        </div-->
+        <div class="input-group mb-3">
+          <span class="input-group-text">{{ _('Verwendungszweck') }}</span>
+          <div class="form-floating flex-grow-1">
+            <input type="text" name="verwendungszweck"  inputmode="text" class="form-control"
+              placeholder="{{ _('Verwendungszweck') }}" value="{{ antrag.verwendungszweck or '' }}">
+              <label for="verwendungszweck">{{ _('Verwendungszweck') }}</label>
+          </div>
+        </div>
 
-        <button type="submit" class="btn btn-sm btn-outline-danger">{{ _('Löschen') }}</button>
+        <!--div class="mb-2">
+          <label>{{ _('Betrag') }}:</label>
+          <input type="text" name="betrag" value="{{ antrag.betrag or '' }}" class="form-control">
+        </div-->
+        <div class="input-group mb-3">
+          <span class="input-group-text">{{ _('Betrag') }}</span>
+          <div class="form-floating flex-grow-1">
+            <input type="text" name="betrag"  inputmode="number" inputmode="decimal" class="form-control"
+              placeholder="{{ _('Betrag') }}" value="{{ antrag.betrag or '' }}">
+              <label for="betrag">{{ _('Betrag') }}</label>
+          </div>
+        </div>
+
+        <!--div class="mb-2">
+          <label>{{ _('Lieferant') }}:</label>
+          <input type="text" name="lieferant" value="{{ antrag.lieferant or '' }}" class="form-control">
+        </div-->
+        <div class="input-group mb-3">
+          <span class="input-group-text">{{ _('Lieferant') }}</span>
+          <div class="form-floating flex-grow-1">
+            <input type="text" name="lieferant"  inputmode="text" class="form-control"
+              placeholder="{{ _('Lieferant') }}" value="{{ antrag.lieferant or '' }}">
+              <label for="lieferant">{{ _('Lieferant') }}</label>
+          </div>
+        </div>
+
+        <!--div class="mb-2">
+          <label>{{ _('Begründung') }}:</label>
+          <textarea name="begruendung" class="form-control">{{ antrag.begruendung or '' }}</textarea>
+        </div-->
+         <div class="input-group mb-3">
+          <span class="input-group-text">{{ _('Begründung') }}</span>
+          <div class="form-floating flex-grow-1">
+            <input type="text" name="begruendung"  inputmode="text" class="form-control"
+              placeholder="{{ _('Begründung') }}" value="{{ antrag.begruendung or '' }}">
+              <label for="begruendung">{{ _('Begründung') }}</label>
+          </div>
+        </div>
+
+        <!--div class="mb-2">
+          <label>{{ _('Datum') }}:</label>
+          <input type="date" name="datum" value="{{ antrag.datum|strftime('%Y-%m-%d') if antrag.datum else '' }}"
+            class="form-control">
+        </div-->
+        <div class="input-group mb-3">
+          <span class="input-group-text">{{ _('Datum') }}</span>
+          <div class="form-floating flex-grow-1">
+            <input type="date" name="datum"  inputmode="decimal" class="form-control"
+              placeholder="Datum" id="datum" value="{{ antrag.datum|strftime('%Y-%m-%d') if antrag.datum else '' }}">
+              <label for="datum">{{ _('Datum') }}</label>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary">{{ _('Speichern') }}</button>
       </form>
-      {% endif %}
-    </li>
-    {% endfor %}
-  </ul>
-  {% else %}
-  <p class="text-muted">{{ _('Keine Anhänge vorhanden') }}.</p>
-  {% endif %}
+      {% else %}
+        <dt class="col-sm-3">{{ _('Paragraph') }}</dt>
+        <dd class="col-sm-9">{{ antrag.paragraph }}</dd>
 
-  <!-- AUDIT -->
-  <h5 class="mt-5">{{ _('Audit-Historie') }}</h5>
-  <table class="table table-sm table-striped align-middle">
-    <thead>
-      <tr>
-        <th>{{ _('Zeitpunkt') }}</th>
-        <th>{{ _('Aktion') }}</th>
-        <th>{{ _('Benutzer') }}</th>
-        <th>{{ _('Details') }}</th>
-      </tr>
-    </thead>
-    <tbody>   
-    {% for log in audit %}
+        <dt class="col-sm-3">{{ _('Verwendungszweck') }}</dt>
+        <dd class="col-sm-9">{{ antrag.verwendungszweck }}</dd>
+
+        <dt class="col-sm-3">{{ _('Betrag') }}</dt>
+        <dd class="col-sm-9">{{ antrag.betrag }} {{ _('waehrung') }}</dd>
+
+        <dt class="col-sm-3">{{ _('Lieferant') }}</dt>
+        <dd class="col-sm-9">{{ antrag.lieferant }}</dd>
+
+        <dt class="col-sm-3">{{ _('Begründung') }}</dt>
+        <dd class="col-sm-9">{{ antrag.begruendung }}</dd>
+
+        <dt class="col-sm-3">{{ _('Status') }}</dt>
+        <dd class="col-sm-9">
+          <span class="badge badge-status-{{ antrag.status|replace(' ', '_') }}">{{ antrag.status }}</span>
+        </dd>
+      {% endif %}
+    </dl>
+
+    <!-- PROGRESS BAR-->
+    <h5 class="mt-5">{{ _('Freigabe-Fortschritt') }}</h5>
+    <div class="mb-2" style="max-width: 520px;">
+      <div class="progress" style="height: 8px;">
+        <div class="progress-bar bg-success" role="progressbar" style="width: {{ approval_percent }}%;"
+          aria-valuenow="{{ approvals_done }}" aria-valuemin="0" aria-valuemax="{{ approvals_total }}"></div>
+      </div>
+      <small class="text-muted">{{ approvals_done }}/{{ approvals_total }} {{ _('Freigaben') }}</small>
+    </div>
+
+    <!-- APPROVERS-->
+    <h5 class="mt-5">{{ _('Geschäftsführende') }}</h5>
+    <div class="row row-cols-1 row-cols-md-2 g-2 mb-3" style="max-width: 720px;">
+      {% for ap in approvers %}
+      <div class="col">
+        <div class="d-flex align-items-center gap-2 p-2 border rounded">
+          {% if ap.approved %}
+          <i class="bi bi-check-circle-fill text-success"></i>
+          <span>{{ ap.username }}</span>
+          <span class="badge bg-success-subtle text-success border border-success-subtle">{{ _('freigegeben') }}</span>
+          {% else %}
+          <i class="bi bi-clock text-muted"></i>
+          <span>{{ ap.username }}</span>
+          <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">{{ _('ausstehend') }}</span>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- ATTACHMENTS-->
+    <h5 class="mt-5">{{ _('Anhänge') }}</h5>
+
+    <!-- Upload-Form -->
+    {% if antrag.status not in ['abgeschlossen', 'abgelehnt', 'zurueckgezogen'] %}
+    <form action="{{ url_for('payment_routes.upload_antrag_attachment', antrag_id=antrag.id) }}" method="post"
+      enctype="multipart/form-data" class="mb-3">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="input-group">
+        <input class="form-control form-control-sm" type="file" name="files" multiple
+          accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.heic,.heif,.svg,.txt,.csv,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.xml,.json">
+        <button class="btn btn-outline-primary" type="submit">
+          <i class="bi-upload me-1"></i> {{ _('Hochladen') }}
+        </button>
+      </div>
+      <div class="form-text">
+        {{ _('Zulässige Formate:') }} PDF, Bilder, Office, Text. {{ _('Mehrere Dateien möglich.') }}
+      </div>
+    </form>
+    {% endif %}
+
+    <!-- Liste der Anhänge -->
+    {% if attachments and attachments|length > 0 %}
+    <ul class="list-group">
+      {% for att in attachments %}
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        <div>
+          <a href="{{ url_for('payment_routes.download_antrag_attachment', att_id=att.id) }}" target="_blank">
+            {{ att.original_name }}
+          </a>
+          <small class="text-muted ms-2">
+            {{ (att.size_bytes or 0) // 1024 }} KB
+            {% if att.created_at %} · {{ att.created_at.strftime('%d.%m.%Y %H:%M') }}{% endif %}
+          </small>
+          <a href="{{ url_for('payment_routes.view_antrag_attachment', att_id=att.id) }}" target="_blank"
+            class="btn btn-sm btn-outline-primary">{{ _('Ansehen') }}</a>
+        </div>
+        {% if antrag.status not in ['abgeschlossen', 'abgelehnt', 'zurueckgezogen'] %}
+        <form method="post" action="{{ url_for('payment_routes.delete_antrag_attachment', att_id=att.id) }}"
+          onsubmit="return confirm('{{ _('Anhang wirklich löschen?') }}');">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+          <button type="submit" class="btn btn-sm btn-outline-danger">{{ _('Löschen') }}</button>
+        </form>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="text-muted">{{ _('Keine Anhänge vorhanden') }}.</p>
+    {% endif %}
+
+    <!-- AUDIT -->
+    <h5 class="mt-5">{{ _('Audit-Historie') }}</h5>
+    <table class="table table-sm table-striped align-middle">
+      <thead>
         <tr>
-          <td data-label="{{ _('Zeitpunkt') }}">{{ log.timestamp.strftime('%d.%m.%Y %H:%M:%S') if log.timestamp else '' }}</td>
-          <td data-label="{{ _('Aktion') }}">{{ log.action }}</td>
-          <td data-label="{{ _('Benutzer') }}">{{ log.username or 'Unbekannt' }}</td>
-          <td data-label="{{ _('Details') }}">{{ (log.detail or '')|replace('\n','<br>')|safe }}</td>
+          <th>{{ _('Zeitpunkt') }}</th>
+          <th>{{ _('Aktion') }}</th>
+          <th>{{ _('Benutzer') }}</th>
+          <th>{{ _('Details') }}</th>
         </tr>
-    {% endfor %}
-    </tbody>
-  </table>
+      </thead>
+      <tbody>   
+      {% for log in audit %}
+          <tr>
+            <td data-label="{{ _('Zeitpunkt') }}">{{ log.timestamp.strftime('%d.%m.%Y %H:%M:%S') if log.timestamp else '' }}</td>
+            <td data-label="{{ _('Aktion') }}">{{ log.action }}</td>
+            <td data-label="{{ _('Benutzer') }}">{{ log.username or 'Unbekannt' }}</td>
+            <td data-label="{{ _('Details') }}">{{ (log.detail or '')|replace('\n','<br>')|safe }}</td>
+          </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
 </div>
 {% endblock %}

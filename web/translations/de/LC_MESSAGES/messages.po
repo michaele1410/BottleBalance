@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2025-12-17 08:30+0100\n"
+"POT-Creation-Date: 2026-01-05 21:37+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: de\n"
@@ -23,12 +23,12 @@ msgstr ""
 msgid "Fehler beim Datenbank-Dump: %(error)s"
 msgstr ""
 
-#: app.py:207
+#: app.py:249
 #, python-format
 msgid "Neuer Zahlungsfreigabeantrag von %(requester)s"
 msgstr ""
 
-#: app.py:209
+#: app.py:251
 #, python-format
 msgid ""
 "Es wurde ein neuer Zahlungsfreigabeantrag erstellt.\n"
@@ -41,192 +41,230 @@ msgid ""
 "Bitte prüfen Sie den Antrag im System."
 msgstr ""
 
-#: app.py:598
+#: app.py:646
 msgid "Datei zu groß. Bitte kleinere Datei hochladen."
 msgstr ""
 
-#: app.py:693 user.py:73
+#: app.py:741 auth.py:245 user.py:73
 msgid "Passwort muss mindestens 8 Zeichen haben."
 msgstr ""
 
-#: app.py:696
+#: app.py:744 auth.py:248
 msgid "Passwörter stimmen nicht überein."
 msgstr ""
 
-#: app.py:709
+#: app.py:757
 msgid ""
 "Bitte aktiviere die Zwei-Faktor-Authentifizierung (2FA), um dein Konto "
 "zusätzlich zu schützen."
 msgstr ""
 
-#: app.py:717
+#: app.py:765
 msgid "Profil aktualisiert."
 msgstr ""
 
-#: app.py:733 app.py:758
+#: app.py:781 app.py:806
 msgid "Benutzer nicht gefunden."
 msgstr ""
 
-#: app.py:776
+#: app.py:824
 msgid "Kein 2FA-Setup aktiv."
 msgstr ""
 
-#: app.py:781
+#: app.py:829
 msgid "Ungültiger 2FA-Code."
 msgstr ""
 
-#: app.py:790
+#: app.py:838
 msgid "2FA aktiviert."
 msgstr ""
 
-#: app.py:809
+#: app.py:857
 msgid "Passwortprüfung fehlgeschlagen."
 msgstr ""
 
-#: app.py:823
+#: app.py:871
 msgid "2FA deaktiviert."
 msgstr ""
 
-#: app.py:833 app.py:856
+#: app.py:881 app.py:904
 msgid "Ungültige Theme-Auswahl."
 msgstr ""
 
-#: app.py:839
+#: app.py:887
 msgid "Theme-Einstellung gespeichert."
 msgstr ""
 
-#: app.py:852
+#: app.py:900
 msgid "Ungültige Sprache."
 msgstr ""
 
-#: app.py:874
+#: app.py:922
 msgid "Einstellungen gespeichert."
 msgstr ""
 
-#: app.py:1017
+#: app.py:1065
 msgid "Freigabeberechtigung geändert."
 msgstr ""
 
-#: app.py:1039
+#: app.py:1087
 msgid "CSV-Header entspricht nicht dem erwarteten Format."
 msgstr ""
 
-#: app.py:1212
+#: app.py:1260
 msgid "CSV-Preview ist deaktiviert."
 msgstr ""
 
-#: app.py:1223 app.py:1342
+#: app.py:1271 app.py:1390
 msgid "Vorschau abgelaufen oder nicht gefunden."
 msgstr ""
 
-#: app.py:1228 app.py:1356
+#: app.py:1276 app.py:1404
 msgid "CSV-Datei nicht gefunden."
 msgstr ""
 
-#: app.py:1237
+#: app.py:1285
 msgid "CSV konnte nicht gelesen werden."
 msgstr ""
 
-#: app.py:1284 bbalance.py:449
+#: app.py:1332 bbalance.py:451
 msgid "Bitte eine CSV-Datei auswählen."
 msgstr ""
 
-#: app.py:1348
+#: app.py:1396
 msgid "Vorschau abgelaufen oder bereits verwendet."
 msgstr ""
 
-#: app.py:1400
+#: app.py:1448
 #, python-format
 msgid "Import erfolgreich: %(rows)d Zeilen übernommen."
 msgstr ""
 
-#: app.py:1406 bbalance.py:511
+#: app.py:1454 bbalance.py:513
 #, python-format
 msgid "Import fehlgeschlagen: %(error)s"
 msgstr ""
 
-#: app.py:1543 modules/csv_utils.py:93 modules/utils.py:13
-#: templates/edit.html:45 templates/edit.html:56 templates/index.html:85
-#: templates/index.html:95 templates/payment_authorization.html:230
-#: templates/payment_authorization_detail.html:62
-msgid "waehrung"
-msgstr "€"
-
-#: app.py:1571 templates/edit.html:15 templates/edit.html:19
-#: templates/import_preview.html:71 templates/index.html:55
-#: templates/index.html:59 templates/index.html:243
-#: templates/payment_authorization.html:27
-#: templates/payment_authorization.html:220
-#: templates/payment_authorization_detail.html:20
-#: templates/payment_authorization_detail.html:48
+#: app.py:1624 templates/edit.html:15 templates/edit.html:19
+#: templates/import_preview.html:71 templates/import_preview.html:91
+#: templates/index.html:70 templates/index.html:74 templates/index.html:295
+#: templates/payment_authorization.html:29
+#: templates/payment_authorization.html:59
+#: templates/payment_authorization.html:238
+#: templates/payment_authorization.html:245
+#: templates/payment_authorization.html:248
+#: templates/payment_authorization_detail.html:36
+#: templates/payment_authorization_detail.html:41
+#: templates/payment_authorization_detail.html:45
+#: templates/payment_authorization_detail.html:133
+#: templates/payment_authorization_detail.html:138
+#: templates/payment_authorization_detail.html:142
 msgid "Datum"
 msgstr ""
 
-#: app.py:1571 templates/edit.html:29 templates/import_preview.html:72
-#: templates/index.html:69 templates/index.html:245
+#: app.py:1624 templates/edit.html:29 templates/import_preview.html:72
+#: templates/import_preview.html:92 templates/index.html:84
+#: templates/index.html:297 templates/index.html:313
 msgid "Vollgut"
 msgstr ""
 
-#: app.py:1571 templates/edit.html:39 templates/import_preview.html:73
-#: templates/index.html:79 templates/index.html:246
+#: app.py:1624 templates/edit.html:39 templates/import_preview.html:73
+#: templates/import_preview.html:93 templates/index.html:94
+#: templates/index.html:298 templates/index.html:314
 msgid "Leergut"
 msgstr ""
 
-#: app.py:1571 templates/edit.html:50 templates/import_preview.html:74
-#: templates/index.html:89 templates/index.html:248
+#: app.py:1624 templates/index.html:299 templates/index.html:318
+msgid "Inventar"
+msgstr ""
+
+#: app.py:1625 templates/edit.html:50 templates/import_preview.html:74
+#: templates/import_preview.html:94 templates/index.html:104
+#: templates/index.html:300 templates/index.html:321
 msgid "Einnahme"
 msgstr ""
 
-#: app.py:1571 templates/edit.html:61 templates/import_preview.html:75
-#: templates/index.html:99 templates/index.html:249
+#: app.py:1625 templates/edit.html:61 templates/import_preview.html:75
+#: templates/import_preview.html:95 templates/index.html:114
+#: templates/index.html:301 templates/index.html:322
 msgid "Ausgabe"
 msgstr ""
 
-#: app.py:1571 templates/edit.html:69 templates/edit.html:73
+#: app.py:1625 templates/index.html:302 templates/index.html:325
+msgid "Kassenbestand"
+msgstr ""
+
+#: app.py:1625 templates/edit.html:69 templates/edit.html:73
 #: templates/edit.html:87 templates/import_preview.html:76
-#: templates/index.html:105 templates/index.html:112 templates/index.html:251
+#: templates/import_preview.html:96 templates/index.html:120
+#: templates/index.html:127 templates/index.html:303 templates/index.html:328
 msgid "Bemerkung"
 msgstr ""
 
-#: app.py:1623
+#: app.py:1720
 msgid "Sprache geändert."
 msgstr ""
 
-#: app.py:1681 app.py:1762
+#: app.py:1778 app.py:1919
 msgid "SMTP configuration incomplete."
 msgstr ""
 
-#: app.py:1709
+#: app.py:1806
 msgid "SMTP test successful – test email sent."
 msgstr ""
 
-#: app.py:1711
+#: app.py:1808
 msgid "SMTP test failed: "
 msgstr ""
 
-#: app.py:1730
+#: app.py:1827
 msgid "Database dump successfully generated."
 msgstr ""
 
-#: app.py:1734
+#: app.py:1831
 #, python-format
 msgid "Error during database dump: %(error)s"
 msgstr ""
 
-#: app.py:1749
+#: app.py:1846
 msgid "Bemerkungsoptionen aktualisiert."
 msgstr ""
 
-#: app.py:1751
+#: app.py:1848
 #, python-format
 msgid "Fehler beim Speichern der Bemerkungsoptionen: %(error)s"
 msgstr ""
 
-#: app.py:1755
+#: app.py:1854
+msgid "Bitte eine Bilddatei auswählen."
+msgstr ""
+
+#: app.py:1868
+msgid "Ungültiges Dateiformat. Erlaubt sind: SVG, PNG, JPG, WEBP."
+msgstr ""
+
+#: app.py:1887
+msgid "Logo erfolgreich hochgeladen."
+msgstr ""
+
+#: app.py:1889
+#, python-format
+msgid "Upload fehlgeschlagen: %(error)s"
+msgstr ""
+
+#: app.py:1905
+msgid "Eigenes Logo entfernt. Fallback auf Standard-Logo aktiv."
+msgstr ""
+
+#: app.py:1907
+msgid "Kein eigenes Logo gefunden."
+msgstr ""
+
+#: app.py:1912
 msgid "Unbekannte Aktion."
 msgstr ""
 
-#: app.py:1764
+#: app.py:1921
 #, python-brace-format
 msgid "SMTP configuration detected for host {}:{}."
 msgstr ""
@@ -240,12 +278,12 @@ msgstr ""
 msgid "Ungültiger Dateityp: %(filename)s"
 msgstr ""
 
-#: attachments.py:78
+#: attachments.py:79
 #, python-format
 msgid "%(num)d Datei(en) hochgeladen."
 msgstr ""
 
-#: attachments.py:80 payment.py:563
+#: attachments.py:81 payment.py:563
 msgid "Keine Dateien hochgeladen."
 msgstr ""
 
@@ -253,87 +291,101 @@ msgstr ""
 msgid "Anhang gelöscht."
 msgstr ""
 
-#: auth.py:42
+#: auth.py:48
 msgid ""
 "Standard-Login: Benutzername <strong>admin</strong> und Passwort "
 "<strong>admin</strong> – bitte sofort ändern!"
 msgstr ""
 
-#: auth.py:57
+#: auth.py:63
 msgid "Login fehlgeschlagen."
 msgstr ""
 
-#: auth.py:64
+#: auth.py:71
 #, python-format
 msgid ""
 "Bitte das Passwort <a href=\"%(link)s\" class=\"alert-link\">im "
 "Profil</a> ändern."
 msgstr ""
 
-#: auth.py:115
+#: auth.py:122
 msgid "2FA nicht aktiv."
 msgstr ""
 
-#: auth.py:151
+#: auth.py:158
 msgid ""
 "Backup-Code verwendet. Es wurden automatisch neue Codes generiert. Bitte "
 "sicher aufbewahren."
 msgstr ""
 
-#: auth.py:160
+#: auth.py:167
 msgid "Ungültiger 2FA-Code oder Backup-Code."
 msgstr ""
 
-#: auth.py:172
+#: auth.py:179
 msgid "Neue Backup-Codes wurden generiert. Bitte sicher aufbewahren."
 msgstr ""
 
-#: auth.py:196
-msgid "Reset‑Token fehlt."
+#: auth.py:233 auth.py:259
+msgid "Reset-Link ist ungültig oder abgelaufen."
 msgstr ""
 
-#: auth.py:199
-msgid "Passwortanforderungen nicht erfüllt oder stimmen nicht überein."
+#: auth.py:276
+msgid "Passwort wurde zurückgesetzt."
 msgstr ""
 
-#: auth.py:207
-msgid "Link ungültig oder abgelaufen."
+#: auth.py:284
+msgid "Wenn die Angaben korrekt sind, wurde ein Reset-Link gesendet."
 msgstr ""
 
-#: auth.py:212
-msgid "Passwort aktualisiert. Bitte einloggen."
+#: auth.py:287 templates/login.html:48
+msgid "Bitte Benutzername angeben"
 msgstr ""
 
-#: bbalance.py:83
+#: auth.py:319 templates/reset.html:7 user.py:222
+msgid "Passwort zurücksetzen"
+msgstr ""
+
+#: auth.py:321
+#, python-format
+msgid ""
+"Bitte klicke auf den folgenden Link, um dein Passwort zurückzusetzen:\n"
+"\n"
+"%(url)s\n"
+"\n"
+"Der Link ist 1 Stunde gültig."
+msgstr ""
+
+#: bbalance.py:85
 #, python-format
 msgid "Eingabefehler: %(error)s"
 msgstr ""
 
-#: bbalance.py:105 templates/index.html:554 templates/index.html:586
-#: templates/index.html:611
+#: bbalance.py:107 templates/index.html:717 templates/index.html:749
+#: templates/index.html:774
 msgid ""
 "Bitte mindestens einen Wert bei Einnahme, Ausgabe, Vollgut oder Leergut "
 "angeben."
 msgstr ""
 
-#: bbalance.py:174
+#: bbalance.py:176
 #, python-brace-format
 msgid "Datensatz gespeichert, {count} Datei(en) übernommen."
 msgstr ""
 
-#: bbalance.py:176
+#: bbalance.py:178
 msgid "Datensatz wurde gespeichert."
 msgstr ""
 
-#: bbalance.py:212
+#: bbalance.py:214
 msgid "Eintrag nicht gefunden."
 msgstr ""
 
-#: bbalance.py:387
+#: bbalance.py:389
 msgid "Eintrag wurde gespeichert."
 msgstr ""
 
-#: bbalance.py:504
+#: bbalance.py:506
 #, python-format
 msgid "Import erfolgreich: %(count)d Zeile übernommen."
 msgid_plural "Import erfolgreich: %(count)d Zeilen übernommen."
@@ -424,40 +476,40 @@ msgstr ""
 msgid "Antrag wurde fortgesetzt und ist wieder offen."
 msgstr ""
 
-#: payment.py:463 payment.py:893
+#: payment.py:463 payment.py:866
 msgid "Antragsteller/in:"
 msgstr ""
 
-#: payment.py:464 payment.py:894
+#: payment.py:464 payment.py:867
 msgid "Datum:"
 msgstr ""
 
-#: payment.py:465 payment.py:895
+#: payment.py:465 payment.py:868
 msgid "Paragraph:"
 msgstr ""
 
-#: payment.py:466 payment.py:896
+#: payment.py:466 payment.py:869
 msgid "Verwendungszweck:"
 msgstr ""
 
-#: payment.py:467 payment.py:897
+#: payment.py:467 payment.py:870
 msgid "Betrag:"
 msgstr ""
 
-#: payment.py:468 payment.py:898
+#: payment.py:468 payment.py:871
 msgid "Lieferant:"
 msgstr ""
 
-#: payment.py:469 payment.py:899
+#: payment.py:469 payment.py:872
 msgid "Begründung:"
 msgstr ""
 
-#: payment.py:470 payment.py:900
+#: payment.py:470 payment.py:873
 msgid "Status:"
 msgstr ""
 
-#: payment.py:477 payment.py:908
-#: templates/payment_authorization_detail.html:160
+#: payment.py:477 payment.py:881
+#: templates/payment_authorization_detail.html:310
 msgid "Audit-Historie"
 msgstr ""
 
@@ -474,48 +526,52 @@ msgid_plural "%(count)d Dateien hochgeladen."
 msgstr[0] ""
 msgstr[1] ""
 
-#: payment.py:695
+#: payment.py:696
 msgid "Bearbeitung nicht mehr möglich."
 msgstr ""
 
-#: payment.py:715
+#: payment.py:727
+msgid "Ungültiger Betrag"
+msgstr ""
+
+#: payment.py:730
 #, python-format
 msgid "Ungültige Eingabe: %(error)s"
 msgstr ""
 
-#: payment.py:827
+#: payment.py:800
 msgid "Antrag gespeichert."
 msgstr ""
 
-#: payment.py:948
+#: payment.py:921
 msgid "Bitte ein gültiges Datum angeben."
 msgstr ""
 
-#: payment.py:952
+#: payment.py:925
 msgid "Bitte einen gültigen Betrag angeben."
 msgstr ""
 
-#: payment.py:958
+#: payment.py:931
 msgid "Ungültiges Datumsformat. Bitte im Format YYYY-MM-DD eingeben."
 msgstr ""
 
-#: payment.py:964
+#: payment.py:937
 msgid "Ungültiger Betrag. Bitte eine Zahl eingeben."
 msgstr ""
 
-#: payment.py:1011
+#: payment.py:984
 msgid "Zahlungsantrag erfolgreich erstellt."
 msgstr ""
 
-#: payment.py:1030
+#: payment.py:1003
 msgid "Abgeschlossene Anträge können nicht mehr geändert werden."
 msgstr ""
 
-#: payment.py:1040
+#: payment.py:1013
 msgid "Keine Freigabe zum Zurückziehen gefunden."
 msgstr ""
 
-#: payment.py:1062
+#: payment.py:1035
 msgid "Deine Freigabe wurde zurückgezogen."
 msgstr ""
 
@@ -523,7 +579,7 @@ msgstr ""
 msgid "Benutzername darf nicht leer sein."
 msgstr ""
 
-#: user.py:70 user.py:102 user.py:251
+#: user.py:70 user.py:102 user.py:256
 msgid "Ungültige Rolle."
 msgstr ""
 
@@ -556,7 +612,7 @@ msgstr ""
 msgid "Passwort gesetzt."
 msgstr ""
 
-#: user.py:210
+#: user.py:213
 #, python-format
 msgid ""
 "Dein Passwort-Reset-Token lautet:\n"
@@ -564,27 +620,23 @@ msgid ""
 "%(token)s\n"
 "\n"
 "Dieser Token ist 30 Minuten gültig.\n"
-"Bitte gib ihn auf der Reset-Seite ein: %(url)s"
+"Bitte nutze den folgenden Link: %(url)s"
 msgstr ""
 
-#: templates/reset.html:7 user.py:218
-msgid "Passwort zurücksetzen"
-msgstr ""
-
-#: user.py:220
+#: user.py:224
 msgid "Reset-Link per E-Mail versendet."
 msgstr ""
 
-#: user.py:222 user.py:225
+#: user.py:226 user.py:229
 #, python-format
 msgid "Reset-Link: %(url)s"
 msgstr ""
 
-#: user.py:236
+#: user.py:241
 msgid "Du kannst dich nicht selbst deaktivieren."
 msgstr ""
 
-#: modules/core_utils.py:101
+#: modules/core_utils.py:102
 msgid "Datei zu groß. Maximal erlaubt: 10 MB."
 msgstr ""
 
@@ -595,6 +647,13 @@ msgstr ""
 #: modules/csv_utils.py:66
 msgid "Ungültiges Datum (erwartet TT.MM.JJJJ): "
 msgstr ""
+
+#: modules/csv_utils.py:93 modules/utils.py:13 templates/edit.html:45
+#: templates/edit.html:56 templates/index.html:100 templates/index.html:110
+#: templates/index.html:563 templates/payment_authorization.html:257
+#: templates/payment_authorization.html:273
+msgid "waehrung"
+msgstr "€"
 
 #: modules/csv_utils.py:183
 msgid "Leere CSV oder fehlender Header."
@@ -639,7 +698,7 @@ msgid ""
 "BottleBalance"
 msgstr ""
 
-#: templates/2fa.html:8 templates/profile.html:35
+#: templates/2fa.html:8
 msgid "2-Faktor-Authentifizierung"
 msgstr ""
 
@@ -651,7 +710,7 @@ msgstr ""
 msgid "Bestätigen"
 msgstr ""
 
-#: templates/2fa_enroll.html:8 templates/profile.html:52
+#: templates/2fa_enroll.html:8 templates/profile.html:91
 msgid "2FA einrichten"
 msgstr ""
 
@@ -670,216 +729,270 @@ msgstr ""
 msgid "6-stelliger Code"
 msgstr ""
 
-#: templates/admin_tools.html:5 templates/base.html:82
+#: templates/admin_tools.html:6 templates/base.html:84
 msgid "Admin-Werkzeuge"
 msgstr ""
 
-#: templates/admin_tools.html:17 templates/base.html:167
-#: templates/index.html:318 templates/index.html:353 templates/index.html:359
-#: templates/index.html:371 templates/index.html:390
+#: templates/admin_tools.html:18 templates/base.html:169
+#: templates/index.html:387 templates/index.html:422 templates/index.html:428
+#: templates/index.html:440 templates/index.html:459 templates/login.html:41
+#: templates/users.html:24
 msgid "Schließen"
 msgstr ""
 
-#: templates/admin_tools.html:29
+#: templates/admin_tools.html:30
 msgid "Bemerkungsoptionen verwalten"
 msgstr ""
 
-#: templates/admin_tools.html:30
+#: templates/admin_tools.html:31
 msgid "Eine Option pro Zeile"
 msgstr ""
 
-#: templates/admin_tools.html:35
+#: templates/admin_tools.html:36
 msgid "Aktuelle Optionen"
 msgstr ""
 
-#: templates/admin_tools.html:40
+#: templates/admin_tools.html:41
 msgid "Keine Optionen vorhanden"
 msgstr ""
 
-#: templates/admin_tools.html:48
+#: templates/admin_tools.html:49
 msgid "Optionen ersetzen"
 msgstr ""
 
-#: templates/admin_tools.html:50
+#: templates/admin_tools.html:51
 msgid "Eine Option pro Zeile ..."
 msgstr ""
 
-#: templates/admin_tools.html:53 templates/edit.html:93
-#: templates/edit_user.html:48 templates/payment_authorization_detail.html:52
-#: templates/profile.html:27 templates/profile.html:106 templates/reset.html:24
-#: templates/users.html:77
+#: templates/admin_tools.html:54 templates/edit.html:93
+#: templates/edit_user.html:76 templates/payment_authorization_detail.html:15
+#: templates/profile.html:48 templates/profile.html:152 templates/reset.html:48
+#: templates/users.html:135
 msgid "Speichern"
 msgstr ""
 
-#: templates/admin_tools.html:57
+#: templates/admin_tools.html:58
 msgid "Leeren"
 msgstr ""
 
-#: templates/admin_tools.html:71
+#: templates/admin_tools.html:72
 msgid "SMTP-Konfiguration prüfen"
 msgstr ""
 
-#: templates/admin_tools.html:83
+#: templates/admin_tools.html:84
 msgid "Unbekannter SMTP-Status"
 msgstr ""
 
-#: templates/admin_tools.html:90
+#: templates/admin_tools.html:91
 msgid "Test-Mail senden"
 msgstr ""
 
-#: templates/admin_tools.html:94
+#: templates/admin_tools.html:95
 msgid "Die Test-Mail wird an die konfigurierte SMTP-Benutzeradresse gesendet."
 msgstr ""
 
-#: templates/admin_tools.html:103
+#: templates/admin_tools.html:104
 msgid "PostgreSQL-Datenbankexport"
 msgstr ""
 
-#: templates/admin_tools.html:107
+#: templates/admin_tools.html:108
 msgid ""
 "Erzeugt einen SQL-Dump der aktuellen Datenbank und bietet ihn zum "
 "Download an."
 msgstr ""
 
-#: templates/admin_tools.html:113
+#: templates/admin_tools.html:114
 msgid "Dump jetzt erzeugen?"
 msgstr ""
 
-#: templates/admin_tools.html:114
+#: templates/admin_tools.html:115
 msgid "Dump erzeugen & herunterladen"
 msgstr ""
 
-#: templates/audit.html:5
-msgid "Audit-Log"
+#: templates/admin_tools.html:126
+msgid "Branding: Eigenes Logo"
 msgstr ""
 
-#: templates/audit.html:11 templates/index.html:155
+#: templates/admin_tools.html:127
+msgid "SVG, PNG, JPG, WEBP – empfohlen: SVG oder PNG"
+msgstr ""
+
+#: templates/admin_tools.html:132
+msgid "Aktuelles Logo (Vorschau)"
+msgstr ""
+
+#: templates/admin_tools.html:137
+msgid "Wenn kein eigenes Logo hinterlegt ist, wird das Standard-Logo verwendet."
+msgstr ""
+
+#: templates/admin_tools.html:148
+msgid "Logo-Datei auswählen"
+msgstr ""
+
+#: templates/admin_tools.html:154 templates/edit.html:107
+#: templates/index.html:448 templates/payment_authorization_detail.html:269
+msgid "Hochladen"
+msgstr ""
+
+#: templates/admin_tools.html:162
+msgid "Eigenes Logo entfernen?"
+msgstr ""
+
+#: templates/admin_tools.html:163
+msgid "Entfernen"
+msgstr ""
+
+#: templates/admin_tools.html:169
+msgid "Hinweis: Das Logo wird serverseitig unter uploads/branding/ gespeichert. "
+msgstr ""
+
+#: templates/admin_tools.html:170
+msgid "Cache wird automatisch aktualisiert."
+msgstr ""
+
+#: templates/audit.html:8 templates/index.html:163
+msgid "Filter"
+msgstr ""
+
+#: templates/audit.html:25 templates/index.html:184
 msgid "Suche"
 msgstr ""
 
-#: templates/audit.html:12
+#: templates/audit.html:26
 msgid "Aktion/Entry-ID"
 msgstr ""
 
-#: templates/audit.html:15 templates/index.html:165
+#: templates/audit.html:29 templates/index.html:199
 msgid "Zeitraum"
 msgstr ""
 
-#: templates/audit.html:17 templates/index.html:167
+#: templates/audit.html:31 templates/index.html:201
 msgid "TT.MM.JJJJ – TT.MM.JJJJ"
 msgstr "TT.MM.JJJJ"
 
-#: templates/audit.html:23
+#: templates/audit.html:37
 msgid "Filtern"
 msgstr ""
 
-#: templates/audit.html:26 templates/index.html:199
+#: templates/audit.html:40 templates/index.html:231
 msgid "Filter zurücksetzen"
 msgstr ""
 
-#: templates/audit.html:37 templates/edit.html:140
-#: templates/payment_authorization_audit.html:13
-#: templates/payment_authorization_detail.html:164
+#: templates/audit.html:55
+msgid "Audit-Log"
+msgstr ""
+
+#: templates/audit.html:62 templates/audit.html:72 templates/edit.html:140
+#: templates/edit.html:149 templates/payment_authorization_audit.html:20
+#: templates/payment_authorization_audit.html:31
+#: templates/payment_authorization_detail.html:314
+#: templates/payment_authorization_detail.html:323
 msgid "Zeitpunkt"
 msgstr ""
 
-#: templates/audit.html:38
+#: templates/audit.html:63 templates/audit.html:73
 msgid "User"
 msgstr "Benutzer"
 
-#: templates/audit.html:39 templates/edit.html:141
-#: templates/payment_authorization_audit.html:12
-#: templates/payment_authorization_detail.html:165
+#: templates/audit.html:64 templates/audit.html:74 templates/edit.html:141
+#: templates/edit.html:150 templates/payment_authorization_audit.html:19
+#: templates/payment_authorization_audit.html:30
+#: templates/payment_authorization_detail.html:315
+#: templates/payment_authorization_detail.html:324
 msgid "Aktion"
 msgstr ""
 
-#: templates/audit.html:40
+#: templates/audit.html:65 templates/audit.html:75
 msgid "Entry-ID"
 msgstr ""
 
-#: templates/audit.html:41 templates/edit.html:143
-#: templates/payment_authorization.html:67
-#: templates/payment_authorization_audit.html:14
-#: templates/payment_authorization_detail.html:167
+#: templates/audit.html:66 templates/audit.html:76 templates/edit.html:143
+#: templates/edit.html:152 templates/payment_authorization.html:69
+#: templates/payment_authorization_audit.html:21
+#: templates/payment_authorization_audit.html:32
+#: templates/payment_authorization_detail.html:317
+#: templates/payment_authorization_detail.html:326
 msgid "Details"
 msgstr ""
 
-#: templates/audit.html:55
+#: templates/audit.html:80
 msgid "Keine Einträge."
 msgstr ""
 
-#: templates/base.html:5 templates/base.html:144 templates/base.html:148
-#: templates/base.html:163
+#: templates/base.html:5 templates/base.html:146 templates/base.html:150
+#: templates/base.html:165
 msgid "BottleBalanceTitle"
 msgstr "BottleBalance"
 
-#: templates/base.html:39
+#: templates/base.html:41
 msgid "Greeting"
 msgstr "Willkommen"
 
-#: templates/base.html:54
+#: templates/base.html:56
 msgid "Dashboard"
 msgstr ""
 
-#: templates/base.html:60
+#: templates/base.html:62
 msgid "Anträge"
 msgstr ""
 
-#: templates/base.html:66 templates/edit.html:142
-#: templates/payment_authorization_audit.html:11
-#: templates/payment_authorization_detail.html:166
+#: templates/base.html:68 templates/edit.html:142 templates/edit.html:151
+#: templates/payment_authorization_audit.html:18
+#: templates/payment_authorization_audit.html:29
+#: templates/payment_authorization_detail.html:316
+#: templates/payment_authorization_detail.html:325
 msgid "Benutzer"
 msgstr ""
 
-#: templates/base.html:72
+#: templates/base.html:74
 msgid "Audit"
 msgstr ""
 
-#: templates/base.html:77 templates/profile.html:7
+#: templates/base.html:79 templates/profile.html:11
 msgid "Profil"
 msgstr ""
 
-#: templates/base.html:89 templates/base.html:144
+#: templates/base.html:91 templates/base.html:146
 msgid "Über"
 msgstr ""
 
-#: templates/base.html:95
+#: templates/base.html:97
 msgid "Logout"
 msgstr ""
 
-#: templates/base.html:110
+#: templates/base.html:112
 msgid "Admin-Passwort noch nicht geändert."
 msgstr ""
 
-#: templates/base.html:111
+#: templates/base.html:113
 msgid "Bitte im Profil aktualisieren."
 msgstr ""
 
-#: templates/base.html:148
+#: templates/base.html:150
 msgid "Name:"
 msgstr ""
 
-#: templates/base.html:149
+#: templates/base.html:151
 msgid "Version:"
 msgstr ""
 
-#: templates/base.html:150
+#: templates/base.html:152
 msgid "Entwickler:"
 msgstr ""
 
-#: templates/base.html:151
+#: templates/base.html:153
 msgid "Kontakt:"
 msgstr ""
 
-#: templates/base.html:154 templates/base.html:157
+#: templates/base.html:156 templates/base.html:159
 msgid "Entwickler kontaktieren"
 msgstr ""
 
-#: templates/base.html:160
+#: templates/base.html:162
 msgid "Webseite:"
 msgstr ""
 
-#: templates/base.html:163
+#: templates/base.html:165
 msgid ""
 " ist eine Webanwendung zur Verwaltung von Getränkekassen und "
 "Zahlungsanträgen. Für Support oder Feedback wenden Sie sich bitte an den "
@@ -890,8 +1003,9 @@ msgstr ""
 msgid "Datensatz bearbeiten"
 msgstr ""
 
-#: templates/edit.html:25 templates/edit.html:35 templates/index.html:9
-#: templates/index.html:65 templates/index.html:75
+#: templates/edit.html:25 templates/edit.html:35 templates/index.html:10
+#: templates/index.html:80 templates/index.html:90 templates/index.html:313
+#: templates/index.html:314 templates/index.html:318 templates/index.html:565
 msgid "Fl."
 msgstr ""
 
@@ -899,51 +1013,47 @@ msgstr ""
 msgid "Notiz"
 msgstr ""
 
-#: templates/edit.html:92 templates/edit_user.html:49
-#: templates/import_preview.html:152 templates/payment_authorization.html:176
-#: templates/payment_authorization.html:250 templates/profile.html:26
-#: templates/reset.html:23
+#: templates/edit.html:92 templates/edit_user.html:75
+#: templates/import_preview.html:152 templates/login.html:55
+#: templates/payment_authorization.html:178
+#: templates/payment_authorization.html:305 templates/profile.html:47
+#: templates/profile.html:151 templates/reset.html:47 templates/users.html:83
 msgid "Abbrechen"
 msgstr ""
 
-#: templates/edit.html:98 templates/index.html:185 templates/index.html:352
-#: templates/payment_authorization_detail.html:108
+#: templates/edit.html:98 templates/index.html:219 templates/index.html:421
+#: templates/payment_authorization_detail.html:258
 msgid "Anhänge"
 msgstr ""
 
-#: templates/edit.html:107 templates/index.html:379
-#: templates/payment_authorization_detail.html:119
-msgid "Hochladen"
-msgstr ""
-
-#: templates/edit.html:111 templates/index.html:383
-#: templates/payment_authorization_detail.html:123
+#: templates/edit.html:111 templates/index.html:452
+#: templates/payment_authorization_detail.html:273
 msgid "Zulässige Formate:"
 msgstr ""
 
-#: templates/edit.html:111 templates/index.html:383
-#: templates/payment_authorization_detail.html:123
+#: templates/edit.html:111 templates/index.html:452
+#: templates/payment_authorization_detail.html:273
 msgid "Mehrere Dateien möglich."
 msgstr ""
 
 #: templates/edit.html:123 templates/edit.html:230
-#: templates/payment_authorization_detail.html:142
+#: templates/payment_authorization_detail.html:292
 msgid "Ansehen"
 msgstr ""
 
-#: templates/edit.html:126 templates/edit.html:232 templates/index.html:753
-#: templates/payment_authorization_detail.html:146
+#: templates/edit.html:126 templates/edit.html:232 templates/index.html:916
+#: templates/payment_authorization_detail.html:296
 msgid "Anhang wirklich löschen?"
 msgstr ""
 
-#: templates/edit.html:128 templates/edit.html:234 templates/index.html:291
-#: templates/index.html:750 templates/payment_authorization.html:147
-#: templates/payment_authorization_detail.html:149
+#: templates/edit.html:128 templates/edit.html:234 templates/index.html:357
+#: templates/index.html:913 templates/payment_authorization.html:149
+#: templates/payment_authorization_detail.html:299
 msgid "Löschen"
 msgstr ""
 
-#: templates/edit.html:133 templates/edit.html:215 templates/index.html:659
-#: templates/index.html:735
+#: templates/edit.html:133 templates/edit.html:215 templates/index.html:822
+#: templates/index.html:898
 msgid "Keine Anhänge vorhanden."
 msgstr ""
 
@@ -955,35 +1065,53 @@ msgstr ""
 msgid "Fehler beim Laden der Anhänge."
 msgstr ""
 
-#: templates/edit_user.html:4 templates/users.html:130
+#: templates/edit_user.html:6 templates/users.html:188
 msgid "Benutzer bearbeiten"
 msgstr ""
 
-#: templates/edit_user.html:9 templates/users.html:15 templates/users.html:41
+#: templates/edit_user.html:11 templates/edit_user.html:15
+#: templates/edit_user.html:18 templates/edit_user.html:19
+#: templates/profile.html:17 templates/profile.html:20 templates/users.html:42
+#: templates/users.html:46 templates/users.html:49 templates/users.html:99
+#: templates/users.html:118
 msgid "E-Mail"
 msgstr ""
 
-#: templates/edit_user.html:15
+#: templates/edit_user.html:24
 msgid "Neues Passwort (optional)"
 msgstr ""
 
-#: templates/edit_user.html:16
+#: templates/edit_user.html:25 templates/edit_user.html:32
+#: templates/profile.html:30 templates/profile.html:73 templates/reset.html:28
+#: templates/reset.html:41
 msgid "Neues Passwort eingeben"
 msgstr ""
 
-#: templates/edit_user.html:17
+#: templates/edit_user.html:26
 msgid "Leer lassen, wenn das Passwort nicht geändert werden soll"
 msgstr ""
 
-#: templates/edit_user.html:21 templates/users.html:19 templates/users.html:42
+#: templates/edit_user.html:29 templates/profile.html:27
+#: templates/reset.html:22 templates/reset.html:25 templates/reset.html:29
+msgid "Neues Passwort"
+msgstr ""
+
+#: templates/edit_user.html:33 templates/profile.html:31
+msgid "Neues Passwort eingeben (optional)"
+msgstr ""
+
+#: templates/edit_user.html:38 templates/edit_user.html:46
+#: templates/users.html:54 templates/users.html:62 templates/users.html:65
+#: templates/users.html:100 templates/users.html:140
 msgid "Rolle"
 msgstr ""
 
-#: templates/edit_user.html:39 templates/users.html:43
+#: templates/edit_user.html:66 templates/users.html:101
+#: templates/users.html:145
 msgid "Aktiv"
 msgstr ""
 
-#: templates/edit_user.html:45
+#: templates/edit_user.html:72
 msgid "Darf Zahlungsfreigaben erteilen"
 msgstr ""
 
@@ -1031,8 +1159,13 @@ msgstr ""
 msgid "Vorschau"
 msgstr ""
 
-#: templates/import_preview.html:77 templates/payment_authorization.html:29
-#: templates/payment_authorization_detail.html:70
+#: templates/import_preview.html:77 templates/import_preview.html:97
+#: templates/payment_authorization.html:31
+#: templates/payment_authorization.html:61
+#: templates/payment_authorization_detail.html:11
+#: templates/payment_authorization_detail.html:116
+#: templates/payment_authorization_detail.html:213
+#: templates/payment_authorization_detail.html:219
 msgid "Status"
 msgstr ""
 
@@ -1068,495 +1201,566 @@ msgstr ""
 msgid "Import jetzt durchführen"
 msgstr ""
 
-#: templates/index.html:8
+#: templates/index.html:9
 msgid "Inventar:"
 msgstr ""
 
-#: templates/index.html:27
+#: templates/index.html:28
 msgid "Kasse:"
 msgstr ""
 
-#: templates/index.html:50
+#: templates/index.html:51
 msgid "Neuen Datensatz hinzufügen"
 msgstr ""
 
-#: templates/index.html:122
+#: templates/index.html:137 templates/payment_authorization.html:307
+#: templates/users.html:85
 msgid "Hinzufügen"
 msgstr ""
 
-#: templates/index.html:127 templates/index.html:128
+#: templates/index.html:142 templates/index.html:143
 msgid "Temporäre Anhänge hochladen"
 msgstr ""
 
-#: templates/index.html:129
+#: templates/index.html:144
 msgid "Upload"
 msgstr ""
 
-#: templates/index.html:147
-msgid "Einträge"
-msgstr ""
-
-#: templates/index.html:151
+#: templates/index.html:180
 msgid "Filter für Einträge"
 msgstr ""
 
-#: templates/index.html:158
+#: templates/index.html:191
 msgid "Datum/Bemerkung"
 msgstr "Bemerkung"
 
-#: templates/index.html:174
+#: templates/index.html:208
 msgid "Jahr"
 msgstr ""
 
-#: templates/index.html:176 templates/index.html:187
+#: templates/index.html:210 templates/index.html:221
 msgid "Alle"
 msgstr ""
 
-#: templates/index.html:188
-msgid ""
-"Nur mit\n"
-"                Anhang"
+#: templates/index.html:222
+msgid "Nur mit Anhang"
 msgstr ""
 
-#: templates/index.html:190
-msgid ""
-"Ohne\n"
-"                Anhang"
+#: templates/index.html:223
+msgid "Ohne Anhang"
 msgstr ""
 
-#: templates/index.html:207
+#: templates/index.html:239
+msgid "PDF exportieren"
+msgstr ""
+
+#: templates/index.html:240 templates/payment_authorization_detail.html:19
 msgid "PDF export"
 msgstr ""
 
-#: templates/index.html:268
-msgid "CSV import"
-msgstr ""
-
-#: templates/index.html:212 templates/index.html:213
+#: templates/index.html:247 templates/index.html:248
 msgid "Weitere Exportoptionen"
 msgstr ""
 
-#: templates/index.html:229
+#: templates/index.html:255
 msgid "CSV export"
 msgstr ""
 
-#: templates/index.html:247
-msgid "Inventar"
+#: templates/index.html:267
+msgid "CSV import"
 msgstr ""
 
-#: templates/index.html:250
-msgid "Kassenbestand"
+#: templates/index.html:286
+msgid "Einträge"
 msgstr ""
 
-#: templates/index.html:252 templates/payment_authorization.html:30
-#: templates/users.html:47
+#: templates/index.html:304 templates/index.html:329
+#: templates/payment_authorization.html:32
+#: templates/payment_authorization.html:64 templates/users.html:105
+#: templates/users.html:184
 msgid "Aktionen"
 msgstr ""
 
-#: templates/index.html:271
+#: templates/index.html:334
 msgid "Bearbeiten"
 msgstr ""
 
-#: templates/index.html:277
+#: templates/index.html:342
 msgid "Dokumente öffnen"
 msgstr ""
 
-#: templates/index.html:289
+#: templates/index.html:355
 msgid "Eintrag wirklich löschen?"
 msgstr ""
 
-#: templates/index.html:300
+#: templates/index.html:366
 msgid "Keine Einträge vorhanden."
 msgstr ""
 
-#: templates/index.html:317
+#: templates/index.html:386
 msgid "CSV-Datei importieren"
 msgstr ""
 
-#: templates/index.html:322
+#: templates/index.html:391
 msgid "CSV-Datei auswählen"
 msgstr ""
 
-#: templates/index.html:326
+#: templates/index.html:395
 msgid "Erwartete Header:"
 msgstr ""
 
-#: templates/index.html:328
+#: templates/index.html:397
 msgid "oder Kurzform ohne Inventar/Kassenbestand."
 msgstr ""
 
-#: templates/index.html:334
+#: templates/index.html:403
 msgid "Bestehende Einträge komplett ersetzen"
 msgstr ""
 
-#: templates/index.html:339
+#: templates/index.html:408
 msgid "Beispiel-CSV herunterladen"
 msgstr ""
 
-#: templates/index.html:340
+#: templates/index.html:409
 msgid "Vorschau anzeigen"
 msgstr ""
 
-#: templates/index.html:370
+#: templates/index.html:439
 msgid "Anhänge hochladen"
 msgstr ""
 
-#: templates/index.html:454
-msgid "Flaschen"
-msgstr ""
-
-#: templates/index.html:689 templates/index.html:749
+#: templates/index.html:852 templates/index.html:912
 msgid "Öffnen"
 msgstr ""
 
-#: templates/login.html:8 templates/login.html:41
+#: templates/login.html:8 templates/login.html:20
 msgid "Login"
 msgstr ""
 
-#: templates/login.html:34 templates/users.html:11 templates/users.html:40
+#: templates/login.html:13 templates/login.html:46 templates/login.html:47
+#: templates/users.html:30 templates/users.html:34 templates/users.html:37
+#: templates/users.html:98 templates/users.html:112
 msgid "Benutzername"
 msgstr ""
 
-#: templates/login.html:38 templates/users.html:25
+#: templates/login.html:17 templates/profile.html:70 templates/users.html:70
+#: templates/users.html:74 templates/users.html:77
 msgid "Passwort"
 msgstr ""
 
-#: templates/payment_authorization.html:4
+#: templates/login.html:29
+msgid "Passwort vergessen?"
+msgstr ""
+
+#: templates/login.html:40
+msgid "Passwort zurücksetzen anfordern"
+msgstr ""
+
+#: templates/login.html:51
+msgid "Wenn die Angaben korrekt sind, wird ein Reset-Link per E-Mail gesendet."
+msgstr ""
+
+#: templates/login.html:56
+msgid "Reset-Link senden"
+msgstr ""
+
+#: templates/payment_authorization.html:6
 msgid "Zahlungsfreigabe"
 msgstr ""
 
-#: templates/payment_authorization.html:9
+#: templates/payment_authorization.html:11
 msgid "Neuer Antrag"
 msgstr ""
 
-#: templates/payment_authorization.html:12
+#: templates/payment_authorization.html:14
 msgid "Alle Anträge als PDF"
 msgstr ""
 
-#: templates/payment_authorization.html:16
-#: templates/payment_authorization_audit.html:4
+#: templates/payment_authorization.html:18
+#: templates/payment_authorization_audit.html:6
 msgid "Audit-Übersicht"
 msgstr ""
 
-#: templates/payment_authorization.html:26
-#: templates/payment_authorization_detail.html:17
+#: templates/payment_authorization.html:28
+#: templates/payment_authorization.html:39
+#: templates/payment_authorization.html:58
+#: templates/payment_authorization_detail.html:27
+#: templates/payment_authorization_detail.html:30
+#: templates/payment_authorization_detail.html:31
+#: templates/payment_authorization_detail.html:124
+#: templates/payment_authorization_detail.html:127
+#: templates/payment_authorization_detail.html:128
 msgid "Antragsteller/in"
 msgstr ""
 
-#: templates/payment_authorization.html:28
-#: templates/payment_authorization.html:226
-#: templates/payment_authorization_detail.html:35
-#: templates/payment_authorization_detail.html:61
+#: templates/payment_authorization.html:30
+#: templates/payment_authorization.html:60
+#: templates/payment_authorization.html:253
+#: templates/payment_authorization.html:263
+#: templates/payment_authorization.html:268
+#: templates/payment_authorization_detail.html:77
+#: templates/payment_authorization_detail.html:81
+#: templates/payment_authorization_detail.html:84
+#: templates/payment_authorization_detail.html:85
+#: templates/payment_authorization_detail.html:174
+#: templates/payment_authorization_detail.html:178
+#: templates/payment_authorization_detail.html:181
+#: templates/payment_authorization_detail.html:182
 msgid "Betrag"
 msgstr ""
 
-#: templates/payment_authorization.html:39
-#: templates/payment_authorization_detail.html:78
+#: templates/payment_authorization.html:41
+#: templates/payment_authorization_detail.html:228
 msgid "Freigabe-Fortschritt"
 msgstr ""
 
-#: templates/payment_authorization.html:40
+#: templates/payment_authorization.html:42
 msgid "von"
 msgstr ""
 
-#: templates/payment_authorization.html:40
-#: templates/payment_authorization_detail.html:96
+#: templates/payment_authorization.html:42
+#: templates/payment_authorization_detail.html:246
 msgid "freigegeben"
 msgstr ""
 
-#: templates/payment_authorization.html:42
+#: templates/payment_authorization.html:44
 msgid "von dir"
 msgstr ""
 
-#: templates/payment_authorization.html:74
+#: templates/payment_authorization.html:76
 msgid "Freigeben"
 msgstr ""
 
-#: templates/payment_authorization.html:82
+#: templates/payment_authorization.html:84
 msgid "Freigabe zurückziehen"
 msgstr ""
 
-#: templates/payment_authorization.html:103
+#: templates/payment_authorization.html:105
 msgid "On Hold"
 msgstr ""
 
-#: templates/payment_authorization.html:111
+#: templates/payment_authorization.html:113
 msgid "Fortsetzen"
 msgstr ""
 
-#: templates/payment_authorization.html:120
+#: templates/payment_authorization.html:122
 msgid "Abschließen"
 msgstr ""
 
-#: templates/payment_authorization.html:127
-#: templates/payment_authorization.html:131
-#: templates/payment_authorization.html:177
+#: templates/payment_authorization.html:129
+#: templates/payment_authorization.html:133
+#: templates/payment_authorization.html:179
 msgid "Ablehnen"
 msgstr ""
 
-#: templates/payment_authorization.html:137
+#: templates/payment_authorization.html:139
 msgid "Antrag zurückziehen"
 msgstr ""
 
-#: templates/payment_authorization.html:139
+#: templates/payment_authorization.html:141
 msgid "Zurückziehen"
 msgstr ""
 
-#: templates/payment_authorization.html:145
+#: templates/payment_authorization.html:147
 msgid "Antrag endgültig löschen"
 msgstr ""
 
-#: templates/payment_authorization.html:164
+#: templates/payment_authorization.html:166
 msgid "Antrag ablehnen"
 msgstr ""
 
-#: templates/payment_authorization.html:170
+#: templates/payment_authorization.html:172
 msgid "Begründung (Pflicht)"
 msgstr ""
 
-#: templates/payment_authorization.html:172
+#: templates/payment_authorization.html:174
 msgid "Bitte Ablehnungsgrund angeben"
 msgstr ""
 
-#: templates/payment_authorization.html:201
+#: templates/payment_authorization.html:203
 msgid "Neuen Zahlungsantrag erstellen"
 msgstr ""
 
-#: templates/payment_authorization.html:209
+#: templates/payment_authorization.html:211
+#: templates/payment_authorization.html:214
 msgid "Paragraph (optional)"
 msgstr ""
 
-#: templates/payment_authorization.html:210
+#: templates/payment_authorization.html:212
+#: templates/payment_authorization.html:217
 msgid "z. Bsp. 3a"
 msgstr ""
 
-#: templates/payment_authorization.html:214
-#: templates/payment_authorization_detail.html:31
-#: templates/payment_authorization_detail.html:58
-msgid "Verwendungszweck"
-msgstr ""
-
-#: templates/payment_authorization.html:215
-msgid "Wofür ist die Zahlungsanfrage"
-msgstr ""
-
-#: templates/payment_authorization.html:223
-msgid "Bitte ein Datum angeben"
-msgstr ""
-
-#: templates/payment_authorization.html:228
-msgid "z. Bsp. 49,90"
-msgstr ""
-
-#: templates/payment_authorization.html:231
-msgid "Bitte einen Betrag angeben"
-msgstr ""
-
-#: templates/payment_authorization.html:233
-msgid "Komma oder Punkt als Dezimaltrenner ist möglich"
-msgstr ""
-
-#: templates/payment_authorization.html:238
-msgid "Lieferant (optional)"
-msgstr ""
-
-#: templates/payment_authorization.html:239
-msgid "Firma / Händler"
-msgstr ""
-
-#: templates/payment_authorization.html:243
-msgid "Begründung (optional)"
-msgstr ""
-
-#: templates/payment_authorization.html:245
-msgid "Weshalb ist die Zahlungsanfrage notwendig"
-msgstr ""
-
-#: templates/payment_authorization.html:252 templates/users.html:30
-msgid "Anlegen"
-msgstr ""
-
-#: templates/payment_authorization_audit.html:9
-msgid "ID"
-msgstr ""
-
-#: templates/payment_authorization_audit.html:10
-msgid "Antrag"
-msgstr ""
-
-#: templates/payment_authorization_audit.html:32
-#: templates/payment_authorization_detail.html:11
-msgid "Zurück"
-msgstr ""
-
-#: templates/payment_authorization_detail.html:5
-msgid "Zahlungsantrag"
-msgstr "Payment request"
-
-#: templates/payment_authorization_detail.html:9
-msgid "Als PDF exportieren"
-msgstr ""
-
-#: templates/payment_authorization_detail.html:27
+#: templates/payment_authorization.html:218
+#: templates/payment_authorization_detail.html:51
 #: templates/payment_authorization_detail.html:55
+#: templates/payment_authorization_detail.html:58
+#: templates/payment_authorization_detail.html:59
+#: templates/payment_authorization_detail.html:148
+#: templates/payment_authorization_detail.html:152
+#: templates/payment_authorization_detail.html:155
+#: templates/payment_authorization_detail.html:156
 msgid "Paragraph"
 msgstr ""
 
-#: templates/payment_authorization_detail.html:39
+#: templates/payment_authorization.html:224
+#: templates/payment_authorization.html:228
+#: templates/payment_authorization.html:232
 #: templates/payment_authorization_detail.html:64
+#: templates/payment_authorization_detail.html:68
+#: templates/payment_authorization_detail.html:71
+#: templates/payment_authorization_detail.html:72
+#: templates/payment_authorization_detail.html:161
+#: templates/payment_authorization_detail.html:165
+#: templates/payment_authorization_detail.html:168
+#: templates/payment_authorization_detail.html:169
+msgid "Verwendungszweck"
+msgstr ""
+
+#: templates/payment_authorization.html:225
+#: templates/payment_authorization.html:231
+msgid "Wofür ist die Zahlungsanfrage"
+msgstr ""
+
+#: templates/payment_authorization.html:241
+msgid "Bitte ein Datum angeben"
+msgstr ""
+
+#: templates/payment_authorization.html:255
+#: templates/payment_authorization.html:267
+msgid "z. Bsp. 49,90"
+msgstr ""
+
+#: templates/payment_authorization.html:258
+#: templates/payment_authorization.html:269
+msgid "Bitte einen Betrag angeben"
+msgstr ""
+
+#: templates/payment_authorization.html:260
+msgid "Komma oder Punkt als Dezimaltrenner ist möglich"
+msgstr ""
+
+#: templates/payment_authorization.html:278
+#: templates/payment_authorization.html:286
+msgid "Lieferant (optional)"
+msgstr ""
+
+#: templates/payment_authorization.html:279
+#: templates/payment_authorization.html:285
+msgid "Firma / Händler"
+msgstr ""
+
+#: templates/payment_authorization.html:282
+#: templates/payment_authorization_detail.html:90
+#: templates/payment_authorization_detail.html:94
+#: templates/payment_authorization_detail.html:97
+#: templates/payment_authorization_detail.html:98
+#: templates/payment_authorization_detail.html:187
+#: templates/payment_authorization_detail.html:191
+#: templates/payment_authorization_detail.html:194
+#: templates/payment_authorization_detail.html:195
 msgid "Lieferant"
 msgstr ""
 
-#: templates/payment_authorization_detail.html:43
-#: templates/payment_authorization_detail.html:67
+#: templates/payment_authorization.html:291
+#: templates/payment_authorization.html:296
+msgid "Begründung (optional)"
+msgstr ""
+
+#: templates/payment_authorization.html:293
+#: templates/payment_authorization.html:299
+msgid "Weshalb ist die Zahlungsanfrage notwendig"
+msgstr ""
+
+#: templates/payment_authorization.html:300
+#: templates/payment_authorization_detail.html:103
+#: templates/payment_authorization_detail.html:107
+#: templates/payment_authorization_detail.html:110
+#: templates/payment_authorization_detail.html:111
+#: templates/payment_authorization_detail.html:200
+#: templates/payment_authorization_detail.html:204
+#: templates/payment_authorization_detail.html:207
+#: templates/payment_authorization_detail.html:208
 msgid "Begründung"
 msgstr ""
 
-#: templates/payment_authorization_detail.html:84
+#: templates/payment_authorization_audit.html:8
+#: templates/payment_authorization_detail.html:21
+msgid "Zurück"
+msgstr ""
+
+#: templates/payment_authorization_audit.html:16
+#: templates/payment_authorization_audit.html:27
+msgid "ID"
+msgstr ""
+
+#: templates/payment_authorization_audit.html:17
+#: templates/payment_authorization_audit.html:28
+msgid "Antrag"
+msgstr ""
+
+#: templates/payment_authorization_detail.html:11
+msgid "Zahlungsantrag"
+msgstr "Payment request"
+
+#: templates/payment_authorization_detail.html:234
 msgid "Freigaben"
 msgstr ""
 
-#: templates/payment_authorization_detail.html:88
+#: templates/payment_authorization_detail.html:238
 msgid "Geschäftsführende"
 msgstr ""
 
-#: templates/payment_authorization_detail.html:100
+#: templates/payment_authorization_detail.html:250
 msgid "ausstehend"
 msgstr ""
 
-#: templates/payment_authorization_detail.html:156
+#: templates/payment_authorization_detail.html:306
 msgid "Keine Anhänge vorhanden"
 msgstr ""
 
-#: templates/profile.html:11
+#: templates/profile.html:21
 msgid "E-Mail (für Passwort-Reset)"
 msgstr ""
 
-#: templates/profile.html:16 templates/reset.html:15
-msgid "Neues Passwort"
+#: templates/profile.html:37 templates/profile.html:40
+#: templates/profile.html:41 templates/reset.html:38 templates/reset.html:42
+msgid "Passwort wiederholen"
 msgstr ""
 
-#: templates/profile.html:17 templates/profile.html:22
-msgid "leer lassen, um nicht zu ändern"
+#: templates/profile.html:59
+msgid "Sicherheit"
 msgstr ""
 
-#: templates/profile.html:21 templates/reset.html:19
-msgid "Neues Passwort (Wiederholen)"
-msgstr ""
-
-#: templates/profile.html:37
+#: templates/profile.html:62
 msgid "2FA ist"
 msgstr ""
 
-#: templates/profile.html:37
+#: templates/profile.html:62
 msgid "aktiviert"
 msgstr ""
 
-#: templates/profile.html:41
+#: templates/profile.html:74
 msgid "Bestätige mit Passwort"
 msgstr ""
 
-#: templates/profile.html:45
+#: templates/profile.html:81
 msgid "2FA deaktivieren"
 msgstr ""
 
-#: templates/profile.html:49
+#: templates/profile.html:87
 msgid "2FA ist aktuell"
 msgstr ""
 
-#: templates/profile.html:49
+#: templates/profile.html:87
 msgid "deaktiviert"
 msgstr ""
 
-#: templates/profile.html:58
+#: templates/profile.html:97
 msgid "Ihre neuen Backup-Codes (einmalig sichtbar):"
 msgstr ""
 
-#: templates/profile.html:67 templates/profile.html:95
+#: templates/profile.html:109 templates/profile.html:139
 msgid "System"
 msgstr ""
 
-#: templates/profile.html:75
+#: templates/profile.html:119
 msgid "Einträge absteigend sortieren (neueste zuerst)"
 msgstr ""
 
-#: templates/profile.html:81
-msgid "Sprache:"
+#: templates/profile.html:126
+msgid "Sprache"
 msgstr ""
 
-#: templates/profile.html:83
+#: templates/profile.html:128
 msgid "Deutsch"
 msgstr ""
 
-#: templates/profile.html:84
+#: templates/profile.html:129
 msgid "Englisch"
 msgstr ""
 
-#: templates/profile.html:89
+#: templates/profile.html:135
 msgid "Darstellung"
 msgstr ""
 
-#: templates/profile.html:98
+#: templates/profile.html:142
 msgid "Hell"
 msgstr ""
 
-#: templates/profile.html:101
+#: templates/profile.html:145
 msgid "Dunkel"
 msgstr ""
 
-#: templates/users.html:5
+#: templates/reset.html:14 templates/reset.html:17
+msgid "Reset-Token"
+msgstr ""
+
+#: templates/reset.html:35
+msgid "Neues Passwort (Wiederholen)"
+msgstr ""
+
+#: templates/users.html:6
 msgid "Benutzerverwaltung"
 msgstr ""
 
-#: templates/users.html:44
+#: templates/users.html:11
+msgid "User hinzufügen"
+msgstr ""
+
+#: templates/users.html:23
+msgid "Neuen Benutzer anlegen"
+msgstr ""
+
+#: templates/users.html:102 templates/users.html:161
 msgid "Geschäftsführend"
 msgstr ""
 
-#: templates/users.html:45
+#: templates/users.html:103 templates/users.html:178
 msgid "Erstellt"
 msgstr ""
 
-#: templates/users.html:46
+#: templates/users.html:104 templates/users.html:181
 msgid "Aktualisiert"
 msgstr ""
 
-#: templates/users.html:91 templates/users.html:92
+#: templates/users.html:149 templates/users.html:150
 msgid "Deaktivieren"
 msgstr ""
 
-#: templates/users.html:95 templates/users.html:96
+#: templates/users.html:153 templates/users.html:154
 msgid "Aktivieren"
 msgstr ""
 
-#: templates/users.html:108
+#: templates/users.html:166
 msgid "Berechtigung entfernen"
 msgstr ""
 
-#: templates/users.html:109
+#: templates/users.html:167
 msgid "Ja"
 msgstr ""
 
-#: templates/users.html:112
+#: templates/users.html:170
 msgid "Berechtigung vergeben"
 msgstr ""
 
-#: templates/users.html:113
+#: templates/users.html:171
 msgid "Nein"
 msgstr ""
 
-#: templates/users.html:137
+#: templates/users.html:195
 msgid "Reset-Link generieren"
 msgstr ""
 
-#: templates/users.html:144
+#: templates/users.html:202
 msgid "Benutzer wirklich löschen?"
 msgstr ""
 
-#: templates/users.html:146
+#: templates/users.html:204
 msgid "Benutzer löschen"
 msgstr ""
 
-#: templates/users.html:156
+#: templates/users.html:214
 msgid "Keine Benutzer vorhanden"
 msgstr ""
 
@@ -1725,5 +1929,57 @@ msgstr ""
 #~ msgstr ""
 
 #~ msgid "Du musst angemeldet sein, um diese Seite zu sehen."
+#~ msgstr ""
+
+#~ msgid "Einträge"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Nur mit\n"
+#~ "                Anhang"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Ohne\n"
+#~ "                Anhang"
+#~ msgstr ""
+
+#~ msgid "Zurücksetzen"
+#~ msgstr ""
+
+#~ msgid "Flaschen"
+#~ msgstr ""
+
+#~ msgid "Anlegen"
+#~ msgstr ""
+
+#~ msgid "Als PDF exportieren"
+#~ msgstr ""
+
+#~ msgid "leer lassen, um nicht zu ändern"
+#~ msgstr ""
+
+#~ msgid "Sprache:"
+#~ msgstr ""
+
+#~ msgid "Reset‑Token fehlt."
+#~ msgstr ""
+
+#~ msgid "Passwortanforderungen nicht erfüllt oder stimmen nicht überein."
+#~ msgstr ""
+
+#~ msgid "Link ungültig oder abgelaufen."
+#~ msgstr ""
+
+#~ msgid "Passwort aktualisiert. Bitte einloggen."
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Dein Passwort-Reset-Token lautet:\n"
+#~ "\n"
+#~ "%(token)s\n"
+#~ "\n"
+#~ "Dieser Token ist 30 Minuten gültig.\n"
+#~ "Bitte gib ihn auf der Reset-Seite ein: %(url)s"
 #~ msgstr ""
 

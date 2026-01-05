@@ -1,119 +1,138 @@
+
+
 {% extends "base.html" %}
 {% block content %}
-<!--div class="row justify-content-center"-->
-  <!--div class="col-12 col-lg-8"-->
+<div class="row g-3">
+
+  <!-- PROFIL -->
+  <div class="col-12">
     <div class="card shadow-sm">
       <div class="card-body">
-        <h2 class="h1 mb-3">{{ _('Profil') }}</h2>
-        <form action="{{ url_for('profile_post') }}" class="row g-3" method="post">
+        <h5 class="mb-3">{{ _('Profil') }}</h5>
+        <form id="profileForm" action="{{ url_for('profile_post') }}" method="post" class="needs-validation" novalidate>
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <!--div class="col-12">
-            <label class="form-label">{{ _('E-Mail (für Passwort-Reset)') }}</label>
-            <input class="form-control" name="email" type="email" value="{{ user.email or '' }}" />
-          </div-->
+
+          <!-- E-Mail -->
           <div class="input-group mb-3">
-            <span class="input-group-text">{{ _('E-Mail (für Passwort-Reset)') }}</span>
+            <span class="input-group-text">{{ _('E-Mail') }}</span>
             <div class="form-floating flex-grow-1">
-              <input type="email" name="email"  inputmode="text" class="form-control"
+              <input type="email" name="email" inputmode="text" class="form-control"
                 placeholder="{{ _('E-Mail') }}" value="{{ user.email or '' }}">
-                <label for="email">{{ _('E-Mail') }}</label>
+              <label for="email">{{ _('E-Mail (für Passwort-Reset)') }}</label>
             </div>
           </div>
 
-
-          <!--div class="col-12 col-md-6">
-            <label class="form-label">{{ _('Neues Passwort') }}</label>
-            <input class="form-control" name="password" placeholder="{{ _('leer lassen, um nicht zu ändern') }}" type="password" />
-          </div-->
+          <!-- Neues Passwort -->
           <div class="input-group mb-3">
             <span class="input-group-text">{{ _('Neues Passwort') }}</span>
             <div class="form-floating flex-grow-1">
-              <input type="password" name="password"  inputmode="text" class="form-control"
-                placeholder="{{ _('Neues Passwort eingeben') }}" value="">
-                <label for="password">{{ _('Neues Passwort eingeben') }}</label>
+              <input type="password" id="password" name="password" class="form-control"
+                placeholder="{{ _('Neues Passwort eingeben') }}">
+              <label for="password">{{ _('Neues Passwort eingeben (optional)') }}</label>
             </div>
-          </div> 
+          </div>
 
-          <!--div class="col-12 col-md-6">
-            <label class="form-label">{{ _('Neues Passwort (Wiederholen)') }}</label>
-            <input class="form-control" name="password2" placeholder="{{ _('leer lassen, um nicht zu ändern') }}" type="password" />
-          </div-->
-          <div class="input-group mb-3">
-            <span class="input-group-text">{{ _('Neues Passwort (Wiederholen)') }}</span>
+          <!-- Passwort wiederholen (standardmäßig versteckt) -->
+          <div class="input-group mb-3 d-none" id="password-confirm-group">
+            <span class="input-group-text">{{ _('Passwort wiederholen') }}</span>
             <div class="form-floating flex-grow-1">
-              <input type="password" name="password2"  inputmode="text" class="form-control"
-                placeholder="{{ _('Neues Passwort eingeben') }}" value="">
-                <label for="password2">{{ _('Neues Passwort eingeben') }}</label>
+              <input type="password" id="password2" name="password2" class="form-control"
+                placeholder="{{ _('Passwort wiederholen') }}">
+              <label for="password2">{{ _('Passwort wiederholen') }}</label>
             </div>
-          </div> 
+          </div>
 
-          <div class="col-12 d-flex gap-2">
-            <button class="btn btn-primary">{{ _('Speichern') }}</button>
+          <!-- Buttons -->
+          <div class="d-flex justify-content-start gap-2">
             <a class="btn btn-outline-secondary" href="{{ url_for('bbalance_routes.index') }}">{{ _('Abbrechen') }}</a>
+            <button class="btn btn-primary">{{ _('Speichern') }}</button>
           </div>
         </form>
       </div>
     </div>
+  </div>
 
+  <!-- SICHERHEIT -->
+  <div class="col-12">
     <div class="card shadow-sm">
       <div class="card-body">
-        <h2 class="h1 mb-3">{{ _('2-Faktor-Authentifizierung') }}</h2>
+        <h5 class="mb-3">{{ _('Sicherheit') }}</h5>
         {% if user.totp_enabled %}
-        <p class="text-success">{{ _('2FA ist') }} <strong>{{ _('aktiviert') }}</strong>.</p>
-        <form action="{{ url_for('disable_2fa') }}" class="row g-2 align-items-end" method="post">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <div class="col-12 col-md-6">
-            <label class="form-label">{{ _('Bestätige mit Passwort') }}</label>
-            <input class="form-control" name="password" required="" type="password" />
-          </div>
-          <div class="col-12 col-md-6">
-            <button class="btn btn-outline-danger">{{ _('2FA deaktivieren') }}</button>
-          </div>
-        </form>
+          <p class="mb-3">
+            {{ _('2FA ist') }} <span class="badge bg-success">{{ _('aktiviert') }}</span>
+          </p>
+          <form action="{{ url_for('disable_2fa') }}" method="post" class="row g-3">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <!-- Passwortfeld -->
+            <div class="col-12">
+              <div class="input-group mb-3">
+                <span class="input-group-text">{{ _('Passwort') }}</span>
+                <div class="form-floating flex-grow-1">
+                  <input id="confirmPassword" type="password" name="password" inputmode="text" class="form-control"
+                    placeholder="{{ _('Neues Passwort eingeben') }}" required>
+                  <label for="confirmPassword">{{ _('Bestätige mit Passwort') }}</label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Button unter dem Feld -->
+            <div class="col-12">
+              <button class="btn btn-outline-danger w-100">{{ _('2FA deaktivieren') }}</button>
+            </div>
+          </form>
+
         {% else %}
-        <p class="text-muted">{{ _('2FA ist aktuell') }} <strong>{{ _('deaktiviert') }}</strong>.</p>
-        <form action="{{ url_for('enable_2fa') }}" method="post">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <button class="btn btn-outline-primary">{{ _('2FA einrichten') }}</button>
-        </form>
+          <p class="mb-3">
+            {{ _('2FA ist aktuell') }} <span class="badge bg-secondary">{{ _('deaktiviert') }}</span>
+          </p>
+          <form action="{{ url_for('enable_2fa') }}" method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn btn-outline-primary">{{ _('2FA einrichten') }}</button>
+          </form>
         {% endif %}
-        
+
         {% if new_backup_codes %}
-        <div class="alert alert-warning">
-          <h5 class="mb-2">{{ _('Ihre neuen Backup-Codes (einmalig sichtbar):') }}</h5>
-          <pre class="mb-0">{{ '\n'.join(new_backup_codes) }}</pre>
-        </div>
+          <div class="alert alert-warning mt-3">
+            <h6 class="mb-2">{{ _('Ihre neuen Backup-Codes (einmalig sichtbar):') }}</h6>
+            <pre class="mb-0">{{ '\n'.join(new_backup_codes) }}</pre>
+          </div>
         {% endif %}
       </div>
     </div>
+  </div>
 
+  <!-- SYSTEM -->
+  <div class="col-12">
     <div class="card shadow-sm">
       <div class="card-body">
-        <h2 class="h1 mb-3">{{ _('System') }}</h2>
+        <h5 class="mb-3">{{ _('System') }}</h5>
         <form method="post" action="{{ url_for('update_preferences') }}" class="row g-3">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <!-- Sort order DESC-->
-          <div class="form-check form-switch mb-3">
-            <input class="form-check-input" type="checkbox" id="sort_order_desc" name="sort_order_desc"
-                  {% if current_user().get('sort_order_desc') %}checked{% endif %}>
-            <label class="form-check-label" for="sort_order_desc">
-              {{ _('Einträge absteigend sortieren (neueste zuerst)') }}
-            </label>
+
+          <!-- Sortierung -->
+          <div class="col-12">
+            <div class="form-check form-switch mb-3">
+              <input class="form-check-input" type="checkbox" id="sort_order_desc" name="sort_order_desc"
+                    {% if current_user().get('sort_order_desc') %}checked{% endif %}>
+              <label class="form-check-label" for="sort_order_desc">
+                {{ _('Einträge absteigend sortieren (neueste zuerst)') }}
+              </label>
+            </div>
           </div>
 
           <!-- Sprache -->
-          <div class="col-12 col-md-6">
-            <label for="language" class="form-label">{{ _('Sprache:') }}</label>
+          <div class="col-12">
+            <label for="language" class="form-label">{{ _('Sprache') }}</label>
             <select id="language" name="language" class="form-select">
               <option value="de" {{ 'selected' if user['locale'] == 'de' else '' }}>{{ _('Deutsch') }}</option>
               <option value="en" {{ 'selected' if user['locale'] == 'en' else '' }}>{{ _('Englisch') }}</option>
             </select>
           </div>
-          <!-- Darstellung -->
+
+          <!-- Theme -->
           <div class="col-12">
-            <label class="form-label">{{ _('Darstellung') }}</label>
-          </div>
-          <div class="col-12">
+            <label for="system" class="form-label">{{ _('Darstellung') }}</label>
             <div class="btn-group" role="group">
               <input type="radio" class="btn-check" name="theme" id="theme-system" value="system" autocomplete="off"
                     {% if theme_preference == 'system' %}checked{% endif %}>
@@ -126,14 +145,50 @@
               <label class="btn btn-outline-secondary" for="theme-dark">{{ _('Dunkel') }}</label>
             </div>
           </div>
-          <!-- Speichern -->
-          <div class="col-12 d-flex gap-2">
-            <button class="btn btn-primary">{{ _('Speichern') }}</button>
+
+          <!-- Buttons -->
+          <div class="col-12 d-flex justify-content-start gap-2 mt-3">
             <a class="btn btn-outline-secondary" href="{{ url_for('bbalance_routes.index') }}">{{ _('Abbrechen') }}</a>
+            <button class="btn btn-primary">{{ _('Speichern') }}</button>
           </div>
         </form>
       </div>
     </div>
   </div>
+  </div>
+
 </div>
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const pwdField = document.getElementById('password');
+  const confirmGroup = document.getElementById('password-confirm-group');
+  const pwdConfirmField = document.getElementById('password2');
+  const form = document.getElementById('profileForm');
+
+  // Einblenden/Ausblenden des zweiten Feldes
+  pwdField.addEventListener('input', () => {
+    if (pwdField.value.trim() !== '') {
+      confirmGroup.classList.remove('d-none');
+    } else {
+      confirmGroup.classList.add('d-none');
+      pwdConfirmField.value = ''; // zurücksetzen
+    }
+  });
+
+  // Validierung vor dem Absenden
+  form.addEventListener('submit', (e) => {
+    if (pwdField.value.trim() !== '') {
+      if (pwdField.value !== pwdConfirmField.value) {
+        e.preventDefault();
+        e.stopPropagation();
+        alert("Die Passwörter stimmen nicht überein.");
+        pwdConfirmField.focus();
+      }
+    }
+  });
+});
+</script>
+{% endblock %}
 {% endblock %}

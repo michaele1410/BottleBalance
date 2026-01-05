@@ -3,7 +3,7 @@
 <div class="card shadow-sm">
   <div class="card-body">
   <!--div class="container-fluid px-2 px-md-3"-->
-    <h1>{{ _('Benutzer bearbeiten') }}: {{ user.username }}</h1>
+    <h1 class="h5 mb-3">{{ _('Benutzer bearbeiten') }}: {{ user.username }}</h1>
     <form method="post">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
@@ -26,11 +26,11 @@
         <small class="form-text text-muted">{{ _('Leer lassen, wenn das Passwort nicht geändert werden soll') }}.</small>
       </div-->
       <div class="input-group mb-3">
-        <span class="input-group-text">{{ _('Neues Passwort (optional)') }}</span>
+        <span class="input-group-text">{{ _('Neues Passwort') }}</span>
         <div class="form-floating flex-grow-1">
           <input type="password" name="password"  inputmode="text" class="form-control"
             placeholder="{{ _('Neues Passwort eingeben') }}" value="">
-            <label for="password">{{ _('Neues Passwort eingeben') }}</label>
+            <label for="password">{{ _('Neues Passwort eingeben (optional)') }}</label>
         </div>
       </div>
 
@@ -72,8 +72,8 @@
         <label class="form-check-label" for="can_approve">{{ _('Darf Zahlungsfreigaben erteilen') }}</label>
       </div>
 
-      <button type="submit" class="btn btn-primary">{{ _('Speichern') }}</button>
       <a href="{{ url_for('user_routes.users_list') }}" class="btn btn-secondary">{{ _('Abbrechen') }}</a>
+      <button type="submit" class="btn btn-primary">{{ _('Speichern') }}</button>
     </form>
   </div>
 </div>

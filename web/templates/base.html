@@ -35,7 +35,8 @@
                 {{ url_for('bbalance_routes.index') }}
               {% endif %}">
       <span class="logo-wrapper">
-        <img src="{{ url_for('static', filename='images/logo.svg') }}" alt="Logo" class="logo-img">
+        <!--img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" class="logo-img"-->
+        <img src="{{ brand_logo_url }}" alt="Logo" class="logo-img">
       </span>
       <span>{{ _('Greeting') }}{% if session.get('user_id') %}, {{ current_user().username|capitalize }}{% endif %}</span>
     </a>

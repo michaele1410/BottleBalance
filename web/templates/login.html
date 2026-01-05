@@ -7,32 +7,11 @@
       <div class="card-body">
         <h1 class="h4 mb-3">{{ _('Login') }}</h1>
 
-        <!-- Flash-Messages -->
-        <!--{% with messages = get_flashed_messages(with_categories=true) %}
-          {% if messages %}
-            {% for category, message in messages %}
-              <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                {{ message|safe }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-              </div>
-            {% endfor %}
-          {% endif %}
-        {% endwith %}
-        
-       {% if current_user() and current_user().get('username') == 'admin' and current_user().get('must_change_password') and not current_user().get('last_login_at') %}
-        <div class="alert alert-warning d-flex align-items-center" role="alert">
-          <i class="bi-exclamation-triangle-fill me-2"></i>
-          <div>
-            Standard-Login: Benutzername <strong>"admin"</strong> und Passwort <strong>"admin"</strong> – bitte sofort ändern!
-          </div>
-        </div>
-        {% endif %}-->
- 
         <form method="post" action="{{ url_for('auth_routes.login') }}">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <div class="mb-3">
             <label class="form-label">{{ _('Benutzername') }}</label>
-            <input name="username" class="form-control" autocomplete="username" required>
+            <input id="login_username" name="username" class="form-control" autocomplete="username" required>
           </div>
           <div class="mb-3">
             <label class="form-label">{{ _('Passwort') }}</label>
@@ -40,8 +19,86 @@
           </div>
           <button class="btn btn-primary w-100">{{ _('Login') }}</button>
         </form>
+
+        <!-- "Passwort vergessen?" -->
+        <div class="mt-3 text-end">
+          <button class="btn btn-link p-0"
+                  type="button"
+                  data-bs-toggle="modal"
+                  data-bs-target="#forgotPwdModal">
+            {{ _('Passwort vergessen?') }}
+          </button>
+        </div>
+
+        <!-- Modal: Passwort zurücksetzen anfordern -->
+        <div class="modal fade" id="forgotPwdModal" tabindex="-1" aria-labelledby="forgotPwdLabel" aria-hidden="true">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <form method="post" action="{{ url_for('auth_routes.request_reset') }}" id="forgotPwdForm" novalidate>
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="forgotPwdLabel">{{ _('Passwort zurücksetzen anfordern') }}</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Schließen') }}"></button>
+                </div>
+                <div class="modal-body">
+                  <div class="form-floating mb-3">
+                    <input type="text" class="form-control" id="forgot_username" name="username"
+                           placeholder="{{ _('Benutzername') }}" required>
+                    <label for="forgot_username">{{ _('Benutzername') }}</label>
+                    <div class="invalid-feedback">{{ _('Bitte Benutzername angeben') }}.</div>
+                  </div>
+                  <small class="text-muted">
+                    {{ _('Wenn die Angaben korrekt sind, wird ein Reset-Link per E-Mail gesendet.') }}
+                  </small>
+                </div>
+                <div class="modal-footer d-flex justify-content-between">
+                  <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ _('Abbrechen') }}</button>
+                  <button type="submit" class="btn btn-primary">{{ _('Reset-Link senden') }}</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
 </div>
+
+{% block scripts %}
+<script>
+  // Prefill: Benutzername aus dem Login-Feld ins Modal übernehmen
+  document.addEventListener('DOMContentLoaded', () => {
+    const modalEl = document.getElementById('forgotPwdModal');
+    if (!modalEl) return;
+    modalEl.addEventListener('shown.bs.modal', () => {
+      const loginUser = document.getElementById('login_username')?.value || '';
+      const forgotUser = document.getElementById('forgot_username');
+      if (forgotUser) {
+        forgotUser.value = loginUser;
+        forgotUser.focus();
+      }
+    });
+
+    // Einfache Client-Validierung
+    const form = document.getElementById('forgotPwdForm');
+    form?.addEventListener('submit', (e) => {
+      if (!form.checkValidity()) {
+        e.preventDefault();
+        e.stopPropagation();
+        form.classList.add('was-validated');
+      }
+    });
+
+    // Enter-Submit im Modal (nur bei Eingaben)
+    modalEl.addEventListener('keydown', (e) => {
+      const tag = (e.target.tagName || '').toLowerCase();
+      if (e.key === 'Enter' && (tag === 'input' || tag === 'select' || tag === 'textarea')) {
+        e.preventDefault();
+        form?.requestSubmit();
+      }
+    });
+  });
+</script>
+{% endblock %}
 {% endblock %}

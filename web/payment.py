@@ -674,12 +674,14 @@ def delete_antrag_attachment(att_id: int):
     flash(_('Anhang gelöscht.'), 'info')
     return redirect(url_for('payment_routes.zahlungsfreigabe_detail', antrag_id=r['antrag_id']))
 
+
 @payment_routes.post('/zahlungsfreigabe/<int:antrag_id>/edit')
 @login_required
 @require_csrf
 def edit_antrag(antrag_id):
     user = current_user()
 
+    # Alte Werte laden + Berechtigungen prüfen
     with engine.begin() as conn:
         row = conn.execute(text("""
             SELECT verwendungszweck, betrag, lieferant, begruendung, paragraph, datum,
@@ -690,15 +692,13 @@ def edit_antrag(antrag_id):
 
         if not row:
             abort(404)
-
         if row['status'] in ('freigegeben', 'abgeschlossen', 'abgelehnt', 'zurueckgezogen'):
             flash(_('Bearbeitung nicht mehr möglich.'), 'warning')
             return redirect(url_for('payment_routes.zahlungsfreigabe_detail', antrag_id=antrag_id))
-
         if user['id'] != row['antragsteller_id'] and not user.get('can_approve'):
             abort(403)
 
-    # Neue Werte aus dem Formular
+    # Form-Werte
     verwendungszweck = (request.form.get('verwendungszweck') or '').strip()
     betrag_str       = (request.form.get('betrag') or '').strip()
     lieferant        = (request.form.get('lieferant') or '').strip()
@@ -706,71 +706,63 @@ def edit_antrag(antrag_id):
     paragraph        = (request.form.get('paragraph') or '').strip()
     datum_str        = (request.form.get('datum') or '').strip()
 
-    # Validierung/Parsing
+    # Betrag + Datum parsen (robust)
     try:
-        from decimal import Decimal
+        from decimal import Decimal, InvalidOperation
         betrag_decimal = Decimal(betrag_str.replace(',', '.'))
-        datum_obj      = datetime.strptime(datum_str, '%Y-%m-%d').date()
+
+        def parse_date_flexible(s: str | None):
+            if not s:
+                return None
+            for fmt in ('%Y-%m-%d', '%d.%m.%Y'):
+                try:
+                    return datetime.strptime(s, fmt).date()
+                except ValueError:
+                    continue
+            return None
+
+        datum_obj = parse_date_flexible(datum_str)
+
+    except InvalidOperation:
+        flash(_('Ungültiger Betrag') + '.', 'danger')
+        return redirect(url_for('payment_routes.zahlungsfreigabe_detail', antrag_id=antrag_id))
     except Exception as e:
         flash(_('Ungültige Eingabe: %(error)s', error=escape(str(e))), 'danger')
         return redirect(url_for('payment_routes.zahlungsfreigabe_detail', antrag_id=antrag_id))
 
-    
-# Änderungen erkennen – NUR für die Zusammenfassung (identisch zur Logik in entries/edit.html)
-    from decimal import Decimal  # falls oben noch nicht im Scope
+    # Änderungen erfassen (für Audit-Text)
     def _q2(v):
-        if v is None:
-            return None
+        if v is None: return None
         return Decimal(str(v)).quantize(Decimal('0.01'))
-
     def _fmt_money(v):
-        v = _q2(v)
-        return "" if v is None else f"{v:.2f}"
-
+        v = _q2(v); return "" if v is None else f"{v:.2f}"
     def _fmt_date(d):
-        if not d:
-            return ""
-        if isinstance(d, datetime):
-            d = d.date()
+        if not d: return ""
+        if isinstance(d, datetime): d = d.date()
         return d.strftime('%d.%m.%Y')
 
-    # Alte Werte (bereits oben aus DB geladen)
     old_verwendungszweck = row['verwendungszweck']
     old_betrag           = row['betrag']
     old_lieferant        = row['lieferant']
     old_begruendung      = row['begruendung']
     old_paragraph        = row['paragraph']
-    old_datum            = row['datum']
+    old_datum_norm       = row['datum'].date() if isinstance(row['datum'], datetime) else row['datum']
 
-    # NEU: 4‑Tuples wie in entries/edit.html: (feld_key, label, old_str, new_str)
-    changes: list[tuple[str, str, str, str]] = []
-
+    changes = []
     if (old_verwendungszweck or '') != verwendungszweck:
-        changes.append(("verwendungszweck", "Verwendungszweck",
-                        (old_verwendungszweck or ''), verwendungszweck))
-
+        changes.append(("verwendungszweck", "Verwendungszweck", (old_verwendungszweck or ''), verwendungszweck))
     if _q2(old_betrag) != _q2(betrag_decimal):
-        changes.append(("betrag", "Betrag",
-                        _fmt_money(old_betrag), _fmt_money(betrag_decimal)))
-
+        changes.append(("betrag", "Betrag", _fmt_money(old_betrag), _fmt_money(betrag_decimal)))
     if (old_lieferant or '') != lieferant:
-        changes.append(("lieferant", "Lieferant",
-                        (old_lieferant or ''), lieferant))
-
+        changes.append(("lieferant", "Lieferant", (old_lieferant or ''), lieferant))
     if (old_begruendung or '') != begruendung:
-        changes.append(("begruendung", "Begründung",
-                        (old_begruendung or ''), begruendung))
-
+        changes.append(("begruendung", "Begründung", (old_begruendung or ''), begruendung))
     if (old_paragraph or '') != paragraph:
-        changes.append(("paragraph", "Paragraph",
-                        (old_paragraph or ''), paragraph))
+        changes.append(("paragraph", "Paragraph", (old_paragraph or ''), paragraph))
+    if old_datum_norm != (datum_obj or old_datum_norm):
+        changes.append(("datum", "Datum", _fmt_date(old_datum_norm), _fmt_date(datum_obj or old_datum_norm)))
 
-    old_datum_norm = old_datum.date() if isinstance(old_datum, datetime) else old_datum
-    if old_datum_norm != datum_obj:
-        changes.append(("datum", "Datum",
-                        _fmt_date(old_datum_norm), _fmt_date(datum_obj)))
-
-    # Zusammenfassung wie in entries/edit.html (kann unverändert bleiben)
+    # --- Update: Datum nie NULL schreiben ---
     with engine.begin() as conn:
         conn.execute(text("""
             UPDATE zahlungsantraege
@@ -779,7 +771,8 @@ def edit_antrag(antrag_id):
                 lieferant=:lieferant,
                 begruendung=:begruendung,
                 paragraph=:paragraph,
-                datum=:datum,
+                -- behalte alten Wert, wenn :datum NULL kommt
+                datum=COALESCE(:datum, datum),
                 updated_at=NOW()
             WHERE id=:id
         """), {
@@ -788,7 +781,7 @@ def edit_antrag(antrag_id):
             'lieferant': lieferant,
             'begruendung': begruendung,
             'paragraph': paragraph,
-            'datum': datum_obj,
+            'datum': datum_obj,  # kann None sein; COALESCE fängt es ab
             'id': antrag_id
         })
 
@@ -802,27 +795,7 @@ def edit_antrag(antrag_id):
         conn.execute(text("""
             INSERT INTO zahlungsantrag_audit (antrag_id, user_id, action, timestamp, detail)
             VALUES (:aid, :uid, 'edit', NOW(), :detail)
-        """), {
-            'aid': antrag_id,
-            'uid': user['id'],
-            'detail': detail_text
-        })
-
-        # Neu laden für Darstellung
-        antrag = conn.execute(text("""
-            SELECT z.*, u.username AS antragsteller
-            FROM zahlungsantraege z
-            LEFT JOIN users u ON u.id = z.antragsteller_id
-            WHERE z.id = :id
-        """), {'id': antrag_id}).mappings().first()
-
-        audit = conn.execute(text("""
-            SELECT a.id, a.user_id, u.username, a.action, a.timestamp, a.detail
-            FROM zahlungsantrag_audit a
-            LEFT JOIN users u ON u.id = a.user_id
-            WHERE a.antrag_id = :id
-            ORDER BY a.timestamp ASC, a.id ASC
-        """), {'id': antrag_id}).mappings().all()
+        """), {'aid': antrag_id, 'uid': user['id'], 'detail': detail_text})
 
     flash(_('Antrag gespeichert.'), 'success')
     return redirect(url_for('payment_routes.zahlungsfreigabe_detail', antrag_id=antrag_id))

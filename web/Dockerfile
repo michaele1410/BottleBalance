@@ -48,7 +48,9 @@ RUN addgroup --system app && adduser --system --ingroup app app \
 
 # Optional: Übersetzungsskript ausführbar machen
 RUN if [ -f /opt/app/scripts/update_translations.sh ]; then \
-      sed -i 's/\r$//' /opt/app/scripts/update_translations.sh && chmod +x /opt/app/scripts/update_translations.sh; \
+      sed -i 's/\r$//' /opt/app/scripts/update_translations.sh && \
+      sed -i '1s/^\xEF\xBB\xBF//' /opt/app/scripts/update_translations.sh && \
+      chmod +x /opt/app/scripts/update_translations.sh; \
     fi
 
 # Buildzeit: Babel kompilieren, wenn .po vorhanden; mit robusten Checks

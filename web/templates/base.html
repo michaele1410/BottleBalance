@@ -133,38 +133,38 @@
 <!-- Footer -->
 <footer class="border-top py-3">
   <div class="container text-muted small">
-    © <a id="developer-email-footer" class="link-secondary text-decoration-none">Michael Eitdorf</a>
-    &nbsp;|&nbsp; Version: <a href="#" data-bs-toggle="modal" data-bs-target="#aboutModal"> {{ app_version }} </a>
+    © Michael Eitdorf | Version: {{ app_version }} |
+    <a href="https://buymeacoffee.com/michaeleitdorf" target="_blank" rel="noopener noreferrer">
+      ☕ Buy me a coffee
+    </a>
   </div>
 </footer>
 
+
 <!-- Über-Modal -->
-<div class="modal fade" id="aboutModal" tabindex="-1" aria-labelledby="aboutModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="aboutModalLabel">{{ _('Über') }} {{ _('BottleBalanceTitle') }}</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
-      </div>
-      <div class="modal-body">
-        <p><strong>{{ _('Name:') }}</strong> {{ _('BottleBalanceTitle') }}</p>
-        <p><strong>{{ _('Version:') }}</strong> {{ app_version }}</p>
-        <p><strong>{{ _('Entwickler:') }}</strong> Michael Eitdorf</p>
-        <p><strong>{{ _('Kontakt:') }}</strong>
-          {% if session.get('user_id') %}
-              <a href="mailto:{{ DEVELOPER_EMAIL }}">
-                  {{ _('Entwickler kontaktieren') }}
-              </a>
-          {% else %}
-              <a id="developer-email-modal">{{ _('Entwickler kontaktieren') }}</a>
-          {% endif %}
-        </p>
-        <p><strong>{{ _('Webseite:') }}</strong> <a href="{{ developer_url }}" target="_blank" rel="noopener noreferrer">GitHub-Projekt</a></p>
-        <hr>
-        <p class="small text-muted">
-          {{ _('BottleBalanceTitle') }}{{ _(' ist eine Webanwendung zur Verwaltung von Getränkekassen und Zahlungsanträgen. Für Support oder Feedback wenden Sie sich bitte an den Entwickler.') }}
-        </p>
-      </div>
+<div class="modal-body">
+  <p><strong>{{ _('Name:') }}</strong> {{ _('BottleBalanceTitle') }}</p>
+  <p><strong>{{ _('Version:') }}</strong> {{ app_version }}</p>
+  <p><strong>{{ _('Entwickler:') }}</strong> Michael Eitdorf</p>
+  <p><strong>{{ _('Kontakt:') }}</strong>
+    <a href="mailto:{{ DEVELOPER_EMAIL }}">{{ _('Entwickler kontaktieren') }}</a>
+  </p>
+  <p><strong>{{ _('Webseite:') }}</strong>
+    <a href="{{ developer_url }}" target="_blank" rel="noopener noreferrer">GitHub-Projekt</a>
+  </p>
+  <hr>
+  <p class="small text-muted">
+    {{ _('BottleBalanceTitle') }}{{ _(' ist eine Webanwendung zur Verwaltung von Getränkekassen und Zahlungsanträgen.') }}
+  </p>
+
+  <!-- Buy Me a Coffee -->
+  <p class="mt-3">
+    ☕ <a href="https://buymeacoffee.com/michaeleitdorf" target="_blank" rel="noopener noreferrer">
+      {{ _('Buy me a coffee') }}
+    </a>
+  </p>
+</div>
+
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Schließen') }}</button>
       </div>

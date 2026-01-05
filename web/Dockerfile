@@ -18,6 +18,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     locales \
     tzdata \
     postgresql-client \
+    findutils \
+    grep \
   && rm -rf /var/lib/apt/lists/*
 
 # Locale
@@ -49,15 +51,21 @@ RUN if [ -f /opt/app/scripts/update_translations.sh ]; then \
       sed -i 's/\r$//' /opt/app/scripts/update_translations.sh && chmod +x /opt/app/scripts/update_translations.sh; \
     fi
 
-# Buildzeit: Babel kompilieren, wenn .po vorhanden; danach Rechte fixen
-RUN if [ -d /opt/app/translations ] && find /opt/app/translations -type f -name '*.po' | grep -q .; then \      pybabel compile -d /opt/app/translations || (echo 'pybabel compile failed' && exit 1); \      chown -R app:app /opt/app/translations; \    else \      echo 'No translations to compile, skipping pybabel'; \    fi
+# Buildzeit: Babel kompilieren, wenn .po vorhanden; mit robusten Checks
+RUN set -eux; \
+    if [ -d /opt/app/translations ] && find /opt/app/translations -type f -name '*.po' | grep -q .; then \
+      python -m babel.messages.frontend compile -d /opt/app/translations || { echo 'pybabel module compile failed'; exit 1; }; \
+      chown -R app:app /opt/app/translations; \
+    else \
+      echo 'No translations to compile, skipping pybabel'; \
+    fi
+
 
 # Gunicorn/WSGI
 ENV GUNICORN_WORKERS=2 \
     GUNICORN_THREADS=2 \
     GUNICORN_TIMEOUT=90 \
-    PYTHONPATH=/opt/app \
-    WSGI_MODULE=app:app
+    PYTHONPATH=/opt/app
 
 EXPOSE 5000
 

@@ -46,12 +46,17 @@ RUN addgroup --system app && adduser --system --ingroup app app \
  && chown -R app:app /opt/app \
  && chown -R app:app /app
 
-# Optional: Übersetzungsskript ausführbar machen
+# BOM/CRLF entfernen & ausführbar machen
 RUN if [ -f /opt/app/scripts/update_translations.sh ]; then \
       sed -i 's/\r$//' /opt/app/scripts/update_translations.sh && \
       sed -i '1s/^\xEF\xBB\xBF//' /opt/app/scripts/update_translations.sh && \
       chmod +x /opt/app/scripts/update_translations.sh; \
     fi
+# Optional NBSP→Space, falls nötig:
+# RUN if [ -f /opt/app/scripts/update_translations.sh ]; then \
+#       tr '\xC2\xA0' ' ' < /opt/app/scripts/update_translations.sh > /opt/app/scripts/update_translations.sh.cleaned && \
+#       mv /opt/app/scripts/update_translations.sh.cleaned /opt/app/scripts/update_translations.sh; \
+#     fi
 
 # Buildzeit: Babel kompilieren, wenn .po vorhanden; mit robusten Checks
 RUN set -eux; \
@@ -74,4 +79,4 @@ EXPOSE 5000
 USER app
 
 # Start: optionales Babel-Update; dann Gunicorn mit konfigurierbarem WSGI-Entry
-CMD sh -lc "[ -f /opt/app/scripts/update_translations.sh ] && sh /opt/app/scripts/update_translations.sh || echo 'skip translations'; \            exec gunicorn -w ${GUNICORN_WORKERS} --threads ${GUNICORN_THREADS} --timeout ${GUNICORN_TIMEOUT} \            --access-logfile - -b 0.0.0.0:5000 ${WSGI_MODULE}"
+CMD sh -lc "[ -f /opt/app/scripts/update_translations.sh ] && sh /opt/app/scripts/update_translations.sh || echo 'skip translations'; exec gunicorn -w ${GUNICORN_WORKERS} --threads ${GUNICORN_THREADS} --timeout ${GUNICORN_TIMEOUT} --access-logfile - -b 0.0.0.0:5000 ${WSGI_MODULE}"

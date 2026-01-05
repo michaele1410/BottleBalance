@@ -145,3 +145,10 @@ Contributions are welcome! Please open an issue/PR. For larger changes, discuss 
 **Schnellstart:** `.env` erstellen → `docker compose -f "docker-compose.yml" up -d --build` → App unter `http://localhost:5000` öffnen.
 
 **Betrieb & Sicherheit:** Reverse Proxy mit TLS, regelmäßige DB‑Backups, Log‑Monitoring, Updates per Compose, 2FA für Admins verpflichtend.
+
+
+## Unterstütze den Entwickler
+
+Wenn dir BottleBalance gefällt, kannst du mich unterstützen:
+
+☕ [Buy me a coffee](https://buymeacoffee.com/michaeleitdorf)

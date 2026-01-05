@@ -55,7 +55,7 @@ from modules.core_utils import (
     localize_dt_str
 )
 from modules.system_utils import (
-    get_version
+    get_version_old
 )
 
 from modules.bbalance_utils import (
@@ -1554,7 +1554,6 @@ def export_pdf():
     story = []
 
     logo_path = os.path.join(app.root_path, 'static', 'images', 'logo.png')
-    waehrung = _("waehrung")
 
     if os.path.exists(logo_path):
         story.append(RLImage(logo_path, width=40*mm, height=12*mm))
@@ -1567,9 +1566,11 @@ def export_pdf():
 
     # ---- HILFSFORMATIERER: nur geänderte Zellen anzeigen ----
     def fmt_fl(n: int | None) -> str:
-        """Flaschen-Anzahl; leer wenn 0/None, sonst 'N Fl.'"""
+        """Flaschen-Anzahl; leer wenn 0/None, sonst 'N Fl.' (lokalisiert)."""
         n = int(n or 0)
-        return '' if n == 0 else f"{n} Fl."
+        return '' if n == 0 else f"{n} {_('Fl.')}"
+
+
 
     def fmt_money(d: Decimal | None) -> str:
         """Währung; leer wenn 0/None, sonst formatiert."""
@@ -1596,7 +1597,7 @@ def export_pdf():
         ])
 
         # Zellenwerte (mit optionalem Ausblenden)
-        inv_cell = '' if (HIDE_CUMULATIVE_WHEN_UNCHANGED and not changed) else str(int(e['inventar'] or 0))
+        inv_cell = '' if (HIDE_CUMULATIVE_WHEN_UNCHANGED and not changed) else fmt_fl(e['inventar'])
         kas_cell = '' if (HIDE_CUMULATIVE_WHEN_UNCHANGED and not changed) else format_eur_de(e['kassenbestand'])
 
         data.append([
@@ -1623,14 +1624,14 @@ def export_pdf():
     # Dynamische Spaltenbreiten (passen sicher in den Satzspiegel)
     table_width = doc.width
     col_widths = [table_width * w for w in [
-        0.12,  # Datum
+        0.10,  # Datum
         0.10,  # Vollgut
         0.10,  # Leergut
-        0.12,  # Inventar
-        0.13,  # Einnahme
-        0.13,  # Ausgabe
-        0.13,  # Kassenbestand
-        0.17,  # Bemerkung
+        0.10,  # Inventar
+        0.12,  # Einnahme
+        0.12,  # Ausgabe
+        0.12,  # Kassenbestand
+        0.18,  # Bemerkung
     ]]
 
     table = Table(data, colWidths=col_widths, repeatRows=1)

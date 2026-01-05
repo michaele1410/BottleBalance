@@ -285,20 +285,20 @@
       <div class="card-body">    
         <!-- Tabelle: eigener Block unter der Filterzeile -->
         <div class="table-responsive mt-0">
-          <table class="table table-sm align-middle table-striped table-stacked">
+          <table class="table table-sm align-middle table-striped table-stacked table-bordered">
             <thead class="table-light">
               <tr>
                 <th class="text-center" style="cursor:pointer;" onclick="sortTableByDate()">
                   {{ _('Datum') }} <i class="bi bi-arrow-down-up"></i>
                 </th>
-                <th class="text-end">{{ _('Vollgut') }}</th>
-                <th class="text-end">{{ _('Leergut') }}</th>
-                <th class="text-end">{{ _('Inventar') }}</th>
-                <th class="text-end">{{ _('Einnahme') }}</th>
-                <th class="text-end">{{ _('Ausgabe') }}</th>
-                <th class="text-end">{{ _('Kassenbestand') }}</th>
-                <th class="text-start">{{ _('Bemerkung') }}</th>
-                <th class="text-start">{{ _('Aktionen') }}</th>
+                <th class="text-center">{{ _('Vollgut') }}</th>
+                <th class="text-center">{{ _('Leergut') }}</th>
+                <th class="text-center">{{ _('Inventar') }}</th>
+                <th class="text-center">{{ _('Einnahme') }}</th>
+                <th class="text-center">{{ _('Ausgabe') }}</th>
+                <th class="text-center">{{ _('Kassenbestand') }}</th>
+                <th class="text-center">{{ _('Bemerkung') }}</th>
+                <th class="text-center">{{ _('Aktionen') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -323,7 +323,7 @@
 
               <!-- Bemerkung: immer anzeigen -->
               <td class="text-start" data-label="{{ _('Bemerkung') }}">{{ e.bemerkung }}</td>
-                <td class="text-end" data-label="{{ _('Aktionen') }}">
+                <td class="text-center" data-label="{{ _('Aktionen') }}">
                   {% set role = current_user().get('role') %}
                   {% if role in ['Editor', 'Manager', 'Admin'] %}
                   <a class="btn btn-sm btn-outline-primary"

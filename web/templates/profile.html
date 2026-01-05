@@ -1,38 +1,63 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="row justify-content-center">
-  <div class="col-12 col-lg-8">
-    <div class="card shadow-sm mb-3">
+<!--div class="row justify-content-center"-->
+  <!--div class="col-12 col-lg-8"-->
+    <div class="card shadow-sm">
       <div class="card-body">
-        <h2 class="h6 mb-3">{{ _('Profil') }}</h2>
+        <h2 class="h1 mb-3">{{ _('Profil') }}</h2>
         <form action="{{ url_for('profile_post') }}" class="row g-3" method="post">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <div class="col-12">
+          <!--div class="col-12">
             <label class="form-label">{{ _('E-Mail (für Passwort-Reset)') }}</label>
             <input class="form-control" name="email" type="email" value="{{ user.email or '' }}" />
+          </div-->
+          <div class="input-group mb-3">
+            <span class="input-group-text">{{ _('E-Mail (für Passwort-Reset)') }}</span>
+            <div class="form-floating flex-grow-1">
+              <input type="email" name="email"  inputmode="text" class="form-control"
+                placeholder="{{ _('E-Mail') }}" value="{{ user.email or '' }}">
+                <label for="email">{{ _('E-Mail') }}</label>
+            </div>
           </div>
 
-          <div class="col-12 col-md-6">
+
+          <!--div class="col-12 col-md-6">
             <label class="form-label">{{ _('Neues Passwort') }}</label>
             <input class="form-control" name="password" placeholder="{{ _('leer lassen, um nicht zu ändern') }}" type="password" />
-          </div>
+          </div-->
+          <div class="input-group mb-3">
+            <span class="input-group-text">{{ _('Neues Passwort') }}</span>
+            <div class="form-floating flex-grow-1">
+              <input type="password" name="password"  inputmode="text" class="form-control"
+                placeholder="{{ _('Neues Passwort eingeben') }}" value="">
+                <label for="password">{{ _('Neues Passwort eingeben') }}</label>
+            </div>
+          </div> 
 
-          <div class="col-12 col-md-6">
+          <!--div class="col-12 col-md-6">
             <label class="form-label">{{ _('Neues Passwort (Wiederholen)') }}</label>
             <input class="form-control" name="password2" placeholder="{{ _('leer lassen, um nicht zu ändern') }}" type="password" />
-          </div>
+          </div-->
+          <div class="input-group mb-3">
+            <span class="input-group-text">{{ _('Neues Passwort (Wiederholen)') }}</span>
+            <div class="form-floating flex-grow-1">
+              <input type="password" name="password2"  inputmode="text" class="form-control"
+                placeholder="{{ _('Neues Passwort eingeben') }}" value="">
+                <label for="password2">{{ _('Neues Passwort eingeben') }}</label>
+            </div>
+          </div> 
 
           <div class="col-12 d-flex gap-2">
-            <a class="btn btn-outline-secondary" href="{{ url_for('bbalance_routes.index') }}">{{ _('Abbrechen') }}</a>
             <button class="btn btn-primary">{{ _('Speichern') }}</button>
+            <a class="btn btn-outline-secondary" href="{{ url_for('bbalance_routes.index') }}">{{ _('Abbrechen') }}</a>
           </div>
         </form>
       </div>
     </div>
 
-    <div class="card shadow-sm mb-3">
+    <div class="card shadow-sm">
       <div class="card-body">
-        <h2 class="h6 mb-3">{{ _('2-Faktor-Authentifizierung') }}</h2>
+        <h2 class="h1 mb-3">{{ _('2-Faktor-Authentifizierung') }}</h2>
         {% if user.totp_enabled %}
         <p class="text-success">{{ _('2FA ist') }} <strong>{{ _('aktiviert') }}</strong>.</p>
         <form action="{{ url_for('disable_2fa') }}" class="row g-2 align-items-end" method="post">
@@ -62,9 +87,9 @@
       </div>
     </div>
 
-    <div class="card shadow-sm mb-3">
+    <div class="card shadow-sm">
       <div class="card-body">
-        <h2 class="h6 mb-3">{{ _('System') }}</h2>
+        <h2 class="h1 mb-3">{{ _('System') }}</h2>
         <form method="post" action="{{ url_for('update_preferences') }}" class="row g-3">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <!-- Sort order DESC-->
@@ -103,7 +128,8 @@
           </div>
           <!-- Speichern -->
           <div class="col-12 d-flex gap-2">
-            <button class="btn btn-primary mt-2">{{ _('Speichern') }}</button>
+            <button class="btn btn-primary">{{ _('Speichern') }}</button>
+            <a class="btn btn-outline-secondary" href="{{ url_for('bbalance_routes.index') }}">{{ _('Abbrechen') }}</a>
           </div>
         </form>
       </div>

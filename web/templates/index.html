@@ -282,6 +282,7 @@
 <div class="row g-3 mb-3">
   <div class="col-12">
     <div class="card shadow-sm">
+      <span>{{ _('Einträge') }}</span>
       <div class="card-body">    
         <!-- Tabelle: eigener Block unter der Filterzeile -->
         <div class="table-responsive mt-0">
@@ -552,19 +553,18 @@
           title: (items) => items[0]?.label ?? '',
           label: (ctx) => {
             const val = ctx.parsed?.y ?? 0;
+            const n = Number(val);
+            const safe = Number.isFinite(n) ? n.toFixed(2) : '0.00';
+
             if (ctx.dataset?.label === 'Kassenbestand') {
-              try {
-                return new Intl.NumberFormat('de-DE', {
-                  style: 'currency', currency: CURRENCY_CODE
-                }).format(val);
-              } catch {
-                return `${val.toFixed?.(2) ?? val} {{ _('waehrung') }}`;
-              }
+              // Einfacher: Wert + Symbol aus Jinja
+              return `${safe} {{ _('waehrung') }}`;
             }
-            return `${val} {{ _('Flaschen') }}`;
+            return `${val} {{ _('Fl.') }}`;
           }
         }
       }
+
     },
     scales: {
       x: {

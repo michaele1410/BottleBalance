@@ -1,6 +1,5 @@
 volumes:
   bottlebalance-db:
-  bottlebalance-app:
   bottlebalance-app-uploads:
 
 services:
@@ -19,10 +18,15 @@ services:
       retries: 10
 
   bottlebalance-web:
-    build: ./web
+    build:
+      context: ./web
+      dockerfile: Dockerfile
     ports:
       - "5000:5000"
     environment:
+      - WSGI_MODULE=app:app
+      - PYTHONPATH=/opt/app
+
       # --- Bestehende DB-Parameter ---
       - DB_HOST=${DB_HOST}
       - DB_NAME=${DB_NAME}
@@ -46,7 +50,6 @@ services:
       #- APP_BASE_URL=http://localhost:5000
       
     volumes:
-      - bottlebalance-app:/app
       - bottlebalance-app-uploads:/app/uploads
     depends_on:
       bottlebalance-db:

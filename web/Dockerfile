@@ -1,77 +1,67 @@
-# Use official Python image as base
+
 FROM python:3.11-slim
 
-# Set environment variables
-ENV PYTHONDONTWRITEBYTECODE=1 
-ENV PYTHONUNBUFFERED=1
+# Basics
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+ENV WSGI_MODULE=app:app
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential libpq-dev libfreetype6 libjpeg62-turbo locales \
+    build-essential \
+    libpq-dev \
+    libfreetype6 \
+    libjpeg62-turbo \
     libjpeg-dev \
-    zlib1g-dev  \
-    gettext  \
-    nano  \
-    postgresql-client  \
-    && rm -rf /var/lib/apt/lists/*
+    zlib1g-dev \
+    gettext \
+    locales \
+    tzdata \
+    postgresql-client \
+  && rm -rf /var/lib/apt/lists/*
 
+# Locale
 RUN sed -i '/de_DE.UTF-8/s/^# //g' /etc/locale.gen && locale-gen
+ENV TZ=Europe/Berlin \
+    LANG=de_DE.UTF-8 \
+    LC_ALL=de_DE.UTF-8
 
-# Set working directory
-WORKDIR /app
+# Code-Verzeichnis (stabil, NICHT übermounten)
+WORKDIR /opt/app
 
-# Install Python dependencies
+# Python-Dependencies
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application files
-COPY . /app
+# Quellen
+COPY . /opt/app
 
-# Optional: Besitzrechte für Non-Root-User vorbereiten
+# Uploads-Verzeichnis (separates Volume)
+RUN mkdir -p /app/uploads
+
+# Non-root User + Besitzrechte
 RUN addgroup --system app && adduser --system --ingroup app app \
-&& chown -R app:app /app
+ && chown -R app:app /opt/app \
+ && chown -R app:app /app
 
-# Make optional translation script executable if present
-RUN if [ -f ./scripts/update_translations.sh ]; then \
-      sed -i 's/\r$//' ./scripts/update_translations.sh && chmod +x ./scripts/update_translations.sh; \
+# Optional: Übersetzungsskript ausführbar machen
+RUN if [ -f /opt/app/scripts/update_translations.sh ]; then \
+      sed -i 's/\r$//' /opt/app/scripts/update_translations.sh && chmod +x /opt/app/scripts/update_translations.sh; \
     fi
 
-# Compile translation files if translation directory exists and has .po files
-# This avoids failing the build when translations are not yet created.
+# Buildzeit: Babel kompilieren, wenn .po vorhanden; danach Rechte fixen
+RUN if [ -d /opt/app/translations ] && find /opt/app/translations -type f -name '*.po' | grep -q .; then \      pybabel compile -d /opt/app/translations || (echo 'pybabel compile failed' && exit 1); \      chown -R app:app /opt/app/translations; \    else \      echo 'No translations to compile, skipping pybabel'; \    fi
 
-RUN if [ -d translations ] && find translations -type f -name '*.po' | grep -q .; then \
-      pybabel compile -d translations || (echo 'pybabel compile failed' && exit 1); \
-    else \
-      echo 'No translations to compile, skipping pybabel'; \
-    fi \
- && chown -R app:app /app/translations
-
-# Expose port
-EXPOSE 5000
-
-# Set timezone
-ENV TZ=Europe/Berlin
-
-ENV LANG=de_DE.UTF-8 \
-    LC_ALL=de_DE.UTF-8
-
-
-# Set version
-ARG APP_VERSION
-ENV APP_VERSION=${APP_VERSION}
-
-# Gunicorn runtime settings
+# Gunicorn/WSGI
 ENV GUNICORN_WORKERS=2 \
     GUNICORN_THREADS=2 \
-    GUNICORN_TIMEOUT=90
+    GUNICORN_TIMEOUT=90 \
+    PYTHONPATH=/opt/app \
+    WSGI_MODULE=app:app
 
-# Switch to non-root user (optional but recommended)
+EXPOSE 5000
+
 USER app
 
-# Start script: erst update_translations.sh, dann gunicorn
-
-
-# Start: run update_translations.sh if present, then gunicorn
-# 'exec' ensures signals are forwarded properly.
-CMD sh -lc "[ -f ./scripts/update_translations.sh ] && sh ./scripts/update_translations.sh || echo 'skip translations'; \
-            exec gunicorn -w ${GUNICORN_WORKERS} --threads ${GUNICORN_THREADS} --timeout ${GUNICORN_TIMEOUT} \
-            --access-logfile - -b 0.0.0.0:5000 app:app"
+# Start: optionales Babel-Update; dann Gunicorn mit konfigurierbarem WSGI-Entry
+CMD sh -lc "[ -f /opt/app/scripts/update_translations.sh ] && sh /opt/app/scripts/update_translations.sh || echo 'skip translations'; \            exec gunicorn -w ${GUNICORN_WORKERS} --threads ${GUNICORN_THREADS} --timeout ${GUNICORN_TIMEOUT} \            --access-logfile - -b 0.0.0.0:5000 ${WSGI_MODULE}"

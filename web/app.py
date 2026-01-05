@@ -185,6 +185,38 @@ app.config.setdefault('UPLOAD_FOLDER', os.path.join(app.instance_path, 'uploads'
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 
+BRANDING_DIR = os.path.join(app.config['UPLOAD_FOLDER'], 'branding')
+os.makedirs(BRANDING_DIR, exist_ok=True)
+
+ALLOWED_LOGO_EXTS = {'svg', 'png', 'jpg', 'jpeg', 'webp'}
+
+def _find_custom_logo():
+    """Gibt (filename, full_path, mtime) des vorhandenen Logos in BRANDING_DIR zurück oder (None, None, None)."""
+    for ext in ('svg', 'png', 'jpg', 'jpeg', 'webp'):
+        fname = f"logo.{ext}"
+        fpath = os.path.join(BRANDING_DIR, fname)
+        if os.path.isfile(fpath):
+            try:
+                mtime = int(os.path.getmtime(fpath))
+            except Exception:
+                mtime = None
+            return (fname, fpath, mtime)
+    return (None, None, None)
+
+def brand_logo_url():
+    """Liefert die URL für das Logo: Custom (Uploads) mit Cache-Buster oder Fallback auf static/images/logo.svg."""
+    fname, _fpath, mtime = _find_custom_logo()
+    if fname:
+        # Wird aus Uploads/branding via /view/<filename> bedient
+        # Cache-Buster per mtime anhängen
+        url = url_for('view_file', filename=f"branding/{fname}")
+        return f"{url}?t={mtime or ''}"
+    # Fallback auf statische Standard-Grafik
+    return url_for('static', filename='images/logo.svg')
+
+@app.context_processor
+def inject_branding():
+    return {'brand_logo_url': brand_logo_url()}
 
 # -----------------------
 # Feature Switches (ENV)
@@ -1515,11 +1547,19 @@ def api_import_dry_run():
 # -----------------------
 # PDF Export with optional logo
 # -----------------------
+def _pdf_logo_path():
+    fname, fpath, _ = _find_custom_logo()
+    if fname:
+        ext = fname.rsplit('.', 1)[1].lower()
+        if ext in ('png', 'jpg', 'jpeg'):
+            return fpath  # ReportLab kann SVG nicht direkt rendern
+    return os.path.join(app.root_path, 'static', 'images', 'logo.png')
 
 @app.get('/export/pdf')
 @login_required
 @require_perms('export:pdf')
 def export_pdf():
+
     q = (request.args.get('q') or '').strip()
     df = request.args.get('from')
     dt = request.args.get('to')
@@ -1553,12 +1593,10 @@ def export_pdf():
     styles = getSampleStyleSheet()
     story = []
 
-    logo_path = os.path.join(app.root_path, 'static', 'images', 'logo.png')
-
+    logo_path = _pdf_logo_path()
     if os.path.exists(logo_path):
         story.append(RLImage(logo_path, width=40*mm, height=12*mm))
         story.append(Spacer(1, 6))
-
 
     # --- Titel (echtes Markup, keine HTML-Entities) ---
     story.append(Paragraph(f"<b>{_('BottleBalanceTitle')}{_(' - Export')}</b>", styles['Title']))
@@ -1809,6 +1847,66 @@ def admin_tools():
             except Exception as e:
                 flash(_("Fehler beim Speichern der Bemerkungsoptionen: %(error)s", error=str(e)), "error")
 
+        # 4) Branding-Logo hochladen
+        elif action == "branding_upload":
+            file = request.files.get("logo")
+            if not file or file.filename == "":
+                flash(_("Bitte eine Bilddatei auswählen."), "danger")
+                return redirect(url_for("admin_tools"))
+
+            # Größe prüfen (falls Funktion vorhanden): MAX_CONTENT_LENGTH deckelt ohnehin serverseitig
+            try:
+                from modules.core_utils import validate_file
+                if not validate_file(file):
+                    return redirect(url_for("admin_tools"))
+            except Exception:
+                pass
+
+            # Endung strikt gegen deine ALLOWED_LOGO_EXTS prüfen
+            ext = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else ''
+            if ext not in ALLOWED_LOGO_EXTS:
+                flash(_("Ungültiges Dateiformat. Erlaubt sind: SVG, PNG, JPG, WEBP."), "danger")
+                return redirect(url_for("admin_tools"))
+
+            target_name = f"logo.{ext}"
+            target_path = os.path.join(BRANDING_DIR, target_name)
+
+            # Alte Logos entfernen
+            for old_ext in ('svg', 'png', 'jpg', 'jpeg', 'webp'):
+                old_path = os.path.join(BRANDING_DIR, f"logo.{old_ext}")
+                try:
+                    if os.path.isfile(old_path):
+                        os.remove(old_path)
+                except Exception:
+                    pass
+
+            # Speichern
+            try:
+                os.makedirs(BRANDING_DIR, exist_ok=True)
+                file.save(target_path)
+                flash(_("Logo erfolgreich hochgeladen."), "success")
+            except Exception as e:
+                flash(_("Upload fehlgeschlagen: %(error)s", error=str(e)), "danger")
+
+            return redirect(url_for("admin_tools"))
+
+
+        elif action == "branding_remove":
+            removed = False
+            for old_ext in ('svg', 'png', 'jpg', 'jpeg', 'webp'):
+                old_path = os.path.join(BRANDING_DIR, f"logo.{old_ext}")
+                try:
+                    if os.path.isfile(old_path):
+                        os.remove(old_path)
+                        removed = True
+                except Exception:
+                    pass
+            if removed:
+                flash(_("Eigenes Logo entfernt. Fallback auf Standard-Logo aktiv."), "success")
+            else:
+                flash(_("Kein eigenes Logo gefunden."), "info")
+            return redirect(url_for("admin_tools"))
+        
         # Fallback bei unbekannter Aktion
         else:
             flash(_("Unbekannte Aktion."), "error")
@@ -1860,12 +1958,13 @@ def _jinja2_filter_datetime(value, format='%Y-%m-%d'):
 
 
 
-@app.route('/view/<filename>')
+@app.route('/view/<path:filename>')
 def view_file(filename):
     response = send_from_directory(app.config['UPLOAD_FOLDER'], filename)
     response.headers['X-Content-Type-Options'] = 'nosniff'
     response.headers['Content-Security-Policy'] = "default-src 'self'; img-src 'self' data:;"
     return response
+
 
 @app.route("/attachments/<int:att_id>/view")
 @login_required

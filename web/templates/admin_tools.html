@@ -25,7 +25,7 @@
     <div class="row g-4">
       {# ---------- Bemerkungsoptionen (volle Breite) ---------- #}
       <div class="col-12">
-        <div class="card shadow-sm mb-4">
+        <div class="card shadow-sm">
           <div class="card-header d-flex justify-content-between align-items-center">
             {{ _('Bemerkungsoptionen verwalten') }}
             <span class="text-muted small">{{ _('Eine Option pro Zeile') }}</span>
@@ -115,6 +115,64 @@
                 <i class="bi bi-download me-1"></i>{{ _('Dump erzeugen & herunterladen') }}
               </button>
             </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- ---------- Branding: Custom-Logo hochladen ---------- -->
+      <div class="col-12">
+        <div class="card shadow-sm">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            {{ _('Branding: Eigenes Logo') }}
+            <span class="text-muted small">{{ _('SVG, PNG, JPG, WEBP – empfohlen: SVG oder PNG') }}</span>
+          </div>
+          <div class="card-body">
+            <div class="row g-3 align-items-start">
+              <div class="col-md-6">
+                <div class="mb-2">{{ _('Aktuelles Logo (Vorschau)') }}</div>
+                <div class="border rounded p-2 d-flex align-items-center" style="min-height:64px">
+                  <img src="{{ brand_logo_url }}" alt="Logo" style="max-height:48px">
+                </div>
+                <small class="text-muted d-block mt-2">
+                  {{ _('Wenn kein eigenes Logo hinterlegt ist, wird das Standard-Logo verwendet.') }}
+                </small>
+              </div>
+              
+              <div class="col-md-6">
+                <!-- Upload-Form -->
+                <form method="post" action="{{ url_for('admin_tools') }}" enctype="multipart/form-data"
+                      class="d-flex flex-column gap-2">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <input type="hidden" name="action" value="branding_upload">
+
+                  <label class="form-label" for="logo">{{ _('Logo-Datei auswählen') }}</label>
+                  <input class="form-control" type="file" id="logo" name="logo"
+                        accept="image/svg+xml,image/png,image/jpeg,image/webp" required>
+
+                  <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                      <i class="bi bi-upload me-1"></i> {{ _('Hochladen') }}
+                    </button>
+
+                    <!-- Remove-Form als Geschwister, nicht innerhalb der Upload-Form -->
+                    <form method="post" action="{{ url_for('admin_tools') }}" class="d-inline">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <input type="hidden" name="action" value="branding_remove">
+                      <button type="submit" class="btn btn-outline-danger"
+                              onclick="return confirm('{{ _('Eigenes Logo entfernen?') }}')">
+                        <i class="bi bi-trash me-1"></i> {{ _('Entfernen') }}
+                      </button>
+                    </form>
+                  </div>
+
+                  <small class="text-muted">
+                    {{ _('Hinweis: Das Logo wird serverseitig unter uploads/branding/ gespeichert. ') }}
+                    {{ _('Cache wird automatisch aktualisiert.') }}
+                  </small>
+                </form>
+              </div>
+
+            </div>
           </div>
         </div>
       </div>

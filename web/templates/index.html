@@ -279,7 +279,7 @@
 </div>
 
 <!-- Tabelle -->
- <div class="row g-3 mb-3">
+<div class="row g-3 mb-3">
   <div class="col-12">
     <div class="card shadow-sm mb-2">
       <div class="card-header d-flex justify-content-between align-items-center">
@@ -305,69 +305,75 @@
               </tr>
             </thead>
             <tbody>
-            {% for e in entries %}
-            <tr>
-              <td class="text-end">{{ format_date_de(e.datum) }}</td>
-
-              <!-- Nur anzeigen, wenn Wert != 0 -->
-              <td class="text-end" data-label="{{ _('Vollgut') }}">{{ e.vollgut ~ ' ' ~ _('Fl.') if e.vollgut != 0 else '' }}</td>
-              <td class="text-end" data-label="{{ _('Leergut') }}">{{ e.leergut ~ ' ' ~ _('Fl.') if e.leergut != 0 else '' }}</td>
-
-              <!-- Inventar: immer anzeigen oder optional ausblenden -->
+              {% for e in entries %}  
+              <!--genau einmal pro Zeile definieren-->
               {% set changed = (e.vollgut != 0 or e.leergut != 0 or e.einnahme != 0 or e.ausgabe != 0) %}
-              <td class="text-end" data-label="{{ _('Inventar') }}">{{ e.inventar ~ ' ' ~ _('Fl.') if changed else '' }}</td>
+              <tr
+                  data-changed="{{ 1 if changed else 0 }}"    
+                  data-vollgut="{{ 1 if e.vollgut != 0 else 0 }}"    
+                  data-leergut="{{ 1 if e.leergut != 0 else 0 }}"    
+                  data-einnahme="{{ 1 if e.einnahme != 0 else 0 }}"    
+                  data-ausgabe="{{ 1 if e.ausgabe != 0 else 0 }}"  
+              >
+                <td class="text-end" data-col="date">{{ format_date_de(e.datum) }}</td>
 
-              <!-- Einnahme/Ausgabe: nur anzeigen, wenn != 0 -->
-              <td class="text-end" data-label="{{ _('Einnahme') }}">{{ format_eur_de(e.einnahme) if e.einnahme != 0 else '' }}</td>
-              <td class="text-end" data-label="{{ _('Ausgabe') }}">{{ format_eur_de(e.ausgabe) if e.ausgabe != 0 else '' }}</td>
+                <!-- Nur anzeigen, wenn Wert != 0 -->
+                <td class="text-end" data-label="{{ _('Vollgut') }}" data-col="vollgut">{{ e.vollgut ~ ' ' ~ _('Fl.') if e.vollgut != 0 else '' }}</td>
+                <td class="text-end" data-label="{{ _('Leergut') }}" data-col="leergut">{{ e.leergut ~ ' ' ~ _('Fl.') if e.leergut != 0 else '' }}</td>
 
-              <!-- Kassenbestand: immer anzeigen oder optional ausblenden -->
-              <td class="text-end" data-label="{{ _('Kassenbestand') }}">{{ format_eur_de(e.kassenbestand) if changed else '' }}</td>
+                <!-- Inventar: immer anzeigen oder optional ausblenden -->
+                <td class="text-end" data-label="{{ _('Inventar') }}" data-col="inventar">{{ e.inventar ~ ' ' ~ _('Fl.') if changed else '' }}</td>
 
-              <!-- Bemerkung: immer anzeigen -->
-              <td class="text-start" data-label="{{ _('Bemerkung') }}">{{ e.bemerkung }}</td>
-                <td class="text-center" data-label="{{ _('Aktionen') }}">
-                  {% set role = current_user().get('role') %}
-                  {% if role in ['Editor', 'Manager', 'Admin'] %}
-                  <a class="btn btn-sm btn-outline-primary"
-                    href="{{ url_for('bbalance_routes.edit', entry_id=e.id) }}"
-                    title="{{ _('Bearbeiten') }}">
-                    <i class="bi-pencil-square"></i>
-                  </a>
-                  {% endif %}
+                <!-- Einnahme/Ausgabe: nur anzeigen, wenn != 0 -->
+                <td class="text-end" data-label="{{ _('Einnahme') }}" data-col="einnahme">{{ format_eur_de(e.einnahme) if e.einnahme != 0 else '' }}</td>
+                <td class="text-end" data-label="{{ _('Ausgabe') }}" data-col="ausgabe">{{ format_eur_de(e.ausgabe) if e.ausgabe != 0 else '' }}</td>
 
-                  <button class="btn btn-sm btn-outline-secondary position-relative"
-                          type="button"
-                          onclick="openAttachments({{ e.id }})"
-                          title="{{ _('Dokumente öffnen') }}">
-                    <i class="bi-paperclip"></i>
-                    {% if e.attachment_count and e.attachment_count > 0 %}
-                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-secondary">
-                      {{ e.attachment_count }}
-                    </span>
+                <!-- Kassenbestand: immer anzeigen oder optional ausblenden -->
+                <td class="text-end" data-label="{{ _('Kassenbestand') }}" data-col="kassenbestand">{{ format_eur_de(e.kassenbestand) if changed else '' }}</td>
+
+                <!-- Bemerkung: immer anzeigen -->
+                <td class="text-start" data-label="{{ _('Bemerkung') }}" data-col="bemerkung">{{ e.bemerkung }}</td>
+                  <td class="text-center" data-label="{{ _('Aktionen') }}" data-col="aktionen">
+                    {% set role = current_user().get('role') %}
+                    {% if role in ['Editor', 'Manager', 'Admin'] %}
+                    <a class="btn btn-sm btn-outline-primary"
+                      href="{{ url_for('bbalance_routes.edit', entry_id=e.id) }}"
+                      title="{{ _('Bearbeiten') }}">
+                      <i class="bi-pencil-square"></i>
+                    </a>
                     {% endif %}
-                  </button>
 
-                  {% if role in ['Editor', 'Manager', 'Admin'] %}
-                  <form method="post"
-                        action="{{ url_for('bbalance_routes.delete', entry_id=e.id) }}"
-                        class="d-inline"
-                        onsubmit="return confirm('{{ _('Eintrag wirklich löschen?') }}');">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button class="btn btn-sm btn-outline-danger" title="{{ _('Löschen') }}">
-                      <i class="bi-trash"></i>
+                    <button class="btn btn-sm btn-outline-secondary position-relative"
+                            type="button"
+                            onclick="openAttachments({{ e.id }})"
+                            title="{{ _('Dokumente öffnen') }}">
+                      <i class="bi-paperclip"></i>
+                      {% if e.attachment_count and e.attachment_count > 0 %}
+                      <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-secondary">
+                        {{ e.attachment_count }}
+                      </span>
+                      {% endif %}
                     </button>
-                  </form>
-                  {% endif %}
-                </td>
-              </tr>
-              {% else %}
-              <tr>
-                <td data-label="{{ _('Keine Einträge vorhanden.') }}" colspan="9" class="text-center text-muted">{{ _('Keine Einträge vorhanden.') }}</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          
+
+                    {% if role in ['Editor', 'Manager', 'Admin'] %}
+                    <form method="post"
+                          action="{{ url_for('bbalance_routes.delete', entry_id=e.id) }}"
+                          class="d-inline"
+                          onsubmit="return confirm('{{ _('Eintrag wirklich löschen?') }}');">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button class="btn btn-sm btn-outline-danger" title="{{ _('Löschen') }}">
+                        <i class="bi-trash"></i>
+                      </button>
+                    </form>
+                    {% endif %}
+                  </td>
+                </tr>
+                {% else %}
+                <tr>
+                  <td data-label="{{ _('Keine Einträge vorhanden.') }}" colspan="9" class="text-center text-muted">{{ _('Keine Einträge vorhanden.') }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
           </table>
         </div>        
       </div>
@@ -825,7 +831,14 @@
       }
 
       if (list.length === 1) {
-        window.open(list[0].url, '_blank');
+        const targetUrl = list[0].view_url || list[0].url;  // Inline bevorzugen
+        const w = window.open('', '_blank');                // synchron aus Click-Kontext
+        if (w) {
+          try { w.opener = null; } catch (e) {}
+          w.location.href = targetUrl;
+        } else {
+          window.location.assign(targetUrl);                // Fallback: gleicher Tab
+        }
         return;
       }
 
@@ -1071,17 +1084,53 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 </script>
 
-<!-- Stacked - hide not changed values -->
 <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    if (window.matchMedia('(max-width: 767.98px)').matches) {
-      document.querySelectorAll('td[data-label]').forEach(td => {
-        if (td.textContent.trim() === '') {
-          td.style.display = 'none';
-        }
+  function applyStackedVisibility() {
+    const isMobile = window.matchMedia('(max-width: 767.98px)').matches;
+
+    // Desktop → alles sichtbar
+    if (!isMobile) {
+      document.querySelectorAll('table.table-stacked td[data-col]').forEach(td => {
+        td.style.display = '';
       });
+      return;
     }
-  });
+
+    // Mobile/stacked → nur relevante Felder
+    document.querySelectorAll('table.table-stacked tbody tr').forEach(tr => {
+      const changed = tr.getAttribute('data-changed') === '1';
+      const nonZero = {
+        vollgut:  tr.getAttribute('data-vollgut')  === '1',
+        leergut:  tr.getAttribute('data-leergut')  === '1',
+        einnahme: tr.getAttribute('data-einnahme') === '1',
+        ausgabe:  tr.getAttribute('data-ausgabe')  === '1'
+      };
+
+      // Basis: immer
+      const show = new Set(['date', 'bemerkung']);
+
+      // Bei Änderungen: Inventar & Kassenbestand
+      if (changed) {
+        show.add('inventar');
+        show.add('kassenbestand');
+      }
+
+      // Nicht‑Null Felder einblenden
+      Object.entries(nonZero).forEach(([key, nz]) => { if (nz) show.add(key); });
+
+      // Aktionen sichtbar lassen? -> true/false
+      const keepActions = true;
+
+      tr.querySelectorAll('td[data-col]').forEach(td => {
+        const col = td.getAttribute('data-col');
+        const visible = show.has(col) || (keepActions && col === 'aktionen');
+        td.style.display = visible ? '' : 'none';
+      });
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', applyStackedVisibility);
+  window.addEventListener('resize', applyStackedVisibility);
 </script>
 
 {% endblock %}

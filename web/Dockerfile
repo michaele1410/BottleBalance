@@ -23,7 +23,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     postgresql-client \
     findutils \
     grep \
-  && rm -rf /var/lib/apt/lists/*
+ && rm -rf /var/lib/apt/lists/*
 
 # Locale
 RUN sed -i '/de_DE.UTF-8/s/^# //g' /etc/locale.gen && locale-gen
@@ -31,25 +31,24 @@ ENV TZ=Europe/Berlin \
     LANG=de_DE.UTF-8 \
     LC_ALL=de_DE.UTF-8
 
-# Code-Verzeichnis (stabil, NICHT übermounten)
+# Stabiles Code-Verzeichnis
 WORKDIR /opt/app
 
+# ---- Security-first: non-root User so früh wie möglich anlegen
+RUN addgroup --system app && adduser --system --ingroup app app
+
 # Python-Dependencies
-COPY requirements.txt ./
+COPY --chown=app:app requirements.txt /opt/app/requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Quellen
-COPY . /opt/app
+COPY --chown=app:app . /opt/app
 
 # Version file creation
 RUN echo "${APP_VERSION}" > /opt/app/VERSION
 
-# Uploads-Verzeichnis (separates Volume)
+# Uploads-Verzeichnis (separates Volume) + Besitzrechte
 RUN mkdir -p /opt/app/uploads && chown -R app:app /opt/app/uploads
-
-# Non-root User + Besitzrechte
-RUN addgroup --system app && adduser --system --ingroup app app \
- && chown -R app:app /opt/app
 
 # BOM/CRLF entfernen & ausführbar machen
 RUN if [ -f /opt/app/scripts/update_translations.sh ]; then \
@@ -57,11 +56,6 @@ RUN if [ -f /opt/app/scripts/update_translations.sh ]; then \
       sed -i '1s/^\xEF\xBB\xBF//' /opt/app/scripts/update_translations.sh && \
       chmod +x /opt/app/scripts/update_translations.sh; \
     fi
-# Optional NBSP→Space, falls nötig:
-# RUN if [ -f /opt/app/scripts/update_translations.sh ]; then \
-#       tr '\xC2\xA0' ' ' < /opt/app/scripts/update_translations.sh > /opt/app/scripts/update_translations.sh.cleaned && \
-#       mv /opt/app/scripts/update_translations.sh.cleaned /opt/app/scripts/update_translations.sh; \
-#     fi
 
 # Buildzeit: Babel kompilieren, wenn .po vorhanden; mit robusten Checks
 RUN set -eux; \
@@ -71,7 +65,6 @@ RUN set -eux; \
     else \
       echo 'No translations to compile, skipping pybabel'; \
     fi
-
 
 # Gunicorn/WSGI
 ENV GUNICORN_WORKERS=2 \
@@ -83,5 +76,6 @@ EXPOSE 5000
 
 USER app
 
-# Start: optionales Babel-Update; dann Gunicorn mit konfigurierbarem WSGI-Entry
-CMD sh -lc "[ -f /opt/app/scripts/update_translations.sh ] && sh /opt/app/scripts/update_translations.sh || echo 'skip translations'; exec gunicorn -w ${GUNICORN_WORKERS} --threads ${GUNICORN_THREADS} --timeout ${GUNICORN_TIMEOUT} --access-logfile - -b 0.0.0.0:5000 ${WSGI_MODULE}"
+# JSON-CMD (vermeidet Signal-/Shell-Probleme)
+# - wenn update_translations.sh existiert, wird sie einmalig ausgeführt, sonst "skip translations"
+CMD ["/bin/sh","-lc","[ -f /opt/app/scripts/update_translations.sh ] && sh /opt/app/scripts/update_translations.sh || echo 'skip translations'; exec gunicorn -w ${GUNICORN_WORKERS} --threads ${GUNICORN_THREADS} --timeout ${GUNICORN_TIMEOUT} --access-logfile - -b 0.0.0.0:5000 ${WSGI_MODULE}"]

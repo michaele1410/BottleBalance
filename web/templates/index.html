@@ -315,7 +315,7 @@
                   data-einnahme="{{ 1 if e.einnahme != 0 else 0 }}"    
                   data-ausgabe="{{ 1 if e.ausgabe != 0 else 0 }}"  
               >
-                <td class="text-end" data-col="date">{{ format_date_de(e.datum) }}</td>
+                <td class="text-end" data-label="{{ _('Datum') }}" data-col="date">{{ format_date_de(e.datum) }}</td>
 
                 <!-- Nur anzeigen, wenn Wert != 0 -->
                 <td class="text-end" data-label="{{ _('Vollgut') }}" data-col="vollgut">{{ e.vollgut ~ ' ' ~ _('Fl.') if e.vollgut != 0 else '' }}</td>

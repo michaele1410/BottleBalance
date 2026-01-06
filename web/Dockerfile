@@ -5,6 +5,10 @@ FROM python:3.11-slim
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
+ARG APP_VERSION=dev
+ENV APP_VERSION=${APP_VERSION}
+RUN echo "${APP_VERSION}" > /opt/app/VERSION
+
 ENV WSGI_MODULE=app:app
 
 RUN apt-get update && apt-get install -y --no-install-recommends \

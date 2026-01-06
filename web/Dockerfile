@@ -34,15 +34,15 @@ ENV TZ=Europe/Berlin \
 # Code-Verzeichnis (stabil, NICHT übermounten)
 WORKDIR /opt/app
 
-# Version file creation
-RUN echo "${APP_VERSION}" > /opt/app/VERSION
-
 # Python-Dependencies
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Quellen
 COPY . /opt/app
+
+# Version file creation
+RUN echo "${APP_VERSION}" > /opt/app/VERSION
 
 # Uploads-Verzeichnis (separates Volume)
 RUN mkdir -p /app/uploads

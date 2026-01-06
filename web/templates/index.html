@@ -1071,5 +1071,17 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 </script>
 
+<!-- Stacked - hide not changed values -->
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    if (window.matchMedia('(max-width: 767.98px)').matches) {
+      document.querySelectorAll('td[data-label]').forEach(td => {
+        if (td.textContent.trim() === '') {
+          td.style.display = 'none';
+        }
+      });
+    }
+  });
+</script>
 
 {% endblock %}

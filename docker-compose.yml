@@ -24,6 +24,7 @@ services:
     ports:
       - "5000:5000"
     environment:
+      - UPLOAD_FOLDER=/opt/app/uploads
       - WSGI_MODULE=app:app
       - PYTHONPATH=/opt/app
 
@@ -50,7 +51,8 @@ services:
       #- APP_BASE_URL=http://localhost:5000
       
     volumes:
-      - bottlebalance-app-uploads:/app/uploads
+      - bottlebalance-app-uploads:/opt/app/uploads
+      
     depends_on:
       bottlebalance-db:
         condition: service_healthy

@@ -208,7 +208,7 @@ def _find_custom_logo():
     return (None, None, None)
 
 def brand_logo_url():
-    """Liefert die URL für das Logo: Custom (Uploads) mit Cache-Buster oder Fallback auf static/images/logo.svg."""
+    """Liefert die URL für das Logo: Custom (Uploads) mit Cache-Buster oder Fallback auf static/images/logo.png."""
     fname, _fpath, mtime = _find_custom_logo()
     if fname:
         # Wird aus Uploads/branding via /view/<filename> bedient
@@ -216,7 +216,7 @@ def brand_logo_url():
         url = url_for('view_file', filename=f"branding/{fname}")
         return f"{url}?t={mtime or ''}"
     # Fallback auf statische Standard-Grafik
-    return url_for('static', filename='images/logo.svg')
+    return url_for('static', filename='images/logo.png')
 
 @app.context_processor
 def inject_branding():

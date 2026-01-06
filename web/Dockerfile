@@ -7,7 +7,6 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 ARG APP_VERSION=dev
 ENV APP_VERSION=${APP_VERSION}
-RUN echo "${APP_VERSION}" > /opt/app/VERSION
 
 ENV WSGI_MODULE=app:app
 
@@ -34,6 +33,9 @@ ENV TZ=Europe/Berlin \
 
 # Code-Verzeichnis (stabil, NICHT übermounten)
 WORKDIR /opt/app
+
+# Version file creation
+RUN echo "${APP_VERSION}" > /opt/app/VERSION
 
 # Python-Dependencies
 COPY requirements.txt ./

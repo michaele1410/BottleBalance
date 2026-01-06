@@ -24,9 +24,12 @@ services:
     ports:
       - "5000:5000"
     environment:
-      - UPLOAD_FOLDER=/opt/app/uploads
       - WSGI_MODULE=app:app
       - PYTHONPATH=/opt/app
+
+      - UPLOAD_FOLDER=/opt/app/uploads
+      - LOG_FILE=/opt/app/uploads/app.log
+      - LOG_LEVEL=INFO
 
       # --- Bestehende DB-Parameter ---
       - DB_HOST=${DB_HOST}

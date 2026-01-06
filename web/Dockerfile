@@ -45,12 +45,11 @@ COPY . /opt/app
 RUN echo "${APP_VERSION}" > /opt/app/VERSION
 
 # Uploads-Verzeichnis (separates Volume)
-RUN mkdir -p /app/uploads
+RUN mkdir -p /opt/app/uploads && chown -R app:app /opt/app/uploads
 
 # Non-root User + Besitzrechte
 RUN addgroup --system app && adduser --system --ingroup app app \
- && chown -R app:app /opt/app \
- && chown -R app:app /app
+ && chown -R app:app /opt/app
 
 # BOM/CRLF entfernen & ausführbar machen
 RUN if [ -f /opt/app/scripts/update_translations.sh ]; then \

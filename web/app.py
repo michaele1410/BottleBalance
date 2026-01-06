@@ -181,18 +181,13 @@ app.config.update({
 # Flask-Mail initialisieren
 mail.init_app(app)
 # Upload-Ordner sicherstellen
-app.config.setdefault('UPLOAD_FOLDER', os.path.join(app.instance_path, 'uploads'))
-os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-
+#app.config.setdefault('UPLOAD_FOLDER', os.path.join(app.instance_path, 'uploads'))
+#os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 # Upload-Ordner aus ENV oder Fallback
 UPLOAD_BASE = os.getenv("UPLOAD_FOLDER", os.path.join(app.instance_path, 'uploads'))
 app.config['UPLOAD_FOLDER'] = UPLOAD_BASE
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-
-BRANDING_DIR = os.path.join(app.config['UPLOAD_FOLDER'], 'branding')
-os.makedirs(BRANDING_DIR, exist_ok=True)
-
 
 BRANDING_DIR = os.path.join(app.config['UPLOAD_FOLDER'], 'branding')
 os.makedirs(BRANDING_DIR, exist_ok=True)

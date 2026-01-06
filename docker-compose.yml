@@ -52,6 +52,7 @@ services:
       
     volumes:
       - bottlebalance-app-uploads:/opt/app/uploads
+      
     depends_on:
       bottlebalance-db:
         condition: service_healthy

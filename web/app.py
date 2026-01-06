@@ -1893,22 +1893,31 @@ def admin_tools():
                 flash(_("Upload fehlgeschlagen: %(error)s", error=str(e)), "danger")
 
             return redirect(url_for("admin_tools"))
-
-
+        
         elif action == "branding_remove":
-            removed = False
+            removed_files = []
+            errors = []
+
             for old_ext in ('svg', 'png', 'jpg', 'jpeg', 'webp'):
                 old_path = os.path.join(BRANDING_DIR, f"logo.{old_ext}")
                 try:
                     if os.path.isfile(old_path):
                         os.remove(old_path)
-                        removed = True
-                except Exception:
-                    pass
-            if removed:
+                        removed_files.append(f"logo.{old_ext}")
+                except Exception as e:
+                    errors.append(f"{old_path}: {e}")
+
+            if removed_files:
+                log_action(session.get('user_id'), 'branding:remove', None, f"removed={removed_files}")
                 flash(_("Eigenes Logo entfernt. Fallback auf Standard-Logo aktiv."), "success")
+            elif errors:
+                # Mindestens eine Datei war da, aber löschen schlug fehl
+                for msg in errors:
+                    flash(_("Konnte Datei nicht löschen: %(msg)s", msg=msg), "danger")
+                log_action(session.get('user_id'), 'branding:remove:error', None, "; ".join(errors))
             else:
                 flash(_("Kein eigenes Logo gefunden."), "info")
+
             return redirect(url_for("admin_tools"))
         
         # Fallback bei unbekannter Aktion

@@ -22,7 +22,7 @@ services:
       context: ./web
       dockerfile: Dockerfile
     ports:
-      - "5000:5000"
+      - "2123:5000"
     environment:
       - WSGI_MODULE=app:app
       - PYTHONPATH=/opt/app
@@ -47,12 +47,11 @@ services:
       - SMTP_SSL=${SMTP_SSL}
       - FROM_EMAIL=${FROM_EMAIL}
       - SMTP_TIMEOUT=${SMTP_TIMEOUT}
+
+      # Optional, sinnvoll für Links in Mails (lokal):
       - APP_BASE_URL=${APP_BASE_URL}
       - SEND_TEST_MAIL=${SEND_TEST_MAIL}
 
-      # Optional, sinnvoll für Links in Mails (lokal):
-      #- APP_BASE_URL=http://localhost:5000
-      
     volumes:
       - bottlebalance-app-uploads:/opt/app/uploads
       

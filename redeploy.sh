@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Wechsle in das Verzeichnis, in dem dieses Script liegt
+cd "$(dirname "$0")" || { echo "Verzeichnis nicht gefunden"; exit 1; }
+
 # Name des Volumes
 VOLUME_NAME="bottlebalance-dev_bottlebalance-dev-app"
 
@@ -15,7 +18,7 @@ else
 fi
 
 echo ">>> Neu bauen und starten..."
-docker compose -f docker-compose-dev.yml up --build -d
+docker compose -f docker-compose-dev.yml --env-file .env up --build -d
 
 echo ">>> Logs (Strg+C zum Beenden)"
 docker compose logs -f

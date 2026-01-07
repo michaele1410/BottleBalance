@@ -12,7 +12,13 @@
         <form method="post" action="{{ url_for('confirm_2fa') }}" class="row g-2 justify-content-center">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <div class="col-8">
-            <input name="code" class="form-control" inputmode="numeric" pattern="[0-9]*" placeholder="{{ _('6-stelliger Code') }}" required>
+            <div class="input-group mb-3">
+              <span class="input-group-text"><i class="bi bi-code"></i></span>
+              <div class="form-floating flex-grow-1">
+                <input name="code" type="number" class="form-control" inputmode="numeric" pattern="[0-9]*" placeholder="{{ _('6-stelliger Code') }}" required>
+                <label for="code">{{ _('6-stelliger Code') }}</label>
+              </div>
+            </div>
           </div>
           <div class="col-4 d-grid">
             <button class="btn btn-primary">{{ _('Bestätigen') }}</button>

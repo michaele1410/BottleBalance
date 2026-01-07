@@ -14,7 +14,7 @@
 
           <!-- E-Mail -->
           <div class="input-group mb-3">
-            <span class="input-group-text">{{ _('E-Mail') }}</span>
+            <span class="input-group-text"><i class="bi bi-envelope"></i></span>
             <div class="form-floating flex-grow-1">
               <input type="email" name="email" inputmode="text" class="form-control"
                 placeholder="{{ _('E-Mail') }}" value="{{ user.email or '' }}">
@@ -24,7 +24,7 @@
 
           <!-- Neues Passwort -->
           <div class="input-group mb-3">
-            <span class="input-group-text">{{ _('Neues Passwort') }}</span>
+            <span class="input-group-text"><i class="bi bi-key"></i></span>
             <div class="form-floating flex-grow-1">
               <input type="password" id="password" name="password" class="form-control"
                 placeholder="{{ _('Neues Passwort eingeben') }}">
@@ -34,7 +34,7 @@
 
           <!-- Passwort wiederholen (standardmäßig versteckt) -->
           <div class="input-group mb-3 d-none" id="password-confirm-group">
-            <span class="input-group-text">{{ _('Passwort wiederholen') }}</span>
+            <span class="input-group-text"><i class="bi bi-key"></i></span>
             <div class="form-floating flex-grow-1">
               <input type="password" id="password2" name="password2" class="form-control"
                 placeholder="{{ _('Passwort wiederholen') }}">
@@ -67,7 +67,7 @@
             <!-- Passwortfeld -->
             <div class="col-12">
               <div class="input-group mb-3">
-                <span class="input-group-text">{{ _('Passwort') }}</span>
+                <span class="input-group-text"><i class="bi bi-key"></i></span>
                 <div class="form-floating flex-grow-1">
                   <input id="confirmPassword" type="password" name="password" inputmode="text" class="form-control"
                     placeholder="{{ _('Neues Passwort eingeben') }}" required>

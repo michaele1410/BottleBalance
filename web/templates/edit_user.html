@@ -12,7 +12,7 @@
         <input type="email" name="email" class="form-control" value="{{ user.email or '' }}">
       </div-->
       <div class="input-group mb-3">
-        <span class="input-group-text">{{ _('E-Mail') }}</span>
+        <span class="input-group-text"><i class="bi bi-envelope"></i></span>
         <div class="form-floating flex-grow-1">
           <input type="email" name="email"  inputmode="text" class="form-control"
             placeholder="{{ _('E-Mail') }}" value="{{ user.email or '' }}">
@@ -26,7 +26,7 @@
         <small class="form-text text-muted">{{ _('Leer lassen, wenn das Passwort nicht geändert werden soll') }}.</small>
       </div-->
       <div class="input-group mb-3">
-        <span class="input-group-text">{{ _('Neues Passwort') }}</span>
+        <span class="input-group-text"><i class="bi bi-key"></i></span>
         <div class="form-floating flex-grow-1">
           <input type="password" name="password"  inputmode="text" class="form-control"
             placeholder="{{ _('Neues Passwort eingeben') }}" value="">
@@ -43,13 +43,14 @@
         </select>
       </div-->
       <div class="input-group mb-3">
-        <span class="input-group-text">{{ _('Rolle') }}</span>
+        <span class="input-group-text"><i class="bi bi-shield-check"></i></span>
         <div class="form-floating flex-grow-1">
           <select name="role" class="form-select" required>
             {% for r in roles %}
             <option value="{{ r }}" {% if user.role==r %}selected{% endif %}>{{ r }}</option>
             {% endfor %}
           </select>
+          <label for="password">{{ _('Rolle') }}</label>
         </div>
       </div>
 

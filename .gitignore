@@ -4,3 +4,4 @@ web/.DS_Store
 web/.DS_Store
 .env
 redeploy.sh
+docker-compose-dev.yml

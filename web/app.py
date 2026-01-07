@@ -21,6 +21,7 @@ mail = Mail()
 from sqlalchemy import text
 from sqlalchemy.exc import OperationalError
 from werkzeug.security import generate_password_hash, check_password_hash
+from flask_socketio import SocketIO
 from email.mime.text import MIMEText
 from email.header import Header
 from functools import wraps
@@ -307,6 +308,8 @@ babel = Babel(app, locale_selector=get_locale, timezone_selector=get_timezone)
 
 app.secret_key = SECRET_KEY
 
+# SocketIO initialisieren
+socketio = SocketIO(app)
 
 # For Error Pages
 app.config["SUPPORT_EMAIL"] = os.getenv("SUPPORT_EMAIL", "webmaster@michaeleitdorf.de")
@@ -2036,4 +2039,4 @@ def inject_version():
 
 if __name__ == '__main__':
     os.environ.setdefault('TZ', 'Europe/Berlin')
-    app.run(host='0.0.0.0', port=5000, debug=False)
+    socketio.run(app, host='0.0.0.0', port=5000, debug=False)

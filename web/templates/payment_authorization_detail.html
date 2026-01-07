@@ -24,7 +24,7 @@
       </div>
         {% if antrag.status not in ['freigegeben', 'abgeschlossen', 'abgelehnt', 'zurueckgezogen'] and approvals_done == 0 %}
         <div class="input-group mb-3">
-          <span class="input-group-text">{{ _('Antragsteller/in') }}</span>
+          <span class="input-group-text"><i class="bi bi-person"></i></span>
           <div class="form-floating flex-grow-1">
             <input type="text" name="antragsteller"  inputmode="text" class="form-control"
               placeholder="{{ _('Antragsteller/in') }}" value="{{ antrag.antragsteller or '' }}" readonly>
@@ -38,7 +38,7 @@
             class="form-control">
         </div-->
         <div class="input-group mb-3">
-          <span class="input-group-text">{{ _('Datum') }}</span>
+          <span class="input-group-text"><i class="bi bi-calendar"></i></span>
           <div class="form-floating flex-grow-1">
             <input type="date" name="datum" value="{{ antrag.datum|strftime('%Y-%m-%d') if antrag.datum else '' }}"
             class="form-control" readonly>
@@ -52,7 +52,7 @@
           <input type="text" name="paragraph" value="{{ antrag.paragraph or '' }}" class="form-control">
         </div-->
         <div class="input-group mb-3">
-          <span class="input-group-text">{{ _('Paragraph') }}</span>
+          <span class="input-group-text"><i class="bi bi-hash"></i></span>
           <div class="form-floating flex-grow-1">
             <input type="text" name="paragraph"  inputmode="text" class="form-control"
               placeholder="{{ _('Paragraph') }}" value="{{ antrag.paragraph or '' }}">
@@ -65,7 +65,7 @@
           <input type="text" name="verwendungszweck" value="{{ antrag.verwendungszweck or '' }}" class="form-control">
         </div-->
         <div class="input-group mb-3">
-          <span class="input-group-text">{{ _('Verwendungszweck') }}</span>
+          <span class="input-group-text"><i class="bi bi-chat-text"></i></span>
           <div class="form-floating flex-grow-1">
             <input type="text" name="verwendungszweck"  inputmode="text" class="form-control"
               placeholder="{{ _('Verwendungszweck') }}" value="{{ antrag.verwendungszweck or '' }}">
@@ -78,10 +78,10 @@
           <input type="text" name="betrag" value="{{ antrag.betrag or '' }}" class="form-control">
         </div-->
         <div class="input-group mb-3">
-          <span class="input-group-text">{{ _('Betrag') }}</span>
+          <span class="input-group-text"><i class="bi bi-currency-euro"></i></span>
           <div class="form-floating flex-grow-1">
-            <input type="text" name="betrag"  inputmode="number" inputmode="decimal" class="form-control"
-              placeholder="{{ _('Betrag') }}" value="{{ antrag.betrag or '' }}">
+            <input type="number" name="betrag"  inputmode="decimal" inputmode="decimal" step="0.01" class="form-control"
+              placeholder="0.00" value="{{ antrag.betrag or '' }}" autocomplete="off">
               <label for="betrag">{{ _('Betrag') }}</label>
           </div>
         </div>
@@ -91,7 +91,7 @@
           <input type="text" name="lieferant" value="{{ antrag.lieferant or '' }}" class="form-control">
         </div-->
         <div class="input-group mb-3">
-          <span class="input-group-text">{{ _('Lieferant') }}</span>
+          <span class="input-group-text"><i class="bi bi-building"></i></span>
           <div class="form-floating flex-grow-1">
             <input type="text" name="lieferant"  inputmode="text" class="form-control"
               placeholder="{{ _('Lieferant') }}" value="{{ antrag.lieferant or '' }}">
@@ -104,7 +104,7 @@
           <textarea name="begruendung" class="form-control">{{ antrag.begruendung or '' }}</textarea>
         </div-->
          <div class="input-group mb-3">
-          <span class="input-group-text">{{ _('Begründung') }}</span>
+          <span class="input-group-text"><i class="bi bi-chat-quote"></i></span>
           <div class="form-floating flex-grow-1">
             <input type="text" name="begruendung"  inputmode="text" class="form-control"
               placeholder="{{ _('Begründung') }}" rows="3" value="{{ antrag.begruendung or '' }}">
@@ -113,7 +113,7 @@
         </div>
 
         <!--iv class="input-group mb-3">
-          <span class="input-group-text">{{ _('Status') }}</span>
+          <span class="input-group-text"><i class="bi bi-info-circle"></i></span>
           <div class="form-floating flex-grow-1">
             <span class="badge badge-status-{{ antrag.status|replace(' ', '_') }}">{{ antrag.status }}</span>
           </div>
@@ -121,7 +121,7 @@
 
         {% else %}
           <div class="input-group mb-3">
-          <span class="input-group-text">{{ _('Antragsteller/in') }}</span>
+          <span class="input-group-text"><i class="bi bi-person"></i></span>
           <div class="form-floating flex-grow-1">
             <input type="text" name="antragsteller"  inputmode="text" class="form-control"
               placeholder="{{ _('Antragsteller/in') }}" value="{{ antrag.antragsteller or '' }}" readonly>
@@ -135,9 +135,9 @@
             class="form-control">
         </div-->
         <div class="input-group mb-3">
-          <span class="input-group-text">{{ _('Datum') }}</span>
+          <span class="input-group-text"><i class="bi bi-calendar"></i></span>
           <div class="form-floating flex-grow-1">
-            <input type="date" name="datum" value="{{ antrag.datum|strftime('%Y-%m-%d') if antrag.datum else '' }}"
+            <input type="text" name="datum" inputmode="decimal" value="{{ antrag.datum|strftime('%Y-%m-%d') if antrag.datum else '' }}"
             class="form-control" readonly>
               <label for="datum">{{ _('Datum') }}</label>
           </div>
@@ -149,7 +149,7 @@
           <input type="text" name="paragraph" value="{{ antrag.paragraph or '' }}" class="form-control">
         </div-->
         <div class="input-group mb-3">
-          <span class="input-group-text">{{ _('Paragraph') }}</span>
+          <span class="input-group-text"><i class="bi bi-hash"></i></span>
           <div class="form-floating flex-grow-1">
             <input type="text" name="paragraph"  inputmode="text" class="form-control"
               placeholder="{{ _('Paragraph') }}" value="{{ antrag.paragraph or '' }}" readonly>
@@ -162,7 +162,7 @@
           <input type="text" name="verwendungszweck" value="{{ antrag.verwendungszweck or '' }}" class="form-control">
         </div-->
         <div class="input-group mb-3">
-          <span class="input-group-text">{{ _('Verwendungszweck') }}</span>
+          <span class="input-group-text"><i class="bi bi-chat-text"></i></span>
           <div class="form-floating flex-grow-1">
             <input type="text" name="verwendungszweck"  inputmode="text" class="form-control"
               placeholder="{{ _('Verwendungszweck') }}" value="{{ antrag.verwendungszweck or '' }}" readonly>
@@ -175,7 +175,7 @@
           <input type="text" name="betrag" value="{{ antrag.betrag or '' }}" class="form-control">
         </div-->
         <div class="input-group mb-3">
-          <span class="input-group-text">{{ _('Betrag') }}</span>
+          <span class="input-group-text"><i class="bi bi-cash"></i></span>
           <div class="form-floating flex-grow-1">
             <input type="text" name="betrag"  inputmode="number" inputmode="decimal" class="form-control"
               placeholder="{{ _('Betrag') }}" value="{{ antrag.betrag or '' }}" readonly>
@@ -188,7 +188,7 @@
           <input type="text" name="lieferant" value="{{ antrag.lieferant or '' }}" class="form-control">
         </div-->
         <div class="input-group mb-3">
-          <span class="input-group-text">{{ _('Lieferant') }}</span>
+          <span class="input-group-text"><i class="bi bi-building"></i></span>
           <div class="form-floating flex-grow-1">
             <input type="text" name="lieferant"  inputmode="text" class="form-control"
               placeholder="{{ _('Lieferant') }}" value="{{ antrag.lieferant or '' }}" readonly>
@@ -201,7 +201,7 @@
           <textarea name="begruendung" class="form-control">{{ antrag.begruendung or '' }}</textarea>
         </div-->
          <div class="input-group mb-3">
-          <span class="input-group-text">{{ _('Begründung') }}</span>
+          <span class="input-group-text"><i class="bi bi-chat-quote"></i></span>
           <div class="form-floating flex-grow-1">
             <input type="text" name="begruendung"  inputmode="text" class="form-control"
               placeholder="{{ _('Begründung') }}" value="{{ antrag.begruendung or '' }}" readonly>
@@ -210,7 +210,7 @@
         </div>
 
         <!--div class="input-group mb-3">
-          <span class="input-group-text">{{ _('Status') }}</span>
+          <span class="input-group-text"><i class="bi bi-info-circle"></i></span>
           <div class="form-floating flex-grow-1">
             <span class="badge badge-status-{{ antrag.status|replace(' ', '_') }}">{{ antrag.status }}</span>
           </div>

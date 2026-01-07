@@ -31,7 +31,7 @@
                   <input name="username" class="form-control" required minlength="3">
                 </div-->
                 <div class="input-group mb-3">
-                  <span class="input-group-text">{{ _('Benutzername') }}</span>
+                  <span class="input-group-text"><i class="bi bi-person"></i></span>
                   <div class="form-floating flex-grow-1">
                     <input name="username" type="text" class="form-control" required minlength="3">
                     <label for="vollgut">{{ _('Benutzername') }}</label>
@@ -43,7 +43,7 @@
                   <input name="email" type="email" class="form-control">
                 </div-->
                 <div class="input-group mb-3">
-                  <span class="input-group-text">{{ _('E-Mail') }}</span>
+                  <span class="input-group-text"><i class="bi bi-envelope"></i></span>
                   <div class="form-floating flex-grow-1">
                     <input name="email" type="text" class="form-control" required>
                     <label for="vollgut">{{ _('E-Mail') }}</label>
@@ -59,7 +59,7 @@
                   </select>
                 </div-->
                 <div class="input-group mb-3">
-                  <span class="input-group-text">{{ _('Rolle') }}</span>
+                  <span class="input-group-text"><i class="bi bi-shield-check"></i></span>
                   <div class="form-floating flex-grow-1">
                     <select class="form-select" name="role" required>
                       {% for r in ROLES.keys() %}
@@ -75,7 +75,7 @@
                   <input type="password" name="password" minlength="8" class="form-control" required>
                 </div-->
                 <div class="input-group mb-3">
-                  <span class="input-group-text">{{ _('Passwort') }}</span>
+                  <span class="input-group-text"><i class="bi bi-key"></i></span>
                   <div class="form-floating flex-grow-1">
                     <input name="password" type="password" class="form-control" required>
                     <label for="vollgut">{{ _('Passwort') }}</label>

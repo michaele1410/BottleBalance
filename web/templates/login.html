@@ -9,14 +9,31 @@
 
         <form method="post" action="{{ url_for('auth_routes.login') }}">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <div class="mb-3">
+          
+          <!--div class="mb-3">
             <label class="form-label">{{ _('Benutzername') }}</label>
             <input id="login_username" name="username" class="form-control" autocomplete="username" required>
+          </div-->
+          <div class="input-group mb-3">
+            <span class="input-group-text"><i class="bi bi-person"></i></span>
+            <div class="form-floating flex-grow-1">
+              <input id="login_username" name="username" type="text" class="form-control" required>
+              <label for="vollgut">{{ _('Benutzername') }}</label>
+            </div>
           </div>
-          <div class="mb-3">
+
+          <!--div class="mb-3">
             <label class="form-label">{{ _('Passwort') }}</label>
             <input type="password" name="password" class="form-control" autocomplete="current-password" required>
+          </div-->
+          <div class="input-group mb-3">
+            <span class="input-group-text"><i class="bi bi-key"></i></span>
+            <div class="form-floating flex-grow-1">
+              <input name="password" type="password" class="form-control" autocomplete="current-password" required>
+              <label for="vollgut">{{ _('Passwort') }}</label>
+            </div>
           </div>
+
           <button class="btn btn-primary w-100">{{ _('Login') }}</button>
         </form>
 
@@ -42,6 +59,7 @@
                 </div>
                 <div class="modal-body">
                   <div class="form-floating mb-3">
+                    <span class="input-group-text"><i class="bi bi-person"></i></span>
                     <input type="text" class="form-control" id="forgot_username" name="username"
                            placeholder="{{ _('Benutzername') }}" required>
                     <label for="forgot_username">{{ _('Benutzername') }}</label>

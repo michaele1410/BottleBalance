@@ -211,11 +211,11 @@
             <!--label class="form-label">{{ _('Paragraph (optional)') }}</label-->
             <!--input type="text" name="paragraph" class="form-control" placeholder="{{ _('z. Bsp. 3a') }}" value="$ 14 Abs. 2"-->
             <div class="input-group mb-3">
-              <span class="input-group-text">{{ _('Paragraph (optional)') }}</span>
+              <span class="input-group-text"><i class="bi bi-hash"></i></span>
               <div class="form-floating flex-grow-1">
                 <input type="text" name="paragraph"  inputmode="text" class="form-control"
                   placeholder="{{ _('z. Bsp. 3a') }}" value="$ 14 Abs. 2">
-                  <label for="paragraph">{{ _('Paragraph') }}</label>
+                  <label for="paragraph">{{ _('Paragraph (optional)') }}</label>
               </div>
             </div>
           </div>
@@ -225,7 +225,7 @@
             <input type="text" name="zweck" class="form-control" placeholder="{{ _('Wofür ist die Zahlungsanfrage') }}?">
           </div-->
           <div class="input-group mb-3">
-            <span class="input-group-text">{{ _('Verwendungszweck') }}</span>
+            <span class="input-group-text"><i class="bi bi-chat-text"></i></span>
             <div class="form-floating flex-grow-1">
               <input type="text" name="zweck"  inputmode="text" class="form-control"
                 placeholder="{{ _('Wofür ist die Zahlungsanfrage') }}?" value="">
@@ -242,7 +242,7 @@
             </div>
           </div-->
           <div class="input-group mb-3">
-            <span class="input-group-text">{{ _('Datum') }}</span>
+            <span class="input-group-text"><i class="bi bi-calendar"></i></span>
             <div class="form-floating flex-grow-1">
               <input type="date" name="datum" class="form-control" required value="{{ today.strftime('%Y-%m-%d') }}">
                 <label for="datum">{{ _('Datum') }}</label>
@@ -254,23 +254,23 @@
             <div class="input-group">
               <input type="text" name="betrag" class="form-control" inputmode="decimal" placeholder="{{ _('z. Bsp. 49,90') }}"
                 required>
-              <span class="input-group-text">{{ _('waehrung') }}</span>
+              <span class="input-group-text"><i class="bi bi-coin"></i></span>
               <div class="invalid-feedback">{{ _('Bitte einen Betrag angeben') }}.</div>
             </div>
             <small class="form-text text-muted">{{ _('Komma oder Punkt als Dezimaltrenner ist möglich') }}.</small>
           </div-->
           <div class="input-group mb-3">
-            <span class="input-group-text">{{ _('Betrag') }}</span>
+            <span class="input-group-text"><i class="bi bi-currency-euro"></i></span>
             <!-- Betrag-Eingabe -->
             <div class="form-floating flex-grow-1">
               <input type="text" name="betrag" inputmode="decimal" class="form-control"
                     placeholder="{{ _('z. Bsp. 49,90') }}" value="">
               <label for="betrag">{{ _('Betrag') }}</label>
-              <div class="invalid-feedback">{{ _('Bitte einen Betrag angeben') }}.</div>
+              <div class="invalid-feedback">{{ _('Betrag') }}.</div>
             </div>
 
             <!-- Währung direkt rechts -->
-            <span class="input-group-text">{{ _('waehrung') }}</span>
+            <span class="input-group-text"><i class="bi bi-coin"></i></span>
           </div>
 
 
@@ -279,7 +279,7 @@
             <input type="text" name="lieferant" class="form-control" placeholder="{{ _('Firma / Händler') }}">
           </div-->
           <div class="input-group mb-3">
-            <span class="input-group-text">{{ _('Lieferant') }}</span>
+            <span class="input-group-text"><i class="bi bi-building"></i></span>
             <div class="form-floating flex-grow-1">
               <input type="text" name="lieferant"  inputmode="text" class="form-control"
                 placeholder="{{ _('Firma / Händler') }}" value="">
@@ -293,7 +293,7 @@
               placeholder="{{ _('Weshalb ist die Zahlungsanfrage notwendig') }}?"></textarea>
           </div-->
           <div class="input-group mb-3">
-            <span class="input-group-text">{{ _('Begründung (optional)') }}</span>
+            <span class="input-group-text"><i class="bi bi-chat-quote"></i></span>
             <div class="form-floating flex-grow-1">
               <input type="text" name="begruendung" rows="3" inputmode="text" class="form-control"
                 placeholder="{{ _('Weshalb ist die Zahlungsanfrage notwendig') }}?" value="">

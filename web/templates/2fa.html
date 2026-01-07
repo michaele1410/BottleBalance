@@ -8,10 +8,14 @@
         <h1 class="h5 mb-3">{{ _('2-Faktor-Authentifizierung') }}</h1>
         <form method="post" action="{{ url_for('auth_routes.login_2fa_post') }}">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <div class="mb-3">
-            <label class="form-label">{{ _('2FA-Code oder Backup-Code') }}</label>
-            <input name="code" class="form-control" required>
-          </div>
+
+          <div class="input-group mb-3">
+              <span class="input-group-text"><i class="bi bi-code"></i></span>
+              <div class="form-floating flex-grow-1">
+                <input name="code" type="number" class="form-control" inputmode="numeric" pattern="[0-9]*" placeholder="{{ _('6-stelliger Code') }}" required>
+                <label for="code">{{ _('2FA-Code oder Backup-Code') }}</label>
+              </div>
+            </div>
           <button class="btn btn-primary">{{ _('Bestätigen') }}</button>
         </form>
       </div>

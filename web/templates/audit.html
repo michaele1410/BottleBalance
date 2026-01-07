@@ -23,14 +23,26 @@
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <div class="col">
                 <label class="form-label">{{ _('Suche') }}</label>
-                <input type="text" name="q" class="form-control" placeholder="{{ _('Aktion/Entry-ID') }}" value="{{ request.args.get('q','') }}">
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi-search"></i></span>
+                  <input type="text"
+                        id="filter_q"
+                        name="q"
+                        class="form-control"
+                        placeholder="{{ _('Datum/Bemerkung') }}"
+                        value="{{ request.args.get('q','') }}"
+                        autocomplete="off">
+                </div>
               </div>
               <div class="col">
                 <label for="filter_daterange" class="form-label mb-1">{{ _('Zeitraum') }}</label>
-                <input type="text" id="filter_daterange" class="form-control"
-                  placeholder="{{ _('TT.MM.JJJJ – TT.MM.JJJJ') }}" autocomplete="off">
-                <input type="hidden" name="from" id="filter_from" value="{{ request.args.get('from','') }}">
-                <input type="hidden" name="to" id="filter_to" value="{{ request.args.get('to','') }}">
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi-calendar"></i></span>
+                  <input type="text" id="filter_daterange" class="form-control"
+                    placeholder="{{ _('TT.MM.JJJJ – TT.MM.JJJJ') }}" autocomplete="off">
+                  <input type="hidden" name="from" id="filter_from" value="{{ request.args.get('from','') }}">
+                  <input type="hidden" name="to" id="filter_to" value="{{ request.args.get('to','') }}">
+                </div>
               </div>
               <div class="col d-flex gap-2">
                 <button class="btn btn-primary" type="submit">

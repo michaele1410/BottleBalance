@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="table-responsive mt-0">
+  <table class="table table-sm align-middle table-striped table-stacked table-bordered">
+    <thead class="table-light">
+      <tr>
+        <th class="text-center" style="cursor:pointer;" onclick="sortTableByDate()">
+          {{ _('Datum') }} <i class="bi bi-arrow-down-up"></i>
+        </th>
+        <th class="text-center">{{ _('Vollgut') }}</th>
+        <th class="text-center">{{ _('Leergut') }}</th>
+        <th class="text-center">{{ _('Inventar') }}</th>
+        <th class="text-center">{{ _('Einnahme') }}</th>
+        <th class="text-center">{{ _('Ausgabe') }}</th>
+        <th class="text-center">{{ _('Kassenbestand') }}</th>
+        <th class="text-center">{{ _('Bemerkung') }}</th>
+        <th class="text-center">{{ _('Aktionen') }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for e in entries %}
+      <!--genau einmal pro Zeile definieren-->
+      {% set changed = (e.vollgut != 0 or e.leergut != 0 or e.einnahme != 0 or e.ausgabe != 0) %}
+      <tr
+          data-changed="{{ 1 if changed else 0 }}"
+          data-vollgut="{{ 1 if e.vollgut != 0 else 0 }}"
+          data-leergut="{{ 1 if e.leergut != 0 else 0 }}"
+          data-einnahme="{{ 1 if e.einnahme != 0 else 0 }}"
+          data-ausgabe="{{ 1 if e.ausgabe != 0 else 0 }}"
+      >
+        <td class="text-end" data-label="{{ _('Datum') }}" data-col="date">{{ format_date_de(e.datum) }}</td>
+
+        <!-- Nur anzeigen, wenn Wert != 0 -->
+        <td class="text-end" data-label="{{ _('Vollgut') }}" data-col="vollgut">{{ e.vollgut ~ ' ' ~ _('Fl.') if e.vollgut != 0 else '' }}</td>
+        <td class="text-end" data-label="{{ _('Leergut') }}" data-col="leergut">{{ e.leergut ~ ' ' ~ _('Fl.') if e.leergut != 0 else '' }}</td>
+
+        <!-- Inventar: immer anzeigen oder optional ausblenden -->
+        <td class="text-end" data-label="{{ _('Inventar') }}" data-col="inventar">{{ e.inventar ~ ' ' ~ _('Fl.') if changed else '' }}</td>
+
+        <!-- Einnahme/Ausgabe: nur anzeigen, wenn != 0 -->
+        <td class="text-end" data-label="{{ _('Einnahme') }}" data-col="einnahme">{{ format_eur_de(e.einnahme) if e.einnahme != 0 else '' }}</td>
+        <td class="text-end" data-label="{{ _('Ausgabe') }}" data-col="ausgabe">{{ format_eur_de(e.ausgabe) if e.ausgabe != 0 else '' }}</td>
+
+        <!-- Kassenbestand: immer anzeigen oder optional ausblenden -->
+        <td class="text-end" data-label="{{ _('Kassenbestand') }}" data-col="kassenbestand">{{ format_eur_de(e.kassenbestand) if changed else '' }}</td>
+
+        <!-- Bemerkung: immer anzeigen -->
+        <td class="text-start" data-label="{{ _('Bemerkung') }}" data-col="bemerkung">{{ e.bemerkung }}</td>
+          <td class="text-center" data-label="{{ _('Aktionen') }}" data-col="aktionen">
+            {% set role = current_user().get('role') %}
+            {% if role in ['Editor', 'Manager', 'Admin'] %}
+            <a class="btn btn-sm btn-outline-primary"
+              href="{{ url_for('bbalance_routes.edit', entry_id=e.id) }}"
+              title="{{ _('Bearbeiten') }}">
+              <i class="bi-pencil-square"></i>
+            </a>
+            {% endif %}
+
+            <button class="btn btn-sm btn-outline-secondary position-relative"
+                    type="button"
+                    onclick="openAttachments({{ e.id }})"
+                    title="{{ _('Dokumente öffnen') }}">
+              <i class="bi-paperclip"></i>
+              {% if e.attachment_count and e.attachment_count > 0 %}
+              <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-secondary">
+                {{ e.attachment_count }}
+              </span>
+              {% endif %}
+            </button>
+
+            {% if role in ['Editor', 'Manager', 'Admin'] %}
+            <form method="post"
+                  action="{{ url_for('bbalance_routes.delete', entry_id=e.id) }}"
+                  class="d-inline"
+                  onsubmit="return confirm('{{ _('Eintrag wirklich löschen?') }}');">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="btn btn-sm btn-outline-danger" title="{{ _('Löschen') }}">
+                <i class="bi-trash"></i>
+              </button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td data-label="{{ _('Keine Einträge vorhanden.') }}" colspan="9" class="text-center text-muted">{{ _('Keine Einträge vorhanden.') }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+  </table>
+</div>
+{% endblock %}

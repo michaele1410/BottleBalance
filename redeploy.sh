@@ -4,13 +4,18 @@
 VOLUME_NAME="bottlebalance-dev_bottlebalance-dev-app"
 
 echo ">>> Container stoppen (aber Volumes behalten)..."
-docker compose down
+docker compose -f docker-compose-dev.yml down
 
 echo ">>> Lösche nur das Volume: $VOLUME_NAME"
-docker volume rm "$VOLUME_NAME" || echo "Volume $VOLUME_NAME nicht gefunden."
+if docker volume ls --format "{{.Name}}" | grep -q "^${VOLUME_NAME}$"; then
+    docker volume rm "$VOLUME_NAME"
+    echo "Volume $VOLUME_NAME erfolgreich entfernt."
+else
+    echo "Volume $VOLUME_NAME nicht gefunden oder bereits entfernt."
+fi
 
 echo ">>> Neu bauen und starten..."
-docker compose up --build -d
+docker compose -f docker-compose-dev.yml up --build -d
 
 echo ">>> Logs (Strg+C zum Beenden)"
 docker compose logs -f

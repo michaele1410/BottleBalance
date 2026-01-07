@@ -14,6 +14,7 @@ import csv
 from decimal import Decimal, InvalidOperation
 
 from time import time
+from flask_socketio import emit
 
 from modules.utils import (
     parse_money
@@ -61,6 +62,18 @@ def index():
     if role == 'Payment Viewer':
         return redirect(url_for('payment_routes.zahlungsfreigabe')) 
     return render_template('index.html', **ctx, now=int(time()))
+
+@bbalance_routes.get('/api/table')
+@login_required
+def api_table():
+    ctx = _build_index_context()
+    # Nur die für die Tabelle nötigen Werte
+    table_ctx = {
+        'entries': ctx['entries'],
+        'format_eur_de': ctx['format_eur_de'],
+        'format_date_de': ctx['format_date_de'],
+    }
+    return render_template('table_partial.html', **table_ctx)
 
 @bbalance_routes.post('/add')
 @login_required
@@ -126,6 +139,9 @@ def add():
             'cb': user['id']
         })
         new_id = res.scalar_one()
+
+    # Emit event für Live-Updates
+    emit('entry_changed', {'message': 'Neuer Eintrag hinzugefügt'}, namespace='/', broadcast=True)
 
     # Temporäre Anhänge übernehmen (nur wenn Session-Token passt)
     moved = 0
@@ -385,6 +401,9 @@ def edit_post(entry_id: int):
             'detail': detail_text
         })
 
+    # Emit event für Live-Updates
+    emit('entry_changed', {'message': 'Eintrag bearbeitet'}, namespace='/', broadcast=True)
+
     # log_action(session.get('user_id'), 'entries:edit', entry_id, None)
     flash(_('Eintrag wurde gespeichert.'), 'success')
 
@@ -406,6 +425,10 @@ def delete(entry_id: int):
     with engine.begin() as conn:
         conn.execute(text('DELETE FROM entries WHERE id=:id'), {'id': entry_id})
     log_action(session.get('user_id'), 'entries:delete', entry_id, None)
+
+    # Emit event für Live-Updates
+    emit('entry_changed', {'message': 'Eintrag gelöscht'}, namespace='/', broadcast=True)
+
     return redirect(url_for('bbalance_routes.index'))
 
 # -----------------------

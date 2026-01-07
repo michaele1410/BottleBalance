@@ -52,7 +52,7 @@
           <input type="text" name="paragraph" value="{{ antrag.paragraph or '' }}" class="form-control">
         </div-->
         <div class="input-group mb-3">
-          <span class="input-group-text"><i class="bi bi-hash"></i></span>
+          <span class="input-group-text"><i class="bi bi-text-paragraph"></i></span>
           <div class="form-floating flex-grow-1">
             <input type="text" name="paragraph"  inputmode="text" class="form-control"
               placeholder="{{ _('Paragraph') }}" value="{{ antrag.paragraph or '' }}">
@@ -78,7 +78,7 @@
           <input type="text" name="betrag" value="{{ antrag.betrag or '' }}" class="form-control">
         </div-->
         <div class="input-group mb-3">
-          <span class="input-group-text"><i class="bi bi-currency-euro"></i></span>
+          <span class="input-group-text"><i class="bi bi-wallet2"></i></span>
           <div class="form-floating flex-grow-1">
             <input type="number" name="betrag"  inputmode="decimal" inputmode="decimal" step="0.01" class="form-control"
               placeholder="0.00" value="{{ antrag.betrag or '' }}" autocomplete="off">
@@ -149,7 +149,7 @@
           <input type="text" name="paragraph" value="{{ antrag.paragraph or '' }}" class="form-control">
         </div-->
         <div class="input-group mb-3">
-          <span class="input-group-text"><i class="bi bi-hash"></i></span>
+          <span class="input-group-text"><i class="bi bi-text-paragraph"></i></span>
           <div class="form-floating flex-grow-1">
             <input type="text" name="paragraph"  inputmode="text" class="form-control"
               placeholder="{{ _('Paragraph') }}" value="{{ antrag.paragraph or '' }}" readonly>
@@ -308,8 +308,8 @@
 
     <!-- AUDIT -->
     <h5 class="mt-5">{{ _('Audit-Historie') }}</h5>
-    <table class="table table-sm table-striped align-middle">
-      <thead>
+    <table class="table table-sm align-middle table-striped table-stacked table-bordered">
+      <thead class="table-light">
         <tr>
           <th>{{ _('Zeitpunkt') }}</th>
           <th>{{ _('Aktion') }}</th>

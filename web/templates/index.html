@@ -204,8 +204,10 @@
                       name="daterange"
                       class="form-control"
                       placeholder="{{ _('TT.MM.JJJJ – TT.MM.JJJJ') }}"
-                      value="{{ request.args.get('q','') }}"
+                      value="{{ request.args.get('daterange','') }}"
                       autocomplete="off">
+                <input type="hidden" id="filter_from" name="from" value="{{ request.args.get('from','') }}">
+                <input type="hidden" id="filter_to" name="to" value="{{ request.args.get('to','') }}">
               </div>
             </div>
 

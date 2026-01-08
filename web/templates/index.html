@@ -237,9 +237,6 @@
                 </select>
               </div>
             </div>
-                </select>
-              </div>
-            </div>
 
             <!-- Aktionen: Zurücksetzen + Export/Import -->
             <div class="col d-flex flex-wrap gap-2">
@@ -1107,19 +1104,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const rows = document.querySelectorAll('table.table-stacked tbody tr');
 
   // -----------------------------
-  // Desktop: alles zurücksetzen
-  // -----------------------------
-  if (!isStacked) {
-    rows.forEach(tr => {
-      tr.querySelectorAll('td[data-col]').forEach(td => {
-        td.style.removeProperty('display');
-        td.classList.remove('has-new');
-      });
-    });
-    return;
-  }
-
-  // -----------------------------
   // Mobile / Stacked
   // -----------------------------
   rows.forEach(tr => {
@@ -1172,6 +1156,19 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   });
+
+   // -----------------------------
+  // Desktop: alles zurücksetzen
+  // -----------------------------
+  if (!isStacked) {
+    rows.forEach(tr => {
+      tr.querySelectorAll('td[data-col]').forEach(td => {
+        td.style.removeProperty('display');
+        //td.classList.remove('has-new');
+      });
+    });
+    return;
+  }
 }
 
 // Initial + Resize

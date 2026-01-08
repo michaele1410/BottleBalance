@@ -1,6 +1,6 @@
 /*=========================================
-   Haupt-Container Anpassungen
-   ========================================= */
+  Haupt-Container Anpassungen
+========================================= */
 
 /* Nur für Tablets (Bootstrap md-Bereich: 768px–991px) */
 @media (min-width: 768px) and (max-width: 991px) {
@@ -15,8 +15,6 @@
 .table td, .table th {
   vertical-align: middle;
 }
-
-
 
 /* Chart-Canvas – nur für Sparklines gezielt */
 .sparkline-container canvas {
@@ -248,6 +246,21 @@ textarea#options {
 .alert {
   border-radius: .375rem;
   font-size: .95rem;
+}
+/* "NEW" Badge in Tabellen */
+@media (min-width: 768px) {
+  td.has-new::after {
+    content: "NEW";
+    display: inline-block;
+    margin-left: .4rem;
+    font-size: .6rem;
+    font-weight: 600;
+    padding: .1rem .35rem;
+    border-radius: .25rem;
+    background-color: var(--bs-success);
+    color: #fff;
+    vertical-align: middle;
+  }
 }
 
 /* =========================================

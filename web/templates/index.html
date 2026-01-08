@@ -1,7 +1,12 @@
 {% extends "base.html" %}
 {% block content %}
+
+{# -------------------------------------------
+# OBERER 3er-CLUSTER: Inventar / Kasse / Neuer Datensatz
+# Drei gleich breite Spalten ab md, auf xs je 100% Breite
+# ------------------------------------------- #}
 <div class="row g-3 mb-3">
-  <!-- Inventar -->
+  {# Inventar #}
   <div class="col-6 col-md-4">
     <div class="card shadow-sm h-100">
       <div class="card-header d-flex justify-content-between align-items-center">
@@ -20,7 +25,7 @@
     </div>
   </div>
 
-  <!-- Kassenbestand -->
+  {# Kassenbestand #}
   <div class="col-6 col-md-4">
     <div class="card shadow-sm h-100">
       <div class="card-header d-flex justify-content-between align-items-center">
@@ -35,20 +40,18 @@
       <div class="card-body sparkline-container">
         <div class="ratio sparkline-ratio">
           <canvas id="sparklineKas"></canvas>
-          </div>
         </div>
       </div>
     </div>
+  </div>
 
-
-  <!-- Formular für neuen Datensatz -->
-
+  {# Formular für neuen Datensatz #}
   {% if can_add %}
   <div class="col-12 col-md-4">
     <div class="card shadow-sm h-100">
       <div class="card-header d-flex justify-content-between align-items-center">
         <span>{{ _('Neuen Datensatz hinzufügen') }}</span>
-        <!-- Toggle-Button nur auf Mobil -->
+        {# Toggle-Button nur auf Mobil #}
         <button class="btn btn-sm btn-outline-secondary d-md-none"
                 type="button"
                 data-bs-toggle="collapse"
@@ -60,10 +63,10 @@
       </div>
       <div id="collapseNewEntry" class="collapse show">
         <div class="card-body">
-          <!-- Dein Formular bleibt hier unverändert -->
+          {# Dein Formular unverändert #}
           <form method="post" action="{{ url_for('bbalance_routes.add') }}" id="transaction-form" novalidate>
-
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            {# ... FORMULARINHALT UNVERÄNDERT ... #}
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <!-- Datum -->
           <div class="input-group mb-3">
             <span class="input-group-text"><i class="bi bi-calendar"></i></span>
@@ -148,20 +151,26 @@
             </button>
           </div>
         </form>
+        </div>
       </div>
     </div>
   </div>
   {% endif %}
 </div>
 
-
-<!-- Filter -->
+{# -------------------------------------------
+# FILTER (volle Breite darunter)
+# ------------------------------------------- #}
 <div class="row g-3 mb-3">
   <div class="col-12">
     <div class="card shadow-sm h-100">
       <div class="card-header d-flex justify-content-between align-items-center">
-        <span>{{ _('Filter') }}</span>
-        <!-- Toggle bleibt -->
+        <span>
+          {{ _('Filter') }}
+          {% if request.args.get('q') or request.args.get('daterange') or request.args.get('year') or request.args.get('attachments') %}
+            <span class="badge bg-primary ms-2">{{ _('aktiv') }}</span>
+          {% endif %}
+        </span>
         <button class="btn btn-sm btn-outline-secondary d-md-none"
                 type="button"
                 data-bs-toggle="collapse"
@@ -173,7 +182,6 @@
       </div>
       <div id="collapseFilters" class="collapse show">
         <div class="card-body">
-
           <form method="get"
                 class="row row-cols-1 row-cols-md-auto row-cols-lg-auto g-2 align-items-end form-compact"
                 id="filtersForm"
@@ -239,7 +247,7 @@
             </div>
 
             <!-- Aktionen: Zurücksetzen + Export/Import -->
-            <div class="col d-flex flex-wrap gap-2">
+            <div class="col d-flex flex-wrap gap-2 ms-auto justify-content-end">
               <a class="btn btn-outline-secondary" href="{{ url_for('bbalance_routes.index') }}">
                 <i class="bi-x-circle me-1"></i>{{ _('Filter zurücksetzen') }}
               </a>
@@ -291,7 +299,9 @@
   </div>
 </div>
 
-<!-- Einträge -->
+{# -------------------------------------------
+# EINTRÄGE (volle Breite darunter)
+# ------------------------------------------- #}
 <div class="row g-3 mb-3">
   <div class="col-12">
     <div class="card shadow-sm h-100">
@@ -299,7 +309,8 @@
         <span>{{ _('Einträge') }}</span>
       </div>
       <div class="card-body">
-        <div class="table-responsive mt-0">
+        {# Tabelle unverändert #}
+        <div class="table-responsive w-100">
           <table class="table table-sm align-middle table-striped table-stacked table-bordered">
             <thead class="table-light">
               <tr>
@@ -349,7 +360,7 @@
 
                 {# --- NEU: Bestandsänderung (Vollgut/Leergut) --- #}
                 <td class="text-end" data-label="{{ _('Bestandsänderung') }}" data-col="delta-inv">
-                  <span class="d-inline-flex flex-wrap gap-1">
+                  <span class="d-inline-flex flex-nowrap gap-1">
                     {% if e.vollgut != 0 %}
                       <span class="badge delta delta-pos" title="{{ _('Vollgut') }}">
                         +{{ e.vollgut }} {{ _('Fl.') }}
@@ -377,7 +388,7 @@
 
                 {# --- NEU: Zahlung (Einnahme/Ausgabe) --- #}
                 <td class="text-end" data-label="{{ _('Zahlung') }}" data-col="delta-kasse">
-                  <span class="d-inline-flex flex-wrap gap-1">
+                  <span class="d-inline-flex flex-nowrap gap-1">
                     {% if e.einnahme != 0 %}
                       <span class="badge delta delta-pos" title="{{ _('Einnahme') }}">
                         +{{ format_eur_de(e.einnahme) }}
@@ -415,7 +426,7 @@
                 </td>
 
                 {# Aktionen unverändert #}
-                  <td class="text-center" data-label="{{ _('Aktionen') }}" data-col="aktionen">
+                  <td class="text-start" data-label="{{ _('Aktionen') }}" data-col="aktionen">
                     {% set role = current_user().get('role') %}
                     {% if role in ['Editor', 'Manager', 'Admin'] %}
                     <a class="btn btn-sm btn-outline-primary"
@@ -464,6 +475,7 @@
     </div>
   </div>
 </div>
+
 
 <!-- CSV Import Modal -->
 <div class="modal fade" id="csvImportModal" tabindex="-1" aria-labelledby="csvImportModalLabel" aria-hidden="true">
@@ -1224,6 +1236,32 @@ document.addEventListener('DOMContentLoaded', () => {
     clearTimeout(window.__bbStackedTO);
     window.__bbStackedTO = setTimeout(applyStackedVisibility, 50);
   });
+</script>
+
+<!-- Tabelle auf Stacked umschalten bei zu kleiner Breite -->
+<script>
+  function toggleStackedTable() {
+    const table = document.querySelector('table.table-stacked');
+    if (!table) return;
+    const containerWidth = table.parentElement.offsetWidth;
+    const tableWidth = table.scrollWidth;
+    table.classList.toggle('is-stacked', tableWidth > containerWidth);
+  }
+
+  // Initial, nach vollständigem Laden, und bei Resize
+  document.addEventListener('DOMContentLoaded', toggleStackedTable);
+  window.addEventListener('load', toggleStackedTable);
+  window.addEventListener('resize', () => {
+    clearTimeout(window.__stackedTO);
+    window.__stackedTO = setTimeout(toggleStackedTable, 100);
+  });
+
+  // Reagiert auch auf Größenänderungen des Elterncontainers (z. B. Collapse/Filter)
+  const tableParent = document.querySelector('table.table-stacked')?.parentElement;
+  if (tableParent && 'ResizeObserver' in window) {
+    const ro = new ResizeObserver(() => toggleStackedTable());
+    ro.observe(tableParent);
+  }
 </script>
 
 {% endblock %}

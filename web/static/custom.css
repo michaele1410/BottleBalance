@@ -41,6 +41,13 @@
   display: flex;
   min-height: 140px;
 }
+/* Responsive: Mehr Platz für Sparklines auf kleinen Bildschirmen */
+@media (max-width: 576px) {
+  .sparkline-container {
+    min-height: 180px; /* oder ein Wert, der gut aussieht */
+  }
+}
+
 
 /* Bootstrap .ratio für volle Höhe statt aspektbasiertem Padding nutzen */
 .sparkline-ratio {
@@ -376,6 +383,39 @@ textarea#options {
   -webkit-overflow-scrolling: touch;
 }
 
+
+/* Dynamisches Umschalten auf Stacked */
+table.table-stacked.is-stacked thead {
+  display: none !important;
+}
+
+/* Stacked Layout für Tabelle, wenn breiter als Display */
+table.table-stacked.is-stacked tr {
+  display: block !important;
+  margin-bottom: 1rem;
+  border: 1px solid #dee2e6;
+  border-radius: .5rem;
+  padding: .75rem;
+  background: var(--bg-color);
+}
+
+table.table-stacked.is-stacked td {
+  display: flex;
+  justify-content: space-between;
+  padding: .25rem .5rem;
+  font-size: .9rem;
+  border-bottom: 1px solid #eee;
+  white-space: normal;
+  word-break: break-word;
+}
+
+table.table-stacked.is-stacked td::before {
+  content: attr(data-label);
+  font-weight: 600;
+  color: var(--text-color);
+  margin-right: .5rem;
+}
+
 /* Stacked Layout für Smartphones */
 @media (max-width: 576px) {
   table.table thead {
@@ -585,4 +625,22 @@ textarea#options {
     width: 2.75rem;
     height: 2.75rem;
   }
+}
+
+/* Navbar-Toggler in Light/Dark sichtbar, ohne harte navbar-light/dark */
+.navbar-toggler {
+  color: var(--bs-navbar-color, var(--bs-body-color)); /* folgt dem Theme */
+  border-color: var(--bs-border-color);
+}
+
+.navbar-toggler-icon {
+  /* SVG verwendet currentColor → passt sich automatisch an */
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' \
+viewBox='0 0 30 30'%3e%3cpath stroke='currentColor' stroke-linecap='round' \
+stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+
+[data-bs-theme="dark"] .navbar-toggler {
+  /* etwas mehr Kontrast für die Umrandung im Dark Mode */
+  border-color: color-mix(in srgb, var(--bs-body-color), transparent 60%);
 }

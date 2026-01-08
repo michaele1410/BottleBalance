@@ -1,17 +1,16 @@
+  
 {% extends "base.html" %}
 {% block content %}
 
-{# -------------------------------------------
-# OBERER 3er-CLUSTER: Inventar / Kasse / Neuer Datensatz
-# Drei gleich breite Spalten ab md, auf xs je 100% Breite
-# ------------------------------------------- #}
+<!-- OBERER 3er-CLUSTER: Inventar / Kasse / Neuer Datensatz -->
 <div class="row g-3 mb-3">
-  {# Inventar #}
+  <!-- Inventar -->
   <div class="col-6 col-md-4">
     <div class="card shadow-sm h-100">
       <div class="card-header d-flex justify-content-between align-items-center">
         <span>{{ _('Inventar:') }}</span>
-        <span class="badge bg-primary">{{ inv_aktuell }} {{ _('Fl.') }}
+        <span class="badge bg-primary">
+          {{ inv_aktuell }} {{ _('Fl.') }}
           {% if delta_inv and (from or to) %}
             <small class="text-muted">(Δ {{ delta_inv }} im Zeitraum)</small>
           {% endif %}
@@ -25,7 +24,7 @@
     </div>
   </div>
 
-  {# Kassenbestand #}
+  <!-- Kassenbestand -->
   <div class="col-6 col-md-4">
     <div class="card shadow-sm h-100">
       <div class="card-header d-flex justify-content-between align-items-center">
@@ -45,13 +44,12 @@
     </div>
   </div>
 
-  {# Formular für neuen Datensatz #}
+  <!-- Formular für neuen Datensatz -->
   {% if can_add %}
   <div class="col-12 col-md-4">
     <div class="card shadow-sm h-100">
       <div class="card-header d-flex justify-content-between align-items-center">
         <span>{{ _('Neuen Datensatz hinzufügen') }}</span>
-        {# Toggle-Button nur auf Mobil #}
         <button class="btn btn-sm btn-outline-secondary d-md-none"
                 type="button"
                 data-bs-toggle="collapse"
@@ -63,94 +61,73 @@
       </div>
       <div id="collapseNewEntry" class="collapse show">
         <div class="card-body">
-          {# Dein Formular unverändert #}
+          <!-- Formular -->
           <form method="post" action="{{ url_for('bbalance_routes.add') }}" id="transaction-form" novalidate>
-            {# ... FORMULARINHALT UNVERÄNDERT ... #}
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <!-- Datum -->
-          <div class="input-group mb-3 w-100">
-            <span class="input-group-text"><i class="bi bi-calendar"></i></span>
-            <div class="form-floating flex-grow-1">
-              <input type="text" name="datum"  inputmode="decimal" class="form-control"
-                placeholder="Datum" id="datum" value="{{ default_date }}" required autofocus>
+            <!-- Datum -->
+            <div class="input-group mb-3 w-100">
+              <span class="input-group-text"><i class="bi bi-calendar"></i></span>
+              <div class="form-floating flex-grow-1">
+                <input type="text" name="datum" class="form-control" placeholder="Datum" id="datum" value="{{ default_date }}" required autofocus>
                 <label for="datum">{{ _('Datum') }}</label>
+              </div>
             </div>
-          </div>
-
-          <!-- Vollgut -->
-          <div class="input-group mb-3 w-100">
-            <span class="input-group-text"><i class="bi bi-cup-straw"></i></span>
-            <div class="form-floating flex-grow-1">
-              <input name="vollgut" type="number" inputmode="numeric" min="0" step="1" class="form-control"
-                placeholder="0" id="vollgut" autocomplete="off">
-              <label for="vollgut">{{ _('Vollgut') }}</label>
+            <!-- Vollgut -->
+            <div class="input-group mb-3 w-100">
+              <span class="input-group-text"><i class="bi bi-cup-straw"></i></span>
+              <div class="form-floating flex-grow-1">
+                <input name="vollgut" type="number" class="form-control" placeholder="0" id="vollgut">
+                <label for="vollgut">{{ _('Vollgut') }}</label>
+              </div>
             </div>
-          </div>
-
-          <!-- Leergut -->
-          <div class="input-group mb-3 w-100">
-            <span class="input-group-text"><i class="bi bi-cup-straw"></i></span>
-            <div class="form-floating flex-grow-1">
-              <input name="leergut" type="number" inputmode="numeric" min="0" step="1" class="form-control"
-                placeholder="0" id="leergut" autocomplete="off">
-              <label for="leergut">{{ _('Leergut') }}</label>
+            <!-- Leergut -->
+            <div class="input-group mb-3 w-100">
+              <span class="input-group-text"><i class="bi bi-cup-straw"></i></span>
+              <div class="form-floating flex-grow-1">
+                <input name="leergut" type="number" class="form-control" placeholder="0" id="leergut">
+                <label for="leergut">{{ _('Leergut') }}</label>
+              </div>
             </div>
-          </div>
-
-          <!-- Einnahme -->
-          <div class="input-group mb-3 w-100">
-            <span class="input-group-text"><i class="bi bi-plus-circle"></i></span>
-            <div class="form-floating flex-grow-1">
-              <input name="einnahme" type="number" step="0.01" inputmode="decimal" class="form-control"
-                placeholder="0.00" id="einnahme" autocomplete="off">
-              <label for="einnahme">{{ _('Einnahme') }}</label>
+            <!-- Einnahme -->
+            <div class="input-group mb-3 w-100">
+              <span class="input-group-text"><i class="bi bi-plus-circle"></i></span>
+              <div class="form-floating flex-grow-1">
+                <input name="einnahme" type="number" step="0.01" class="form-control" placeholder="0.00" id="einnahme">
+                <label for="einnahme">{{ _('Einnahme') }}</label>
+              </div>
             </div>
-          </div>
-
-          <!-- Ausgabe -->
-          <div class="input-group mb-3 w-100">
-            <span class="input-group-text"><i class="bi bi-dash-circle"></i></span>
-            <div class="form-floating flex-grow-1">
-              <input name="ausgabe" type="number" step="0.01" inputmode="decimal" class="form-control"
-                placeholder="0.00" id="ausgabe" autocomplete="off">
-              <label for="ausgabe">{{ _('Ausgabe') }}</label>
+            <!-- Ausgabe -->
+            <div class="input-group mb-3 w-100">
+              <span class="input-group-text"><i class="bi bi-dash-circle"></i></span>
+              <div class="form-floating flex-grow-1">
+                <input name="ausgabe" type="number" step="0.01" class="form-control" placeholder="0.00" id="ausgabe">
+                <label for="ausgabe">{{ _('Ausgabe') }}</label>
+              </div>
             </div>
-          </div>
-
-          <!-- Bemerkung als Dropdown -->
-          <div class="input-group mb-3 w-100">
-            <span class="input-group-text"><i class="bi bi-chat-text"></i></span>
-            <div class="form-floating flex-grow-1">
-              <select id="bemerkung" name="bemerkung" class="form-select">
-                {% for option in bemerkungsoptionen %}
-                  <option value="{{ option }}">{{ option }}</option>
-                {% endfor %}
-              </select>
-              <label for="bemerkung">{{ _('Bemerkung') }}</label>
+            <!-- Bemerkung -->
+            <div class="input-group mb-3 w-100">
+              <span class="input-group-text"><i class="bi bi-chat-text"></i></span>
+              <div class="form-floating flex-grow-1">
+                <select id="bemerkung" name="bemerkung" class="form-select">
+                  {% for option in bemerkungsoptionen %}
+                    <option value="{{ option }}">{{ option }}</option>
+                  {% endfor %}
+                </select>
+                <label for="bemerkung">{{ _('Bemerkung') }}</label>
+              </div>
             </div>
-          </div>
-
-          <!-- Upload -->
-          <input type="hidden" name="temp_token" id="temp_token" value="{{ temp_token }}">
-
-          <div class="d-flex gap-2 w-100">
-            <!-- Hinzufügen -->
-            <button type="submit" class="btn btn-success flex-grow-1" disabled>
-              <i class="bi-plus-lg me-1"></i> {{ _('Hinzufügen') }}
-            </button>
-
-            <!-- Upload-Button mit Badge -->
-            <button type="button" class="btn btn-outline-primary position-relative" data-bs-toggle="modal"
-              data-bs-target="#uploadModal" id="uploadBtn" aria-label="{{ _('Temporäre Anhänge hochladen') }}"
-              title="{{ _('Temporäre Anhänge hochladen') }}">
-              <i class="bi-upload me-1"></i> {{ _('Upload') }}
-              <span id="uploadBadge"
-                class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-secondary d-none">
-                0
-              </span>
-            </button>
-          </div>
-        </form>
+            <!-- Buttons -->
+            <div class="d-flex gap-2 w-100">
+              <button type="submit" class="btn btn-success flex-grow-1" disabled>
+                <i class="bi-plus-lg me-1"></i> {{ _('Hinzufügen') }}
+              </button>
+              <button type="button" class="btn btn-outline-primary position-relative" data-bs-toggle="modal"
+                data-bs-target="#uploadModal" id="uploadBtn">
+                <i class="bi-upload me-1"></i> {{ _('Upload') }}
+                <span id="uploadBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-secondary d-none">0</span>
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     </div>
@@ -158,150 +135,139 @@
   {% endif %}
 </div>
 
-{# -------------------------------------------
-# FILTER (volle Breite darunter)
-# ------------------------------------------- #}
+
+<!-- FILTER -->
 <div class="row g-3 mb-3">
   <div class="col-12">
     <div class="card shadow-sm h-100">
       <div class="card-header d-flex justify-content-between align-items-center">
-        <span>
-          {{ _('Filter') }}
-          {% if request.args.get('q') or request.args.get('daterange') or request.args.get('year') or request.args.get('attachments') %}
-            <span class="badge bg-primary ms-2">{{ _('aktiv') }}</span>
-          {% endif %}
-        </span>
-        <button class="btn btn-sm btn-outline-secondary d-md-none"
-                type="button"
-                data-bs-toggle="collapse"
-                data-bs-target="#collapseFilters"
-                aria-expanded="false"
-                aria-controls="collapseFilters">
+        <span>{{ _('Filter') }}</span>
+        <button class="btn btn-sm btn-outline-secondary d-md-none" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFilters">
           <i class="bi-chevron-down"></i>
         </button>
       </div>
       <div id="collapseFilters" class="collapse show">
         <div class="card-body">
-          <form method="get"
-                class="row row-cols-1 row-cols-md-auto row-cols-lg-auto g-2 align-items-end form-compact"
-                id="filtersForm"
-                aria-label="{{ _('Filter für Einträge') }}">
 
-            <!-- Suche -->
-            <div class="col">
-              <label for="filter_q" class="form-label mb-1">{{ _('Suche') }}</label>
-              <div class="input-group">
-                <span class="input-group-text"><i class="bi-search"></i></span>
-                <input type="text"
-                      id="filter_q"
-                      name="q"
-                      class="form-control"
-                      placeholder="{{ _('Datum/Bemerkung') }}"
-                      value="{{ request.args.get('q','') }}"
-                      autocomplete="off">
+            <form method="get"
+                  class="row row-cols-1 row-cols-md-auto row-cols-lg-auto g-2 align-items-end form-compact"
+                  id="filtersForm"
+                  aria-label="{{ _('Filter für Einträge') }}">
+
+              <!-- Suche -->
+              <div class="col">
+                <label for="filter_q" class="form-label mb-1">{{ _('Suche') }}</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi-search"></i></span>
+                  <input type="text"
+                        id="filter_q"
+                        name="q"
+                        class="form-control"
+                        placeholder="{{ _('Datum/Bemerkung') }}"
+                        value="{{ request.args.get('q','') }}"
+                        autocomplete="off">
+                </div>
               </div>
-            </div>
 
-            <!-- Zeitraum -->
-            <div class="col">
-              <label for="filter_daterange" class="form-label mb-1">{{ _('Zeitraum') }}</label>
-              <div class="input-group">
-                <span class="input-group-text"><i class="bi-calendar"></i></span>
-                <input type="text"
-                      id="filter_daterange"
-                      name="daterange"
-                      class="form-control"
-                      placeholder="{{ _('TT.MM.JJJJ – TT.MM.JJJJ') }}"
-                      value="{{ request.args.get('daterange','') }}"
-                      autocomplete="off">
-                <input type="hidden" id="filter_from" name="from" value="{{ request.args.get('from','') }}">
-                <input type="hidden" id="filter_to" name="to" value="{{ request.args.get('to','') }}">
+              <!-- Zeitraum -->
+              <div class="col">
+                <label for="filter_daterange" class="form-label mb-1">{{ _('Zeitraum') }}</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi-calendar"></i></span>
+                  <input type="text"
+                        id="filter_daterange"
+                        name="daterange"
+                        class="form-control"
+                        placeholder="{{ _('TT.MM.JJJJ – TT.MM.JJJJ') }}"
+                        value="{{ request.args.get('daterange','') }}"
+                        autocomplete="off">
+                  <input type="hidden" id="filter_from" name="from" value="{{ request.args.get('from','') }}">
+                  <input type="hidden" id="filter_to" name="to" value="{{ request.args.get('to','') }}">
+                </div>
               </div>
-            </div>
 
-            <!-- Jahr -->
-            <div class="col">
-              <label for="filter_year" class="form-label mb-1">{{ _('Jahr') }}</label>
-              <div class="input-group">
-                <span class="input-group-text"><i class="bi-calendar"></i></span>
-                <select id="filter_year" name="year" class="form-select">
-                  <option value="" {% if not selected_year %}selected{% endif %}>{{ _('Alle') }}</option>
-                  {% for y in years %}
-                    <option value="{{ y }}" {% if selected_year == y|string %}selected{% endif %}>{{ y }}</option>
-                  {% endfor %}
-                </select>
+              <!-- Jahr -->
+              <div class="col">
+                <label for="filter_year" class="form-label mb-1">{{ _('Jahr') }}</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi-calendar"></i></span>
+                  <select id="filter_year" name="year" class="form-select">
+                    <option value="" {% if not selected_year %}selected{% endif %}>{{ _('Alle') }}</option>
+                    {% for y in years %}
+                      <option value="{{ y }}" {% if selected_year == y|string %}selected{% endif %}>{{ y }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
               </div>
-            </div>
 
-            <!-- Anhänge -->
-            <div class="col">
-              <label for="filter_attachments" class="form-label mb-1">{{ _('Anhänge') }}</label>
-              <div class="input-group">
-                <span class="input-group-text"><i class="bi-paperclip"></i></span>
-                <select id="filter_attachments" name="attachments" class="form-select">
-                  <option value="" {{ '' if request.args.get('attachments') else 'selected' }}>{{ _('Alle') }}</option>
-                  <option value="only" {{ 'selected' if request.args.get('attachments')=='only' else '' }}>{{ _('Nur mit Anhang') }}</option>
-                  <option value="none" {{ 'selected' if request.args.get('attachments')=='none' else '' }}>{{ _('Ohne Anhang') }}</option>
-                </select>
+              <!-- Anhänge -->
+              <div class="col">
+                <label for="filter_attachments" class="form-label mb-1">{{ _('Anhänge') }}</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi-paperclip"></i></span>
+                  <select id="filter_attachments" name="attachments" class="form-select">
+                    <option value="" {{ '' if request.args.get('attachments') else 'selected' }}>{{ _('Alle') }}</option>
+                    <option value="only" {{ 'selected' if request.args.get('attachments')=='only' else '' }}>{{ _('Nur mit Anhang') }}</option>
+                    <option value="none" {{ 'selected' if request.args.get('attachments')=='none' else '' }}>{{ _('Ohne Anhang') }}</option>
+                  </select>
+                </div>
               </div>
-            </div>
 
-            <!-- Aktionen: Zurücksetzen + Export/Import -->
-            <div class="col d-flex flex-wrap gap-2 ms-auto justify-content-end">
-              <a class="btn btn-outline-secondary" href="{{ url_for('bbalance_routes.index') }}">
-                <i class="bi-x-circle me-1"></i>{{ _('Filter zurücksetzen') }}
-              </a>
-
-              <div class="btn-group">
-                {% if can_export_pdf %}
-                <a class="btn btn-outline-danger"
-                  href="{{ url_for('export_pdf') }}?{{ request.query_string.decode() if request.query_string else '' }}"
-                  title="{{ _('PDF exportieren') }}">
-                  <i class="bi-file-earmark-pdf me-1 text-danger"></i>{{ _('PDF export') }}
+              <!-- Aktionen: Zurücksetzen + Export/Import -->
+              <div class="col d-flex flex-wrap gap-2 ms-auto justify-content-end">
+                <a class="btn btn-outline-secondary" href="{{ url_for('bbalance_routes.index') }}">
+                  <i class="bi-x-circle me-1"></i>{{ _('Filter zurücksetzen') }}
                 </a>
-                {% endif %}
 
-                {% if can_export_csv or can_import_csv %}
-                  <button type="button" class="btn btn-outline-danger dropdown-toggle dropdown-toggle-split"
-                          data-bs-toggle="dropdown" aria-expanded="false"
-                          aria-label="{{ _('Weitere Exportoptionen') }}">
-                    <span class="visually-hidden">{{ _('Weitere Exportoptionen') }}</span>
-                  </button>
-                  <ul class="dropdown-menu dropdown-menu-end">
-                  {% if can_export_csv %}
-                    <li>
-                      <a class="dropdown-item"
-                        href="{{ url_for('bbalance_routes.export_csv') }}?{{ request.query_string.decode() if request.query_string else '' }}">
-                        <i class="bi-filetype-csv me-2 text-success"></i> {{ _('CSV export') }}
-                      </a>
-                    </li>
+                <div class="btn-group">
+                  {% if can_export_pdf %}
+                  <a class="btn btn-outline-danger"
+                    href="{{ url_for('export_pdf') }}?{{ request.query_string.decode() if request.query_string else '' }}"
+                    title="{{ _('PDF exportieren') }}">
+                    <i class="bi-file-earmark-pdf me-1 text-danger"></i>{{ _('PDF export') }}
+                  </a>
                   {% endif %}
 
-                  <!-- CSV importieren -->
-                  {% if can_import_csv %}
-                    <li>
-                      <a class="dropdown-item"
-                        href="#"
-                        data-bs-toggle="modal"
-                        data-bs-target="#csvImportModal">
-                        <i class="bi-filetype-csv me-2 text-info"></i> {{ _('CSV import') }}
-                      </a>
-                    </li>
+                  {% if can_export_csv or can_import_csv %}
+                    <button type="button" class="btn btn-outline-danger dropdown-toggle dropdown-toggle-split"
+                            data-bs-toggle="dropdown" aria-expanded="false"
+                            aria-label="{{ _('Weitere Exportoptionen') }}">
+                      <span class="visually-hidden">{{ _('Weitere Exportoptionen') }}</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                    {% if can_export_csv %}
+                      <li>
+                        <a class="dropdown-item"
+                          href="{{ url_for('bbalance_routes.export_csv') }}?{{ request.query_string.decode() if request.query_string else '' }}">
+                          <i class="bi-filetype-csv me-2 text-success"></i> {{ _('CSV export') }}
+                        </a>
+                      </li>
+                    {% endif %}
+
+                    <!-- CSV importieren -->
+                    {% if can_import_csv %}
+                      <li>
+                        <a class="dropdown-item"
+                          href="#"
+                          data-bs-toggle="modal"
+                          data-bs-target="#csvImportModal">
+                          <i class="bi-filetype-csv me-2 text-info"></i> {{ _('CSV import') }}
+                        </a>
+                      </li>
+                    {% endif %}
+                    </ul>
                   {% endif %}
-                  </ul>
-                {% endif %}
+                </div>
               </div>
-            </div>
-          </form>
+            </form>
+          </div>
         </div>
-      </div>
     </div>
   </div>
 </div>
 
-{# -------------------------------------------
-# EINTRÄGE (volle Breite darunter)
-# ------------------------------------------- #}
+
+<!-- EINTRÄGE -->
 <div class="row g-3 mb-3">
   <div class="col-12">
     <div class="card shadow-sm h-100">
@@ -309,165 +275,150 @@
         <span>{{ _('Einträge') }}</span>
       </div>
       <div class="card-body">
-        {# Tabelle unverändert #}
         <div class="table-responsive w-100">
-          <table class="table table-sm align-middle table-striped table-stacked table-bordered">
+          <table class="table table-sm table-striped table-hover align-middle table-stacked">
             <thead class="table-light">
               <tr>
-                  <th class="text-center" style="cursor:pointer;" onclick="sortTableByDate()">
-                    {{ _('Datum') }} <i class="bi bi-arrow-down-up"></i>
-                  </th>
-
-                  {# ALT: Vollgut / Leergut #}
-                  {# <th class="text-center">{{ _('Vollgut') }}</th>
-                    <th class="text-center">{{ _('Leergut') }}</th> #}
-
-                  <th class="text-center">{{ _('Bestandsänderung') }}</th>
-
-                  {# ALT: Einnahme / Ausgabe #}
-                  {# <th class="text-center">{{ _('Einnahme') }}</th>
-                    <th class="text-center">{{ _('Ausgabe') }}</th> #}
-
-                  <th class="text-center">{{ _('Inventar') }}</th>
-                  <th class="text-center">{{ _('Zahlung') }}</th>
-                  <th class="text-center">{{ _('Kassenbestand') }}</th>
-                  <th class="text-center">{{ _('Bemerkung') }}</th>
-                  <th class="text-center">{{ _('Aktionen') }}</th>
-                </tr>
+                <th class="text-center">{{ _('Datum') }}</th>
+                <th class="text-center">{{ _('Bestandsänderung') }}</th>
+                <th class="text-center">{{ _('Inventar') }}</th>
+                <th class="text-center">{{ _('Zahlung') }}</th>
+                <th class="text-center">{{ _('Kassenbestand') }}</th>
+                <th class="text-center">{{ _('Bemerkung') }}</th>
+                <th class="text-center">{{ _('Aktionen') }}</th>
+              </tr>
             </thead>
             <tbody>
-            {% for e in entries %}
-              {% set changed = (e.vollgut != 0 or e.leergut != 0 or e.einnahme != 0 or e.ausgabe != 0) %}
-              <tr
-                data-changed="{{ 1 if changed else 0 }}"
-                data-vollgut="{{ 1 if e.vollgut != 0 else 0 }}"
-                data-leergut="{{ 1 if e.leergut != 0 else 0 }}"
-                data-einnahme="{{ 1 if e.einnahme != 0 else 0 }}"
-                data-ausgabe="{{ 1 if e.ausgabe != 0 else 0 }}"
-                data-vollgut-val="{{ e.vollgut or 0 }}"
-                data-leergut-val="{{ e.leergut or 0 }}"
-                data-einnahme-val="{{ e.einnahme or 0 }}"
-                data-ausgabe-val="{{ e.ausgabe or 0 }}"
-              >
-                
-              <td class="text-end" data-label="{{ _('Datum') }}" data-col="date"
-                  data-sort="{{ e.datum.isoformat() if e.datum else '' }}">
-                <span class="badge-compact badge-datum badge-soft">
-                  {{ format_date_de(e.datum) }}
-                </span>
-              </td>
-
-
-                {# --- NEU: Bestandsänderung (Vollgut/Leergut) --- #}
-                <td class="text-end" data-label="{{ _('Bestandsänderung') }}" data-col="delta-inv">
-                  <span class="d-inline-flex flex-nowrap gap-1">
-                    {% if e.vollgut != 0 %}
-                      <span class="badge delta delta-pos" title="{{ _('Vollgut') }}">
-                        +{{ e.vollgut }} {{ _('Fl.') }}
-                        <span class="visually-hidden">{{ _('Vollgut') }}</span>
-                      </span>
-                    {% endif %}
-                    {% if e.leergut != 0 %}
-                      <span class="badge delta delta-neg" title="{{ _('Leergut') }}">
-                        −{{ e.leergut }} {{ _('Fl.') }}
-                        <span class="visually-hidden">{{ _('Leergut') }}</span>
-                      </span>
-                    {% endif %}
-                    {% if e.vollgut == 0 and e.leergut == 0 %}
-                      <span class="text-muted">—</span>
-                    {% endif %}
+              {% for e in entries %}
+                {% set changed = (e.vollgut != 0 or e.leergut != 0 or e.einnahme != 0 or e.ausgabe != 0) %}
+                <tr
+                  data-changed="{{ 1 if changed else 0 }}"
+                  data-vollgut="{{ 1 if e.vollgut != 0 else 0 }}"
+                  data-leergut="{{ 1 if e.leergut != 0 else 0 }}"
+                  data-einnahme="{{ 1 if e.einnahme != 0 else 0 }}"
+                  data-ausgabe="{{ 1 if e.ausgabe != 0 else 0 }}"
+                  data-vollgut-val="{{ e.vollgut or 0 }}"
+                  data-leergut-val="{{ e.leergut or 0 }}"
+                  data-einnahme-val="{{ e.einnahme or 0 }}"
+                  data-ausgabe-val="{{ e.ausgabe or 0 }}"
+                >
+                  
+                <td class="text-end" data-label="{{ _('Datum') }}" data-col="date"
+                    data-sort="{{ e.datum.isoformat() if e.datum else '' }}">
+                  <span class="badge-compact badge-datum badge-soft">
+                    {{ format_date_de(e.datum) }}
                   </span>
                 </td>
 
-                <td class="text-end" data-label="{{ _('Inventar') }}" data-col="inventar">
-                  <span class="badge badge-compact badge-inventar badge-soft">
-                    {{ e.inventar }} {{ _('Fl.') }}
-                    <span class="dir-arrow" aria-hidden="true"></span>
-                  </span>
-                </td>
 
-                {# --- NEU: Zahlung (Einnahme/Ausgabe) --- #}
-                <td class="text-end" data-label="{{ _('Zahlung') }}" data-col="delta-kasse">
-                  <span class="d-inline-flex flex-nowrap gap-1">
-                    {% if e.einnahme != 0 %}
-                      <span class="badge delta delta-pos" title="{{ _('Einnahme') }}">
-                        +{{ format_eur_de(e.einnahme) }}
-                        <span class="visually-hidden">{{ _('Einnahme') }}</span>
-                      </span>
-                    {% endif %}
-                    {% if e.ausgabe != 0 %}
-                      <span class="badge delta delta-neg" title="{{ _('Ausgabe') }}">
-                        −{{ format_eur_de(e.ausgabe) }}
-                        <span class="visually-hidden">{{ _('Ausgabe') }}</span>
-                      </span>
-                    {% endif %}
-                    {% if e.einnahme == 0 and e.ausgabe == 0 %}
-                      <span class="text-muted">—</span>
-                    {% endif %}
-                  </span>
-                </td>
-
-                <td class="text-end" data-label="{{ _('Kassenbestand') }}" data-col="kassenbestand">
-                  <span class="badge badge-compact badge-kasse badge-soft">
-                    {{ format_eur_de(e.kassenbestand) }}
-                    <span class="dir-arrow" aria-hidden="true"></span>
-                  </span>
-                </td>
-
-                <td class="text-start" data-label="{{ _('Bemerkung') }}" data-col="bemerkung"
-                    data-sort="{{ (e.bemerkung or '').lower() }}">
-                  {% if e.bemerkung %}
-                    <span class="badge-compact badge-bemerkung badge-soft" title="{{ e.bemerkung }}">
-                      {{ e.bemerkung }}
-                    </span>
-                  {% else %}
-                    <span class="text-muted">—</span>
-                  {% endif %}
-                </td>
-
-                {# Aktionen unverändert #}
-                  <td class="text-start" data-label="{{ _('Aktionen') }}" data-col="aktionen">
-                    {% set role = current_user().get('role') %}
-                    {% if role in ['Editor', 'Manager', 'Admin'] %}
-                    <a class="btn btn-sm btn-outline-primary"
-                      href="{{ url_for('bbalance_routes.edit', entry_id=e.id) }}"
-                      title="{{ _('Bearbeiten') }}">
-                      <i class="bi-pencil-square"></i>
-                    </a>
-                    {% endif %}
-
-                    <button class="btn btn-sm btn-outline-secondary position-relative"
-                            type="button"
-                            onclick="openAttachments({{ e.id }})"
-                            title="{{ _('Dokumente öffnen') }}">
-                      <i class="bi-paperclip"></i>
-                      {% if e.attachment_count and e.attachment_count > 0 %}
-                      <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-secondary">
-                        {{ e.attachment_count }}
-                      </span>
+                  {# --- NEU: Bestandsänderung (Vollgut/Leergut) --- #}
+                  <td class="text-end" data-label="{{ _('Bestandsänderung') }}" data-col="delta-inv">
+                    <span class="d-inline-flex flex-nowrap gap-1">
+                      {% if e.vollgut != 0 %}
+                        <span class="badge delta delta-pos" title="{{ _('Vollgut') }}">
+                          +{{ e.vollgut }} {{ _('Fl.') }}
+                          <span class="visually-hidden">{{ _('Vollgut') }}</span>
+                        </span>
                       {% endif %}
-                    </button>
+                      {% if e.leergut != 0 %}
+                        <span class="badge delta delta-neg" title="{{ _('Leergut') }}">
+                          −{{ e.leergut }} {{ _('Fl.') }}
+                          <span class="visually-hidden">{{ _('Leergut') }}</span>
+                        </span>
+                      {% endif %}
+                      {% if e.vollgut == 0 and e.leergut == 0 %}
+                        <span class="text-muted">—</span>
+                      {% endif %}
+                    </span>
+                  </td>
 
-                    {% if role in ['Editor', 'Manager', 'Admin'] %}
-                    <form method="post"
-                          action="{{ url_for('bbalance_routes.delete', entry_id=e.id) }}"
-                          class="d-inline"
-                          onsubmit="return confirm('{{ _('Eintrag wirklich löschen?') }}');">
-                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                      <button class="btn btn-sm btn-outline-danger" title="{{ _('Löschen') }}">
-                        <i class="bi-trash"></i>
-                      </button>
-                    </form>
+                  <td class="text-end" data-label="{{ _('Inventar') }}" data-col="inventar">
+                    <span class="badge badge-compact badge-inventar badge-soft">
+                      {{ e.inventar }} {{ _('Fl.') }}
+                      <span class="dir-arrow" aria-hidden="true"></span>
+                    </span>
+                  </td>
+
+                  {# --- NEU: Zahlung (Einnahme/Ausgabe) --- #}
+                  <td class="text-end" data-label="{{ _('Zahlung') }}" data-col="delta-kasse">
+                    <span class="d-inline-flex flex-nowrap gap-1">
+                      {% if e.einnahme != 0 %}
+                        <span class="badge delta delta-pos" title="{{ _('Einnahme') }}">
+                          +{{ format_eur_de(e.einnahme) }}
+                          <span class="visually-hidden">{{ _('Einnahme') }}</span>
+                        </span>
+                      {% endif %}
+                      {% if e.ausgabe != 0 %}
+                        <span class="badge delta delta-neg" title="{{ _('Ausgabe') }}">
+                          −{{ format_eur_de(e.ausgabe) }}
+                          <span class="visually-hidden">{{ _('Ausgabe') }}</span>
+                        </span>
+                      {% endif %}
+                      {% if e.einnahme == 0 and e.ausgabe == 0 %}
+                        <span class="text-muted">—</span>
+                      {% endif %}
+                    </span>
+                  </td>
+
+                  <td class="text-end" data-label="{{ _('Kassenbestand') }}" data-col="kassenbestand">
+                    <span class="badge badge-compact badge-kasse badge-soft">
+                      {{ format_eur_de(e.kassenbestand) }}
+                      <span class="dir-arrow" aria-hidden="true"></span>
+                    </span>
+                  </td>
+
+                  <td class="text-start" data-label="{{ _('Bemerkung') }}" data-col="bemerkung"
+                      data-sort="{{ (e.bemerkung or '').lower() }}">
+                    {% if e.bemerkung %}
+                      <span class="badge-compact badge-bemerkung badge-soft" title="{{ e.bemerkung }}">
+                        {{ e.bemerkung }}
+                      </span>
+                    {% else %}
+                      <span class="text-muted">—</span>
                     {% endif %}
-                </td>
-              </tr>
-            {% else %}
-              <tr>
-                <td data-label="{{ _('Keine Einträge vorhanden.') }}" colspan="7" class="text-center text-muted">
-                  {{ _('Keine Einträge vorhanden.') }}
-                </td>
-              </tr>
-            {% endfor %}
+                  </td>
+
+                  {# Aktionen unverändert #}
+                    <td class="text-start" data-label="{{ _('Aktionen') }}" data-col="aktionen">
+                      {% set role = current_user().get('role') %}
+                      {% if role in ['Editor', 'Manager', 'Admin'] %}
+                      <a class="btn btn-sm btn-outline-primary"
+                        href="{{ url_for('bbalance_routes.edit', entry_id=e.id) }}"
+                        title="{{ _('Bearbeiten') }}">
+                        <i class="bi-pencil-square"></i>
+                      </a>
+                      {% endif %}
+
+                      <button class="btn btn-sm btn-outline-secondary position-relative"
+                              type="button"
+                              onclick="openAttachments({{ e.id }})"
+                              title="{{ _('Dokumente öffnen') }}">
+                        <i class="bi-paperclip"></i>
+                        {% if e.attachment_count and e.attachment_count > 0 %}
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-secondary">
+                          {{ e.attachment_count }}
+                        </span>
+                        {% endif %}
+                      </button>
+
+                      {% if role in ['Editor', 'Manager', 'Admin'] %}
+                      <form method="post"
+                            action="{{ url_for('bbalance_routes.delete', entry_id=e.id) }}"
+                            class="d-inline"
+                            onsubmit="return confirm('{{ _('Eintrag wirklich löschen?') }}');">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button class="btn btn-sm btn-outline-danger" title="{{ _('Löschen') }}">
+                          <i class="bi-trash"></i>
+                        </button>
+                      </form>
+                      {% endif %}
+                  </td>
+                </tr>
+              {% else %}
+                <tr>
+                  <td colspan="7" class="text-center text-muted">{{ _('Keine Einträge vorhanden.') }}</td>
+                </tr>
+              {% endfor %}
             </tbody>
           </table>
         </div>
@@ -476,792 +427,802 @@
   </div>
 </div>
 
+  <!-- CSV Import Modal -->
+  <div class="modal fade" id="csvImportModal" tabindex="-1" aria-labelledby="csvImportModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <form action="{{ url_for('import_preview') if IMPORT_USE_PREVIEW else url_for('bbalance_routes.import_csv') }}" method="post" enctype="multipart/form-data">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-<!-- CSV Import Modal -->
-<div class="modal fade" id="csvImportModal" tabindex="-1" aria-labelledby="csvImportModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <form action="{{ url_for('import_preview') if IMPORT_USE_PREVIEW else url_for('bbalance_routes.import_csv') }}" method="post"
-        enctype="multipart/form-data">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <!-- Header -->
+          <div class="modal-header">
+            <h5 class="modal-title" id="csvImportModalLabel">{{ _('CSV-Datei importieren') }}</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Schließen') }}"></button>
+          </div>
+
+          <!-- Body -->
+          <div class="modal-body">
+            <!-- Datei-Upload -->
+            <div class="input-group  mb-3">
+              <span class="input-group-text"><i class="bi bi-file-earmark-spreadsheet"></i></span>
+              <div class="form-floating flex-grow-1">
+                <input id="csvFile" name="file" type="file" accept=".csv,text/csv" required class="form-control"
+                placeholder="CSV-Datei auswählen">
+                <label for="csvFile" class="form-label">{{ _('CSV-Datei auswählen') }}</label>
+              </div>
+              <small class="form-text text-muted">
+                {{ _("Erwartete Header:") }}
+                <code>Datum;Vollgut;Leergut;Inventar;Einnahme;Ausgabe;Kassenbestand;Bemerkung</code>
+                {{ _("oder Kurzform ohne Inventar/Kassenbestand.") }}
+              </small>
+            </div>
+            <div class="form-check mb-3">
+              <input class="form-check-input" type="checkbox" name="replace_all" id="replaceAll">
+              <label class="form-check-label" for="replaceAll">
+                {{ _('Bestehende Einträge komplett ersetzen') }}
+              </label>
+            </div>
+          </div>
+          <div class="modal-footer d-flex justify-content-between">
+            <a href="{{ url_for('import_sample') }}" class="btn btn-link">
+              <i class="bi bi-download me-1"></i> {{ _('Beispiel-CSV herunterladen') }}
+            </a>
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-eye me-1"></i> {{ _('Vorschau anzeigen') }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- NEU: Attachments Modal -->
+  <div class="modal fade" id="attachmentsModal" tabindex="-1" aria-labelledby="attachmentsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-md">
+      <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="csvImportModalLabel">{{ _('CSV-Datei importieren') }}</h5>
+          <h5 class="modal-title" id="attachmentsModalLabel">{{ _('Anhänge') }}</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Schließen') }}"></button>
         </div>
-        <div class="modal-body bg-light p-3 rounded shadow-sm">
-          <div class="mb-3">
-            <label for="csvFile" class="form-label">{{ _('CSV-Datei auswählen') }}</label>
-            <input id="csvFile" name="file" type="file" accept=".csv,text/csv" required class="form-control"
-              placeholder="CSV-Datei auswählen">
-            <small class="form-text text-muted">
-              {{ _("Erwartete Header:") }}
-              <code>Datum;Vollgut;Leergut;Inventar;Einnahme;Ausgabe;Kassenbestand;Bemerkung</code>
-              {{ _("oder Kurzform ohne Inventar/Kassenbestand.") }}
-            </small>
+        <div class="modal-body">
+          <ul id="attachmentsList" class="list-group"></ul>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Schließen') }}</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Upload-Modal -->
+  <div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="uploadModalLabel">{{ _('Anhänge hochladen') }}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Schließen') }}"></button>
+        </div>
+
+        <div class="modal-body">
+          <div class="input-group mb-2">
+            <input class="form-control" type="file" id="add_temp_files" multiple
+              accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.heic,.heif,.svg,.txt,.csv,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.xml,.json">
+            <button class="btn btn-outline-primary" type="button" id="btnTempUpload">
+              <i class="bi-upload me-1"></i> {{ _('Hochladen') }}
+            </button>
           </div>
-          <div class="form-check mb-3">
-            <input class="form-check-input" type="checkbox" name="replace_all" id="replaceAll">
-            <label class="form-check-label" for="replaceAll">
-              {{ _('Bestehende Einträge komplett ersetzen') }}
-            </label>
+          <div class="form-text">
+            {{ _('Zulässige Formate:') }} PDF, Bilder, Office, Text. {{ _('Mehrere Dateien möglich.') }}
           </div>
-        </div>
-        <div class="modal-footer d-flex justify-content-between">
-          <a href="{{ url_for('import_sample') }}" class="btn btn-link">{{ _('Beispiel-CSV herunterladen') }}</a>
-          <button type="submit" class="btn btn-primary">{{ _('Vorschau anzeigen') }}</button>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
 
-<!-- NEU: Attachments Modal -->
-<div class="modal fade" id="attachmentsModal" tabindex="-1" aria-labelledby="attachmentsModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-md">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="attachmentsModalLabel">{{ _('Anhänge') }}</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Schließen') }}"></button>
-      </div>
-      <div class="modal-body">
-        <ul id="attachmentsList" class="list-group"></ul>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Schließen') }}</button>
+          <ul id="addTempAttachmentsList" class="list-group mt-3"></ul>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Schließen') }}</button>
+        </div>
       </div>
     </div>
   </div>
-</div>
-
-<!-- Upload-Modal -->
-<div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="uploadModalLabel">{{ _('Anhänge hochladen') }}</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Schließen') }}"></button>
-      </div>
-
-      <div class="modal-body">
-        <div class="input-group mb-2">
-          <input class="form-control" type="file" id="add_temp_files" multiple
-            accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.heic,.heif,.svg,.txt,.csv,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.xml,.json">
-          <button class="btn btn-outline-primary" type="button" id="btnTempUpload">
-            <i class="bi-upload me-1"></i> {{ _('Hochladen') }}
-          </button>
-        </div>
-        <div class="form-text">
-          {{ _('Zulässige Formate:') }} PDF, Bilder, Office, Text. {{ _('Mehrere Dateien möglich.') }}
-        </div>
-
-        <ul id="addTempAttachmentsList" class="list-group mt-3"></ul>
-      </div>
-
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Schließen') }}</button>
-      </div>
-    </div>
-  </div>
-</div>
-<div class="toast-container position-fixed top-0 end-0 p-3" id="bbToastContainer"></div>
+  <div class="toast-container position-fixed top-0 end-0 p-3" id="bbToastContainer"></div>
 
 
-{% endblock %}
+  {% endblock %}
 
-{% block scripts %}
-<!-- Neuen Datensatz hinzufügen zugeklappt -->
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const el = document.getElementById('collapseNewEntry');
-    if (el && window.matchMedia('(max-width: 767.98px)').matches) {
-      const c = new bootstrap.Collapse(el, { toggle: false });
-      c.hide();
-    }
-});
-</script>
-<!-- Filter zugeklappt-->
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const el = document.getElementById('collapseFilters');
-    if (el && window.matchMedia('(max-width: 767.98px)').matches) {
-      const c = new bootstrap.Collapse(el, { toggle: false });
-      c.hide();
-    }
-});
-</script>
-<!-- Plugin für gestrichelte Nullinie -->
-<script>
-  // Einfache gestrichelte Nulllinie für Y=0
-  const zeroLinePlugin = {
-    id: 'zeroLinePlugin',
-    afterDatasetsDraw(chart, args, pluginOptions) {
-      const { ctx, chartArea, scales } = chart;
-      const yScale = scales?.y;
-      if (!yScale) return;
-
-      // Pixelposition der Nulllinie berechnen
-      const yZero = yScale.getPixelForValue(0);
-
-      // Nur zeichnen, wenn 0 im sichtbaren Bereich liegt
-      if (yZero < chartArea.top || yZero > chartArea.bottom) return;
-
-      ctx.save();
-      ctx.beginPath();
-      ctx.setLineDash([6, 4]);            // gestrichelt
-      ctx.lineWidth = 1.5;
-      ctx.strokeStyle = (getComputedStyle(document.documentElement)
-        .getPropertyValue('--bs-secondary') || '#6c757d').trim();
-      ctx.moveTo(chartArea.left, yZero);
-      ctx.lineTo(chartArea.right, yZero);
-      ctx.stroke();
-      ctx.restore();
-    }
-  };
-
-  // global registrieren
-  if (window.Chart) Chart.register(zeroLinePlugin);
-</script>
-
-<script>
-  // Daten aus Flask (Jinja rendert nur die Werte)
-  const labelsRaw = {{ labels_all | tojson | safe }};
-  const dataInv   = {{ series_inv | tojson | safe }};
-  const dataKas   = {{ series_kas | tojson | safe }};
-
-  // Optional: ISO-Währung aus Kontext (Fallback EUR)
-  const CURRENCY_CODE = "{{ currency_code | default('EUR') }}";
-
-  // Labels stabil gegen UTC-Shift: interpretier Datum als lokale Mitternacht
-  const labels = (Array.isArray(labelsRaw) ? labelsRaw : []).map(d => {
-      if (!d) return '';                          // leer → kein Datum
-      const parsed = new Date(`${d}T00:00:00`);   // lokale Mitternacht
-      return isNaN(parsed) ? '' : parsed.toLocaleDateString('de-DE');
+  {% block scripts %}
+  <!-- Neuen Datensatz hinzufügen zugeklappt -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const el = document.getElementById('collapseNewEntry');
+      if (el && window.matchMedia('(max-width: 767.98px)').matches) {
+        const c = new bootstrap.Collapse(el, { toggle: false });
+        c.hide();
+      }
   });
+  </script>
+  <!-- Filter zugeklappt-->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const el = document.getElementById('collapseFilters');
+      if (el && window.matchMedia('(max-width: 767.98px)').matches) {
+        const c = new bootstrap.Collapse(el, { toggle: false });
+        c.hide();
+      }
+  });
+  </script>
+  <!-- Plugin für gestrichelte Nullinie -->
+  <script>
+    // Einfache gestrichelte Nulllinie für Y=0
+    const zeroLinePlugin = {
+      id: 'zeroLinePlugin',
+      afterDatasetsDraw(chart, args, pluginOptions) {
+        const { ctx, chartArea, scales } = chart;
+        const yScale = scales?.y;
+        if (!yScale) return;
+
+        // Pixelposition der Nulllinie berechnen
+        const yZero = yScale.getPixelForValue(0);
+
+        // Nur zeichnen, wenn 0 im sichtbaren Bereich liegt
+        if (yZero < chartArea.top || yZero > chartArea.bottom) return;
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.setLineDash([6, 4]);            // gestrichelt
+        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = (getComputedStyle(document.documentElement)
+          .getPropertyValue('--bs-secondary') || '#6c757d').trim();
+        ctx.moveTo(chartArea.left, yZero);
+        ctx.lineTo(chartArea.right, yZero);
+        ctx.stroke();
+        ctx.restore();
+      }
+    };
+
+    // global registrieren
+    if (window.Chart) Chart.register(zeroLinePlugin);
+  </script>
+
+  <script>
+    // Daten aus Flask (Jinja rendert nur die Werte)
+    const labelsRaw = {{ labels_all | tojson | safe }};
+    const dataInv   = {{ series_inv | tojson | safe }};
+    const dataKas   = {{ series_kas | tojson | safe }};
+
+    // Optional: ISO-Währung aus Kontext (Fallback EUR)
+    const CURRENCY_CODE = "{{ currency_code | default('EUR') }}";
+
+    // Labels stabil gegen UTC-Shift: interpretier Datum als lokale Mitternacht
+    const labels = (Array.isArray(labelsRaw) ? labelsRaw : []).map(d => {
+        if (!d) return '';                          // leer → kein Datum
+        const parsed = new Date(`${d}T00:00:00`);   // lokale Mitternacht
+        return isNaN(parsed) ? '' : parsed.toLocaleDateString('de-DE');
+    });
 
 
-  // Bootstrap-Farben aus CSS-Variablen
-  const css = getComputedStyle(document.documentElement);
-  const colorPrimary = (css.getPropertyValue('--bs-primary') || '#0d6efd').trim();
-  const colorSuccess = (css.getPropertyValue('--bs-success') || '#198754').trim();
-  const gridColor    = (css.getPropertyValue('--bs-border-color') || '#dee2e6').trim();
+    // Bootstrap-Farben aus CSS-Variablen
+    const css = getComputedStyle(document.documentElement);
+    const colorPrimary = (css.getPropertyValue('--bs-primary') || '#0d6efd').trim();
+    const colorSuccess = (css.getPropertyValue('--bs-success') || '#198754').trim();
+    const gridColor    = (css.getPropertyValue('--bs-border-color') || '#dee2e6').trim();
 
-  // Gemeinsame Chart-Optionen für beide Sparklines
-  const baseOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    interaction: { intersect: false, mode: 'index' },
-    plugins: {
-      legend: { display: false },
-      tooltip: {
-        callbacks: {
-          title: (items) => items[0]?.label ?? '',
-          label: (ctx) => {
-            const val = ctx.parsed?.y ?? 0;
-            const n = Number(val);
-            const safe = Number.isFinite(n) ? n.toFixed(2) : '0.00';
+    // Gemeinsame Chart-Optionen für beide Sparklines
+    const baseOptions = {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { intersect: false, mode: 'index' },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            title: (items) => items[0]?.label ?? '',
+            label: (ctx) => {
+              const val = ctx.parsed?.y ?? 0;
+              const n = Number(val);
+              const safe = Number.isFinite(n) ? n.toFixed(2) : '0.00';
 
-            if (ctx.dataset?.label === 'Kassenbestand') {
-              // Einfacher: Wert + Symbol aus Jinja
-              return `${safe} {{ _('waehrung') }}`;
+              if (ctx.dataset?.label === 'Kassenbestand') {
+                // Einfacher: Wert + Symbol aus Jinja
+                return `${safe} {{ _('waehrung') }}`;
+              }
+              return `${val} {{ _('Fl.') }}`;
             }
-            return `${val} {{ _('Fl.') }}`;
+          }
+        }
+
+      },
+      scales: {
+        x: {
+          display: true,                   // ← sichtbar
+          grid: { display: false },
+          ticks: {
+            maxTicksLimit: 6,              // kompakt
+            autoSkip: true
+          }
+        },
+        y: {
+          display: true,                   // ← sichtbar
+          grid: {
+            color: gridColor,
+            lineWidth: 1
+          },
+          ticks: {
+            maxTicksLimit: 5,              // kompakt
           }
         }
       }
+    };
 
-    },
-    scales: {
-      x: {
-        display: true,                   // ← sichtbar
-        grid: { display: false },
-        ticks: {
-          maxTicksLimit: 6,              // kompakt
-          autoSkip: true
-        }
-      },
-      y: {
-        display: true,                   // ← sichtbar
-        grid: {
-          color: gridColor,
-          lineWidth: 1
+
+    // Sanfte Flächenfüllung
+    function makeGradient(ctx, baseColor) {
+      const h = ctx?.canvas?.height || 80;
+      const g = ctx.createLinearGradient(0, 0, 0, h);
+      g.addColorStop(0, baseColor + '33'); // ~20% Deckkraft
+      g.addColorStop(1, baseColor + '00'); // 0% Deckkraft
+      return g;
+    }
+
+    // Inventar-Sparkline
+    (function renderInv() {
+      const invCanvas = document.getElementById('sparklineInv');
+      if (!invCanvas || !window.Chart) return;
+      const invCtx = invCanvas.getContext('2d');
+      new Chart(invCtx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Inventar',
+            data: dataInv || [],
+            borderColor: colorPrimary,
+            backgroundColor: makeGradient(invCtx, colorPrimary),
+            borderWidth: 2,
+            fill: true,
+            tension: 0.35,
+            pointRadius: 3,
+            pointBackgroundColor: colorPrimary
+          }]
         },
-        ticks: {
-          maxTicksLimit: 5,              // kompakt
-        }
-      }
-    }
-  };
-
-
-  // Sanfte Flächenfüllung
-  function makeGradient(ctx, baseColor) {
-    const h = ctx?.canvas?.height || 80;
-    const g = ctx.createLinearGradient(0, 0, 0, h);
-    g.addColorStop(0, baseColor + '33'); // ~20% Deckkraft
-    g.addColorStop(1, baseColor + '00'); // 0% Deckkraft
-    return g;
-  }
-
-  // Inventar-Sparkline
-  (function renderInv() {
-    const invCanvas = document.getElementById('sparklineInv');
-    if (!invCanvas || !window.Chart) return;
-    const invCtx = invCanvas.getContext('2d');
-    new Chart(invCtx, {
-      type: 'line',
-      data: {
-        labels,
-        datasets: [{
-          label: 'Inventar',
-          data: dataInv || [],
-          borderColor: colorPrimary,
-          backgroundColor: makeGradient(invCtx, colorPrimary),
-          borderWidth: 2,
-          fill: true,
-          tension: 0.35,
-          pointRadius: 3,
-          pointBackgroundColor: colorPrimary
-        }]
-      },
-      options: baseOptions
-    });
-  })();
-
-  // Kassenbestand-Sparkline
-  (function renderKas() {
-    const kasCanvas = document.getElementById('sparklineKas');
-    if (!kasCanvas || !window.Chart) return;
-    const kasCtx = kasCanvas.getContext('2d');
-    new Chart(kasCtx, {
-      type: 'line',
-      data: {
-        labels,
-        datasets: [{
-          label: 'Kassenbestand',
-          data: dataKas || [],
-          borderColor: colorSuccess,
-          backgroundColor: makeGradient(kasCtx, colorSuccess),
-          borderWidth: 2,
-          fill: true,
-          tension: 0.35,
-          pointRadius: 3,
-          pointBackgroundColor: colorSuccess
-        }]
-      },
-      options: baseOptions
-    });
-  })();
-</script>
-
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const form = document.getElementById('transaction-form');
-    const orderIds = ['datum', 'vollgut', 'leergut', 'einnahme', 'ausgabe', 'bemerkung'];
-    const fields = orderIds.map(id => document.getElementById(id) || form?.querySelector(`[name="${id}"]`)).filter(Boolean);
-
-    // Auto-Tab
-    function focusByOffset(currentEl, delta) {
-      const idx = Number(currentEl?.dataset?.idx ?? -1);
-      if (idx < 0) return;
-      const next = fields[idx + delta];
-      if (next) next.focus({ preventScroll: true });
-    }
-    fields.forEach((el, idx) => {
-      el.dataset.idx = idx;
-      el.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          focusByOffset(el, e.shiftKey ? -1 : 1);
-        }
+        options: baseOptions
       });
-      if (el.type === 'number') el.addEventListener('wheel', (e) => e.preventDefault(), { passive: false });
-    });
+    })();
 
-    // Flatpickr
-    function isDark() { return document.documentElement.getAttribute('data-bs-theme') === 'dark'; }
-    function toggleCalendarDark(calEl, dark) { if (calEl) calEl.classList.toggle('flatpickr-dark', !!dark); }
-    if (window.flatpickr) {
-      if (flatpickr.l10ns?.de) flatpickr.localize(flatpickr.l10ns.de);
-      const fp = flatpickr('#datum', {
-        allowInput: true, dateFormat: 'd.m.Y', clickOpens: true, disableMobile: false,
-        onClose: () => focusByOffset(document.getElementById('datum'), 1),
-        onOpen: (s, d, i) => toggleCalendarDark(i.calendarContainer, isDark())
+    // Kassenbestand-Sparkline
+    (function renderKas() {
+      const kasCanvas = document.getElementById('sparklineKas');
+      if (!kasCanvas || !window.Chart) return;
+      const kasCtx = kasCanvas.getContext('2d');
+      new Chart(kasCtx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Kassenbestand',
+            data: dataKas || [],
+            borderColor: colorSuccess,
+            backgroundColor: makeGradient(kasCtx, colorSuccess),
+            borderWidth: 2,
+            fill: true,
+            tension: 0.35,
+            pointRadius: 3,
+            pointBackgroundColor: colorSuccess
+          }]
+        },
+        options: baseOptions
       });
-      new MutationObserver(() => {
-        const dark = isDark();
-        document.querySelectorAll('.flatpickr-calendar').forEach(c => toggleCalendarDark(c, dark));
-    }).observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ['data-bs-theme']
-    });
-    }
+    })();
+  </script>
 
-    // Haptik
-    function hapticFeedback() { if (navigator.vibrate) navigator.vibrate(10); }
-    form?.querySelectorAll('input, textarea, select').forEach(el => el.addEventListener('focus', hapticFeedback));
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const form = document.getElementById('transaction-form');
+      const orderIds = ['datum', 'vollgut', 'leergut', 'einnahme', 'ausgabe', 'bemerkung'];
+      const fields = orderIds.map(id => document.getElementById(id) || form?.querySelector(`[name="${id}"]`)).filter(Boolean);
 
-    // Pflichtfelder-Gruppe
-    const feldIds = ['einnahme', 'ausgabe', 'vollgut', 'leergut'];
-    const felder = feldIds.map(id => document.getElementById(id)).filter(Boolean);
-    function getNumericValue(el) {
-      const raw = (el?.value ?? '').toString().trim().replace(',', '.');
-      const val = parseFloat(raw);
-      return Number.isFinite(val) ? val : 0;
-    }
-    function anyPositive() { return felder.some(el => getNumericValue(el) > 0); }
-
-    function setInlineInvalid(on) {
-      felder.forEach(el => { el.classList.toggle('is-invalid', on); el.setAttribute('aria-invalid', on ? 'true' : 'false'); });
-      const ausgabeWrap = document.getElementById('ausgabe')?.closest('.input-group, .form-floating');
-      if (on && ausgabeWrap && !ausgabeWrap.querySelector('.invalid-feedback')) {
-        const fb = document.createElement('div');
-        fb.className = 'invalid-feedback';
-        fb.textContent = '{{ _("Bitte mindestens einen Wert bei Einnahme, Ausgabe, Vollgut oder Leergut angeben.") }}';
-        (ausgabeWrap.parentElement || ausgabeWrap).appendChild(fb);
+      // Auto-Tab
+      function focusByOffset(currentEl, delta) {
+        const idx = Number(currentEl?.dataset?.idx ?? -1);
+        if (idx < 0) return;
+        const next = fields[idx + delta];
+        if (next) next.focus({ preventScroll: true });
       }
-    }
-    function showGlobalError(msg) {
-      const btnRow = form?.querySelector('.d-flex.gap-2') || form;
-      let alert = form.querySelector('#globalFormError');
-      if (!alert) {
-        alert = document.createElement('div');
-        alert.id = 'globalFormError';
-        alert.className = 'alert alert-danger';
-        alert.setAttribute('role', 'alert');
-        alert.setAttribute('aria-live', 'assertive');
-        btnRow.parentNode.insertBefore(alert, btnRow);
-      }
-      alert.textContent = msg;
-      alert.classList.remove('d-none');
-      alert.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      (felder[0] || form).focus({ preventScroll: true });
-    }
-    function clearGlobalError() {
-      const alert = form?.querySelector('#globalFormError');
-      if (alert) { alert.classList.add('d-none'); alert.textContent = ''; }
-    }
-
-    // Submit-Button deaktivieren bis >0
-    const submitBtn = form?.querySelector('.btn.btn-success.flex-grow-1');
-    function updateSubmit() {
-      if (!submitBtn) return;
-      const enabled = anyPositive();
-      submitBtn.disabled = !enabled;
-      submitBtn.setAttribute('aria-disabled', String(!enabled));
-      submitBtn.title = enabled ? '' : '{{ _("Bitte mindestens einen Wert bei Einnahme, Ausgabe, Vollgut oder Leergut angeben.") }}';
-    }
-
-    feldIds.forEach(id => {
-      const el = document.getElementById(id);
-      el?.addEventListener('input', () => {
-        if (anyPositive()) { setInlineInvalid(false); clearGlobalError(); }
-        updateSubmit();
-      });
-      el?.addEventListener('change', updateSubmit);
-    });
-    updateSubmit();
-
-    // Submit-Handler
-    if (form) {
-
-      // Safari/Back-Forward-Cache: Spinner entfernen, wenn Nutzer per "Zurück" auf die Seite kommt
-      window.addEventListener('pageshow', (e) => {
-        if (e.persisted) form.classList.remove('is-submitting');
-      });
-
-      form.addEventListener('submit', (event) => {
-        if (!anyPositive()) {
-          event.preventDefault(); event.stopPropagation();
-          setInlineInvalid(true);
-          showGlobalError('{{ _("Bitte mindestens einen Wert bei Einnahme, Ausgabe, Vollgut oder Leergut angeben.") }}');
-          form.classList.add('was-validated');
-          updateSubmit();
-          return;
-        }
-
-        // Browser-Constraint-Validation
-        if (!form.checkValidity()) {
-          event.preventDefault(); event.stopPropagation();
-          form.classList.add('was-validated');
-          return;
-        }
-
-        // ✅ Alles ok: Spinner-Klasse setzen (wird serverseitig durch Redirect automatisch beendet)
-        form.classList.add('is-submitting');
-        form.classList.add('was-validated');
-      }, false);
-    }
-  });
-</script>
-
-
-<script>
-function sortTableByDate() {
-  const table = document.querySelector("table");
-  const tbody = table.querySelector("tbody");
-  const rows = Array.from(tbody.querySelectorAll("tr"));
-  const isAsc = table.dataset.sortOrder !== "asc";
-  table.dataset.sortOrder = isAsc ? "asc" : "desc";
-
-  rows.sort((a, b) => {
-    const cellA = a.querySelector('td[data-col="date"]');
-    const cellB = b.querySelector('td[data-col="date"]');
-    const sortA = cellA?.getAttribute('data-sort') || '';
-    const sortB = cellB?.getAttribute('data-sort') || '';
-    // ISO-String: lexikographisch sortierbar
-    return isAsc ? sortA.localeCompare(sortB) : sortB.localeCompare(sortA);
-  });
-
-  rows.forEach(r => tbody.appendChild(r));
-}
-</script>
-
-<script>
-  async function openAttachments(entryId) {
-    try {
-      const resp = await fetch(`{{ url_for('attachments_routes.attachments_list', entry_id=0) }}`.replace('0', entryId));
-      if (!resp.ok) throw new Error('HTTP ' + resp.status);
-      const list = await resp.json();
-
-      const ul = document.getElementById('attachmentsList');
-      ul.innerHTML = '';
-
-      if (!list || list.length === 0) {
-        ul.innerHTML = `<li class="list-group-item text-muted">{{ _('Keine Anhänge vorhanden.') }}</li>`;
-        new bootstrap.Modal(document.getElementById('attachmentsModal')).show();
-        return;
-      }
-
-      if (list.length === 1) {
-        const targetUrl = list[0].view_url || list[0].url;  // Inline bevorzugen
-        const w = window.open('', '_blank');                // synchron aus Click-Kontext
-        if (w) {
-          try { w.opener = null; } catch (e) {}
-          w.location.href = targetUrl;
-        } else {
-          window.location.assign(targetUrl);                // Fallback: gleicher Tab
-        }
-        return;
-      }
-
-      list.forEach(it => {
-        const li = document.createElement('li');
-        li.className = 'list-group-item d-flex justify-content-between align-items-center';
-
-        const left = document.createElement('div');
-        left.className = 'text-truncate';
-        left.style.maxWidth = '70%';
-
-        const icon = document.createElement('i');
-        icon.className = 'bi-paperclip me-1';
-
-        const nameSpan = document.createElement('span');
-        nameSpan.textContent = it.name;
-
-        left.append(icon, nameSpan);
-
-        const openA = document.createElement('a');
-        openA.className = 'btn btn-sm btn-outline-primary';
-        openA.href = it.view_url; //inline
-        openA.target = '_blank';
-        openA.textContent = "{{ _('Öffnen') }}";
-
-        li.append(left, openA);
-        ul.appendChild(li);
-      });
-
-      new bootstrap.Modal(document.getElementById('attachmentsModal')).show();
-    } catch (e) {
-      console.error(e);
-      alert('Fehler beim Laden der Anhänge.');
-    }
-  }
-</script>
-
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const csrf = "{{ csrf_token() }}";
-    const token = document.getElementById('temp_token')?.value || '';
-    const listEl = document.getElementById('addTempAttachmentsList');
-    const badge = document.getElementById('uploadBadge');
-    const fileEl = document.getElementById('add_temp_files');
-    const btnUp = document.getElementById('btnTempUpload');
-
-    function toggleBtn() { if (btnUp) btnUp.disabled = !(fileEl?.files?.length > 0); }
-    fileEl?.addEventListener('change', toggleBtn);
-    toggleBtn();
-
-    function updateBadge(count) {
-      if (!badge) return;
-      if (count > 0) {
-        badge.textContent = count > 99 ? '99+' : String(count);
-        badge.classList.remove('d-none');
-      } else {
-        badge.classList.add('d-none');
-      }
-    }
-
-    async function refreshTempList() {
-      if (!token || !listEl) return;
-      const url = "{{ url_for('attachments_routes.attachments_temp_list', token='__T__') }}".replace('__T__', token);
-      const resp = await fetch(url, { credentials: 'same-origin' });
-      if (!resp.ok) return;
-      const items = await resp.json();
-      listEl.innerHTML = '';
-      updateBadge(items.length); // ← Badge aktualisieren
-      if (!items || items.length === 0) {
-        listEl.innerHTML = `<li class="list-group-item text-muted">{{ _('Keine Anhänge vorhanden.') }}</li>`;
-        updateBadge(0);
-        return;
-      }
-      updateBadge(items.length);
-      items.forEach(it => {
-        const li = document.createElement('li');
-        li.className = 'list-group-item d-flex justify-content-between align-items-center';
-        const left = document.createElement('div');
-        left.className = 'text-truncate'; left.style.maxWidth = '70%';
-        const icon = document.createElement('i'); icon.className = 'bi-paperclip me-1';
-        const nameSpan = document.createElement('span'); nameSpan.textContent = it.name;
-        left.append(icon, nameSpan);
-        const actions = document.createElement('div'); actions.className = 'd-flex gap-2';
-        const openA = document.createElement('a'); openA.className = 'btn btn-sm btn-outline-primary'; openA.href = it.url; openA.target = '_blank'; openA.textContent = "{{ _('Öffnen') }}";
-        const delBtn = document.createElement('button'); delBtn.className = 'btn btn-sm btn-outline-danger'; delBtn.dataset.id = it.id; delBtn.textContent = "{{ _('Löschen') }}";
-        delBtn.addEventListener('click', async (ev) => {
-          ev.preventDefault();
-          if (!confirm('{{ _("Anhang wirklich löschen?") }}')) return;
-          const attId = delBtn.dataset.id;
-          await fetch(`{{ url_for('attachments_routes.attachments_temp_delete', att_id=0) }}`.replace('0', attId), { method: 'POST', headers: { 'X-CSRF-Token': "{{ csrf_token() }}" }, credentials: 'same-origin' });
-          refreshTempList();
+      fields.forEach((el, idx) => {
+        el.dataset.idx = idx;
+        el.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            focusByOffset(el, e.shiftKey ? -1 : 1);
+          }
         });
-        actions.append(openA, delBtn);
-        li.append(left, actions);
-        listEl.appendChild(li);
+        if (el.type === 'number') el.addEventListener('wheel', (e) => e.preventDefault(), { passive: false });
       });
-    }
 
-    const uploadModalEl = document.getElementById('uploadModal');
-    if (uploadModalEl) uploadModalEl.addEventListener('shown.bs.modal', refreshTempList);
-
-    btnUp?.addEventListener('click', async () => {
-      if (!token || !fileEl || !fileEl.files?.length) return;
-      for (const f of fileEl.files) {
-        const fd = new FormData();
-        fd.append('files', f);
-        fd.append('csrf_token', csrf);
-        const url = "{{ url_for('attachments_routes.attachments_temp_upload', token='__T__') }}".replace('__T__', token);
-        const resp = await fetch(url, { method: 'POST', body: fd, credentials: 'same-origin' });
-        if (!resp.ok) { alert(await resp.text() || 'Upload fehlgeschlagen'); break; }
+      // Flatpickr
+      function isDark() { return document.documentElement.getAttribute('data-bs-theme') === 'dark'; }
+      function toggleCalendarDark(calEl, dark) { if (calEl) calEl.classList.toggle('flatpickr-dark', !!dark); }
+      if (window.flatpickr) {
+        if (flatpickr.l10ns?.de) flatpickr.localize(flatpickr.l10ns.de);
+        const fp = flatpickr('#datum', {
+          allowInput: true, dateFormat: 'd.m.Y', clickOpens: true, disableMobile: false,
+          onClose: () => focusByOffset(document.getElementById('datum'), 1),
+          onOpen: (s, d, i) => toggleCalendarDark(i.calendarContainer, isDark())
+        });
+        new MutationObserver(() => {
+          const dark = isDark();
+          document.querySelectorAll('.flatpickr-calendar').forEach(c => toggleCalendarDark(c, dark));
+      }).observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['data-bs-theme']
+      });
       }
-      fileEl.value = '';
+
+      // Haptik
+      function hapticFeedback() { if (navigator.vibrate) navigator.vibrate(10); }
+      form?.querySelectorAll('input, textarea, select').forEach(el => el.addEventListener('focus', hapticFeedback));
+
+      // Pflichtfelder-Gruppe
+      const feldIds = ['einnahme', 'ausgabe', 'vollgut', 'leergut'];
+      const felder = feldIds.map(id => document.getElementById(id)).filter(Boolean);
+      function getNumericValue(el) {
+        const raw = (el?.value ?? '').toString().trim().replace(',', '.');
+        const val = parseFloat(raw);
+        return Number.isFinite(val) ? val : 0;
+      }
+      function anyPositive() { return felder.some(el => getNumericValue(el) > 0); }
+
+      function setInlineInvalid(on) {
+        felder.forEach(el => { el.classList.toggle('is-invalid', on); el.setAttribute('aria-invalid', on ? 'true' : 'false'); });
+        const ausgabeWrap = document.getElementById('ausgabe')?.closest('.input-group, .form-floating');
+        if (on && ausgabeWrap && !ausgabeWrap.querySelector('.invalid-feedback')) {
+          const fb = document.createElement('div');
+          fb.className = 'invalid-feedback';
+          fb.textContent = '{{ _("Bitte mindestens einen Wert bei Einnahme, Ausgabe, Vollgut oder Leergut angeben.") }}';
+          (ausgabeWrap.parentElement || ausgabeWrap).appendChild(fb);
+        }
+      }
+      function showGlobalError(msg) {
+        const btnRow = form?.querySelector('.d-flex.gap-2') || form;
+        let alert = form.querySelector('#globalFormError');
+        if (!alert) {
+          alert = document.createElement('div');
+          alert.id = 'globalFormError';
+          alert.className = 'alert alert-danger';
+          alert.setAttribute('role', 'alert');
+          alert.setAttribute('aria-live', 'assertive');
+          btnRow.parentNode.insertBefore(alert, btnRow);
+        }
+        alert.textContent = msg;
+        alert.classList.remove('d-none');
+        alert.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        (felder[0] || form).focus({ preventScroll: true });
+      }
+      function clearGlobalError() {
+        const alert = form?.querySelector('#globalFormError');
+        if (alert) { alert.classList.add('d-none'); alert.textContent = ''; }
+      }
+
+      // Submit-Button deaktivieren bis >0
+      const submitBtn = form?.querySelector('.btn.btn-success.flex-grow-1');
+      function updateSubmit() {
+        if (!submitBtn) return;
+        const enabled = anyPositive();
+        submitBtn.disabled = !enabled;
+        submitBtn.setAttribute('aria-disabled', String(!enabled));
+        submitBtn.title = enabled ? '' : '{{ _("Bitte mindestens einen Wert bei Einnahme, Ausgabe, Vollgut oder Leergut angeben.") }}';
+      }
+
+      feldIds.forEach(id => {
+        const el = document.getElementById(id);
+        el?.addEventListener('input', () => {
+          if (anyPositive()) { setInlineInvalid(false); clearGlobalError(); }
+          updateSubmit();
+        });
+        el?.addEventListener('change', updateSubmit);
+      });
+      updateSubmit();
+
+      // Submit-Handler
+      if (form) {
+
+        // Safari/Back-Forward-Cache: Spinner entfernen, wenn Nutzer per "Zurück" auf die Seite kommt
+        window.addEventListener('pageshow', (e) => {
+          if (e.persisted) form.classList.remove('is-submitting');
+        });
+
+        form.addEventListener('submit', (event) => {
+          if (!anyPositive()) {
+            event.preventDefault(); event.stopPropagation();
+            setInlineInvalid(true);
+            showGlobalError('{{ _("Bitte mindestens einen Wert bei Einnahme, Ausgabe, Vollgut oder Leergut angeben.") }}');
+            form.classList.add('was-validated');
+            updateSubmit();
+            return;
+          }
+
+          // Browser-Constraint-Validation
+          if (!form.checkValidity()) {
+            event.preventDefault(); event.stopPropagation();
+            form.classList.add('was-validated');
+            return;
+          }
+
+          // ✅ Alles ok: Spinner-Klasse setzen (wird serverseitig durch Redirect automatisch beendet)
+          form.classList.add('is-submitting');
+          form.classList.add('was-validated');
+        }, false);
+      }
+    });
+  </script>
+
+
+  <script>
+  function sortTableByDate() {
+    const table = document.querySelector("table");
+    const tbody = table.querySelector("tbody");
+    const rows = Array.from(tbody.querySelectorAll("tr"));
+    const isAsc = table.dataset.sortOrder !== "asc";
+    table.dataset.sortOrder = isAsc ? "asc" : "desc";
+
+    rows.sort((a, b) => {
+      const cellA = a.querySelector('td[data-col="date"]');
+      const cellB = b.querySelector('td[data-col="date"]');
+      const sortA = cellA?.getAttribute('data-sort') || '';
+      const sortB = cellB?.getAttribute('data-sort') || '';
+      // ISO-String: lexikographisch sortierbar
+      return isAsc ? sortA.localeCompare(sortB) : sortB.localeCompare(sortA);
+    });
+
+    rows.forEach(r => tbody.appendChild(r));
+  }
+  </script>
+
+  <script>
+    async function openAttachments(entryId) {
+      try {
+        const resp = await fetch(`{{ url_for('attachments_routes.attachments_list', entry_id=0) }}`.replace('0', entryId));
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        const list = await resp.json();
+
+        const ul = document.getElementById('attachmentsList');
+        ul.innerHTML = '';
+
+        if (!list || list.length === 0) {
+          ul.innerHTML = `<li class="list-group-item text-muted">{{ _('Keine Anhänge vorhanden.') }}</li>`;
+          new bootstrap.Modal(document.getElementById('attachmentsModal')).show();
+          return;
+        }
+
+        if (list.length === 1) {
+          const targetUrl = list[0].view_url || list[0].url;  // Inline bevorzugen
+          const w = window.open('', '_blank');                // synchron aus Click-Kontext
+          if (w) {
+            try { w.opener = null; } catch (e) {}
+            w.location.href = targetUrl;
+          } else {
+            window.location.assign(targetUrl);                // Fallback: gleicher Tab
+          }
+          return;
+        }
+
+        list.forEach(it => {
+          const li = document.createElement('li');
+          li.className = 'list-group-item d-flex justify-content-between align-items-center';
+
+          const left = document.createElement('div');
+          left.className = 'text-truncate';
+          left.style.maxWidth = '70%';
+
+          const icon = document.createElement('i');
+          icon.className = 'bi-paperclip me-1';
+
+          const nameSpan = document.createElement('span');
+          nameSpan.textContent = it.name;
+
+          left.append(icon, nameSpan);
+
+          const openA = document.createElement('a');
+          openA.className = 'btn btn-sm btn-outline-primary';
+          openA.href = it.view_url; //inline
+          openA.target = '_blank';
+          openA.textContent = "{{ _('Öffnen') }}";
+
+          li.append(left, openA);
+          ul.appendChild(li);
+        });
+
+        new bootstrap.Modal(document.getElementById('attachmentsModal')).show();
+      } catch (e) {
+        console.error(e);
+        alert('Fehler beim Laden der Anhänge.');
+      }
+    }
+  </script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const csrf = "{{ csrf_token() }}";
+      const token = document.getElementById('temp_token')?.value || '';
+      const listEl = document.getElementById('addTempAttachmentsList');
+      const badge = document.getElementById('uploadBadge');
+      const fileEl = document.getElementById('add_temp_files');
+      const btnUp = document.getElementById('btnTempUpload');
+
+      function toggleBtn() { if (btnUp) btnUp.disabled = !(fileEl?.files?.length > 0); }
+      fileEl?.addEventListener('change', toggleBtn);
+      toggleBtn();
+
+      function updateBadge(count) {
+        if (!badge) return;
+        if (count > 0) {
+          badge.textContent = count > 99 ? '99+' : String(count);
+          badge.classList.remove('d-none');
+        } else {
+          badge.classList.add('d-none');
+        }
+      }
+
+      async function refreshTempList() {
+        if (!token || !listEl) return;
+        const url = "{{ url_for('attachments_routes.attachments_temp_list', token='__T__') }}".replace('__T__', token);
+        const resp = await fetch(url, { credentials: 'same-origin' });
+        if (!resp.ok) return;
+        const items = await resp.json();
+        listEl.innerHTML = '';
+        updateBadge(items.length); // ← Badge aktualisieren
+        if (!items || items.length === 0) {
+          listEl.innerHTML = `<li class="list-group-item text-muted">{{ _('Keine Anhänge vorhanden.') }}</li>`;
+          updateBadge(0);
+          return;
+        }
+        updateBadge(items.length);
+        items.forEach(it => {
+          const li = document.createElement('li');
+          li.className = 'list-group-item d-flex justify-content-between align-items-center';
+          const left = document.createElement('div');
+          left.className = 'text-truncate'; left.style.maxWidth = '70%';
+          const icon = document.createElement('i'); icon.className = 'bi-paperclip me-1';
+          const nameSpan = document.createElement('span'); nameSpan.textContent = it.name;
+          left.append(icon, nameSpan);
+          const actions = document.createElement('div'); actions.className = 'd-flex gap-2';
+          const openA = document.createElement('a'); openA.className = 'btn btn-sm btn-outline-primary'; openA.href = it.url; openA.target = '_blank'; openA.textContent = "{{ _('Öffnen') }}";
+          const delBtn = document.createElement('button'); delBtn.className = 'btn btn-sm btn-outline-danger'; delBtn.dataset.id = it.id; delBtn.textContent = "{{ _('Löschen') }}";
+          delBtn.addEventListener('click', async (ev) => {
+            ev.preventDefault();
+            if (!confirm('{{ _("Anhang wirklich löschen?") }}')) return;
+            const attId = delBtn.dataset.id;
+            await fetch(`{{ url_for('attachments_routes.attachments_temp_delete', att_id=0) }}`.replace('0', attId), { method: 'POST', headers: { 'X-CSRF-Token': "{{ csrf_token() }}" }, credentials: 'same-origin' });
+            refreshTempList();
+          });
+          actions.append(openA, delBtn);
+          li.append(left, actions);
+          listEl.appendChild(li);
+        });
+      }
+
+      const uploadModalEl = document.getElementById('uploadModal');
+      if (uploadModalEl) uploadModalEl.addEventListener('shown.bs.modal', refreshTempList);
+
+      btnUp?.addEventListener('click', async () => {
+        if (!token || !fileEl || !fileEl.files?.length) return;
+        for (const f of fileEl.files) {
+          const fd = new FormData();
+          fd.append('files', f);
+          fd.append('csrf_token', csrf);
+          const url = "{{ url_for('attachments_routes.attachments_temp_upload', token='__T__') }}".replace('__T__', token);
+          const resp = await fetch(url, { method: 'POST', body: fd, credentials: 'same-origin' });
+          if (!resp.ok) { alert(await resp.text() || 'Upload fehlgeschlagen'); break; }
+        }
+        fileEl.value = '';
+        refreshTempList();
+      });
+
       refreshTempList();
     });
-
-    refreshTempList();
-  });
-</script>
+  </script>
 
 
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-  const form    = document.getElementById('filtersForm');
-  const elRange = document.getElementById('filter_daterange');
-  const elFrom  = document.getElementById('filter_from');
-  const elTo    = document.getElementById('filter_to');
+  <script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const form    = document.getElementById('filtersForm');
+    const elRange = document.getElementById('filter_daterange');
+    const elFrom  = document.getElementById('filter_from');
+    const elTo    = document.getElementById('filter_to');
 
-  // -----------------------------
-  // Auto-Submit: Anhänge
-  // -----------------------------
-  const attachmentsSelect = document.getElementById('filter_attachments');
-  if (attachmentsSelect && form) {
-    attachmentsSelect.addEventListener('change', () => {
-      form.requestSubmit();
-    });
-  }
-
-  // -----------------------------
-  // Auto-Submit: Jahr
-  // -----------------------------
-  const yearSelect = document.getElementById('filter_year');
-  if (yearSelect && form) {
-    yearSelect.addEventListener('change', () => {
-      form.requestSubmit();
-    });
-  }
-
-  // -----------------------------
-  // Suche (filter_q):
-  // submit bei change/blur + optional Debounce beim Tippen
-  // -----------------------------
-  const searchInput = document.getElementById('filter_q');
-
-  // Debounce-Helfer
-  function debounce(fn, wait = 500) {
-    let t = null;
-    return function (...args) {
-      clearTimeout(t);
-      t = setTimeout(() => fn.apply(this, args), wait);
-    };
-  }
-
-  // letzter erfolgreich übermittelter q-Wert (Loop-/Doppel-Submit-Schutz)
-  let lastSubmittedQ = (searchInput?.value || '').trim();
-
-  // Submits nur, wenn sich der Wert wirklich geändert hat
-  const submitIfQChanged = () => {
-    if (!form || !searchInput) return;
-    const q = searchInput.value.trim();
-    if (q === lastSubmittedQ) return;
-    lastSubmittedQ = q;
-    form.requestSubmit();
-  };
-
-  if (searchInput && form) {
-    // 1) CHANGE: Nutzer bestätigt/verlässt Feld mit geändertem Wert
-    searchInput.addEventListener('change', submitIfQChanged);
-
-    // 2) BLUR: Beim Verlassen des Feldes (nur wenn Wert anders)
-    searchInput.addEventListener('blur', submitIfQChanged);
-
-    // 3) (OPTIONAL) Debounce beim Tippen: nach 500ms Inaktivität filtern
-    //    Wenn du KEIN Live-Filtering willst, kommentiere die nächste Zeile aus.
-    searchInput.addEventListener('input', debounce(submitIfQChanged, 1500));
-  }
-
-  // -----------------------------
-  // Zeitraum / Flatpickr
-  // -----------------------------
-  // Lokales YYYY-MM-DD (kein UTC-Shift)
-  const fmtLocal = (d) => {
-    if (!d) return '';
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${y}-${m}-${day}`;
-  };
-
-  // Re-Submit nur bei echter Änderung von from/to (Loop-Schutz)
-  const submitIfDateChanged = (() => {
-    let lastKey = `${elFrom?.value || ''}|${elTo?.value || ''}`;
-    return () => {
-      const key = `${elFrom?.value || ''}|${elTo?.value || ''}`;
-      if (key === lastKey) return;
-      lastKey = key;
-      form?.requestSubmit();
-    };
-  })();
-
-  // Flatpickr für Zeitraum initialisieren
-  if (!window.flatpickr || !elRange) return;
-  if (flatpickr.l10ns?.de) flatpickr.localize(flatpickr.l10ns.de);
-  const isDark = () => document.documentElement.getAttribute('data-bs-theme') === 'dark';
-
-  let hydrating = true;
-  const fp = flatpickr(elRange, {
-    mode: 'range',
-    dateFormat: 'Y-m-d',
-    altInput: true,
-    altFormat: 'd.m.Y',
-    allowInput: true,
-    clickOpens: true,
-    locale: { rangeSeparator: ' – ', firstDayOfWeek: 1 },
-    onOpen: (_, __, i) => i.calendarContainer.classList.toggle('flatpickr-dark', isDark()),
-    onChange: (dates) => {
-      const [from, to] = dates;
-      elFrom.value = fmtLocal(from);
-      elTo.value   = fmtLocal(to);
-      if (!hydrating && from && to) submitIfDateChanged();
+    // -----------------------------
+    // Auto-Submit: Anhänge
+    // -----------------------------
+    const attachmentsSelect = document.getElementById('filter_attachments');
+    if (attachmentsSelect && form) {
+      attachmentsSelect.addEventListener('change', () => {
+        form.requestSubmit();
+      });
     }
-  });
 
-  
-  const preset = [elFrom.value, elTo.value].filter(Boolean);
-    if (preset.length) fp.setDate(preset, false, 'Y-m-d');
-    hydrating = false;
-
-    const mo = new MutationObserver(() => {
-      document.querySelectorAll('.flatpickr-calendar')
-        .forEach(c => c.classList.toggle('flatpickr-dark', isDark()));
-    });
-    mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-bs-theme'] });
-  });
-</script>
-
-
-<script>
-  function applyStackedVisibility() {
-    const isStacked = window.matchMedia('(max-width: 768px)').matches;
-    const rows = document.querySelectorAll('table.table-stacked tbody tr');
-
-    rows.forEach(tr => {
-      // vorhandene Flags wie bisher
-      const vV = Number(tr.getAttribute('data-vollgut-val')   || 0);
-      const lV = Number(tr.getAttribute('data-leergut-val')   || 0);
-      const eV = Number(tr.getAttribute('data-einnahme-val')  || 0);
-      const aV = Number(tr.getAttribute('data-ausgabe-val')   || 0);
-
-      // Zellen
-      const tdInv = tr.querySelector('td[data-col="inventar"]');
-      const tdKas = tr.querySelector('td[data-col="kassenbestand"]');
-
-      // Pfeil-Span im Badge holen
-      const invArrow = tdInv?.querySelector('.dir-arrow');
-      const kasArrow = tdKas?.querySelector('.dir-arrow');
-
-      // Inventar: Vollgut vs. Leergut
-      if (invArrow) {
-        if (vV > lV) { invArrow.textContent = '▲'; invArrow.classList.add('dir-up'); invArrow.classList.remove('dir-down'); }
-        else if (lV > vV) { invArrow.textContent = '▼'; invArrow.classList.add('dir-down'); invArrow.classList.remove('dir-up'); }
-        else { invArrow.textContent = ''; invArrow.classList.remove('dir-up','dir-down'); }
-      }
-
-      // Kasse: Einnahme vs. Ausgabe
-      if (kasArrow) {
-        if (eV > aV) { kasArrow.textContent = '▲'; kasArrow.classList.add('dir-up'); kasArrow.classList.remove('dir-down'); }
-        else if (aV > eV) { kasArrow.textContent = '▼'; kasArrow.classList.add('dir-down'); kasArrow.classList.remove('dir-up'); }
-        else { kasArrow.textContent = ''; kasArrow.classList.remove('dir-up','dir-down'); }
-      }
-
-      // --- deine bisherige Sichtbarkeitslogik (Stacked) kann unverändert bleiben ---
-      // ... (delta-inv / delta-kasse anzeigen/ausblenden, ALWAYS_SHOW etc.)
-    });
-
-    // Desktop-Sichtbarkeit zurücksetzen wie bisher
-    if (!isStacked) {
-      rows.forEach(tr => tr.querySelectorAll('td[data-col]').forEach(td => td.style.removeProperty('display')));
+    // -----------------------------
+    // Auto-Submit: Jahr
+    // -----------------------------
+    const yearSelect = document.getElementById('filter_year');
+    if (yearSelect && form) {
+      yearSelect.addEventListener('change', () => {
+        form.requestSubmit();
+      });
     }
-  }
 
-  document.addEventListener('DOMContentLoaded', applyStackedVisibility);
-  window.addEventListener('resize', () => {
-    clearTimeout(window.__bbStackedTO);
-    window.__bbStackedTO = setTimeout(applyStackedVisibility, 50);
-  });
-</script>
+    // -----------------------------
+    // Suche (filter_q):
+    // submit bei change/blur + optional Debounce beim Tippen
+    // -----------------------------
+    const searchInput = document.getElementById('filter_q');
 
-<!-- Tabelle auf Stacked umschalten bei zu kleiner Breite -->
-<script>
-  function toggleStackedTable() {
-    const table = document.querySelector('table.table-stacked');
-    if (!table) return;
-    const containerWidth = table.parentElement.offsetWidth;
-    const tableWidth = table.scrollWidth;
-    table.classList.toggle('is-stacked', tableWidth > containerWidth);
-  }
+    // Debounce-Helfer
+    function debounce(fn, wait = 500) {
+      let t = null;
+      return function (...args) {
+        clearTimeout(t);
+        t = setTimeout(() => fn.apply(this, args), wait);
+      };
+    }
 
-  // Initial, nach vollständigem Laden, und bei Resize
-  document.addEventListener('DOMContentLoaded', toggleStackedTable);
-  window.addEventListener('load', toggleStackedTable);
-  window.addEventListener('resize', () => {
-    clearTimeout(window.__stackedTO);
-    window.__stackedTO = setTimeout(toggleStackedTable, 100);
-  });
+    // letzter erfolgreich übermittelter q-Wert (Loop-/Doppel-Submit-Schutz)
+    let lastSubmittedQ = (searchInput?.value || '').trim();
 
-  // Reagiert auch auf Größenänderungen des Elterncontainers (z. B. Collapse/Filter)
-  const tableParent = document.querySelector('table.table-stacked')?.parentElement;
-  if (tableParent && 'ResizeObserver' in window) {
-    const ro = new ResizeObserver(() => toggleStackedTable());
-    ro.observe(tableParent);
-  }
-</script>
+    // Submits nur, wenn sich der Wert wirklich geändert hat
+    const submitIfQChanged = () => {
+      if (!form || !searchInput) return;
+      const q = searchInput.value.trim();
+      if (q === lastSubmittedQ) return;
+      lastSubmittedQ = q;
+      form.requestSubmit();
+    };
 
-{% endblock %}
+    if (searchInput && form) {
+      // 1) CHANGE: Nutzer bestätigt/verlässt Feld mit geändertem Wert
+      searchInput.addEventListener('change', submitIfQChanged);
+
+      // 2) BLUR: Beim Verlassen des Feldes (nur wenn Wert anders)
+      searchInput.addEventListener('blur', submitIfQChanged);
+
+      // 3) (OPTIONAL) Debounce beim Tippen: nach 500ms Inaktivität filtern
+      //    Wenn du KEIN Live-Filtering willst, kommentiere die nächste Zeile aus.
+      searchInput.addEventListener('input', debounce(submitIfQChanged, 1500));
+    }
+
+    // -----------------------------
+    // Zeitraum / Flatpickr
+    // -----------------------------
+    // Lokales YYYY-MM-DD (kein UTC-Shift)
+    const fmtLocal = (d) => {
+      if (!d) return '';
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    };
+
+    // Re-Submit nur bei echter Änderung von from/to (Loop-Schutz)
+    const submitIfDateChanged = (() => {
+      let lastKey = `${elFrom?.value || ''}|${elTo?.value || ''}`;
+      return () => {
+        const key = `${elFrom?.value || ''}|${elTo?.value || ''}`;
+        if (key === lastKey) return;
+        lastKey = key;
+        form?.requestSubmit();
+      };
+    })();
+
+    // Flatpickr für Zeitraum initialisieren
+    if (!window.flatpickr || !elRange) return;
+    if (flatpickr.l10ns?.de) flatpickr.localize(flatpickr.l10ns.de);
+    const isDark = () => document.documentElement.getAttribute('data-bs-theme') === 'dark';
+
+    let hydrating = true;
+    const fp = flatpickr(elRange, {
+      mode: 'range',
+      dateFormat: 'Y-m-d',
+      altInput: true,
+      altFormat: 'd.m.Y',
+      allowInput: true,
+      clickOpens: true,
+      locale: { rangeSeparator: ' – ', firstDayOfWeek: 1 },
+      onOpen: (_, __, i) => i.calendarContainer.classList.toggle('flatpickr-dark', isDark()),
+      onChange: (dates) => {
+        const [from, to] = dates;
+        elFrom.value = fmtLocal(from);
+        elTo.value   = fmtLocal(to);
+        if (!hydrating && from && to) submitIfDateChanged();
+      }
+    });
+
+    
+    const preset = [elFrom.value, elTo.value].filter(Boolean);
+      if (preset.length) fp.setDate(preset, false, 'Y-m-d');
+      hydrating = false;
+
+      const mo = new MutationObserver(() => {
+        document.querySelectorAll('.flatpickr-calendar')
+          .forEach(c => c.classList.toggle('flatpickr-dark', isDark()));
+      });
+      mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-bs-theme'] });
+    });
+  </script>
+
+
+  <script>
+    function applyStackedVisibility() {
+      const isStacked = window.matchMedia('(max-width: 768px)').matches;
+      const rows = document.querySelectorAll('table.table-stacked tbody tr');
+
+      rows.forEach(tr => {
+        // vorhandene Flags wie bisher
+        const vV = Number(tr.getAttribute('data-vollgut-val')   || 0);
+        const lV = Number(tr.getAttribute('data-leergut-val')   || 0);
+        const eV = Number(tr.getAttribute('data-einnahme-val')  || 0);
+        const aV = Number(tr.getAttribute('data-ausgabe-val')   || 0);
+
+        // Zellen
+        const tdInv = tr.querySelector('td[data-col="inventar"]');
+        const tdKas = tr.querySelector('td[data-col="kassenbestand"]');
+
+        // Pfeil-Span im Badge holen
+        const invArrow = tdInv?.querySelector('.dir-arrow');
+        const kasArrow = tdKas?.querySelector('.dir-arrow');
+
+        // Inventar: Vollgut vs. Leergut
+        if (invArrow) {
+          if (vV > lV) { invArrow.textContent = '▲'; invArrow.classList.add('dir-up'); invArrow.classList.remove('dir-down'); }
+          else if (lV > vV) { invArrow.textContent = '▼'; invArrow.classList.add('dir-down'); invArrow.classList.remove('dir-up'); }
+          else { invArrow.textContent = ''; invArrow.classList.remove('dir-up','dir-down'); }
+        }
+
+        // Kasse: Einnahme vs. Ausgabe
+        if (kasArrow) {
+          if (eV > aV) { kasArrow.textContent = '▲'; kasArrow.classList.add('dir-up'); kasArrow.classList.remove('dir-down'); }
+          else if (aV > eV) { kasArrow.textContent = '▼'; kasArrow.classList.add('dir-down'); kasArrow.classList.remove('dir-up'); }
+          else { kasArrow.textContent = ''; kasArrow.classList.remove('dir-up','dir-down'); }
+        }
+
+        // --- deine bisherige Sichtbarkeitslogik (Stacked) kann unverändert bleiben ---
+        // ... (delta-inv / delta-kasse anzeigen/ausblenden, ALWAYS_SHOW etc.)
+      });
+
+      // Desktop-Sichtbarkeit zurücksetzen wie bisher
+      if (!isStacked) {
+        rows.forEach(tr => tr.querySelectorAll('td[data-col]').forEach(td => td.style.removeProperty('display')));
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', applyStackedVisibility);
+    window.addEventListener('resize', () => {
+      clearTimeout(window.__bbStackedTO);
+      window.__bbStackedTO = setTimeout(applyStackedVisibility, 50);
+    });
+  </script>
+
+  <!-- Tabelle auf Stacked umschalten bei zu kleiner Breite -->
+  <script>
+    function toggleStackedTable() {
+      const table = document.querySelector('table.table-stacked');
+      if (!table) return;
+      const containerWidth = table.parentElement.offsetWidth;
+      const tableWidth = table.scrollWidth;
+      table.classList.toggle('is-stacked', tableWidth > containerWidth);
+    }
+
+    // Initial, nach vollständigem Laden, und bei Resize
+    document.addEventListener('DOMContentLoaded', toggleStackedTable);
+    window.addEventListener('load', toggleStackedTable);
+    window.addEventListener('resize', () => {
+      clearTimeout(window.__stackedTO);
+      window.__stackedTO = setTimeout(toggleStackedTable, 100);
+    });
+
+    // Reagiert auch auf Größenänderungen des Elterncontainers (z. B. Collapse/Filter)
+    const tableParent = document.querySelector('table.table-stacked')?.parentElement;
+    if (tableParent && 'ResizeObserver' in window) {
+      const ro = new ResizeObserver(() => toggleStackedTable());
+      ro.observe(tableParent);
+    }
+  </script>
+
+  {% endblock %}

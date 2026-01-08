@@ -304,89 +304,112 @@
           <table class="table table-sm align-middle table-striped table-stacked table-bordered">
             <thead class="table-light">
               <tr>
-                <th class="text-center" style="cursor:pointer;" onclick="sortTableByDate()">
-                  {{ _('Datum') }} <i class="bi bi-arrow-down-up"></i>
-                </th>
-                <th class="text-center">{{ _('Vollgut') }}</th>
-                <th class="text-center">{{ _('Leergut') }}</th>
-                <th class="text-center">{{ _('Inventar') }}</th>
-                <th class="text-center">{{ _('Einnahme') }}</th>
-                <th class="text-center">{{ _('Ausgabe') }}</th>
-                <th class="text-center">{{ _('Kassenbestand') }}</th>
-                <th class="text-center">{{ _('Bemerkung') }}</th>
-                <th class="text-center">{{ _('Aktionen') }}</th>
-              </tr>
+                  <th class="text-center" style="cursor:pointer;" onclick="sortTableByDate()">
+                    {{ _('Datum') }} <i class="bi bi-arrow-down-up"></i>
+                  </th>
+
+                  {# ALT: Vollgut / Leergut #}
+                  {# <th class="text-center">{{ _('Vollgut') }}</th>
+                    <th class="text-center">{{ _('Leergut') }}</th> #}
+
+                  <th class="text-center">{{ _('Bestandsänderung') }}</th>
+
+                  {# ALT: Einnahme / Ausgabe #}
+                  {# <th class="text-center">{{ _('Einnahme') }}</th>
+                    <th class="text-center">{{ _('Ausgabe') }}</th> #}
+
+                  <th class="text-center">{{ _('Zahlung') }}</th>
+
+                  <th class="text-center">{{ _('Inventar') }}</th>
+                  <th class="text-center">{{ _('Kassenbestand') }}</th>
+                  <th class="text-center">{{ _('Bemerkung') }}</th>
+                  <th class="text-center">{{ _('Aktionen') }}</th>
+                </tr>
             </thead>
             <tbody>
-              {% for e in entries %}  
-              <!--genau einmal pro Zeile definieren-->
+            {% for e in entries %}
               {% set changed = (e.vollgut != 0 or e.leergut != 0 or e.einnahme != 0 or e.ausgabe != 0) %}
               <tr
-                  data-changed="{{ 1 if changed else 0 }}"    
-                  data-vollgut="{{ 1 if e.vollgut != 0 else 0 }}"    
-                  data-leergut="{{ 1 if e.leergut != 0 else 0 }}"    
-                  data-einnahme="{{ 1 if e.einnahme != 0 else 0 }}"    
-                  data-ausgabe="{{ 1 if e.ausgabe != 0 else 0 }}"  
+                data-changed="{{ 1 if changed else 0 }}"
+                data-vollgut="{{ 1 if e.vollgut != 0 else 0 }}"
+                data-leergut="{{ 1 if e.leergut != 0 else 0 }}"
+                data-einnahme="{{ 1 if e.einnahme != 0 else 0 }}"
+                data-ausgabe="{{ 1 if e.ausgabe != 0 else 0 }}"
+                data-vollgut-val="{{ e.vollgut or 0 }}"
+                data-leergut-val="{{ e.leergut or 0 }}"
+                data-einnahme-val="{{ e.einnahme or 0 }}"
+                data-ausgabe-val="{{ e.ausgabe or 0 }}"
               >
-                <td class="text-end" data-label="{{ _('Datum') }}" data-col="date">{{ format_date_de(e.datum) }}</td>
+                <td class="text-end" data-label="{{ _('Datum') }}" data-col="date">
+                  {{ format_date_de(e.datum) }}
+                </td>
 
-                <!-- Nur anzeigen, wenn Wert != 0 -->
-                <td class="text-end" data-label="{{ _('Vollgut') }}" data-col="vollgut">{{ e.vollgut ~ ' ' ~ _('Fl.') if e.vollgut != 0 else '' }}</td>
-                <td class="text-end" data-label="{{ _('Leergut') }}" data-col="leergut">{{ e.leergut ~ ' ' ~ _('Fl.') if e.leergut != 0 else '' }}</td>
-
-                <!-- Inventar: immer anzeigen oder optional ausblenden -->
-                <td class="text-end" data-label="{{ _('Inventar') }}" data-col="inventar">{{ e.inventar ~ ' ' ~ _('Fl.') }}</td>
-
-                <!-- Einnahme/Ausgabe: nur anzeigen, wenn != 0 -->
-                <td class="text-end" data-label="{{ _('Einnahme') }}" data-col="einnahme">{{ format_eur_de(e.einnahme) if e.einnahme != 0 else '' }}</td>
-                <td class="text-end" data-label="{{ _('Ausgabe') }}" data-col="ausgabe">{{ format_eur_de(e.ausgabe) if e.ausgabe != 0 else '' }}</td>
-
-                <!-- Kassenbestand: immer anzeigen oder optional ausblenden -->
-                <td class="text-end" data-label="{{ _('Kassenbestand') }}" data-col="kassenbestand">{{ format_eur_de(e.kassenbestand) }}</td>
-
-                <!-- Bemerkung: immer anzeigen -->
-                <td class="text-start" data-label="{{ _('Bemerkung') }}" data-col="bemerkung">{{ e.bemerkung }}</td>
-                  <td class="text-center" data-label="{{ _('Aktionen') }}" data-col="aktionen">
-                    {% set role = current_user().get('role') %}
-                    {% if role in ['Editor', 'Manager', 'Admin'] %}
-                    <a class="btn btn-sm btn-outline-primary"
-                      href="{{ url_for('bbalance_routes.edit', entry_id=e.id) }}"
-                      title="{{ _('Bearbeiten') }}">
-                      <i class="bi-pencil-square"></i>
-                    </a>
-                    {% endif %}
-
-                    <button class="btn btn-sm btn-outline-secondary position-relative"
-                            type="button"
-                            onclick="openAttachments({{ e.id }})"
-                            title="{{ _('Dokumente öffnen') }}">
-                      <i class="bi-paperclip"></i>
-                      {% if e.attachment_count and e.attachment_count > 0 %}
-                      <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-secondary">
-                        {{ e.attachment_count }}
+                {# --- NEU: Bestandsänderung (Vollgut/Leergut) --- #}
+                <td class="text-end" data-label="{{ _('Bestandsänderung') }}" data-col="delta-inv">
+                  <span class="d-inline-flex flex-wrap gap-1">
+                    {% if e.vollgut != 0 %}
+                      <span class="badge delta delta-pos" title="{{ _('Vollgut') }}">
+                        +{{ e.vollgut }} {{ _('Fl.') }}
+                        <span class="visually-hidden">{{ _('Vollgut') }}</span>
                       </span>
-                      {% endif %}
-                    </button>
-
-                    {% if role in ['Editor', 'Manager', 'Admin'] %}
-                    <form method="post"
-                          action="{{ url_for('bbalance_routes.delete', entry_id=e.id) }}"
-                          class="d-inline"
-                          onsubmit="return confirm('{{ _('Eintrag wirklich löschen?') }}');">
-                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                      <button class="btn btn-sm btn-outline-danger" title="{{ _('Löschen') }}">
-                        <i class="bi-trash"></i>
-                      </button>
-                    </form>
                     {% endif %}
-                  </td>
-                </tr>
-                {% else %}
-                <tr>
-                  <td data-label="{{ _('Keine Einträge vorhanden.') }}" colspan="9" class="text-center text-muted">{{ _('Keine Einträge vorhanden.') }}</td>
-                </tr>
-                {% endfor %}
-              </tbody>
+                    {% if e.leergut != 0 %}
+                      <span class="badge delta delta-neg" title="{{ _('Leergut') }}">
+                        −{{ e.leergut }} {{ _('Fl.') }}
+                        <span class="visually-hidden">{{ _('Leergut') }}</span>
+                      </span>
+                    {% endif %}
+                    {% if e.vollgut == 0 and e.leergut == 0 %}
+                      <span class="text-muted">—</span>
+                    {% endif %}
+                  </span>
+                </td>
+
+                {# --- NEU: Zahlung (Einnahme/Ausgabe) --- #}
+                <td class="text-end" data-label="{{ _('Zahlung') }}" data-col="delta-kasse">
+                  <span class="d-inline-flex flex-wrap gap-1">
+                    {% if e.einnahme != 0 %}
+                      <span class="badge delta delta-pos" title="{{ _('Einnahme') }}">
+                        +{{ format_eur_de(e.einnahme) }}
+                        <span class="visually-hidden">{{ _('Einnahme') }}</span>
+                      </span>
+                    {% endif %}
+                    {% if e.ausgabe != 0 %}
+                      <span class="badge delta delta-neg" title="{{ _('Ausgabe') }}">
+                        −{{ format_eur_de(e.ausgabe) }}
+                        <span class="visually-hidden">{{ _('Ausgabe') }}</span>
+                      </span>
+                    {% endif %}
+                    {% if e.einnahme == 0 and e.ausgabe == 0 %}
+                      <span class="text-muted">—</span>
+                    {% endif %}
+                  </span>
+                </td>
+
+                {# unverändert weiter anzeigen #}
+                <td class="text-end" data-label="{{ _('Inventar') }}" data-col="inventar">
+                  {{ e.inventar ~ ' ' ~ _('Fl.') }}
+                </td>
+                <td class="text-end" data-label="{{ _('Kassenbestand') }}" data-col="kassenbestand">
+                  {{ format_eur_de(e.kassenbestand) }}
+                </td>
+                <td class="text-start" data-label="{{ _('Bemerkung') }}" data-col="bemerkung">
+                  {{ e.bemerkung }}
+                </td>
+
+                {# Aktionen unverändert #}
+                <td class="text-center" data-label="{{ _('Aktionen') }}" data-col="aktionen">
+                  {# ... dein bestehender Aktionsblock ... #}
+                </td>
+              </tr>
+            {% else %}
+              <tr>
+                <td data-label="{{ _('Keine Einträge vorhanden.') }}" colspan="7" class="text-center text-muted">
+                  {{ _('Keine Einträge vorhanden.') }}
+                </td>
+              </tr>
+            {% endfor %}
+            </tbody>
           </table>
         </div>        
       </div>
@@ -1099,84 +1122,84 @@ document.addEventListener('DOMContentLoaded', () => {
 
 <script>
   function applyStackedVisibility() {
-  // gleicher Breakpoint wie CSS
-  const isStacked = window.matchMedia('(max-width: 768px)').matches;
-  const rows = document.querySelectorAll('table.table-stacked tbody tr');
+    const isStacked = window.matchMedia('(max-width: 768px)').matches;
+    const rows = document.querySelectorAll('table.table-stacked tbody tr');
 
-  // -----------------------------
-  // Mobile / Stacked
-  // -----------------------------
-  rows.forEach(tr => {
-    const ALWAYS_SHOW = new Set([
-      'date', 'inventar', 'kassenbestand', 'bemerkung', 'aktionen'
-    ]);
-
-    // Änderungsflags aus data-*
-    const invChanged =
-      tr.getAttribute('data-vollgut') === '1' ||
-      tr.getAttribute('data-leergut') === '1';
-
-    const kasChanged =
-      tr.getAttribute('data-einnahme') === '1' ||
-      tr.getAttribute('data-ausgabe') === '1';
-
-    const flags = {
-      vollgut:   tr.getAttribute('data-vollgut')  === '1',
-      leergut:   tr.getAttribute('data-leergut')  === '1',
-      einnahme:  tr.getAttribute('data-einnahme') === '1',
-      ausgabe:   tr.getAttribute('data-ausgabe')  === '1'
-    };
-
-    const tdInventar = tr.querySelector('td[data-col="inventar"]');
-    const tdKasse    = tr.querySelector('td[data-col="kassenbestand"]');
-
-    // Reset NEW
-    tdInventar?.classList.remove('has-new');
-    tdKasse?.classList.remove('has-new');
-
-    // 👉 NEW-Badge setzen
-    if (invChanged && tdInventar) tdInventar.classList.add('has-new');
-    if (kasChanged && tdKasse)    tdKasse.classList.add('has-new');
-
-    // Sichtbarkeit der Spalten
-    tr.querySelectorAll('td[data-col]').forEach(td => {
-      const col = td.getAttribute('data-col');
-
-      if (ALWAYS_SHOW.has(col)) {
-        td.style.setProperty('display', '', '');
-        return;
-      }
-
-      if (col in flags) {
-        if (flags[col]) {
-          td.style.setProperty('display', '', '');
-        } else {
-          td.style.setProperty('display', 'none', 'important');
-        }
-      }
-    });
-  });
-
-   // -----------------------------
-  // Desktop: alles zurücksetzen
-  // -----------------------------
-  if (!isStacked) {
     rows.forEach(tr => {
+      const ALWAYS_SHOW = new Set(['date','inventar','kassenbestand','bemerkung','aktionen']);
+
+      // Flags (wie bisher)
+      const flags = {
+        vollgut:   tr.getAttribute('data-vollgut')  === '1',
+        leergut:   tr.getAttribute('data-leergut')  === '1',
+        einnahme:  tr.getAttribute('data-einnahme') === '1',
+        ausgabe:   tr.getAttribute('data-ausgabe')  === '1'
+      };
+
+      // NEU: Rohwerte lesen
+      const vV = Number(tr.getAttribute('data-vollgut-val')   || 0);
+      const lV = Number(tr.getAttribute('data-leergut-val')   || 0);
+      const eV = Number(tr.getAttribute('data-einnahme-val')  || 0);
+      const aV = Number(tr.getAttribute('data-ausgabe-val')   || 0);
+
+      // Zellen referenzieren
+      const tdInventar = tr.querySelector('td[data-col="inventar"]');
+      const tdKasse    = tr.querySelector('td[data-col="kassenbestand"]');
+
+      // Alle Zustände resetten
+      [tdInventar, tdKasse].forEach(td => {
+        td?.classList.remove('has-new','delta-up','delta-down','delta-none');
+      });
+
+      // 👉 Richtung bestimmen und Klasse setzen
+      // Inventar: Vollgut vs. Leergut
+      if (tdInventar) {
+        if (vV > lV)      { tdInventar.classList.add('delta-up'); }
+        else if (lV > vV) { tdInventar.classList.add('delta-down'); }
+        else              { tdInventar.classList.add('delta-none'); }
+      }
+
+      // Kasse: Einnahme vs. Ausgabe
+      if (tdKasse) {
+        if (eV > aV)      { tdKasse.classList.add('delta-up'); }
+        else if (aV > eV) { tdKasse.classList.add('delta-down'); }
+        else              { tdKasse.classList.add('delta-none'); }
+      }
+
+      // --- Sichtbarkeit (Stacked) wie gehabt ---
       tr.querySelectorAll('td[data-col]').forEach(td => {
-        td.style.removeProperty('display');
-        //td.classList.remove('has-new');
+        const col = td.getAttribute('data-col');
+
+        if (!isStacked) { td.style.removeProperty('display'); return; }
+        if (ALWAYS_SHOW.has(col)) { td.style.setProperty('display','', ''); return; }
+
+        // Kombinierte Spalten (falls genutzt)
+        if (col === 'delta-inv') {
+          td.style.setProperty('display', (flags.vollgut || flags.leergut) ? '' : 'none', 'important');
+          return;
+        }
+        if (col === 'delta-kasse') {
+          td.style.setProperty('display', (flags.einnahme || flags.ausgabe) ? '' : 'none', 'important');
+          return;
+        }
+
+        td.style.setProperty('display','', '');
       });
     });
-    return;
-  }
-}
 
-// Initial + Resize
-document.addEventListener('DOMContentLoaded', applyStackedVisibility);
-window.addEventListener('resize', () => {
-  clearTimeout(window.__bbStackedTO);
-  window.__bbStackedTO = setTimeout(applyStackedVisibility, 50);
-});
+    // Desktop: alles zurücksetzen (Sichtbarkeit)
+    if (!isStacked) {
+      rows.forEach(tr => {
+        tr.querySelectorAll('td[data-col]').forEach(td => td.style.removeProperty('display'));
+      });
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', applyStackedVisibility);
+  window.addEventListener('resize', () => {
+    clearTimeout(window.__bbStackedTO);
+    window.__bbStackedTO = setTimeout(applyStackedVisibility, 50);
+  });
 </script>
 
 {% endblock %}

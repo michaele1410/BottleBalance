@@ -410,8 +410,57 @@ textarea#options {
 
 }
 
-/* Stacked Layout für Tablets */
+
+.badge.delta {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .01em;
+  padding: .25em .45em;
+}
+.badge.delta-pos { background-color: var(--bs-success); color: #fff; }
+.badge.delta-neg { background-color: var(--bs-danger);  color: #fff; }
+
+/* Basis: Platz für den Pfeil schaffen */
+td[data-col="inventar"],
+td[data-col="kassenbestand"] {
+  position: relative;
+  padding-right: 2rem; /* Raum für das Pseudo-Element */
+}
+
+/* Pseudo-Element für Pfeile: gemeinsame Position für ▲ und ▼ */
+td.delta-up::after,
+td.delta-down::after,
+td.delta-none::after {
+  content: "";
+  position: absolute;
+  top: .25rem;
+  right: .35rem; /* Desktop: rechts oben */
+  font-weight: 800;
+  font-size: .8rem;
+  line-height: 1;
+}
+
+/* Inhalte + Farben */
+td.delta-up::after   { content: "▲"; color: var(--bs-success, #198754); }
+td.delta-down::after { content: "▼"; color: var(--bs-danger,  #dc3545); }
+td.delta-none::after { content: ""; } /* neutral: kein Pfeil */
+
+/* Optional: etwas mehr Abstand, wenn ein Pfeil gesetzt ist */
+td.delta-up,
+td.delta-down {
+  padding-right: 2.2rem;
+}
+
+/* Stacked/Mobile: Pfeil hinter dem Label positionieren */
 @media (max-width: 768px) {
+  td[data-col="delta-inv"] .badge,
+  td[data-col="delta-kasse"] .badge { white-space: nowrap; }
+
+  .table-stacked td[data-col="inventar"]::after,
+  .table-stacked td[data-col="kassenbestand"]::after {
+    top: .25rem;
+    left: calc(0.5rem + 6.5ch); /* Pfeil direkt rechts neben dem Label */
+    right: auto;
+  }
   .table-stacked thead { display: none !important; }
   .table-stacked tbody, .table-stacked tr { display: block !important; }
   .table-stacked tr {

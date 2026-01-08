@@ -157,6 +157,83 @@
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/de.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const btn = document.getElementById('toTopBtn');
+    if (!btn) return;
+
+    // Ab wann der Button eingeblendet wird (in Pixel)
+    const SHOW_AFTER_PX = 350;
+
+    // Motion-Preference beachten
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // Performanter Scroll-Handler mit requestAnimationFrame
+    let rafId = null;
+    const onScroll = () => {
+      if (rafId) return;
+      rafId = requestAnimationFrame(() => {
+        const y = window.scrollY || document.documentElement.scrollTop || 0;
+        btn.classList.toggle('d-none', y <= SHOW_AFTER_PX);
+        rafId = null;
+      });
+    };
+
+    // Initial visible state setzen & Listener binden
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+
+    // Klick → nach oben scrollen (smooth, falls erlaubt)
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (prefersReducedMotion) {
+        window.scrollTo(0, 0);
+      } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
+      // A11y: Fokus am Seitenanfang setzen (H1/H2), ohne Sprung
+      const heading = document.getElementById('page-title') || document.querySelector('main h1, main h2');
+      if (heading) {
+        const restoreTabindex = heading.hasAttribute('tabindex') ? heading.getAttribute('tabindex') : null;
+        heading.setAttribute('tabindex', '-1');
+        // kurz warten, bis der Scroll abgeschlossen ist
+        setTimeout(() => {
+          heading.focus({ preventScroll: true });
+          // Aufräumen
+          if (restoreTabindex === null) {
+            heading.removeAttribute('tabindex');
+          } else {
+            heading.setAttribute('tabindex', restoreTabindex);
+          }
+        }, prefersReducedMotion ? 0 : 400);
+      }
+    });
+
+    // Optional: mit Escape ausblendbar (Fokusfreiheit)
+    btn.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        btn.classList.add('d-none');
+      }
+    });
+  });
+</script>
+
 {% block scripts %}{% endblock %}
+
+
+<!-- To-Top Button -->
+<button
+  id="toTopBtn"
+  type="button"
+  class="btn btn-primary btn-lg to-top-btn d-none"
+  aria-label="{{ _('Nach oben') }}"
+  title="{{ _('Nach oben') }}"
+>
+  <i class="bi bi-arrow-up-short" aria-hidden="true"></i>
+</button>
+
 </body>
 </html>

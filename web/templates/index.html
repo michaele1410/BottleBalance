@@ -338,14 +338,14 @@
                 <td class="text-end" data-label="{{ _('Leergut') }}" data-col="leergut">{{ e.leergut ~ ' ' ~ _('Fl.') if e.leergut != 0 else '' }}</td>
 
                 <!-- Inventar: immer anzeigen oder optional ausblenden -->
-                <td class="text-end" data-label="{{ _('Inventar') }}" data-col="inventar">{{ e.inventar ~ ' ' ~ _('Fl.') if changed else '' }}</td>
+                <td class="text-end" data-label="{{ _('Inventar') }}" data-col="inventar">{{ e.inventar ~ ' ' ~ _('Fl.') }}</td>
 
                 <!-- Einnahme/Ausgabe: nur anzeigen, wenn != 0 -->
                 <td class="text-end" data-label="{{ _('Einnahme') }}" data-col="einnahme">{{ format_eur_de(e.einnahme) if e.einnahme != 0 else '' }}</td>
                 <td class="text-end" data-label="{{ _('Ausgabe') }}" data-col="ausgabe">{{ format_eur_de(e.ausgabe) if e.ausgabe != 0 else '' }}</td>
 
                 <!-- Kassenbestand: immer anzeigen oder optional ausblenden -->
-                <td class="text-end" data-label="{{ _('Kassenbestand') }}" data-col="kassenbestand">{{ format_eur_de(e.kassenbestand) if changed else '' }}</td>
+                <td class="text-end" data-label="{{ _('Kassenbestand') }}" data-col="kassenbestand">{{ format_eur_de(e.kassenbestand) }}</td>
 
                 <!-- Bemerkung: immer anzeigen -->
                 <td class="text-start" data-label="{{ _('Bemerkung') }}" data-col="bemerkung">{{ e.bemerkung }}</td>
@@ -1102,51 +1102,66 @@ document.addEventListener('DOMContentLoaded', () => {
 
 <script>
   function applyStackedVisibility() {
-    const isMobile = window.matchMedia('(max-width: 767.98px)').matches;
+    // Verwende denselben Breakpoint wie im CSS:
+    const isStacked = window.matchMedia('(max-width: 768px)').matches;
 
-    // Desktop → alles sichtbar
-    if (!isMobile) {
-      document.querySelectorAll('table.table-stacked td[data-col]').forEach(td => {
-        td.style.display = '';
+    const rows = document.querySelectorAll('table.table-stacked tbody tr');
+
+    if (!isStacked) {
+      // Desktop → alles sichtbar
+      rows.forEach(tr => {
+        tr.style.removeProperty('display');
+        tr.querySelectorAll('td[data-col]').forEach(td => {
+          // entfernt evtl. gesetzte !important-Styles
+          td.style.removeProperty('display');
+        });
       });
       return;
     }
 
-    // Mobile/stacked → nur relevante Felder
-    document.querySelectorAll('table.table-stacked tbody tr').forEach(tr => {
-      const changed = tr.getAttribute('data-changed') === '1';
-      const nonZero = {
-        vollgut:  tr.getAttribute('data-vollgut')  === '1',
-        leergut:  tr.getAttribute('data-leergut')  === '1',
-        einnahme: tr.getAttribute('data-einnahme') === '1',
-        ausgabe:  tr.getAttribute('data-ausgabe')  === '1'
+    rows.forEach(tr => {
+      // Immer sichtbare Felder
+      const ALWAYS_SHOW = new Set(['date', 'inventar', 'kassenbestand', 'bemerkung', 'aktionen']);
+
+      // Flags aus data-Attributen (Wert ≠ 0 → '1')
+      const flags = {
+        vollgut:   tr.getAttribute('data-vollgut')   === '1',
+        leergut:   tr.getAttribute('data-leergut')   === '1',
+        einnahme:  tr.getAttribute('data-einnahme')  === '1',
+        ausgabe:   tr.getAttribute('data-ausgabe')   === '1'
       };
-
-      // Basis: immer
-      const show = new Set(['date', 'bemerkung']);
-
-      // Bei Änderungen: Inventar & Kassenbestand
-      if (changed) {
-        show.add('inventar');
-        show.add('kassenbestand');
-      }
-
-      // Nicht‑Null Felder einblenden
-      Object.entries(nonZero).forEach(([key, nz]) => { if (nz) show.add(key); });
-
-      // Aktionen sichtbar lassen? -> true/false
-      const keepActions = true;
 
       tr.querySelectorAll('td[data-col]').forEach(td => {
         const col = td.getAttribute('data-col');
-        const visible = show.has(col) || (keepActions && col === 'aktionen');
-        td.style.display = visible ? '' : 'none';
+
+        if (ALWAYS_SHOW.has(col)) {
+          td.style.setProperty('display', '', ''); // Basisfelder: sichtbar
+          return;
+        }
+
+        if (col in flags) {
+          // WICHTIG: !important setzen, um CSS 'display:flex !important' sicher zu übersteuern
+          if (flags[col]) {
+            td.style.setProperty('display', '', '');
+          } else {
+            td.style.setProperty('display', 'none', 'important');
+          }
+          return;
+        }
+
+        // Fallback sichtbar
+        td.style.setProperty('display', '', '');
       });
     });
   }
 
+  // Initial und bei Resize anwenden
   document.addEventListener('DOMContentLoaded', applyStackedVisibility);
-  window.addEventListener('resize', applyStackedVisibility);
+  window.addEventListener('resize', () => {
+    // leichte Entlastung
+    clearTimeout(window.__bbStackedTO);
+    window.__bbStackedTO = setTimeout(applyStackedVisibility, 50);
+  });
 </script>
 
 {% endblock %}

@@ -15,19 +15,22 @@
   <link rel="alternate icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
 
   <meta name="color-scheme" content="light dark">
-  <script>
+  
+<script>
   (() => {
-    const stored = localStorage.getItem('theme') || '{{ theme_preference|default("system") }}';
+    const effective = '{{ theme_preference|default("system") }}';
     const systemDark = window.matchMedia('(prefers-color-scheme: dark)');
-    const effective = stored === 'system' ? (systemDark.matches ? 'dark' : 'light') : stored;
-    document.documentElement.setAttribute('data-bs-theme', effective);
+    document.documentElement.setAttribute('data-bs-theme',
+      effective === 'system' ? (systemDark.matches ? 'dark' : 'light') : effective
+    );
   })();
   </script>
-</head>
+
+  </head>
 <body>
 
 <!-- Navbar -->
-<nav class="navbar navbar-expand-lg navbar-light bg-body-tertiary border-bottom sticky-top">
+<nav class="navbar navbar-expand-lg border-bottom sticky-top">
   <div class="container">
     <a class="navbar-brand fw-semibold d-flex align-items-center gap-2"
       href="{% if current_user().get('role') == 'Payment Viewer' %}
@@ -222,6 +225,28 @@
     });
   });
 </script>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const systemDark = window.matchMedia('(prefers-color-scheme: dark)');
+
+  function applyTheme() {
+    const stored = localStorage.getItem('theme') || '{{ theme_preference|default("system") }}';
+    const effective = stored === 'system'
+      ? (systemDark.matches ? 'dark' : 'light')
+      : stored;
+    document.documentElement.setAttribute('data-bs-theme', effective);
+  }
+
+  // Initial setzen
+  applyTheme();
+
+  // Reagieren auf Systemwechsel
+  systemDark.addEventListener('change', applyTheme);
+});
+</script>
+
 
 {% block scripts %}{% endblock %}
 

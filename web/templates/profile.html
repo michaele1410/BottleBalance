@@ -190,5 +190,23 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 </script>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const radios = document.querySelectorAll('input[name="theme"]');
+  radios.forEach(radio => {
+    radio.addEventListener('change', () => {
+      const value = radio.value; // 'system', 'light', 'dark'
+      localStorage.setItem('theme', value);
+
+      const systemDark = window.matchMedia('(prefers-color-scheme: dark)');
+      const effective = value === 'system' ? (systemDark.matches ? 'dark' : 'light') : value;
+
+      document.documentElement.setAttribute('data-bs-theme', effective);
+    });
+  });
+});
+</script>
+
 {% endblock %}
 {% endblock %}

@@ -76,8 +76,13 @@
 }
 
 body {
-  background-color: var(--bg-color);
-  color: var(--text-color);
+  background-color: var(--bs-body-bg);
+  color: var(--bs-body-color);
+}
+
+footer {
+  background-color: var(--bs-body-bg);
+  color: var(--bs-body-color);
 }
 
 /* =========================================
@@ -128,8 +133,8 @@ body {
 
 /* Flatpickr Dark Mode */
 :root[data-bs-theme="dark"] .flatpickr-calendar {
-  background-color: var(--bs-body-bg);
-  color: var(--bs-body-color);
+  background-color: var(--bs-body-bg) !important;
+  color: var(--bs-body-color) !important;
   border: 1px solid var(--bs-border-color);
 }
 
@@ -627,10 +632,11 @@ table.table-stacked.is-stacked td::before {
   }
 }
 
-/* Navbar-Toggler in Light/Dark sichtbar, ohne harte navbar-light/dark */
-.navbar-toggler {
-  color: var(--bs-navbar-color, var(--bs-body-color)); /* folgt dem Theme */
-  border-color: var(--bs-border-color);
+.navbar-toggler-icon {
+  /* SVG nutzt currentColor → im Dark Mode automatisch hell, in Light Mode dunkel */
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' \
+viewBox='0 0 30 30'%3e%3cpath stroke='currentColor' stroke-linecap='round' \
+stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
 }
 
 .navbar-toggler-icon {
@@ -643,4 +649,10 @@ stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3
 [data-bs-theme="dark"] .navbar-toggler {
   /* etwas mehr Kontrast für die Umrandung im Dark Mode */
   border-color: color-mix(in srgb, var(--bs-body-color), transparent 60%);
+}
+
+/* Navbar folgt dem globalen Theme (Light/Dark) */
+.navbar {
+  background-color: var(--bs-body-bg) !important;
+  color: var(--bs-body-color) !important;
 }

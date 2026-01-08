@@ -55,15 +55,6 @@
   inset: 0;
 }
 
-/* Entferne die harte Mobile-Höhe – erlaubt volles Ausbreiten */
-@media (max-width: 768px) {
-  .sparkline-ratio { --bs-aspect-ratio: auto; }
-  /* Falls du eine Mindesthöhe auf Mobile willst, nutze min-height statt height: */
-  /* .sparkline-container { min-height: 120px; } */
-  /* Entfernen / Überschreiben der bisherigen fixen Höhe: */
-  #sparklineInv, #sparklineKas { height: 100% !important; }
-}
-
 /* --- Korrigiere außerdem die bisherigen fehlerhaften Regeln --- */
 
 /* Vorher: globaler canvas-Selector
@@ -150,7 +141,6 @@ body {
 /* Sparkline-Höhensteuerung über Bootstrap .ratio */
 /*.sparkline-ratio { --bs-aspect-ratio: 100%; } */
 
-/* Mobile: Charts flacher */
 /*@media (max-width: 768px) {
   .sparkline-ratio { --bs-aspect-ratio: 100%; }
   #sparklineInv, #sparklineKas { height: 80px !important; }
@@ -258,10 +248,6 @@ textarea#options {
 .alert {
   border-radius: .375rem;
   font-size: .95rem;
-}
-@media (max-width: 768px) {
-  .card-header { font-size: .95rem; }
-  textarea#options { font-size: .9rem; }
 }
 
 /* =========================================
@@ -456,6 +442,36 @@ textarea#options {
   .table-stacked td[data-default="true"] {
     display: none !important;
   }
+
+  /* "NEW" Badge in Stacked Tabellen */
+  .table-stacked td.has-new {
+    position: relative;
+    padding-right: 3.2rem;
+  }
+  /* "NEW" Badge Stil */
+  .table-stacked td.has-new::after {
+    content: "NEW";
+    position: absolute;
+    top: .25rem;
+    right: .25rem;
+    font-size: .65rem;
+    font-weight: 700;
+    padding: .15rem .35rem;
+    border-radius: .25rem;
+    background-color: var(--bs-success);
+    color: #fff;
+    letter-spacing: .04em;
+  }
+
+  .card-header { font-size: .95rem; }
+  textarea#options { font-size: .9rem; }
+
+  /* Entferne die harte Mobile-Höhe – erlaubt volles Ausbreiten */
+  .sparkline-ratio { --bs-aspect-ratio: auto; }
+  /* Falls du eine Mindesthöhe auf Mobile willst, nutze min-height statt height: */
+  /* .sparkline-container { min-height: 120px; } */
+  /* Entfernen / Überschreiben der bisherigen fixen Höhe: */
+  #sparklineInv, #sparklineKas { height: 100% !important; }
 }
 /* =========================================
    "Zurück nach oben" Button
@@ -484,3 +500,4 @@ textarea#options {
       height: 2.75rem;
     }
   }
+  

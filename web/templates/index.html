@@ -1102,66 +1102,84 @@ document.addEventListener('DOMContentLoaded', () => {
 
 <script>
   function applyStackedVisibility() {
-    // Verwende denselben Breakpoint wie im CSS:
-    const isStacked = window.matchMedia('(max-width: 768px)').matches;
+  // gleicher Breakpoint wie CSS
+  const isStacked = window.matchMedia('(max-width: 768px)').matches;
+  const rows = document.querySelectorAll('table.table-stacked tbody tr');
 
-    const rows = document.querySelectorAll('table.table-stacked tbody tr');
-
-    if (!isStacked) {
-      // Desktop → alles sichtbar
-      rows.forEach(tr => {
-        tr.style.removeProperty('display');
-        tr.querySelectorAll('td[data-col]').forEach(td => {
-          // entfernt evtl. gesetzte !important-Styles
-          td.style.removeProperty('display');
-        });
-      });
-      return;
-    }
-
+  // -----------------------------
+  // Desktop: alles zurücksetzen
+  // -----------------------------
+  if (!isStacked) {
     rows.forEach(tr => {
-      // Immer sichtbare Felder
-      const ALWAYS_SHOW = new Set(['date', 'inventar', 'kassenbestand', 'bemerkung', 'aktionen']);
-
-      // Flags aus data-Attributen (Wert ≠ 0 → '1')
-      const flags = {
-        vollgut:   tr.getAttribute('data-vollgut')   === '1',
-        leergut:   tr.getAttribute('data-leergut')   === '1',
-        einnahme:  tr.getAttribute('data-einnahme')  === '1',
-        ausgabe:   tr.getAttribute('data-ausgabe')   === '1'
-      };
-
       tr.querySelectorAll('td[data-col]').forEach(td => {
-        const col = td.getAttribute('data-col');
-
-        if (ALWAYS_SHOW.has(col)) {
-          td.style.setProperty('display', '', ''); // Basisfelder: sichtbar
-          return;
-        }
-
-        if (col in flags) {
-          // WICHTIG: !important setzen, um CSS 'display:flex !important' sicher zu übersteuern
-          if (flags[col]) {
-            td.style.setProperty('display', '', '');
-          } else {
-            td.style.setProperty('display', 'none', 'important');
-          }
-          return;
-        }
-
-        // Fallback sichtbar
-        td.style.setProperty('display', '', '');
+        td.style.removeProperty('display');
+        td.classList.remove('has-new');
       });
     });
+    return;
   }
 
-  // Initial und bei Resize anwenden
-  document.addEventListener('DOMContentLoaded', applyStackedVisibility);
-  window.addEventListener('resize', () => {
-    // leichte Entlastung
-    clearTimeout(window.__bbStackedTO);
-    window.__bbStackedTO = setTimeout(applyStackedVisibility, 50);
+  // -----------------------------
+  // Mobile / Stacked
+  // -----------------------------
+  rows.forEach(tr => {
+    const ALWAYS_SHOW = new Set([
+      'date', 'inventar', 'kassenbestand', 'bemerkung', 'aktionen'
+    ]);
+
+    // Änderungsflags aus data-*
+    const invChanged =
+      tr.getAttribute('data-vollgut') === '1' ||
+      tr.getAttribute('data-leergut') === '1';
+
+    const kasChanged =
+      tr.getAttribute('data-einnahme') === '1' ||
+      tr.getAttribute('data-ausgabe') === '1';
+
+    const flags = {
+      vollgut:   tr.getAttribute('data-vollgut')  === '1',
+      leergut:   tr.getAttribute('data-leergut')  === '1',
+      einnahme:  tr.getAttribute('data-einnahme') === '1',
+      ausgabe:   tr.getAttribute('data-ausgabe')  === '1'
+    };
+
+    const tdInventar = tr.querySelector('td[data-col="inventar"]');
+    const tdKasse    = tr.querySelector('td[data-col="kassenbestand"]');
+
+    // Reset NEW
+    tdInventar?.classList.remove('has-new');
+    tdKasse?.classList.remove('has-new');
+
+    // 👉 NEW-Badge setzen
+    if (invChanged && tdInventar) tdInventar.classList.add('has-new');
+    if (kasChanged && tdKasse)    tdKasse.classList.add('has-new');
+
+    // Sichtbarkeit der Spalten
+    tr.querySelectorAll('td[data-col]').forEach(td => {
+      const col = td.getAttribute('data-col');
+
+      if (ALWAYS_SHOW.has(col)) {
+        td.style.setProperty('display', '', '');
+        return;
+      }
+
+      if (col in flags) {
+        if (flags[col]) {
+          td.style.setProperty('display', '', '');
+        } else {
+          td.style.setProperty('display', 'none', 'important');
+        }
+      }
+    });
   });
+}
+
+// Initial + Resize
+document.addEventListener('DOMContentLoaded', applyStackedVisibility);
+window.addEventListener('resize', () => {
+  clearTimeout(window.__bbStackedTO);
+  window.__bbStackedTO = setTimeout(applyStackedVisibility, 50);
+});
 </script>
 
 {% endblock %}

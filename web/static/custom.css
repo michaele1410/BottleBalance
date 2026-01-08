@@ -648,6 +648,11 @@ table.table-stacked.is-stacked td::before {
   min-width: 0; /* wichtig bei Flexbox gegen ungewolltes Schrumpfverhalten */
 }
 
+/* Filter Batch */
+#filterBadge {
+  font-size: 0.75rem;
+  padding: 0.35em 0.6em;
+}
 
 .navbar-toggler-icon {
   /* SVG nutzt currentColor → im Dark Mode automatisch hell, in Light Mode dunkel */

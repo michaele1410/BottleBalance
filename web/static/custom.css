@@ -457,3 +457,30 @@ textarea#options {
     display: none !important;
   }
 }
+/* =========================================
+   "Zurück nach oben" Button
+   ========================================= */
+  .to-top-btn {
+    position: fixed;
+    right: 1rem;
+    bottom: 1rem;
+    z-index: 1080; /* über Modals/Toasts (Bootstrap nutzt 1060–1080) */
+    box-shadow: var(--bs-box-shadow);
+    /* optional: runder Button */
+    border-radius: 9999px;
+    width: 3rem;
+    height: 3rem;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  @media (max-width: 575.98px) {
+    .to-top-btn {
+      right: .75rem;
+      bottom: .75rem;
+      width: 2.75rem;
+      height: 2.75rem;
+    }
+  }

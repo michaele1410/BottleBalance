@@ -68,7 +68,7 @@
             {# ... FORMULARINHALT UNVERÄNDERT ... #}
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <!-- Datum -->
-          <div class="input-group mb-3">
+          <div class="input-group mb-3 w-100">
             <span class="input-group-text"><i class="bi bi-calendar"></i></span>
             <div class="form-floating flex-grow-1">
               <input type="text" name="datum"  inputmode="decimal" class="form-control"
@@ -78,7 +78,7 @@
           </div>
 
           <!-- Vollgut -->
-          <div class="input-group mb-3">
+          <div class="input-group mb-3 w-100">
             <span class="input-group-text"><i class="bi bi-cup-straw"></i></span>
             <div class="form-floating flex-grow-1">
               <input name="vollgut" type="number" inputmode="numeric" min="0" step="1" class="form-control"
@@ -88,7 +88,7 @@
           </div>
 
           <!-- Leergut -->
-          <div class="input-group mb-3">
+          <div class="input-group mb-3 w-100">
             <span class="input-group-text"><i class="bi bi-cup-straw"></i></span>
             <div class="form-floating flex-grow-1">
               <input name="leergut" type="number" inputmode="numeric" min="0" step="1" class="form-control"
@@ -98,7 +98,7 @@
           </div>
 
           <!-- Einnahme -->
-          <div class="input-group mb-3">
+          <div class="input-group mb-3 w-100">
             <span class="input-group-text"><i class="bi bi-plus-circle"></i></span>
             <div class="form-floating flex-grow-1">
               <input name="einnahme" type="number" step="0.01" inputmode="decimal" class="form-control"
@@ -108,7 +108,7 @@
           </div>
 
           <!-- Ausgabe -->
-          <div class="input-group mb-3">
+          <div class="input-group mb-3 w-100">
             <span class="input-group-text"><i class="bi bi-dash-circle"></i></span>
             <div class="form-floating flex-grow-1">
               <input name="ausgabe" type="number" step="0.01" inputmode="decimal" class="form-control"
@@ -118,7 +118,7 @@
           </div>
 
           <!-- Bemerkung als Dropdown -->
-          <div class="input-group mb-3">
+          <div class="input-group mb-3 w-100">
             <span class="input-group-text"><i class="bi bi-chat-text"></i></span>
             <div class="form-floating flex-grow-1">
               <select id="bemerkung" name="bemerkung" class="form-select">
@@ -133,7 +133,7 @@
           <!-- Upload -->
           <input type="hidden" name="temp_token" id="temp_token" value="{{ temp_token }}">
 
-          <div class="d-flex gap-2">
+          <div class="d-flex gap-2 w-100">
             <!-- Hinzufügen -->
             <button type="submit" class="btn btn-success flex-grow-1" disabled>
               <i class="bi-plus-lg me-1"></i> {{ _('Hinzufügen') }}

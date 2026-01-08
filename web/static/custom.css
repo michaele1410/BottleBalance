@@ -631,6 +631,23 @@ table.table-stacked.is-stacked td::before {
     height: 2.75rem;
   }
 }
+#collapseNewEntry 
+.card-body {
+  display: block;           /* klassische Block-Layout-Regeln */
+}
+
+/* Formular füllt den Card-Body */
+#transaction-form { width: 100%; }
+
+/* Input-Gruppen immer volle Breite */
+#transaction-form .input-group { width: 100%; }
+
+/* Form-Floating im Input-Group soll wachsen und nicht wegen min-content clippen */
+#transaction-form .form-floating {
+  flex: 1 1 auto;
+  min-width: 0; /* wichtig bei Flexbox gegen ungewolltes Schrumpfverhalten */
+}
+
 
 .navbar-toggler-icon {
   /* SVG nutzt currentColor → im Dark Mode automatisch hell, in Light Mode dunkel */
@@ -648,7 +665,7 @@ stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3
 
 [data-bs-theme="dark"] .navbar-toggler {
   /* etwas mehr Kontrast für die Umrandung im Dark Mode */
-  border-color: color-mix(in srgb, var(--bs-body-color), transparent 60%);
+  border-color: color-mix(in srgb, var(--bs-body-color), transparent 60%);  
 }
 
 /* Navbar folgt dem globalen Theme (Light/Dark) */

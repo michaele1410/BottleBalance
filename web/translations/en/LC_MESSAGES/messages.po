@@ -1192,7 +1192,7 @@ msgstr "Error in row"
 
 #: templates/import_preview.html:25
 msgid "Feldzuordnung (Mapping)"
-msgstr "Feldzuordnung (Mapping)"
+msgstr "Field mapping"
 
 #: templates/import_preview.html:40
 msgid "keine"
@@ -1212,7 +1212,7 @@ msgstr "Preview"
 #: templates/payment_authorization_detail.html:11
 #: templates/payment_authorization_detail.html:219
 msgid "Status"
-msgstr "Status"
+msgstr "State"
 
 #: templates/import_preview.html:99
 msgid "Fehler:"

@@ -32,7 +32,7 @@
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
       <div class="row">
-        {% for field in ['Datum', 'Vollgut', 'Leergut', 'Einnahme', 'Ausgabe', 'Bemerkung'] %}
+        {% for field in ['{{ _('Datum') }}', '{{ _('Vollgut') }}', '{{ _('Leergut') }}', '{{ _('Einnahme') }}', '{{ _('Ausgabe') }}', '{{ _('Bemerkung') }}'] %}
           {% set field_id = field|lower %}
           <div class="col-12 col-md-4 mb-3">
             <label for="map_{{ field_id }}" class="form-label"><strong>{{ field }}</strong></label>

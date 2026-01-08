@@ -1,133 +1,131 @@
 /*=========================================
-   Haupt-Container Anpassungen
-   ========================================= */
+  Haupt-Container Anpassungen
+========================================= */
 
 /* Nur für Tablets (Bootstrap md-Bereich: 768px–991px) */
 @media (min-width: 768px) and (max-width: 991px) {
   main.container {
-    max-width: 90%; /* statt fester Pixelbreite, prozentual für Flexibilität */
+    max-width: 90%;
   }
 }
 
 /* =========================================
    Allgemeine Tabellen & Layout
-   ========================================= */
-.table td, .table th {
+========================================= */
+.table td,
+.table th {
   vertical-align: middle;
 }
-
-
 
 /* Chart-Canvas – nur für Sparklines gezielt */
 .sparkline-container canvas {
   width: 100% !important;
-  height: 100% !important;    /* volle Höhe der Box */
+  height: 100% !important;
   max-height: none !important;
 }
 
 /* Karte streckbar machen und Card-Body den Rest einnehmen lassen */
-.card.h-100 { 
-  display: flex; 
-  flex-direction: column; 
+.card.h-100 {
+  display: flex;
+  flex-direction: column;
 }
-.card.h-100 .card-body { 
-  flex: 1 1 auto; 
-  display: flex;            /* damit der Chart-Container sich strecken kann */
+
+.card.h-100 .card-body {
+  flex: 1 1 auto;
+  display: flex;
 }
 
 /* Sparkline-Container füllt Card-Body */
-.sparkline-container { 
-  flex: 1 1 auto; 
-  display: flex; 
-  min-height: 140px;        /* Basishöhe; nach Bedarf anpassen */
+.sparkline-container {
+  flex: 1 1 auto;
+  display: flex;
+  min-height: 140px;
+}
+/* Responsive: Mehr Platz für Sparklines auf kleinen Bildschirmen */
+@media (max-width: 576px) {
+  .sparkline-container {
+    min-height: 180px; /* oder ein Wert, der gut aussieht */
+  }
 }
 
+
 /* Bootstrap .ratio für volle Höhe statt aspektbasiertem Padding nutzen */
-.sparkline-ratio { 
-  --bs-aspect-ratio: auto;  /* Aspect-Ratio aus */
+.sparkline-ratio {
+  --bs-aspect-ratio: auto;
   position: relative;
-  height: 100%; 
+  height: 100%;
   width: 100%;
 }
-/* Absicherung: Canvas soll die Ratio-Box komplett füllen */
-.sparkline-ratio > * {
+
+.sparkline-ratio>* {
   position: absolute;
   inset: 0;
 }
 
-/* Entferne die harte Mobile-Höhe – erlaubt volles Ausbreiten */
-@media (max-width: 768px) {
-  .sparkline-ratio { --bs-aspect-ratio: auto; }
-  /* Falls du eine Mindesthöhe auf Mobile willst, nutze min-height statt height: */
-  /* .sparkline-container { min-height: 120px; } */
-  /* Entfernen / Überschreiben der bisherigen fixen Höhe: */
-  #sparklineInv, #sparklineKas { height: 100% !important; }
-}
-
-/* --- Korrigiere außerdem die bisherigen fehlerhaften Regeln --- */
-
-/* Vorher: globaler canvas-Selector
-canvas { width: 100%; height: auto; max-height: 100% !important!; }
-→ Entferne ihn oder ersetze ihn durch die gezielte Regel oben */
-
-/* Vorher in deiner Datei (Syntaxfehler):
-max-height: 100% !important!;
-→ korrekt wäre: max-height: 100% !important; (ohne zweites !) */
-
-/* Chart-Canvas */
-/*canvas {
-  width: 100%;
-  height: auto;
-  max-height: 100% !important;
-}*/
-
 /* =========================================
    Farbvariablen (Light/Dark)
-   ========================================= */
+========================================= */
 :root {
   --bg-color: #ffffff;
   --text-color: #000000;
 }
+
 [data-bs-theme="dark"] {
   --bg-color: #121212;
   --text-color: #e0e0e0;
 }
+
 body {
-  background-color: var(--bg-color);
-  color: var(--text-color);
+  background-color: var(--bs-body-bg);
+  color: var(--bs-body-color);
+}
+
+footer {
+  background-color: var(--bs-body-bg);
+  color: var(--bs-body-color);
 }
 
 /* =========================================
    Logos & Branding
-   ========================================= */
+========================================= */
 .logo-img {
   height: 80px;
   width: auto;
   vertical-align: middle;
 }
+
 .logo-wrapper svg {
   height: 28px !important;
   width: auto !important;
   vertical-align: middle;
 }
+
 .navbar-brand {
   font-size: 1.5rem;
 }
 
 /* =========================================
    Animationen
-   ========================================= */
+========================================= */
 .error-card {
   animation: fadeIn 0.6s ease-in-out;
 }
+
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* =========================================
    Dark-Mode Cards
-   ========================================= */
+========================================= */
 [data-bs-theme="dark"] .card {
   background-color: #2c2f33;
   color: #f8f9fa;
@@ -135,33 +133,25 @@ body {
 
 /* Flatpickr Dark Mode */
 :root[data-bs-theme="dark"] .flatpickr-calendar {
-  background-color: var(--bs-body-bg);
-  color: var(--bs-body-color);
+  background-color: var(--bs-body-bg) !important;
+  color: var(--bs-body-color) !important;
   border: 1px solid var(--bs-border-color);
 }
 
 /* =========================================
    Responsive Layout
-   ========================================= */
-.row.g-3 > [class*="col-"] {
+========================================= */
+.row.g-3>[class*="col-"] {
   flex: 0 0 auto;
 }
 
-/* Sparkline-Höhensteuerung über Bootstrap .ratio */
-/*.sparkline-ratio { --bs-aspect-ratio: 100%; } */
-
-/* Mobile: Charts flacher */
-/*@media (max-width: 768px) {
-  .sparkline-ratio { --bs-aspect-ratio: 100%; }
-  #sparklineInv, #sparklineKas { height: 80px !important; }
-}*/
-
 /* =========================================
    Formular-Buttons (BottleBalance)
-   ========================================= */
+========================================= */
 #transaction-form .btn.btn-success.flex-grow-1 {
   transition: opacity .15s ease-in-out, filter .15s ease-in-out;
 }
+
 #transaction-form .btn.btn-success.flex-grow-1:disabled,
 #transaction-form .btn.btn-success.flex-grow-1[aria-disabled="true"] {
   opacity: .55;
@@ -169,117 +159,125 @@ body {
   box-shadow: none !important;
   filter: grayscale(25%);
 }
+
 #transaction-form .btn.btn-success.flex-grow-1:not(:disabled):hover {
   filter: brightness(1.03);
 }
+
 #transaction-form .btn.btn-success.flex-grow-1:not(:disabled):focus-visible {
   outline: 2px solid rgba(25, 135, 84, .5);
   outline-offset: 2px;
 }
+
 @supports (color: color-mix(in srgb, #000, #fff)) {
   #transaction-form .btn.btn-success.flex-grow-1:not(:disabled):focus-visible {
     outline: 2px solid color-mix(in srgb, var(--bs-success), transparent 50%);
   }
 }
+
 @media (prefers-reduced-motion: reduce) {
   #transaction-form .btn.btn-success.flex-grow-1 {
     transition: none;
   }
 }
+
 /* Spinner beim Absenden */
 #transaction-form.is-submitting .btn.btn-success.flex-grow-1 {
   position: relative;
   pointer-events: none;
 }
+
 #transaction-form.is-submitting .btn.btn-success.flex-grow-1 i.bi-plus-lg {
   visibility: hidden;
 }
+
 #transaction-form.is-submitting .btn.btn-success.flex-grow-1::after {
   content: "";
   position: absolute;
   inset-inline-start: .75rem;
   top: 50%;
-  width: 1rem; height: 1rem;
+  width: 1rem;
+  height: 1rem;
   margin-top: -.5rem;
   border: .15em solid currentColor;
   border-right-color: transparent;
   border-radius: 50%;
   animation: bb-spin .6s linear infinite;
 }
-@keyframes bb-spin { to { transform: rotate(360deg); } }
+
+@keyframes bb-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 
 /* =========================================
    Kompakte Formulare
-   ========================================= */
-.form-compact .form-label { font-size: .9rem; margin-bottom: .25rem; }
-.form-compact .input-group-text { padding: .375rem .5rem; }
+========================================= */
+.form-compact .form-label {
+  font-size: .9rem;
+  margin-bottom: .25rem;
+}
+
+.form-compact .input-group-text {
+  padding: .375rem .5rem;
+}
 
 @media (min-width: 768px) {
+
   .form-compact .form-control,
   .form-compact .form-select {
-    min-width: 8em;   /* Mindestbreite */
-    max-width: 12rem;  /* maximale Breite */
+    min-width: 8em;
+    max-width: 12rem;
   }
-}
-/* =========================================
-   Flatpickr Dark Mode
-   ========================================= */
-.flatpickr-dark {
-  background: #2b2b2b;
-  color: #fff;
-}
-.flatpickr-dark .flatpickr-day {
-  color: #fff;
 }
 
 /* =========================================
    Admin-Tools Styling
-   ========================================= */
+========================================= */
 .card {
   border-radius: .5rem;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
+
 .card-header {
   font-weight: 600;
   font-size: 1rem;
   background-color: var(--bs-light);
 }
+
 [data-bs-theme="dark"] .card-header {
   background-color: #343a40;
   color: #f8f9fa;
 }
+
 textarea#options {
   font-family: monospace;
   resize: vertical;
 }
+
 .btn i {
   vertical-align: middle;
 }
+
 .alert {
   border-radius: .375rem;
   font-size: .95rem;
 }
-@media (max-width: 768px) {
-  .card-header { font-size: .95rem; }
-  textarea#options { font-size: .9rem; }
-}
 
 /* =========================================
    Status Badges – Zahlungsfreigabe
-   ========================================= */
-
-/* Farb-Variablen – leicht anpassbar */
+========================================= */
 :root {
-  --bb-status-offen:         #ffc107; /* Gelb */
-  --bb-status-on-hold:       #6c757d; /* Grau */
-  --bb-status-freigegeben:   #0d6efd; /* Blau */
-  --bb-status-abgelehnt:     #dc3545; /* Rot */
-  --bb-status-zurueckgezogen:#fd7e14; /* Orange */
-  --bb-status-abgeschlossen: #198754; /* Grün */
-  --bb-status-unknown:       #0dcaf0; /* Cyan/Info */
+  --bb-status-offen: #ffc107;
+  --bb-status-on-hold: #6c757d;
+  --bb-status-freigegeben: #0d6efd;
+  --bb-status-abgelehnt: #dc3545;
+  --bb-status-zurueckgezogen: #fd7e14;
+  --bb-status-abgeschlossen: #198754;
+  --bb-status-unknown: #0dcaf0;
 }
 
-/* Einheitliche Badge-Basis */
 .badge {
   font-size: .85rem;
   font-weight: 600;
@@ -288,39 +286,41 @@ textarea#options {
   vertical-align: middle;
 }
 
-/* Fokus sichtbarer (A11y) */
 .badge:focus-visible {
-  outline: 2px solid rgba(13,110,253,.5);
+  outline: 2px solid rgba(13, 110, 253, .5);
   outline-offset: 2px;
 }
 
-/* Einzelne Status-Farben */
 .badge-status-offen {
   background-color: var(--bb-status-offen);
-  color: #212529; /* dunkler Text auf Gelb */
+  color: #212529;
 }
+
 .badge-status-on_hold {
   background-color: var(--bb-status-on-hold);
   color: #fff;
 }
+
 .badge-status-freigegeben {
   background-color: var(--bb-status-freigegeben);
   color: #fff;
 }
+
 .badge-status-abgelehnt {
   background-color: var(--bb-status-abgelehnt);
   color: #fff;
 }
+
 .badge-status-zurueckgezogen {
   background-color: var(--bb-status-zurueckgezogen);
   color: #fff;
 }
+
 .badge-status-abgeschlossen {
   background-color: var(--bb-status-abgeschlossen);
   color: #fff;
 }
 
-/* Fallback für unbekannte/neue Statuswerte */
 .badge-status-unknown,
 .badge-status-Unbekannt,
 .badge-status-default {
@@ -328,7 +328,6 @@ textarea#options {
   color: #08222a;
 }
 
-/* Mini-Statuspunkt (optional) */
 .status-dot {
   display: inline-block;
   width: .5rem;
@@ -338,41 +337,96 @@ textarea#options {
   margin-right: .35rem;
   background-color: var(--bb-status-unknown);
 }
-.status-dot.offen          { background-color: var(--bb-status-offen); }
-.status-dot.on_hold        { background-color: var(--bb-status-on-hold); }
-.status-dot.freigegeben    { background-color: var(--bb-status-freigegeben); }
-.status-dot.abgelehnt      { background-color: var(--bb-status-abgelehnt); }
-.status-dot.zurueckgezogen { background-color: var(--bb-status-zurueckgezogen); }
-.status-dot.abgeschlossen  { background-color: var(--bb-status-abgeschlossen); }
 
-/* Button/Tabellen-Feinschliff bei Aktionsleisten */
-.table td .btn { margin: 2px; }
-.table th, .table td { white-space: nowrap; }
+.status-dot.offen {
+  background-color: var(--bb-status-offen);
+}
+
+.status-dot.on_hold {
+  background-color: var(--bb-status-on-hold);
+}
+
+.status-dot.freigegeben {
+  background-color: var(--bb-status-freigegeben);
+}
+
+.status-dot.abgelehnt {
+  background-color: var(--bb-status-abgelehnt);
+}
+
+.status-dot.zurueckgezogen {
+  background-color: var(--bb-status-zurueckgezogen);
+}
+
+.status-dot.abgeschlossen {
+  background-color: var(--bb-status-abgeschlossen);
+}
+
+.table td .btn {
+  margin: 2px;
+}
+
+.table th,
+.table td {
+  white-space: nowrap;
+}
 
 @media (max-width: 576px) {
   .table td .btn {
-    font-size: 0.75rem;
-    padding: 0.2rem 0.35rem;
+    font-size: .75rem;
+    padding: .2rem .35rem;
     white-space: normal;
     word-break: break-word;
-
   }
 }
 
 /* =========================================
    Responsive Tabellen
-   ========================================= */
+========================================= */
 .table-responsive {
   overflow-x: auto;
-  -webkit-overflow-scrolling: touch; /* sanftes Scrollen auf iOS */
+  -webkit-overflow-scrolling: touch;
+}
+
+
+/* Dynamisches Umschalten auf Stacked */
+table.table-stacked.is-stacked thead {
+  display: none !important;
+}
+
+/* Stacked Layout für Tabelle, wenn breiter als Display */
+table.table-stacked.is-stacked tr {
+  display: block !important;
+  margin-bottom: 1rem;
+  border: 1px solid #dee2e6;
+  border-radius: .5rem;
+  padding: .75rem;
+  background: var(--bg-color);
+}
+
+table.table-stacked.is-stacked td {
+  display: flex;
+  justify-content: space-between;
+  padding: .25rem .5rem;
+  font-size: .9rem;
+  border-bottom: 1px solid #eee;
+  white-space: normal;
+  word-break: break-word;
+}
+
+table.table-stacked.is-stacked td::before {
+  content: attr(data-label);
+  font-weight: 600;
+  color: var(--text-color);
+  margin-right: .5rem;
 }
 
 /* Stacked Layout für Smartphones */
 @media (max-width: 576px) {
   table.table thead {
-    display: none; /* Kopf ausblenden */
-
+    display: none;
   }
+
   table.table tr {
     display: block;
     margin-bottom: 1rem;
@@ -381,6 +435,7 @@ textarea#options {
     padding: .5rem;
     background: var(--bg-color);
   }
+
   table.table td {
     display: flex;
     justify-content: space-between;
@@ -389,14 +444,14 @@ textarea#options {
     border-bottom: 1px solid #eee;
     white-space: normal;
     word-break: break-word;
-
   }
-  table.table td:last-child {  
+
+  table.table td:last-child {
     justify-content: flex-start;
     flex-wrap: wrap;
-    gap: 0.25rem;
-
+    gap: .25rem;
   }
+
   table.table td::before {
     content: attr(data-label);
     font-weight: 600;
@@ -404,17 +459,109 @@ textarea#options {
     margin-right: .5rem;
   }
 
-  /* Zellen mit Defaultwert im Stacked Layout ausblenden */
   table.table td[data-default="true"] {
-      display: none;
+    display: none;
   }
-
 }
 
-/* Stacked Layout für Tablets */
+/* =========================================
+   Delta-Badges (+ / −) für Bestandsänderung/Zahlung
+========================================= */
+.badge.delta {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .01em;
+  padding: .25em .45em;
+}
+
+.badge.delta-pos {
+  background-color: var(--bs-success);
+  color: #fff;
+}
+
+.badge.delta-neg {
+  background-color: var(--bs-danger);
+  color: #fff;
+}
+
+/* =========================================
+   Wert-Badges (Inventar/Kassenbestand/Datum/Bemerkung)
+========================================= */
+.badge-compact {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .01em;
+  padding: .25em .45em;
+  line-height: 1.1;
+  font-weight: 600;
+  border-radius: .35rem;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+/* Solide Varianten */
+.badge-inventar {
+  background: var(--bs-primary);
+  color: #fff;
+}
+
+.badge-kasse {
+  background: var(--bs-success);
+  color: #fff;
+}
+
+.badge-datum {
+  background: var(--bs-secondary);
+  color: #fff;
+}
+
+.badge-bemerkung {
+  background: var(--bs-info);
+  color: #08222a;
+}
+
+/* Dezente Variante */
+.badge-soft {
+  background-color: color-mix(in srgb, var(--bs-body-color) 8%, transparent);
+  color: var(--bs-body-color);
+  border: 1px solid var(--bs-border-color);
+}
+
+/* Pfeil direkt im Badge (hinter dem Wert) */
+.badge .dir-arrow {
+  display: inline-block;
+  margin-left: .3rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.badge .dir-arrow.dir-up {
+  color: var(--bs-success, #198754);
+}
+
+.badge .dir-arrow.dir-down {
+  color: var(--bs-danger, #dc3545);
+}
+
+/* Stacked/Mobile: Werte-Badges möglichst zusammenhalten (kein Umbruch zwischen Wert und Pfeil) */
 @media (max-width: 768px) {
-  .table-stacked thead { display: none !important; }
-  .table-stacked tbody, .table-stacked tr { display: block !important; }
+
+  td[data-col="inventar"] .badge-compact,
+  td[data-col="kassenbestand"] .badge-compact,
+  td[data-col="delta-inv"] .badge,
+  td[data-col="delta-kasse"] .badge,
+  td[data-col="date"] .badge-compact,
+  td[data-col="bemerkung"] .badge-compact {
+    white-space: nowrap;
+  }
+
+  .table-stacked thead {
+    display: none !important;
+  }
+
+  .table-stacked tbody,
+  .table-stacked tr {
+    display: block !important;
+  }
+
   .table-stacked tr {
     width: 100%;
     box-sizing: border-box;
@@ -434,17 +581,16 @@ textarea#options {
     white-space: normal;
     word-break: break-word;
   }
-  
+
   .table-stacked td.text-end {
-      display: flex !important;
-      justify-content: space-between !important; /* Label links, Buttons rechts */
-      gap: .5rem;
-      border-bottom: 0;
+    display: flex !important;
+    justify-content: space-between !important;
+    gap: .5rem;
+    border-bottom: 0;
   }
 
-  /* Buttons in Aktionen rechtsbündig */
   .table-stacked td.text-end .btn {
-    margin-left: auto; /* schiebt Buttons nach rechts */
+    margin-left: auto;
   }
 
   .table-stacked td::before {
@@ -453,34 +599,60 @@ textarea#options {
     color: var(--text-color);
     margin-right: .5rem;
   }
+
   .table-stacked td[data-default="true"] {
     display: none !important;
   }
 }
+
 /* =========================================
    "Zurück nach oben" Button
-   ========================================= */
-  .to-top-btn {
-    position: fixed;
-    right: 1rem;
-    bottom: 1rem;
-    z-index: 1080; /* über Modals/Toasts (Bootstrap nutzt 1060–1080) */
-    box-shadow: var(--bs-box-shadow);
-    /* optional: runder Button */
-    border-radius: 9999px;
-    width: 3rem;
-    height: 3rem;
-    padding: 0;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-  }
+========================================= */
+.to-top-btn {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 1080;
+  box-shadow: var(--bs-box-shadow);
+  border-radius: 9999px;
+  width: 3rem;
+  height: 3rem;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
 
-  @media (max-width: 575.98px) {
-    .to-top-btn {
-      right: .75rem;
-      bottom: .75rem;
-      width: 2.75rem;
-      height: 2.75rem;
-    }
+@media (max-width: 575.98px) {
+  .to-top-btn {
+    right: .75rem;
+    bottom: .75rem;
+    width: 2.75rem;
+    height: 2.75rem;
   }
+}
+
+.navbar-toggler-icon {
+  /* SVG nutzt currentColor → im Dark Mode automatisch hell, in Light Mode dunkel */
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' \
+viewBox='0 0 30 30'%3e%3cpath stroke='currentColor' stroke-linecap='round' \
+stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+
+.navbar-toggler-icon {
+  /* SVG verwendet currentColor → passt sich automatisch an */
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' \
+viewBox='0 0 30 30'%3e%3cpath stroke='currentColor' stroke-linecap='round' \
+stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+
+[data-bs-theme="dark"] .navbar-toggler {
+  /* etwas mehr Kontrast für die Umrandung im Dark Mode */
+  border-color: color-mix(in srgb, var(--bs-body-color), transparent 60%);
+}
+
+/* Navbar folgt dem globalen Theme (Light/Dark) */
+.navbar {
+  background-color: var(--bs-body-bg) !important;
+  color: var(--bs-body-color) !important;
+}

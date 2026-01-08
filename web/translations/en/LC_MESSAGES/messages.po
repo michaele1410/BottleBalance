@@ -763,8 +763,8 @@ msgid "6-stelliger Code"
 msgstr "6-digit code"
 
 #: templates/admin_tools.html:6 templates/base.html:84
-msgid "Admin-Werkzeuge"
-msgstr "Admin tools"
+msgid "Einstellungen"
+msgstr "Settings"
 
 #: templates/admin_tools.html:18 templates/base.html:169
 #: templates/index.html:387 templates/index.html:422 templates/index.html:428

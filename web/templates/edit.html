@@ -4,8 +4,14 @@
   <div class="col-12">
     <div class="card shadow-sm">
       <div class="card-body">
-        <h1 class="h5 mb-3">{{ _('Datensatz bearbeiten') }}</h1>
-
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h1 class="h5 mb-0">{{ _('Datensatz bearbeiten') }}</h1>
+          <div class="d-flex gap-2">
+            <a href="{{ url_for('bbalance_routes.index') }}" class="btn btn-outline-secondary">
+              {{ _('Zurück') }}
+            </a>
+          </div>
+        </div>
         <form method="post" action="{{ url_for('bbalance_routes.edit_post', entry_id=data.id) }}" class="row g-3"
           id="transaction-form" novalidate>
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -17,7 +23,7 @@
               <input type="text" name="datum"  inputmode="decimal" class="form-control"
                 placeholder="Datum" id="datum" value="{{ data.datum.strftime('%d.%m.%Y') if data.datum else '' }}" required autofocus>
                 <label for="datum">{{ _('Datum') }}</label>
-            </div>w
+            </div>
           </div>
 
           <!-- Vollgut -->
@@ -135,7 +141,7 @@
         </div>
         <h5 class="mt-5">Audit-Historie</h5>
         <table class="table table-sm table-striped align-middle">
-          <thead>
+          <thead class="table-light">
             <tr>
               <th>{{ _('Zeitpunkt') }}</th>
               <th>{{ _('Aktion') }}</th>

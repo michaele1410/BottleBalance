@@ -1759,7 +1759,7 @@ def parse_date_iso_or_today(s: str | None) -> date:
 @require_perms('admin:tools')
 def admin_tools():
     """
-    Admin-Werkzeuge:
+    Einstellungen für administrative Werkzeuge:
       - SMTP-Testmail senden
       - Datenbank-Dump erzeugen und herunterladen
       - Bemerkungsoptionen vollständig überschreiben

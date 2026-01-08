@@ -730,7 +730,7 @@ msgid "6-stelliger Code"
 msgstr ""
 
 #: templates/admin_tools.html:6 templates/base.html:84
-msgid "Admin-Werkzeuge"
+msgid "Einstellungen"
 msgstr ""
 
 #: templates/admin_tools.html:18 templates/base.html:169

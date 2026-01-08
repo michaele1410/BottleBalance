@@ -81,7 +81,7 @@
 
         {% if 'admin:tools' in (ROLES.get(session.get('role'), [])) %}
         <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('admin_tools') }}">
-          <i class="bi-tools me-1"></i> {{ _('Admin-Werkzeuge') }}
+          <i class="bi-tools me-1"></i> {{ _('Einstellungen') }}
         </a>
         {% endif %}  
 

@@ -187,11 +187,13 @@ def _build_index_context(default_date: str | None = None, temp_token: str | None
             year_val = int(year_raw)
         except ValueError:
             year_val = None
-
-    # ✅ Standardfilter aus Profil anwenden, wenn kein expliziter Filter gesetzt ist
+    
     if not year_val and not df and not dt:
         user = current_user()
-        if user and user.get('default_filter'):  # TRUE = aktuelles Jahr
+        # TRUE = Alle anzeigen, FALSE = aktuelles Jahr
+        if user and user.get('default_filter'):
+            year_val = None  # Alle
+        else:
             year_val = date.today().year
 
     # Einträge für Tabelle (mit Profil-Sortierung)

@@ -170,7 +170,6 @@ def _user_can_view_entry(entry_id: int) -> bool:
     allowed = ROLES.get(session.get('role'), set())
     return 'entries:view' in allowed
 
-
 def _build_index_context(default_date: str | None = None, temp_token: str | None = None):
     q = (request.args.get('q') or '').strip()
     date_from_s = request.args.get('from')
@@ -180,7 +179,7 @@ def _build_index_context(default_date: str | None = None, temp_token: str | None
 
     filter_attachments = request.args.get('attachments')
 
-    # Jahresfilter
+    # Jahresfilter aus URL
     year_raw = (request.args.get('year') or '').strip().lower()
     year_val: int | None = None
     if year_raw not in ('', 'all'):
@@ -188,6 +187,12 @@ def _build_index_context(default_date: str | None = None, temp_token: str | None
             year_val = int(year_raw)
         except ValueError:
             year_val = None
+
+    # ✅ Standardfilter aus Profil anwenden, wenn kein expliziter Filter gesetzt ist
+    if not year_val and not df and not dt:
+        user = current_user()
+        if user and user.get('default_filter'):  # TRUE = aktuelles Jahr
+            year_val = date.today().year
 
     # Einträge für Tabelle (mit Profil-Sortierung)
     entries = fetch_entries(
@@ -197,11 +202,7 @@ def _build_index_context(default_date: str | None = None, temp_token: str | None
     )
 
     years = get_available_years()
-
-    # Gesamtwerte unabhängig vom Filter
     inv_aktuell, kas_aktuell = get_global_totals()
-
-    # Veränderung im Filterbereich (nur by date-range)
     delta_inv, delta_kas = get_delta_for_filter(df, dt)
 
     # Sparklines: Jahr berücksichtigen, aber immer chronologisch (ASC)
@@ -219,7 +220,6 @@ def _build_index_context(default_date: str | None = None, temp_token: str | None
     series_kas = [float(e['kassenbestand']) for e in entries_for_chart]
     labels_all = [e['datum'].isoformat() if e['datum'] else '' for e in entries_for_chart]
 
-    # Filterstände (chronologisch letzter Eintrag)
     if entries:
         last = max(entries, key=lambda e: (e['datum'], e['id']))
         finv = last['inventar']

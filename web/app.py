@@ -353,6 +353,7 @@ CREATE TABLE IF NOT EXISTS users (
     role TEXT NOT NULL,
     active BOOLEAN NOT NULL DEFAULT TRUE,
     sort_order_desc BOOLEAN DEFAULT FALSE,
+    default_filter BOOLEAN DEFAULT TRUE,
     must_change_password BOOLEAN NOT NULL DEFAULT FALSE,
     totp_secret TEXT,
     totp_enabled BOOLEAN NOT NULL DEFAULT FALSE,
@@ -503,15 +504,16 @@ def migrate_columns(conn):
     conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS totp_secret TEXT"))
     conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS totp_enabled BOOLEAN NOT NULL DEFAULT FALSE"))
     conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS backup_codes TEXT"))
-    conn.execute(text("ALTER TABLE entries ADD COLUMN IF NOT EXISTS created_by INTEGER"))
-    conn.execute(text("ALTER TABLE entries ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT NOW()"))
-    conn.execute(text("ALTER TABLE entries ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP NOT NULL DEFAULT NOW()"))
     conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS locale TEXT"))
     conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS timezone TEXT"))
     conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS theme_preference TEXT DEFAULT 'system'"))
     conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login_at TIMESTAMP"))
     conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS can_approve BOOLEAN NOT NULL DEFAULT FALSE"))
     conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS sort_order_desc BOOLEAN DEFAULT FALSE"))
+    conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS default_filter BOOLEAN NOT NULL DEFAULT TRUE"))
+    conn.execute(text("ALTER TABLE entries ADD COLUMN IF NOT EXISTS created_by INTEGER"))
+    conn.execute(text("ALTER TABLE entries ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT NOW()"))
+    conn.execute(text("ALTER TABLE entries ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP NOT NULL DEFAULT NOW()"))
     conn.execute(text("ALTER TABLE zahlungsantraege ADD COLUMN IF NOT EXISTS approver_snapshot JSONB"))
     
     try:
@@ -902,6 +904,7 @@ def update_preferences():
     language = request.form.get('language')
     theme = request.form.get('theme') or 'system'
     sort_order_desc = (request.form.get('sort_order_desc') == 'on')
+    default_filter = (request.form.get('default_filter') == 'on')  # Checkbox → Boolean
 
     if language not in ['de', 'en']:
         flash(_('Ungültige Sprache.'))
@@ -917,14 +920,16 @@ def update_preferences():
             SET locale=:lang,
                 theme_preference=:theme,
                 sort_order_desc=:desc,
+                default_filter=:df,
                 updated_at=NOW()
             WHERE id=:id
         """), {
             'lang': language,
             'theme': theme,
             'desc': sort_order_desc,
+            'df': default_filter,
             'id': uid
-    })
+        })
 
     flash(_('Einstellungen gespeichert.'))
     return redirect(url_for('profile'))

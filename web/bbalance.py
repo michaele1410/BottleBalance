@@ -72,14 +72,13 @@ def index():
     to_date = request.args.get('to')
 
     if not selected_year and not from_date and not to_date:
-        # Boolean aus Profil: TRUE = aktuelles Jahr, FALSE = alle Einträge
+        # Boolean aus Profil:
+        # TRUE = Alle anzeigen, FALSE = aktuelles Jahr
         if current_user().get('default_filter'):
-            ctx['selected_year'] = date.today().year  # aktuelles Jahr
+            ctx['selected_year'] = None  # Alle
         else:
-            ctx['selected_year'] = None  # alle Einträge
-
-    return render_template('index.html', **ctx, now=int(time()))
-
+            ctx['selected_year'] = date.today().year  # aktuelles Jahr
+            
 @bbalance_routes.get('/api/table')
 @login_required
 def api_table():

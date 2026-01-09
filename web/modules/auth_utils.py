@@ -28,10 +28,10 @@ def current_user():
         return None
     with engine.begin() as conn:
         row = conn.execute(text("""
-                    SELECT id, username, email, role, active, must_change_password, totp_enabled,
-                        backup_codes, locale, timezone, theme_preference, sort_order_desc, can_approve, last_login_at
-                    FROM users WHERE id=:id
-                """), {'id': uid}).mappings().first()
+            SELECT id, username, email, role, sort_order_desc, default_filter, locale, theme_preference
+            FROM users
+            WHERE id = :id
+        """), {'id': uid}).mappings().first()
     return dict(row) if row else None
 
 def require_perms(*perms):

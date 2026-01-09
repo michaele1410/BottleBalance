@@ -53,6 +53,7 @@ from modules.csv_utils import (
 
 bbalance_routes = Blueprint('bbalance_routes', __name__)
 
+
 @bbalance_routes.get('/')
 @login_required
 def index():
@@ -66,18 +67,18 @@ def index():
         return redirect(url_for('payment_routes.zahlungsfreigabe'))
 
     # Standardfilter anwenden, wenn kein Filter gesetzt ist
-    # Prüfe URL-Parameter
     selected_year = request.args.get('year')
     from_date = request.args.get('from')
     to_date = request.args.get('to')
 
     if not selected_year and not from_date and not to_date:
-        # Boolean aus Profil:
         # TRUE = Alle anzeigen, FALSE = aktuelles Jahr
         if current_user().get('default_filter'):
             ctx['selected_year'] = None  # Alle
         else:
             ctx['selected_year'] = date.today().year  # aktuelles Jahr
+
+    return render_template('index.html', **ctx, now=int(time()))
             
 @bbalance_routes.get('/api/table')
 @login_required

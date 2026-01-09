@@ -56,11 +56,28 @@ bbalance_routes = Blueprint('bbalance_routes', __name__)
 @bbalance_routes.get('/')
 @login_required
 def index():
+    # Basis-Kontext
     ctx = _build_index_context(default_date=today_ddmmyyyy())
     ctx['bemerkungsoptionen'] = get_bemerkungsoptionen()
+
+    # Rollen-Redirect
     role = session.get('role')
     if role == 'Payment Viewer':
-        return redirect(url_for('payment_routes.zahlungsfreigabe')) 
+        return redirect(url_for('payment_routes.zahlungsfreigabe'))
+
+    # Standardfilter anwenden, wenn kein Filter gesetzt ist
+    # Prüfe URL-Parameter
+    selected_year = request.args.get('year')
+    from_date = request.args.get('from')
+    to_date = request.args.get('to')
+
+    if not selected_year and not from_date and not to_date:
+        # Boolean aus Profil: TRUE = aktuelles Jahr, FALSE = alle Einträge
+        if current_user().get('default_filter'):
+            ctx['selected_year'] = date.today().year  # aktuelles Jahr
+        else:
+            ctx['selected_year'] = None  # alle Einträge
+
     return render_template('index.html', **ctx, now=int(time()))
 
 @bbalance_routes.get('/api/table')

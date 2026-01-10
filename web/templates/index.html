@@ -187,15 +187,15 @@
                 </div>
               </div>
 
-              <!-- Jahr -->
+               <!-- Jahr -->
               <div class="col">
                 <label for="filter_year" class="form-label mb-1">{{ _('Jahr') }}</label>
                 <div class="input-group">
                   <span class="input-group-text"><i class="bi-calendar"></i></span>
-                  <select id="filter_year" name="year" class="form-select">
-                    <option value="" {% if not selected_year %}selected{% endif %}>{{ _('Alle') }}</option>
+                  <select id="filter_year" name="year" class="form-select" onchange="this.form.submit()">
+                    <option value="all" {{ 'selected' if selected_year == 'all' else '' }}>{{ _('Alle') }}</option>
                     {% for y in years %}
-                      <option value="{{ y }}" {% if selected_year == y|string %}selected{% endif %}>{{ y }}</option>
+                      <option value="{{ y }}" {{ 'selected' if selected_year == y|string else '' }}>{{ y }}</option>
                     {% endfor %}
                   </select>
                 </div>

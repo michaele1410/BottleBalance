@@ -188,7 +188,9 @@ def _build_index_context(default_date: str | None = None, temp_token: str | None
         except ValueError:
             year_val = None
     
-    if not year_val and not df and not dt:
+    #Default nur anwenden, wenn der Nutzer KEIN 'year' übergeben hat
+    year_param_present = 'year' in request.args
+    if (not year_param_present) and (not df) and (not dt):
         user = current_user()
         # TRUE = Alle anzeigen, FALSE = aktuelles Jahr
         if user and user.get('default_filter'):
@@ -256,7 +258,7 @@ def _build_index_context(default_date: str | None = None, temp_token: str | None
         'labels_all': labels_all,
         'temp_token': token,
         'years': years,
-        'selected_year': str(year_val) if year_val is not None else '',
+        'selected_year': str(year_val) if year_val is not None else 'all',
         'from': date_from_s or '',
         'to': date_to_s or '',
     }

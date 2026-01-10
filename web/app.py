@@ -904,7 +904,11 @@ def update_preferences():
     language = request.form.get('language')
     theme = request.form.get('theme') or 'system'
     sort_order_desc = (request.form.get('sort_order_desc') == 'on')
-    default_filter = (request.form.get('default_filter') == 'on')  # Checkbox → Boolean
+
+    # UI (checked) = "nur aktuelles Jahr"  -> DB default_filter = False
+    # UI (unchecked) = "Alle"              -> DB default_filter = True
+    default_filter = (request.form.get('default_filter') != 'on')
+
 
     if language not in ['de', 'en']:
         flash(_('Ungültige Sprache.'))

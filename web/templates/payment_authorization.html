@@ -2,151 +2,136 @@
 {% block content %}
 <div class="card shadow-sm">
   <div class="card-body">
-  <!--div class="container-fluid px-2 px-md-3"-->
-    <h1 class="h5 mb-3">{{ _('Zahlungsfreigabe') }}</h1>
+    <h1 class="h5 mb-3">{{ _('Payment request') }}</h1>
 
-    <!-- Aktionen -->
+    <!-- Actions -->
     <div class="d-flex flex-wrap gap-2 mb-3">
-      <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#antragModal">
-        <i class="bi-plus-lg me-1"></i> {{ _('Neuer Antrag') }}
+      <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#payment_requestModal">
+        <i class="bi-plus-lg me-1"></i> {{ _('New payment request') }}
       </button>
-      <a href="{{ url_for('payment_routes.export_alle_antraege_pdf') }}" class="btn btn-outline-danger">
-        <i class="bi-file-earmark-pdf me-1 text-danger"></i> {{ _('Alle Anträge als PDF') }}
+      <a href="{{ url_for('payment_routes.export_all_payment_requests_pdf') }}" class="btn btn-outline-danger">
+        <i class="bi-file-earmark-pdf me-1 text-danger"></i> {{ _('All payment request as PDF') }}
       </a>
       {% if 'payment:audit' in (ROLES.get(session.get('role'), [])) %}
-      <a href="{{ url_for('payment_routes.zahlungsfreigabe_audit') }}" class="btn btn-outline-secondary">
-        <i class="bi bi-clock-history me-1"></i> {{ _('Audit-Übersicht') }}
+      <a href="{{ url_for('payment_routes.payment_requests_audit') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-clock-history me-1"></i> {{ _('Audit overview') }}
       </a>
       {% endif %}
     </div>
 
-    <!-- Tabelle -->
+    <!-- Table -->
     <div class="table-responsive">
       <table class="table table-bordered align-middle">
         <thead class="table-light">
           <tr>
-            <th>{{ _('Antragsteller/in') }}</th>
-            <th>{{ _('Datum') }}</th>
-            <th>{{ _('Betrag') }}</th>
-            <th>{{ _('Status') }}</th>
-            <th class="text-nowrap">{{ _('Aktionen') }}</th>
+            <th>{{ _('Requestor') }}</th>
+            <th>{{ _('Date') }}</th>
+            <th>{{ _('Amount') }}</th>
+            <th>{{ _('State') }}</th>
+            <th class="text-nowrap">{{ _('Actions') }}</th>
           </tr>
         </thead>
 
         <tbody>
-          {% for a in antraege %}
+          {% for a in payment_requests %}
           <tr>
-            <td data-label="{{ _('Antragsteller/in') }}" colspan="5">
+            <td data-label="{{ _('Requestor') }}" colspan="5">
               <div class="mb-2">
-                <strong>{{ _('Freigabe-Fortschritt') }}:</strong>
-                {{ a.freigaben_count }} {{ _('von') }} {{ a.freigaben_gesamt }} {{ _('freigegeben') }}
+                <strong>{{ _('Approval progress') }}:</strong>
+                {{ a.approvals_count }} {{ _('von') }} {{ a.approvals_total }} {{ _('approved') }}
                 {% if a.approved_by_me %}
-                • <i class="bi bi-person-check text-success"></i> {{ _('von dir') }}
+                • <i class="bi bi-person-check text-success"></i> {{ _('from you') }}
                 {% endif %}
               </div>
               <div class="progress" style="height: 20px;">
-                <div class="progress-bar" role="progressbar" style="width: {{ a.freigabe_prozent }}%;"
-                  aria-valuenow="{{ a.freigaben_count }}" aria-valuemin="0" aria-valuemax="{{ a.freigaben_gesamt }}">
-                  {{ a.freigaben_count }} / {{ a.freigaben_gesamt }}
+                <div class="progress-bar" role="progressbar" style="width: {{ a.approvals_percent }}%;"
+                  aria-valuenow="{{ a.approvals_count }}" aria-valuemin="0" aria-valuemax="{{ a.approvals_total }}">
+                  {{ a.approvals_count }} / {{ a.approvals_total }}
                 </div>
               </div>
-
             </td>
           </tr>
 
           <tr>
-            <td data-label="{{ _('Antragsteller/in') }}">{{ a.antragsteller }}</td>
-            <td data-label="{{ _('Datum') }}">{{ a.datum }}</td>
-            <td data-label="{{ _('Betrag') }}">{{ a.betrag }} €</td>
-            <td data-label="{{ _('Status') }}">
-              <span class="badge badge-status-{{ a.status|replace(' ', '_') }}">{{ a.status }}</span>
+            <td data-label="{{ _('Requestor') }}">{{ a.requestor }}</td>
+            <td data-label="{{ _('Date') }}">{{ a.date }}</td>
+            <td data-label="{{ _('Amount') }}">{{ a.amount }} €</td>
+            <td data-label="{{ _('State') }}">
+              <span class="badge badge-state-{{ a.state|replace(' ', '_') }}">{{ a.state }}</span>
             </td>
-            <td data-label="{{ _('Aktionen') }}" class="text-nowrap">
+            <td data-label="{{ _('Actions') }}" class="text-nowrap">
 
               <!-- Details -->
-              <a href="{{ url_for('payment_routes.zahlungsfreigabe_detail', antrag_id=a.id) }}"
+              <a href="{{ url_for('payment_routes.payment_request_detail', request_id=a.id) }}"
                 class="btn btn-sm btn-outline-secondary">
                 {{ _('Details') }}
               </a>
 
-              {% if a.can_freigeben %}
-              <form method="post" action="{{ url_for('payment_routes.freigeben_antrag', antrag_id=a.id) }}"
+              {% if a.can_approve %}
+              <form method="post" action="{{ url_for('payment_routes.approve_payment_request', request_id=a.id) }}"
                 style="display:inline">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button class="btn btn-sm btn-success">{{ _('Freigeben') }}</button>
+                <button class="btn btn-sm btn-success">{{ _('Approve') }}</button>
               </form>
               {% endif %}
 
-              {% if a.can_freigabe_zurueckziehen %}
-              <form method="post" action="{{ url_for('payment_routes.freigabe_zurueckziehen', antrag_id=a.id) }}"
+              {% if a.can_withdraw_approval %}
+              <form method="post" action="{{ url_for('payment_routes.withdraw_approval', request_id=a.id) }}"
                 style="display:inline">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button class="btn btn-sm btn-warning">{{ _('Freigabe zurückziehen') }}</button>
+                <button class="btn btn-sm btn-warning">{{ _('Withdraw approval') }}</button>
               </form>
               {% endif %}
 
-              <!--{% if a.can_on_hold %}
-              <form method="post" action="{{ url_for('payment_routes.on_hold_antrag', antrag_id=a.id) }}" style="display:inline">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button class="btn btn-sm btn-outline-warning">On hold</button>
-              </form>
-              {% endif %}
-
-              {% if has_endpoint('fortsetzen_antrag') and a.can_fortsetzen %}
-              <form method="post" action="{{ url_for('payment_routes.fortsetzen_antrag', antrag_id=a.id) }}" style="display:inline">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button class="btn btn-sm btn-outline-primary">Fortsetzen</button>
-              </form>
-              {% endif %}-->
               {% if a.can_on_hold %}
-              <form method="post" action="{{ url_for('payment_routes.on_hold_antrag', antrag_id=a.id) }}"
+              <form method="post" action="{{ url_for('payment_routes.on_hold_payment_request', request_id=a.id) }}"
                 style="display:inline">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button class="btn btn-sm btn-outline-warning">{{ _('On Hold') }}</button>
+                <button class="btn btn-sm btn-outline-warning">{{ _('On hold') }}</button>
               </form>
               {% endif %}
 
-              {% if a.can_fortsetzen %}
-              <form method="post" action="{{ url_for('payment_routes.fortsetzen_antrag', antrag_id=a.id) }}"
+              {% if a.can_continue %}
+              <form method="post" action="{{ url_for('payment_routes.continue_payment_request', request_id=a.id) }}"
                 style="display:inline">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button class="btn btn-sm btn-outline-primary">{{ _('Fortsetzen') }}</button>
+                <button class="btn btn-sm btn-outline-primary">{{ _('Continue') }}</button>
               </form>
               {% endif %}
 
 
-              {% if a.can_abschliessen %}
-              <form method="post" action="{{ url_for('payment_routes.abschliessen_antrag', antrag_id=a.id) }}"
+              {% if a.can_complete %}
+              <form method="post" action="{{ url_for('payment_routes.complete_payment_request', request_id=a.id) }}"
                 style="display:inline">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button class="btn btn-sm btn-primary">{{ _('Abschließen') }}</button>
+                <button class="btn btn-sm btn-primary">{{ _('Complete') }}</button>
               </form>
               {% endif %}
 
-              {% if a.can_ablehnen %}
-              <!-- Einfaches Inline-Ablehnen mit Grund -->
-              <form method="post" action="{{ url_for('payment_routes.ablehnen_antrag', antrag_id=a.id) }}"
-                style="display:inline" onsubmit="return confirm('{{ _('Ablehnen') }}?');">
+              {% if a.can_reject %}
+              <!-- Simple inline rejection with reason -->
+              <form method="post" action="{{ url_for('payment_routes.reject_payment_request', request_id=a.id) }}"
+                style="display:inline" onsubmit="return confirm('{{ _('Reject') }}?');">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <input type="hidden" name="grund" value="Abgelehnt (kurzbegründet)">
-                <!-- ersetze bei Bedarf durch Modal -->
-                <button class="btn btn-sm btn-outline-danger">{{ _('Ablehnen') }}</button>
+                <input type="hidden" name="justification" value="Rejected (briefly justified))">
+                <!-- replace with modal if necessary -->
+                <button class="btn btn-sm btn-outline-danger">{{ _('Reject') }}</button>
               </form>
               {% endif %}
 
-              {% if a.can_zurueckziehen %}
-              <form method="post" action="{{ url_for('payment_routes.zurueckziehen_antrag', antrag_id=a.id) }}"
-                style="display:inline" onsubmit="return confirm('{{ _('Antrag zurückziehen') }}?');">
+              {% if a.can_withdraw %}
+              <form method="post" action="{{ url_for('payment_routes.withdraw_payment_request', request_id=a.id) }}"
+                style="display:inline" onsubmit="return confirm('{{ _('Withdraw payment request') }}?');">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button class="btn btn-sm btn-outline-secondary">{{ _('Zurückziehen') }}</button>
+                <button class="btn btn-sm btn-outline-secondary">{{ _('Withdraw') }}</button>
               </form>
               {% endif %}
 
-              {% if a.can_loeschen and a.status not in ['abgeschlossen', 'abgelehnt', 'freigegeben'] %}
-              <form method="post" action="{{ url_for('payment_routes.loeschen_antrag', antrag_id=a.id) }}"
-                style="display:inline" onsubmit="return confirm('{{ _('Antrag endgültig löschen') }}?');">
+              {% if a.can_delete and a.state not in ['completed', 'rejected', 'approved'] %}
+              <form method="post" action="{{ url_for('payment_routes.delete_payment_request', request_id=a.id) }}"
+                style="display:inline" onsubmit="return confirm('{{ _('Delete payment request permanently') }}?');">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button class="btn btn-sm btn-danger">{{ _('Löschen') }}</button>
+                <button class="btn btn-sm btn-danger">{{ _('Delete') }}</button>
               </form>
               {% endif %}
             </td>
@@ -157,26 +142,26 @@
     </div>
   </div>
 </div>
-<!-- Modal: Ablehnen -->
-<div class="modal fade" id="ablehnenModal" tabindex="-1" aria-labelledby="ablehnenModalLabel" aria-hidden="true">
+<!-- Modal: Reject -->
+<div class="modal fade" id="rejectModal" tabindex="-1" aria-labelledby="rejectModalLabel" aria-hidden="true">
   <div class="modal-dialog">
-    <form method="post" id="ablehnenForm">
+    <form method="post" id="rejectForm">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="ablehnenModalLabel">{{ _('Antrag ablehnen') }}</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
+          <h5 class="modal-title" id="rejectModalLabel">{{ _('Reject payment request') }}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <div class="mb-3">
-            <label class="form-label">{{ _('Begründung (Pflicht)') }}</label>
-            <textarea class="form-control" name="grund" required rows="4"
-              placeholder="{{ _('Bitte Ablehnungsgrund angeben') }}."></textarea>
+            <label class="form-label">{{ _('Justification (mandatory)') }}</label>
+            <textarea class="form-control" name="justification" required rows="4"
+              placeholder="{{ _('Please specify reason for rejection') }}."></textarea>
           </div>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">{{ _('Abbrechen') }}</button>
-          <button class="btn btn-danger" type="submit">{{ _('Ablehnen') }}</button>
+          <button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">{{ _('Cancel') }}</button>
+          <button class="btn btn-danger" type="submit">{{ _('Reject') }}</button>
         </div>
       </div>
     </form>
@@ -184,124 +169,90 @@
 </div>
 
 <script>
-  const ablehnenModal = document.getElementById('ablehnenModal');
-  ablehnenModal.addEventListener('show.bs.modal', (event) => {
+  const rejectModal = document.getElementById('rejectModal');
+  rejectnModal.addEventListener('show.bs.modal', (event) => {
     const button = event.relatedTarget;
-    const antragId = button.getAttribute('data-antrag-id');
-    const form = document.getElementById('ablehnenForm');
-    form.action = "{{ url_for('payment_routes.ablehnen_antrag', antrag_id=0) }}".replace('/0', '/' + antragId);
+    const payment_requestId = button.getAttribute('data-payment_request-id');
+    const form = document.getElementById('rejectForm');
+    form.action = "{{ url_for('payment_routes.reject_payment_request', request_id=0) }}".replace('/0', '/' + payment_requestId);
   });
 </script>
 
-<!-- Modal: Neuer Antrag -->
-<div class="modal fade" id="antragModal" tabindex="-1" aria-labelledby="antragModalLabel" aria-hidden="true">
+<!-- Modal: New request -->
+<div class="modal fade" id="payment_requestModal" tabindex="-1" aria-labelledby="payment_requestModalLabel" aria-hidden="true">
   <div class="modal-dialog">
-    <form method="post" action="{{ url_for('payment_routes.zahlungsfreigabe_antrag') }}" id="antragForm"
+    <form method="post" action="{{ url_for('payment_routes.payment_request') }}" id="payment_requestForm"
       class="needs-validation" novalidate>
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="antragModalLabel">{{ _('Neuen Zahlungsantrag erstellen') }}</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
+          <h5 class="modal-title" id="payment_requestModalLabel">{{ _('Create new payment request') }}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
 
         <div class="modal-body">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
           <div class="mb-3">
-            <!--label class="form-label">{{ _('Paragraph (optional)') }}</label-->
-            <!--input type="text" name="paragraph" class="form-control" placeholder="{{ _('z. Bsp. 3a') }}" value="$ 14 Abs. 2"-->
             <div class="input-group mb-3">
               <span class="input-group-text"><i class="bi bi-text-paragraph"></i></span>
               <div class="form-floating flex-grow-1">
                 <input type="text" name="paragraph"  inputmode="text" class="form-control"
-                  placeholder="{{ _('z. Bsp. 3a') }}" value="$ 14 Abs. 2">
+                  placeholder="{{ _('e.g. 3a') }}" value="$ 14 Abs. 2">
                   <label for="paragraph">{{ _('Paragraph (optional)') }}</label>
               </div>
             </div>
           </div>
 
-          <!--div class="mb-3">
-            <label class="form-label">{{ _('Verwendungszweck') }}</label>
-            <input type="text" name="zweck" class="form-control" placeholder="{{ _('Wofür ist die Zahlungsanfrage') }}?">
-          </div-->
           <div class="input-group mb-3">
             <span class="input-group-text"><i class="bi bi-chat-text"></i></span>
             <div class="form-floating flex-grow-1">
               <input type="text" name="zweck"  inputmode="text" class="form-control"
-                placeholder="{{ _('Wofür ist die Zahlungsanfrage') }}?" value="">
-                <label for="zweck">{{ _('Verwendungszweck') }}</label>
+                placeholder="{{ _('What is the payment request for?') }}?" value="">
+                <label for="zweck">{{ _('Purpose') }}</label>
             </div>
           </div>
 
-          <!--div class="row g-3">
-            <div class="col-md-6">
-              <label class="form-label">{{ _('Datum') }}</label>              
-              <input type="date" name="datum" class="form-control" required value="{{ today.strftime('%Y-%m-%d') }}">
-
-              <div class="invalid-feedback">{{ _('Bitte ein Datum angeben') }}.</div>
-            </div>
-          </div-->
           <div class="input-group mb-3">
             <span class="input-group-text"><i class="bi bi-calendar"></i></span>
             <div class="form-floating flex-grow-1">
-              <input type="date" name="datum" class="form-control" required value="{{ today.strftime('%Y-%m-%d') }}">
-                <label for="datum">{{ _('Datum') }}</label>
+              <input type="date" name="date" class="form-control" required value="{{ today.strftime('%Y-%m-%d') }}">
+                <label for="date">{{ _('Date') }}</label>
             </div>
           </div>
 
-          <!--div class="col-md-6">
-            <label class="form-label">{{ _('Betrag') }}</label>
-            <div class="input-group">
-              <input type="number" name="betrag" class="form-control" inputmode="decimal" placeholder="{{ _('z. Bsp. 49,90') }}"
-                required>
-              <span class="input-group-text"><i class="bi bi-coin"></i></span>
-              <div class="invalid-feedback">{{ _('Bitte einen Betrag angeben') }}.</div>
-            </div>
-            <small class="form-text text-muted">{{ _('Komma oder Punkt als Dezimaltrenner ist möglich') }}.</small>
-          </div-->
           <div class="input-group mb-3">
             <span class="input-group-text"><i class="bi bi-wallet2"></i></span>
-            <!-- Betrag-Eingabe -->
+            <!-- Amount input -->
             <div class="form-floating flex-grow-1">
-              <input type="number" name="betrag" inputmode="decimal" class="form-control"
-                    placeholder="{{ _('z. Bsp. 49,90') }}" value="">
-              <label for="betrag">{{ _('Betrag') }}</label>
-              <div class="invalid-feedback">{{ _('Betrag') }}.</div>
+              <input type="number" name="amount" inputmode="decimal" class="form-control"
+                    placeholder="{{ _('eg. 49,90') }}" value="">
+              <label for="amount">{{ _('Amount') }}</label>
+              <div class="invalid-feedback">{{ _('Amount') }}.</div>
             </div>
           </div>
 
-
-          <!--div class="mb-3 mt-3">
-            <label class="form-label">{{ _('Lieferant (optional)') }}</label>
-            <input type="text" name="lieferant" class="form-control" placeholder="{{ _('Firma / Händler') }}">
-          </div-->
           <div class="input-group mb-3">
             <span class="input-group-text"><i class="bi bi-building"></i></span>
             <div class="form-floating flex-grow-1">
-              <input type="text" name="lieferant"  inputmode="text" class="form-control"
-                placeholder="{{ _('Firma / Händler') }}" value="">
-                <label for="lieferant">{{ _('Lieferant (optional)') }}</label>
+              <input type="text" name="supplier"  inputmode="text" class="form-control"
+                placeholder="{{ _('Company / Supplier') }}" value="">
+                <label for="supplier">{{ _('Supplier (optional)') }}</label>
             </div>
           </div>
 
-          <!--div class="mb-3">
-            <label class="form-label">{{ _('Begründung (optional)') }}</label>
-            <textarea name="begruendung" rows="3" class="form-control"
-              placeholder="{{ _('Weshalb ist die Zahlungsanfrage notwendig') }}?"></textarea>
-          </div-->
           <div class="input-group mb-3">
             <span class="input-group-text"><i class="bi bi-chat-quote"></i></span>
             <div class="form-floating flex-grow-1">
-              <input type="text" name="begruendung" rows="3" inputmode="text" class="form-control"
-                placeholder="{{ _('Weshalb ist die Zahlungsanfrage notwendig') }}?" value="">
-                <label for="begruendung">{{ _('Begründung') }}</label>
+              <input type="text" name="justification" rows="3" inputmode="text" class="form-control"
+                placeholder="{{ _('Why is the payment request necessary?') }}?" value="">
+                <label for="justification">{{ _('Justification') }}</label>
             </div>
           </div>
 
           <div class="modal-footer">
-            <button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">{{ _('Abbrechen') }}</button>
+            <button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">{{ _('Cancel') }}</button>
             <button class="btn btn-primary" type="submit">
-              <i class="bi bi-check-lg me-1"></i> {{ _('Hinzufügen') }}
+              <i class="bi bi-check-lg me-1"></i> {{ _('Add') }}
             </button>
           </div>
         </div>
@@ -311,9 +262,9 @@
 </div>
 
 <script>
-  // Bootstrap-Client-Validation aktivieren (optional)
+  // Enable Bootstrap client validation (optional)
   (() => {
-    const form = document.getElementById('antragForm');
+    const form = document.getElementById('payment_requestForm');
     form?.addEventListener('submit', (e) => {
       if (!form.checkValidity()) {
         e.preventDefault();
@@ -323,9 +274,9 @@
     }, false);
   })();
 
-  // Formular beim Schließen zurücksetzen (optional)
-  document.getElementById('antragModal')?.addEventListener('hidden.bs.modal', () => {
-    const form = document.getElementById('antragForm');
+  // Reset form on closing (optional)
+  document.getElementById('payment_requestModal')?.addEventListener('hidden.bs.modal', () => {
+    const form = document.getElementById('payment_requestForm');
     if (form) {
       form.reset();
       form.classList.remove('was-validated');

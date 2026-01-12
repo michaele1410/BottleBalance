@@ -31,14 +31,14 @@ services:
       - LOG_FILE=/opt/app/uploads/app.log
       - LOG_LEVEL=INFO
 
-      # --- Bestehende DB-Parameter ---
+      # --- Existing DB parameters ---
       - DB_HOST=${DB_HOST}
       - DB_NAME=${DB_NAME}
       - DB_USER=${DB_USER}
       - DB_PASS=${DB_PASS}
       - SECRET_KEY=${SECRET_KEY}
 
-      #Email-Konfiguration
+      #Email configuration
       - SMTP_HOST=${SMTP_HOST}
       - SMTP_PORT=${SMTP_PORT}
       - SMTP_USER=${SMTP_USER}
@@ -48,7 +48,7 @@ services:
       - FROM_EMAIL=${FROM_EMAIL}
       - SMTP_TIMEOUT=${SMTP_TIMEOUT}
 
-      # Optional, sinnvoll für Links in Mails (lokal):
+      # Optional, useful for links in emails (local):
       - APP_BASE_URL=${APP_BASE_URL}
       - SEND_TEST_MAIL=${SEND_TEST_MAIL}
 

@@ -1,4 +1,4 @@
 # modules/__init__.py
 
-# Diese Datei macht das Verzeichnis "modules" zu einem Python-Paket.
-# Sie kann leer bleiben, wenn du keine speziellen Exporte brauchst.
+# This file turns the "modules" directory into a Python package.
+# It can remain empty if you do not need any special exports.

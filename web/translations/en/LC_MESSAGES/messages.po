@@ -174,8 +174,8 @@ msgstr "Date"
 #: templates/import_preview.html:92 templates/index.html:86
 #: templates/index.html:365 templates/index.html:367
 #: templates/table_partial.html:10 templates/table_partial.html:34
-msgid "Vollgut"
-msgstr "Full bottles"
+msgid "Full"
+msgstr ""
 
 #: app.py:1631 templates/edit.html:45 templates/import_preview.html:73
 #: templates/import_preview.html:93 templates/index.html:96
@@ -397,8 +397,7 @@ msgid ""
 "Bitte mindestens einen Wert bei Einnahme, Ausgabe, Vollgut oder Leergut "
 "angeben."
 msgstr ""
-"Please enter at least one value for revenue, expense, full bottles or "
-"empty bottles."
+"Please provide at least one value for revenue, expense, full  or empty bootles.."
 
 #: bbalance.py:192
 #, python-brace-format
@@ -973,7 +972,7 @@ msgid "Keine Einträge."
 msgstr "No Entries."
 
 #: templates/base.html:6 templates/base.html:135 templates/base.html:146
-msgid "BottleBalanceTitle"
+msgid "AppTitle"
 msgstr "BottleBalance"
 
 #: templates/base.html:44

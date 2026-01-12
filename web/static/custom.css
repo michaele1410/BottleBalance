@@ -1,8 +1,7 @@
 /*=========================================
-  Haupt-Container Anpassungen
+  Main container adjustments
 ========================================= */
-
-/* Nur für Tablets (Bootstrap md-Bereich: 768px–991px) */
+/* For tablets only (Bootstrap md range: 768px–991px) */
 @media (min-width: 768px) and (max-width: 991px) {
   main.container {
     max-width: 90%;
@@ -10,21 +9,21 @@
 }
 
 /* =========================================
-   Allgemeine Tabellen & Layout
+   General Tables & Layout
 ========================================= */
 .table td,
 .table th {
   vertical-align: middle;
 }
 
-/* Chart-Canvas – nur für Sparklines gezielt */
+/* Chart canvas – only for sparklines */
 .sparkline-container canvas {
   width: 100% !important;
   height: 100% !important;
   max-height: none !important;
 }
 
-/* Karte streckbar machen und Card-Body den Rest einnehmen lassen */
+/* Make the card expandable and let the card body take up the rest */
 .card.h-100 {
   display: flex;
   flex-direction: column;
@@ -35,21 +34,20 @@
   display: flex;
 }
 
-/* Sparkline-Container füllt Card-Body */
+/* Sparkline container fills card body */
 .sparkline-container {
   flex: 1 1 auto;
   display: flex;
   min-height: 140px;
 }
-/* Responsive: Mehr Platz für Sparklines auf kleinen Bildschirmen */
+/* Responsive: More space for sparklines on small screens */
 @media (max-width: 576px) {
   .sparkline-container {
     min-height: 180px; /* oder ein Wert, der gut aussieht */
   }
 }
 
-
-/* Bootstrap .ratio für volle Höhe statt aspektbasiertem Padding nutzen */
+/* Use Bootstrap .ratio for full height instead of aspect-based padding */
 .sparkline-ratio {
   --bs-aspect-ratio: auto;
   position: relative;
@@ -63,7 +61,7 @@
 }
 
 /* =========================================
-   Farbvariablen (Light/Dark)
+   Color variables (light/dark)
 ========================================= */
 :root {
   --bg-color: #ffffff;
@@ -105,7 +103,7 @@ footer {
 }
 
 /* =========================================
-   Animationen
+   Animations
 ========================================= */
 .error-card {
   animation: fadeIn 0.6s ease-in-out;
@@ -139,7 +137,7 @@ footer {
 }
 
 /* =========================================
-   Responsive Layout
+   Responsive layout
 ========================================= */
 .row.g-3>[class*="col-"] {
   flex: 0 0 auto;
@@ -181,7 +179,7 @@ footer {
   }
 }
 
-/* Spinner beim Absenden */
+/* Spinner when sending */
 #transaction-form.is-submitting .btn.btn-success.flex-grow-1 {
   position: relative;
   pointer-events: none;
@@ -212,7 +210,7 @@ footer {
 }
 
 /* =========================================
-   Kompakte Formulare
+   Compact forms
 ========================================= */
 .form-compact .form-label {
   font-size: .9rem;
@@ -233,7 +231,7 @@ footer {
 }
 
 /* =========================================
-   Admin-Tools Styling
+   Admin-Tools styling
 ========================================= */
 .card {
   border-radius: .5rem;
@@ -266,16 +264,16 @@ textarea#options {
 }
 
 /* =========================================
-   Status Badges – Zahlungsfreigabe
+   State badges – Payment request
 ========================================= */
 :root {
-  --bb-status-offen: #ffc107;
-  --bb-status-on-hold: #6c757d;
-  --bb-status-freigegeben: #0d6efd;
-  --bb-status-abgelehnt: #dc3545;
-  --bb-status-zurueckgezogen: #fd7e14;
-  --bb-status-abgeschlossen: #198754;
-  --bb-status-unknown: #0dcaf0;
+  --bb-state-pending: #ffc107;
+  --bb-state-on-hold: #6c757d;
+  --bb-state-approved: #0d6efd;
+  --bb-state-rejected: #dc3545;
+  --bb-state-withdrawn: #fd7e14;
+  --bb-state-completed: #198754;
+  --bb-state-unknown: #0dcaf0;
 }
 
 .badge {
@@ -291,75 +289,75 @@ textarea#options {
   outline-offset: 2px;
 }
 
-.badge-status-offen {
-  background-color: var(--bb-status-offen);
+.badge-state-pending {
+  background-color: var(--bb-state-pending);
   color: #212529;
 }
 
-.badge-status-on_hold {
-  background-color: var(--bb-status-on-hold);
+.badge-state-on_hold {
+  background-color: var(--bb-state-on-hold);
   color: #fff;
 }
 
-.badge-status-freigegeben {
-  background-color: var(--bb-status-freigegeben);
+.badge-state-approved {
+  background-color: var(--bb-state-approved);
   color: #fff;
 }
 
-.badge-status-abgelehnt {
-  background-color: var(--bb-status-abgelehnt);
+.badge-state-rejected {
+  background-color: var(--bb-state-rejected);
   color: #fff;
 }
 
-.badge-status-zurueckgezogen {
-  background-color: var(--bb-status-zurueckgezogen);
+.badge-state-withdrawn {
+  background-color: var(--bb-state-withdrawn);
   color: #fff;
 }
 
-.badge-status-abgeschlossen {
-  background-color: var(--bb-status-abgeschlossen);
+.badge-state-completed {
+  background-color: var(--bb-state-completed);
   color: #fff;
 }
 
-.badge-status-unknown,
-.badge-status-Unbekannt,
-.badge-status-default {
-  background-color: var(--bb-status-unknown);
+.badge-state-unknown,
+.badge-state-Unknown,
+.badge-state-default {
+  background-color: var(--bb-state-unknown);
   color: #08222a;
 }
 
-.status-dot {
+.state-dot {
   display: inline-block;
   width: .5rem;
   height: .5rem;
   border-radius: 50%;
   vertical-align: middle;
   margin-right: .35rem;
-  background-color: var(--bb-status-unknown);
+  background-color: var(--bb-state-unknown);
 }
 
-.status-dot.offen {
-  background-color: var(--bb-status-offen);
+.state-dot.pending {
+  background-color: var(--bb-state-pending);
 }
 
-.status-dot.on_hold {
-  background-color: var(--bb-status-on-hold);
+.state-dot.on_hold {
+  background-color: var(--bb-state-on-hold);
 }
 
-.status-dot.freigegeben {
-  background-color: var(--bb-status-freigegeben);
+.state-dot.approved {
+  background-color: var(--bb-state-approved);
 }
 
-.status-dot.abgelehnt {
-  background-color: var(--bb-status-abgelehnt);
+.state-dot.rejected {
+  background-color: var(--bb-state-rejected);
 }
 
-.status-dot.zurueckgezogen {
-  background-color: var(--bb-status-zurueckgezogen);
+.state-dot.withdrawn {
+  background-color: var(--bb-state-withdrawn);
 }
 
-.status-dot.abgeschlossen {
-  background-color: var(--bb-status-abgeschlossen);
+.state-dot.completed {
+  background-color: var(--bb-state-completed);
 }
 
 .table td .btn {
@@ -381,7 +379,7 @@ textarea#options {
 }
 
 /* =========================================
-   Responsive Tabellen
+   Responsive tables
 ========================================= */
 .table-responsive {
   overflow-x: auto;
@@ -389,12 +387,12 @@ textarea#options {
 }
 
 
-/* Dynamisches Umschalten auf Stacked */
+/* Dynamic switching to stacked */
 table.table-stacked.is-stacked thead {
   display: none !important;
 }
 
-/* Stacked Layout für Tabelle, wenn breiter als Display */
+/* Stacked layout for table if wider than display */
 table.table-stacked.is-stacked tr {
   display: block !important;
   margin-bottom: 1rem;
@@ -421,7 +419,7 @@ table.table-stacked.is-stacked td::before {
   margin-right: .5rem;
 }
 
-/* Stacked Layout für Smartphones */
+/* Stacked layout for mobile phones */
 @media (max-width: 576px) {
   table.table thead {
     display: none;
@@ -465,7 +463,7 @@ table.table-stacked.is-stacked td::before {
 }
 
 /* =========================================
-   Delta-Badges (+ / −) für Bestandsänderung/Zahlung
+   Delta badges (+ / −) for inventory changes/payments
 ========================================= */
 .badge.delta {
   font-variant-numeric: tabular-nums;
@@ -484,7 +482,7 @@ table.table-stacked.is-stacked td::before {
 }
 
 /* =========================================
-   Wert-Badges (Inventar/Kassenbestand/Datum/Bemerkung)
+   Value badges (inventory/cash balance/date/grade)
 ========================================= */
 .badge-compact {
   font-variant-numeric: tabular-nums;
@@ -497,8 +495,8 @@ table.table-stacked.is-stacked td::before {
   white-space: nowrap;
 }
 
-/* Solide Varianten */
-.badge-inventar {
+/* Solid variants */
+.badge-inventory {
   background: var(--bs-primary);
   color: #fff;
 }
@@ -508,24 +506,24 @@ table.table-stacked.is-stacked td::before {
   color: #fff;
 }
 
-.badge-datum {
+.badge-date {
   background: var(--bs-secondary);
   color: #fff;
 }
 
-.badge-bemerkung {
+.badge-note {
   background: var(--bs-info);
   color: #08222a;
 }
 
-/* Dezente Variante */
+/* Subtle variant */
 .badge-soft {
   background-color: color-mix(in srgb, var(--bs-body-color) 8%, transparent);
   color: var(--bs-body-color);
   border: 1px solid var(--bs-border-color);
 }
 
-/* Pfeil direkt im Badge (hinter dem Wert) */
+/* Arrow directly in the badge (behind the value) */
 .badge .dir-arrow {
   display: inline-block;
   margin-left: .3rem;
@@ -541,15 +539,15 @@ table.table-stacked.is-stacked td::before {
   color: var(--bs-danger, #dc3545);
 }
 
-/* Stacked/Mobile: Werte-Badges möglichst zusammenhalten (kein Umbruch zwischen Wert und Pfeil) */
+/* Stacked/Mobile: Keep value badges together as much as possible (no line break between value and arrow) */
 @media (max-width: 768px) {
 
-  td[data-col="inventar"] .badge-compact,
-  td[data-col="kassenbestand"] .badge-compact,
+  td[data-col="inventory"] .badge-compact,
+  td[data-col="cashBalance"] .badge-compact,
   td[data-col="delta-inv"] .badge,
   td[data-col="delta-kasse"] .badge,
   td[data-col="date"] .badge-compact,
-  td[data-col="bemerkung"] .badge-compact {
+  td[data-col="note"] .badge-compact {
     white-space: nowrap;
   }
 
@@ -606,7 +604,7 @@ table.table-stacked.is-stacked td::before {
 }
 
 /* =========================================
-   "Zurück nach oben" Button
+   "Back to top" button
 ========================================= */
 .to-top-btn {
   position: fixed;
@@ -633,19 +631,19 @@ table.table-stacked.is-stacked td::before {
 }
 #collapseNewEntry 
 .card-body {
-  display: block;           /* klassische Block-Layout-Regeln */
+  display: block;           /* classic block layout rules */
 }
 
-/* Formular füllt den Card-Body */
+/* Form fills in the card body */
 #transaction-form { width: 100%; }
 
-/* Input-Gruppen immer volle Breite */
+/* Input groups always full width */
 #transaction-form .input-group { width: 100%; }
 
-/* Form-Floating im Input-Group soll wachsen und nicht wegen min-content clippen */
+/* Form floating in the input group should grow and not be clipped due to min-content */
 #transaction-form .form-floating {
   flex: 1 1 auto;
-  min-width: 0; /* wichtig bei Flexbox gegen ungewolltes Schrumpfverhalten */
+  min-width: 0; /* Important for Flexbox to prevent unwanted shrinkage */
 }
 
 /* Filter Batch */
@@ -655,7 +653,7 @@ table.table-stacked.is-stacked td::before {
 }
 
 .navbar-toggler-icon {
-  /* SVG nutzt currentColor → im Dark Mode automatisch hell, in Light Mode dunkel */
+  /* SVG uses currentColor → automatically light in dark mode, dark in light mode */
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' \
 viewBox='0 0 30 30'%3e%3cpath stroke='currentColor' stroke-linecap='round' \
 stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");

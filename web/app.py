@@ -2,7 +2,6 @@
 # Checked: auth, bbalance, 
 # -----------------
 
-
 import os
 import secrets
 import ssl
@@ -25,12 +24,10 @@ from flask_socketio import SocketIO
 from email.mime.text import MIMEText
 from email.header import Header
 from functools import wraps
-from typing import Tuple
+from typing import List, Tuple
 from urllib.parse import urlencode
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image as RLImage, PageBreak, KeepTogether
-
 from types import SimpleNamespace
-
 from auth import auth_routes
 from bbalance import bbalance_routes
 from attachments import attachments_routes
@@ -87,9 +84,9 @@ from modules.auth_utils import (
 )
 
 from modules.payment_utils import (
-    _user_can_view_antrag,
-    _user_can_edit_antrag,
-    get_antrag_email,
+    _user_can_view_payment_requests,
+    _user_can_edit_payment_requests,
+    get_payment_requests_email,
     _require_approver,
     _approvals_done,
     _approvals_total
@@ -104,21 +101,12 @@ from modules.csv_utils import (
     _fetch_existing_signature_set
 )
 
-
-#from users import users_bp
-#from entries import entries_bp
-#from payment import payment_bp
-#from attachments import attachments_bp
-#from auth import auth_bp
-
 import csv
 import io
 import time
 import pyotp
 import qrcode
-
 import subprocess
-
 import json
 
 # PDF (ReportLab)
@@ -133,11 +121,9 @@ from uuid import uuid4
 from pathlib import Path
 import mimetypes
 
-
 # -----------------------
 # Logging
 # -----------------------
-
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
 LOG_FILE = os.getenv("LOG_FILE", "app.log")
 LOG_MAX_BYTES = int(os.getenv("LOG_MAX_BYTES", "10485760"))  # 10 MB
@@ -177,15 +163,17 @@ app.config.update({
         "MAIL_USERNAME": SMTP_USER,    
         "MAIL_PASSWORD": SMTP_PASS,    
         "MAIL_DEFAULT_SENDER": FROM_EMAIL,    
-        "MAIL_TIMEOUT": SMTP_TIMEOUT, # Flask-Mail unterstützt timeout ab neueren Versionen teils via kwargs})
+        "MAIL_TIMEOUT": SMTP_TIMEOUT, # Flask-Mail supports timeout in newer versions, partly via kwargs.
 })
-# Flask-Mail initialisieren
+
+# Initialize Flask-Mail
 mail.init_app(app)
-# Upload-Ordner sicherstellen
+
+# Make sure the upload folder is there
 #app.config.setdefault('UPLOAD_FOLDER', os.path.join(app.instance_path, 'uploads'))
 #os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
-# Upload-Ordner aus ENV oder Fallback
+# Upload folder from ENV or fallback
 UPLOAD_BASE = os.getenv("UPLOAD_FOLDER", os.path.join(app.instance_path, 'uploads'))
 app.config['UPLOAD_FOLDER'] = UPLOAD_BASE
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
@@ -196,7 +184,7 @@ os.makedirs(BRANDING_DIR, exist_ok=True)
 ALLOWED_LOGO_EXTS = {'svg', 'png', 'jpg', 'jpeg', 'webp'}
 
 def _find_custom_logo():
-    """Gibt (filename, full_path, mtime) des vorhandenen Logos in BRANDING_DIR zurück oder (None, None, None)."""
+    """Returns (filename, full_path, mtime) of the existing logo in BRANDING_DIR or (None, None, None)."""
     for ext in ('svg', 'png', 'jpg', 'jpeg', 'webp'):
         fname = f"logo.{ext}"
         fpath = os.path.join(BRANDING_DIR, fname)
@@ -209,14 +197,14 @@ def _find_custom_logo():
     return (None, None, None)
 
 def brand_logo_url():
-    """Liefert die URL für das Logo: Custom (Uploads) mit Cache-Buster oder Fallback auf static/images/logo.png."""
+    """Provides the URL for the logo: Custom (Uploads) with cache buster or fallback to static/images/logo.png."""
     fname, _fpath, mtime = _find_custom_logo()
     if fname:
-        # Wird aus Uploads/branding via /view/<filename> bedient
-        # Cache-Buster per mtime anhängen
+        # Served from Uploads/branding via /view/<filename>
+        # Attach Cache-Buster via mtime
         url = url_for('view_file', filename=f"branding/{fname}")
         return f"{url}?t={mtime or ''}"
-    # Fallback auf statische Standard-Grafik
+    # Fallback to static standard graphics
     return url_for('static', filename='images/logo.png')
 
 @app.context_processor
@@ -226,7 +214,6 @@ def inject_branding():
 # -----------------------
 # Feature Switches (ENV)
 # -----------------------
-
 # Developer Information
 DEVELOPER_EMAIL = "webmaster@michaeleitdorf.de"
 DEVELOPER_URL = "https://github.com/michaele1410/BottleBalance"
@@ -235,12 +222,12 @@ IMPORT_USE_PREVIEW   = os.getenv("IMPORT_USE_PREVIEW", "true").lower() in ("1","
 IMPORT_ALLOW_MAPPING = os.getenv("IMPORT_ALLOW_MAPPING", "true").lower() in ("1","true","yes","on")
 IMPORT_ALLOW_DRYRUN  = os.getenv("IMPORT_ALLOW_DRYRUN", "true").lower() in ("1","true","yes","on")
 
-# Optionaler API-Token für CI/Headless-Dry-Runs (Header: X-Import-Token)
-IMPORT_API_TOKEN     = os.getenv("IMPORT_API_TOKEN")  # leer = kein Token erlaubt
+# Optional API token for CI/headless dry runs (Header: X-Import-Token)
+IMPORT_API_TOKEN     = os.getenv("IMPORT_API_TOKEN")  # empty = no token allowed
 
 def serialize_attachment(att):
     return {
-        "filename": att.original_name,
+        "filenrequest_idame": att.original_name,
         "download_url": url_for('download_file', filename=att.filename),
         "view_url": url_for('view_file', filename=att.filename),
         "mime_type": att.mime_type,
@@ -248,18 +235,18 @@ def serialize_attachment(att):
     }
 
 # -----------------------
-# Antrag
+# Payment requests
 # -----------------------
-def notify_managing_users(antrag_id, antragsteller, betrag, datum):
-    subject = _('Neuer Zahlungsfreigabeantrag von %(requester)s', requester=antragsteller)
+def notify_managing_users(request_id, requestor, amount, date):
+    subject = _('New payment request from %(requester)s', requester=requestor)
     body = _(
-        "Es wurde ein neuer Zahlungsfreigabeantrag erstellt.\n\n"
-        "Antragsteller: %(requester)s\n"
-        "Betrag: %(amount).2f EUR\n"
-        "Datum: %(date)s\n"
-        "Antrag-ID: %(id)d\n\n"
-        "Bitte prüfen Sie den Antrag im System.",
-        requester=antragsteller, amount=betrag, date=datum, id=antrag_id
+        "A new payment request has been created.\n\n"
+        "Requestor: %(requester)s\n"
+        "Amount: %(amount).2f EUR\n"
+        "Date: %(date)s\n"
+        "Request-ID: %(id)d\n\n"
+        "Please check the request in the system.",
+        requester=requestor, amount=amount, date=date, id=request_id
     )
 
     with engine.begin() as conn:
@@ -273,25 +260,24 @@ def notify_managing_users(antrag_id, antragsteller, betrag, datum):
         msg = Message(subject=subject, recipients=[to_addr], body=body, sender=FROM_EMAIL)
         mail.send(msg)
 
-
 def get_locale():
     user = current_user()
     if user:
-        # robust: dict ODER Row-Objekt unterstützen
+        # robust: dict OR Row object support
         pref = user.get('locale') if isinstance(user, dict) else getattr(user, 'locale', None)
         return (
             pref
             or session.get('language')
             or request.accept_languages.best_match(['de', 'en'])
         )
-    # anonyme Nutzer: Session-Override oder Browser-Header
+    # Anonymous users: Session override or browser header
     return session.get('language') or request.accept_languages.best_match(['de', 'en'])
 
 def get_timezone():
     user = current_user()
     if user:
         return user.get('timezone') if isinstance(user, dict) else getattr(user, 'timezone', None)
-    return None  # oder ein Default wie 'Europe/Berlin'
+    return None  # or a default like 'Europe/Berlin'
 
 # Register Blueprints
 app.register_blueprint(auth_routes)
@@ -302,13 +288,12 @@ app.register_blueprint(user_routes)
 app.register_blueprint(payment_routes)
 app.register_blueprint(mail_routes)
 
-
 app.config['BABEL_DEFAULT_LOCALE'] = 'de'
 babel = Babel(app, locale_selector=get_locale, timezone_selector=get_timezone)
 
 app.secret_key = SECRET_KEY
 
-# SocketIO initialisieren
+# SocketIO initializing
 socketio = SocketIO(app)
 
 # For Error Pages
@@ -319,10 +304,10 @@ app.config["SUPPORT_URL"]   = os.getenv("SUPPORT_URL", "https://github.com/micha
 app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024  # 10 MB
 
 
-# ROLES und set() global für Jinja2 verfügbar machen
+# Make ROLES and set() globally available for Jinja2
 #app.jinja_env.globals.update(ROLES=ROLES, set=set, current_user=current_user)
 
-#Zeitstempel
+#Timestamp
 app.jinja_env.filters['localize_dt'] = localize_dt
 app.jinja_env.filters['localize_dt_str'] = localize_dt_str
 
@@ -332,12 +317,12 @@ app.jinja_env.filters['localize_dt_str'] = localize_dt_str
 CREATE_TABLE_ENTRIES = """
 CREATE TABLE IF NOT EXISTS entries (
     id SERIAL PRIMARY KEY,
-    datum DATE NOT NULL,
-    vollgut INTEGER NOT NULL DEFAULT 0,
-    leergut INTEGER NOT NULL DEFAULT 0,
-    einnahme NUMERIC(12,2) NOT NULL DEFAULT 0,
-    ausgabe NUMERIC(12,2) NOT NULL DEFAULT 0,
-    bemerkung TEXT,
+    date DATE NOT NULL,
+    full INTEGER NOT NULL DEFAULT 0,
+    empty INTEGER NOT NULL DEFAULT 0,
+    revenue NUMERIC(12,2) NOT NULL DEFAULT 0,
+    expense NUMERIC(12,2) NOT NULL DEFAULT 0,
+    note TEXT,
     created_by INTEGER,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
@@ -388,8 +373,8 @@ CREATE_TABLE_ATTACHMENTS = """
 CREATE TABLE IF NOT EXISTS attachments (
     id SERIAL PRIMARY KEY,
     entry_id INTEGER NOT NULL REFERENCES entries(id) ON DELETE CASCADE,
-    stored_name TEXT NOT NULL,           -- serverseitiger Dateiname (uuid.ext)
-    original_name TEXT NOT NULL,         -- Originalname
+    stored_name TEXT NOT NULL,           -- server-side filename (uuid.ext)
+    original_name TEXT NOT NULL,         -- Original name
     content_type TEXT,
     size_bytes BIGINT,
     uploaded_by INTEGER,
@@ -400,9 +385,9 @@ CREATE TABLE IF NOT EXISTS attachments (
 CREATE_TABLE_ATTACHMENTS_TEMP = """
 CREATE TABLE IF NOT EXISTS attachments_temp (
     id SERIAL PRIMARY KEY,
-    temp_token TEXT NOT NULL,            -- clientseitiges Token für die Add-Session
-    stored_name TEXT NOT NULL,           -- serverseitiger Dateiname (uuid.ext)
-    original_name TEXT NOT NULL,         -- Originalname
+    temp_token TEXT NOT NULL,            -- client-side token for the add session
+    stored_name TEXT NOT NULL,           -- server-side filename (uuid.ext)
+    original_name TEXT NOT NULL,         -- Original name
     content_type TEXT,
     size_bytes BIGINT,
     uploaded_by INTEGER,                 -- User-ID
@@ -410,13 +395,8 @@ CREATE TABLE IF NOT EXISTS attachments_temp (
 );
 """
 
-CREATE_INDEX_ATTACHMENTS_TEMP = """
-CREATE INDEX IF NOT EXISTS idx_attachments_temp_token
-ON attachments_temp (temp_token, uploaded_by, created_at);
-"""
-
-CREATE_TABLE_BEMERKUNGSOPTIONEN = """
-CREATE TABLE IF NOT EXISTS bemerkungsoptionen (
+CREATE_TABLE_NOTES = """
+CREATE TABLE IF NOT EXISTS notes (
     id SERIAL PRIMARY KEY,
     text TEXT NOT NULL UNIQUE,
     active BOOLEAN NOT NULL DEFAULT TRUE,
@@ -425,17 +405,17 @@ CREATE TABLE IF NOT EXISTS bemerkungsoptionen (
 );
 """
 
-CREATE_TABLE_ZAHLUNGSFREIGABE = """
-CREATE TABLE IF NOT EXISTS zahlungsantraege (
+CREATE_TABLE_PAYMENT_REQUESTS = """
+CREATE TABLE IF NOT EXISTS payment_requests (
     id SERIAL PRIMARY KEY,
-    antragsteller_id INTEGER NOT NULL,
-    datum DATE NOT NULL,
+    requestor_id INTEGER NOT NULL,
+    date DATE NOT NULL,
     paragraph VARCHAR(50),
-    verwendungszweck TEXT,
-    betrag NUMERIC(10,2),
-    lieferant TEXT,
-    begruendung TEXT,
-    status VARCHAR(20) DEFAULT 'offen',
+    purpose TEXT,
+    amount NUMERIC(10,2),
+    supplier TEXT,
+    justification TEXT,
+    state VARCHAR(20) DEFAULT 'pending',
     read_only BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
@@ -443,10 +423,10 @@ CREATE TABLE IF NOT EXISTS zahlungsantraege (
 );
 """
 
-CREATE_TABLE_ZAHLUNGSFREIGABE_AUDIT = """
-CREATE TABLE IF NOT EXISTS zahlungsantrag_audit (
+CREATE_TABLE_PAYMENT_REQUESTS_AUDIT = """
+CREATE TABLE IF NOT EXISTS payment_requests_audit (
     id SERIAL PRIMARY KEY,
-    antrag_id INTEGER NOT NULL,
+    request_id INTEGER NOT NULL,
     user_id INTEGER,
     action VARCHAR(50),
     timestamp TIMESTAMP NOT NULL DEFAULT NOW(),
@@ -454,12 +434,12 @@ CREATE TABLE IF NOT EXISTS zahlungsantrag_audit (
 );
 """
 
-CREATE_TABLE_ZAHLUNGSFREIGABE_ATTACHMENTS = """
-CREATE TABLE IF NOT EXISTS antrag_attachments (
+CREATE_TABLE_PAYMENT_REQUESTS_ATTACHMENTS = """
+CREATE TABLE IF NOT EXISTS payment_requests_attachments (
     id SERIAL PRIMARY KEY,
-    antrag_id INTEGER NOT NULL REFERENCES zahlungsantraege(id) ON DELETE CASCADE,
-    stored_name TEXT NOT NULL,       -- serverseitiger Dateiname (uuid.ext)
-    original_name TEXT NOT NULL,     -- Originalname
+    request_id INTEGER NOT NULL REFERENCES payment_requests(id) ON DELETE CASCADE,
+    stored_name TEXT NOT NULL,       -- server-side file name (uuid.ext)
+    original_name TEXT NOT NULL,     -- Original name
     content_type TEXT,
     size_bytes BIGINT,
     uploaded_by INTEGER,             -- users.id
@@ -467,38 +447,42 @@ CREATE TABLE IF NOT EXISTS antrag_attachments (
 );
 """
 
-CREATE_INDEX_ZAHLUNGSFREIGABE_ATTACHMENTS = """
-CREATE INDEX IF NOT EXISTS idx_antrag_attachments_antrag_created
-ON antrag_attachments(antrag_id, created_at DESC, id DESC);
-"""
-
-CREATE_TABLE_ZAHLUNGSFREIGABE_TRANSITIONS = """
-CREATE TABLE IF NOT EXISTS status_transitions (
+CREATE_TABLE_PAYMENT_REQUESTS_TRANSITIONS = """
+CREATE TABLE IF NOT EXISTS state_transitions (
     id SERIAL PRIMARY KEY,
-    from_status VARCHAR(50) NOT NULL,
-    to_status VARCHAR(50) NOT NULL,
+    from_state VARCHAR(50) NOT NULL,
+    to_state VARCHAR(50) NOT NULL,
     role_required VARCHAR(50) NOT NULL,
     conditions TEXT
 );
 """
 
-CREATE_INDEX_ENTRIES_DATUM = """
-CREATE INDEX IF NOT EXISTS idx_entries_datum_id ON entries(datum, id);
+CREATE_INDEX_ENTRIES_DATE = """
+CREATE INDEX IF NOT EXISTS idx_entries_date_id ON entries(date, id);
+"""
+
+CREATE_INDEX_ATTACHMENTS_TEMP = """
+CREATE INDEX IF NOT EXISTS idx_attachments_temp_token
+ON attachments_temp (temp_token, uploaded_by, created_at);
+"""
+
+CREATE_INDEX_PAYMENT_REQUESTS_ATTACHMENTS = """
+CREATE INDEX IF NOT EXISTS idx_payment_requests_attachments_payment_requests_created
+ON payment_requests_attachments(request_id, created_at DESC, id DESC);
 """
 
 def migrate_columns(conn):
     # Best-effort migrations for added columns
     conn.execute(text(CREATE_TABLE_ATTACHMENTS))
     conn.execute(text(CREATE_TABLE_ATTACHMENTS_TEMP))
-    conn.execute(text(CREATE_TABLE_BEMERKUNGSOPTIONEN))
-    conn.execute(text(CREATE_TABLE_ZAHLUNGSFREIGABE))
-    conn.execute(text(CREATE_TABLE_ZAHLUNGSFREIGABE_AUDIT))
-    # Schneller zählen: DISTINCT user_id je Antrag/Aktion
-    conn.execute(text("CREATE INDEX IF NOT EXISTS idx_za_antrag_action_user " "ON zahlungsantrag_audit(antrag_id, action, user_id)"))
-    conn.execute(text(CREATE_TABLE_ZAHLUNGSFREIGABE_ATTACHMENTS))
-    conn.execute(text(CREATE_TABLE_ZAHLUNGSFREIGABE_TRANSITIONS))
-    conn.execute(text(CREATE_INDEX_ENTRIES_DATUM))
-
+    conn.execute(text(CREATE_TABLE_NOTES))
+    conn.execute(text(CREATE_TABLE_PAYMENT_REQUESTS))
+    conn.execute(text(CREATE_TABLE_PAYMENT_REQUESTS_AUDIT))
+    # Count faster: DISTINCT user_id per application/action
+    conn.execute(text("CREATE INDEX IF NOT EXISTS idx_za_payment_requests_action_user " "ON payment_requests_audit(request_id, action, user_id)"))
+    conn.execute(text(CREATE_TABLE_PAYMENT_REQUESTS_ATTACHMENTS))
+    conn.execute(text(CREATE_TABLE_PAYMENT_REQUESTS_TRANSITIONS))
+    conn.execute(text(CREATE_INDEX_ENTRIES_DATE))
 
     conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS email TEXT"))
     conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS totp_secret TEXT"))
@@ -514,39 +498,39 @@ def migrate_columns(conn):
     conn.execute(text("ALTER TABLE entries ADD COLUMN IF NOT EXISTS created_by INTEGER"))
     conn.execute(text("ALTER TABLE entries ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT NOW()"))
     conn.execute(text("ALTER TABLE entries ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP NOT NULL DEFAULT NOW()"))
-    conn.execute(text("ALTER TABLE zahlungsantraege ADD COLUMN IF NOT EXISTS approver_snapshot JSONB"))
+    conn.execute(text("ALTER TABLE payment_requests ADD COLUMN IF NOT EXISTS approver_snapshot JSONB"))
     
     try:
         current_len = conn.execute(text("""
             SELECT character_maximum_length
             FROM information_schema.columns
-            WHERE table_name='zahlungsantraege'
+            WHERE table_name='payment_requests'
             AND column_name='paragraph'
             AND data_type='character varying'
         """)).scalar_one_or_none()
 
         if current_len is not None and current_len < 50:
-            conn.execute(text("ALTER TABLE zahlungsantraege ALTER COLUMN paragraph TYPE VARCHAR(50)"))
+            conn.execute(text("ALTER TABLE payment_requests ALTER COLUMN paragraph TYPE VARCHAR(50)"))
     except Exception:
-        # bewusst best effort – kein Crash, nur loggen
+        # Deliberately best effort – no crash, just logging
         logging.getLogger(__name__).exception("Migration paragraph -> VARCHAR(50) fehlgeschlagen")
 
-    # Standardwerte einfügen, falls Tabelle leer ist
-    default_bemerkungen = [
-        "Entnahme",
-        "Inventur",
-        "Kassenzählung",
-        "Leerung Kasse GR",
-        "Lieferung Getränke",
-        "Einzelkauf Getränke",
-        "Einzahlung Paypal",
-        "Spende"
+    # Insert default values ​​if table is empty
+    default_notes = [
+        _("Withdrew money"),
+        _("Inventory"),
+        _("Count cash register"),
+        _("Emptying cash register GR"),
+        _("Delivery of Bottles"),
+        _("Individual bottle purchase"),
+        _("Deposit PayPal"),
+        _("Donation")
     ]
-    existing = conn.execute(text("SELECT COUNT(*) FROM bemerkungsoptionen")).scalar_one()
+    existing = conn.execute(text("SELECT COUNT(*) FROM notes")).scalar_one()
     if existing == 0:
-        for text_value in default_bemerkungen:
+        for text_value in default_notes:
             conn.execute(text("""
-                INSERT INTO bemerkungsoptionen (text) VALUES (:t)
+                INSERT INTO notes (text) VALUES (:t)
             """), {'t': text_value})
 
 def init_db():
@@ -585,18 +569,18 @@ def _ensure_init_once():
     global _initialized
     if not _initialized:
         init_db_with_retry()
-        # Basen-URL Hygienecheck (nur Hinweis-Log)
+        # Base URL Hygiene Check (information log only)
         if "localhost" in (APP_BASE_URL or "") or APP_BASE_URL.strip() == "":
             logging.warning(
-                "APP_BASE_URL ist nicht produktionsgeeignet gesetzt (aktuell '%s'). "
-                "Setze eine öffentlich erreichbare Basis-URL, damit Hinweise/Links in Mails korrekt sind.",
+                _("APP_BASE_URL is not set to production-ready (currently '%(url)s'). "
+                  "Set a publicly accessible base URL so that hints/links in emails are correct.",
                 APP_BASE_URL,
             )
         _initialized = True
 
 @app.cli.command('cleanup-temp')
 def cleanup_temp():
-    """Temp-Uploads z.B. älter als 24h löschen."""
+    """Delete temporary uploads, e.g., older than 24 hours."""
     cutoff = datetime.utcnow() - timedelta(hours=24)
     with engine.begin() as conn:
         rows = conn.execute(text("""
@@ -623,23 +607,16 @@ def cleanup_temp():
             pass
     print(f"Temp cleanup done. Files removed: {removed}")
 
-
-
-
-
-
-
 # -----------------------
 # Error Handling
-#404 – Not Found: Für nicht existierende Routen.
-#500 – Internal Server Error: Für unerwartete Serverfehler.
-#403 – Forbidden: Für Zugriffsverletzungen.
-#401 – Unauthorized: Für fehlende Authentifizierung.
+#404 – Not Found: For non-existent routes.
+#500 – Internal Server Error: For unexpected server errors.
+#403 – Forbidden: For access violations.
+#401 – Unauthorized: For missing authentication.
 # -----------------------
-
 @app.errorhandler(401)
 def unauthorized(e):
-    # Optional eigenes Template errors/401.html, sonst 404er Template weiterverwenden
+    # Optionally, use your own template errors/401.html; otherwise, continue using the 404 template.
     return render_template('errors/401.html'), 401
 
 @app.errorhandler(403)
@@ -652,9 +629,8 @@ def not_found(e):
 
 @app.errorhandler(413)
 def request_entity_too_large(e):
-    flash(_('Datei zu groß. Bitte kleinere Datei hochladen.'))
+    flash(_('File too large. Please upload a smaller file.'))
     return redirect(request.referrer or url_for('bbalance_routes.index'))
-
 
 @app.errorhandler(500)
 def internal_error(e):
@@ -674,21 +650,6 @@ logger.info("Flask-Babel version: %s", fb_ver)
 # -----------------------
 # Helpers: Current user, RBAC
 # -----------------------
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 # Utility to parse strict integers
 def parse_int_strict(value: str):
     if value is None:
@@ -696,25 +657,10 @@ def parse_int_strict(value: str):
     s = str(value).strip()
     if s == '':
         return None
-    # nur Ziffern erlauben (optional führendes +/-, hier nicht nötig)
+    # Allow only digits (optional leading +/-, not necessary here)
     if not s.isdigit():
         return None
     return int(s)
-
-# -----------------------
-# Data Access
-# -----------------------
-
-
-
-
-# -----------------------
-# Auth & 2FA
-# -----------------------
-
-
-
-
 
 # -----------------------
 # Profile & 2FA management
@@ -725,7 +671,7 @@ def profile():
     user = current_user()
     theme = user.get('theme_preference') if user else 'system'
     themes = ['system', 'light', 'dark']
-    # Backup-Codes EINMALIG aus Session holen
+    # Retrieve backup codes from session ONCE
     new_codes = session.pop('new_backup_codes', None)
     return render_template(
         'profile.html',
@@ -733,7 +679,7 @@ def profile():
         theme_preference=theme,
         ROLES=ROLES,
         themes=themes,
-        new_backup_codes=new_codes,  # <-- hier übergeben
+        new_backup_codes=new_codes,  # <-- hand over here
     )
 
 @app.post('/profile')
@@ -747,10 +693,10 @@ def profile_post():
 
     if pwd or pwd2:
         if len(pwd) < 8:
-            flash(_('Passwort muss mindestens 8 Zeichen haben.'))
+            flash(_('Password must be at least 8 characters long.'))
             return redirect(url_for('profile'))
         if pwd != pwd2:
-            flash(_('Passwörter stimmen nicht überein.'))
+            flash(_('Passwords do not match.'))
             return redirect(url_for('profile'))
 
     with engine.begin() as conn:
@@ -760,18 +706,18 @@ def profile_post():
                 WHERE id=:id
             """), {'ph': generate_password_hash(pwd), 'em': email or None, 'id': uid})
 
-            # Nach Passwortänderung: 2FA aktivieren, falls noch nicht aktiv
+            # After changing your password: Activate 2FA if not already active
             user = conn.execute(text("SELECT totp_enabled FROM users WHERE id=:id"), {'id': uid}).mappings().first()
             if user and not user['totp_enabled']:
-                flash(_('Bitte aktiviere die Zwei-Faktor-Authentifizierung (2FA), um dein Konto zusätzlich zu schützen.'))
-                return redirect(url_for('enable_2fa'))  # <-- Sofortige Rückgabe
+                flash(_('Please enable two-factor authentication (2FA) to provide additional protection for your account.'))
+                return redirect(url_for('enable_2fa'))  # <-- Immediate return
         else:
             conn.execute(text("""
                 UPDATE users SET email=:em, updated_at=NOW()
                 WHERE id=:id
             """), {'em': email or None, 'id': uid})
 
-    flash(_('Profil aktualisiert.'))
+    flash(_('Profile updated.'))
     return redirect(url_for('bbalance_routes.index'))
 
 @app.get('/profile/2fa/enable')
@@ -787,10 +733,10 @@ def enable_2fa_get():
         ).scalar_one_or_none()
 
     if username is None:
-        flash(_('Benutzer nicht gefunden.'))
+        flash(_('User not found.'))
         return redirect(url_for('profile'))
 
-    issuer = 'BottleBalance'
+    issuer = _('AppTitle')
     otpauth = pyotp.totp.TOTP(secret).provisioning_uri(name=username, issuer_name=issuer)
     img = qrcode.make(otpauth)
     buf = io.BytesIO()
@@ -815,7 +761,7 @@ def enable_2fa():
         flash(_('Benutzer nicht gefunden.'))
         return redirect(url_for('profile'))
 
-    issuer = 'BottleBalance'
+    issuer = _('AppTitle')
     otpauth = pyotp.totp.TOTP(secret).provisioning_uri(name=username, issuer_name=issuer)
     img = qrcode.make(otpauth)
     buf = io.BytesIO()
@@ -830,21 +776,21 @@ def confirm_2fa():
     uid = session['user_id']
     secret = session.get('enroll_totp_secret')
     if not secret:
-        flash(_('Kein 2FA-Setup aktiv.'))
+        flash(_('No 2FA setup active.'))
         return redirect(url_for('profile'))
     code = (request.form.get('code') or '').strip()
     totp = pyotp.TOTP(secret)
     if not totp.verify(code, valid_window=1):
-        flash(_('Ungültiger 2FA-Code.'))
+        flash(_('Invalid 2FA code.'))
         return redirect(url_for('enable_2fa'))
     with engine.begin() as conn:
         conn.execute(text("UPDATE users SET totp_secret=:s, totp_enabled=TRUE, updated_at=NOW() WHERE id=:id"),
                      {'s': secret, 'id': uid})
     session.pop('enroll_totp_secret', None)
-    # neue Codes generieren und im Profil einmalig anzeigen
+    # Generate new codes and display them once in the profile
     codes = generate_and_store_backup_codes(uid)
     session['new_backup_codes'] = codes
-    flash(_('2FA aktiviert.'))
+    flash(_('2FA enabled.'))
     log_action(uid, '2fa:enabled', None, None)
     return redirect(url_for('profile'))
 
@@ -855,7 +801,7 @@ def disable_2fa():
     uid = session['user_id']
     pwd = (request.form.get('password') or '').strip()
 
-    # Passwort prüfen
+    # Check password
     with engine.begin() as conn:
         user = conn.execute(
             text("SELECT password_hash FROM users WHERE id=:id"),
@@ -863,10 +809,10 @@ def disable_2fa():
         ).mappings().first()
 
     if not user or not check_password_hash(user['password_hash'], pwd):
-        flash(_('Passwortprüfung fehlgeschlagen.'))
+        flash(_('Password verification failed.'))
         return redirect(url_for('profile'))
 
-    # 2FA deaktivieren + Backup-Codes löschen
+    # Disable 2FA + delete backup codes
     with engine.begin() as conn:
         conn.execute(text("""
             UPDATE users
@@ -877,7 +823,7 @@ def disable_2fa():
             WHERE id=:id
         """), {'id': uid})
 
-    flash(_('2FA deaktiviert.'))
+    flash(_('2FA disabled.'))
     log_action(uid, '2fa:disabled', None, None)
     return redirect(url_for('profile'))
 
@@ -887,13 +833,13 @@ def disable_2fa():
 def update_theme():
     theme = request.form.get('theme')
     if theme not in ['light', 'dark', 'system']:
-        flash(_('Ungültige Theme-Auswahl.'))
+        flash(_('Invalid theme selection.'))
         return redirect(url_for('profile'))
     uid = session.get('user_id')
     with engine.begin() as conn:
         conn.execute(text("UPDATE users SET theme_preference=:t, updated_at=NOW() WHERE id=:id"),
                      {'t': theme, 'id': uid})
-    flash(_('Theme-Einstellung gespeichert.'))
+    flash(_('Theme settings saved.'))
     return redirect(url_for('profile'))
 
 @app.post('/profile/preferences')
@@ -905,17 +851,16 @@ def update_preferences():
     theme = request.form.get('theme') or 'system'
     sort_order_desc = (request.form.get('sort_order_desc') == 'on')
 
-    # UI (checked) = "nur aktuelles Jahr"  -> DB default_filter = False
-    # UI (unchecked) = "Alle"              -> DB default_filter = True
+    # UI (checked) = "current year only"  -> DB default_filter = False
+    # UI (unchecked) = "All"              -> DB default_filter = True
     default_filter = (request.form.get('default_filter') != 'on')
 
-
     if language not in ['de', 'en']:
-        flash(_('Ungültige Sprache.'))
+        flash(_('Invalid language.'))
         return redirect(url_for('profile'))
 
     if theme not in ['light', 'dark', 'system']:
-        flash(_('Ungültige Theme-Auswahl.'))
+        flash(_('Invalid theme selection.'))
         return redirect(url_for('profile'))
 
     with engine.begin() as conn:
@@ -935,7 +880,7 @@ def update_preferences():
             'id': uid
         })
 
-    flash(_('Einstellungen gespeichert.'))
+    flash(_('Settings saved.'))
     return redirect(url_for('profile'))
 
 @app.context_processor
@@ -956,21 +901,21 @@ def utility_processor():
 # ---- Jinja current_user Proxy (callable + dict-like) ----
 class _CurrentUserProxy(SimpleNamespace):
     def __call__(self):
-        # erlaubt legacy {{ current_user() }} - gibt sich selbst zurück
+        # allows legacy {{ current_user() }} - returns itself
         return self
     def get(self, key, default=None):
-        # erlaubt legacy {{ current_user().get('feld') }}
+        # allow legacy {{ current_user().get('field') }}
         return getattr(self, key, default)
 
 @app.context_processor
 def inject_theme():
     """
-    Stellt globale Template-Variablen bereit.
+    Provides global template variables.
     Backwards-compat:
       - {{ current_user.is_authenticated }}
       - {{ current_user().get('username') }}
     """
-    user_dict = current_user()  # nutzt deine bestehende DB-Funktion
+    user_dict = current_user()  # uses existing DB function
     theme = 'system'
     if user_dict:
         cu = _CurrentUserProxy(**user_dict, is_authenticated=True)
@@ -980,7 +925,7 @@ def inject_theme():
 
     return {
         'theme_preference': theme,
-        'current_user': cu,               # Objekt, aber auch aufrufbar
+        'current_user': cu,               # Object, but also accessible
         'ROLES': ROLES,
         'set': set,
         'IMPORT_USE_PREVIEW': IMPORT_USE_PREVIEW,
@@ -988,18 +933,18 @@ def inject_theme():
         'format_date_de': format_date_de,
         'format_eur_de': format_eur_de,
         'csrf_token': csrf_token,
-        '_': translate                   # Babel-Funktion für Templates
+        '_': translate                   # Babel function for templates
     }
 
 @app.context_processor
 def inject_helpers():
     def qs(_remove=None, **overrides):
-        # aktuelle args kopieren
+        # copy current arguments
         current = request.args.to_dict()
-        # entfernen
+        # remove
         for k in (_remove or []):
             current.pop(k, None)
-        # überschreiben/hinzufügen (nur nicht-None)
+        # overwrite/add (only non-None)
         for k, v in overrides.items():
             if v is None:
                 current.pop(k, None)
@@ -1021,22 +966,9 @@ def inject_developer_and_support_info():
     }
 
 # -----------------------
-# Password reset tokens
-# -----------------------
-
-
-
-
-
-
-
-
-# -----------------------
 # Admin: Users & Audit
 # -----------------------
-
-
-# Userverwaltung
+# User management
 
 @app.get('/audit')
 @login_required
@@ -1069,8 +1001,6 @@ def audit_list():
         """), params).mappings().all()
     return render_template('audit.html', logs=rows)
 
-
-
 @app.post('/admin/users/<int:uid>/toggle_approve')
 @login_required
 @require_perms('users:setApprover')
@@ -1078,188 +1008,83 @@ def audit_list():
 def users_toggle_approve(uid: int):
     with engine.begin() as conn:
         conn.execute(text("UPDATE users SET can_approve = NOT can_approve, updated_at=NOW() WHERE id=:id"), {'id': uid})
-    flash(_('Freigabeberechtigung geändert.'))
+    flash(_('Approval authorization changed.'))
     return redirect(url_for('user_routes.users_list'))
 
-
-
-
 # -----------------------
-# CSV Import – Vorschau & Commit (NEU)
+# CSV Import – Preview & Commit
 # -----------------------
-from typing import List, Tuple
-
 def _parse_csv_file_storage(file_storage):
     content = file_storage.read().decode('utf-8-sig')
     reader = csv.reader(io.StringIO(content), delimiter=';')
     headers = next(reader, None)
-    # Robustheit: Header-Zeile prüfen und ggf. splitten
+    # Robustness: Check header row and split if necessary
     if headers and len(headers) == 1 and ';' in headers[0]:
         headers = headers[0].split(';')
 
-    expected = ['Datum','Vollgut','Leergut','Inventar','Einnahme','Ausgabe','Kassenbestand','Bemerkung']
-    alt_expected = ['Datum','Vollgut','Leergut','Einnahme','Ausgabe','Bemerkung']
+    expected = ['Date','Full','Empty','Inventory','Revenue','Expense','Cash balance','Note']
+    alt_expected = ['Date','Full','Empty','Revenue','Expense','Note']
     if headers is None or [h.strip() for h in headers] not in (expected, alt_expected):
-        raise ValueError(_('CSV-Header entspricht nicht dem erwarteten Format.'))
+        raise ValueError(_('CSV header does not match the expected format.'))
 
     rows = []
     for row in reader:
         if not row or all(not (c or '').strip() for c in row):
-            continue  # leere Zeilen überspringen
+            continue  # skip blank lines
         if len(row) == 8:
-            datum_s, voll_s, leer_s, _inv, ein_s, aus_s, _kas, bem = row
+            date_s, voll_s, leer_s, _inv, ein_s, aus_s, _kas, note = row
         else:
-            datum_s, voll_s, leer_s, ein_s, aus_s, bem = row
-        datum = parse_date_de_or_today(datum_s)
-        vollgut = int((voll_s or '0').strip() or 0)
-        leergut = int((leer_s or '0').strip() or 0)
-        einnahme = parse_money(ein_s or '0')
-        ausgabe = parse_money(aus_s or '0')
-        bemerkung = (bem or '').strip()
+            date_s, voll_s, leer_s, ein_s, aus_s, note = row
+        date = parse_date_de_or_today(date_s)
+        full = int((voll_s or '0').strip() or 0)
+        empty = int((leer_s or '0').strip() or 0)
+        revenue = parse_money(ein_s or '0')
+        expense = parse_money(aus_s or '0')
+        note = (note or '').strip()
         rows.append({
-            'datum': datum,
-            'vollgut': vollgut,
-            'leergut': leergut,
-            'einnahme': str(einnahme),
-            'ausgabe': str(ausgabe),
-            'bemerkung': bemerkung
+            'date': date,
+            'full': full,
+            'empty': empty,
+            'revenue': str(revenue),
+            'expense': str(expense),
+            'note': note
         })
     return rows
-
-
-
-
-#@app.post('/import/preview')
-#@login_required
-#@require_perms('import:csv')
-#def import_preview():
-#    file = request.files.get('file')
-#    replace_all = request.form.get('replace_all') == 'on'
-#    if not file or file.filename == '':
-#        flash(_('Bitte eine CSV-Datei auswählen.'))
-#        return redirect(url_for('bbalance_routes.index'))
-#
-#    try:
-#        rows_to_insert = _parse_csv_file_storage(file)
-#        with engine.begin() as conn:
-#            existing = _fetch_existing_signature_set(conn)
-#
-#        preview = []
-#        dup_count = 0
-#        for r in rows_to_insert:
-#            sig = _signature(r)
-#            is_dup = (sig in existing) and not replace_all
-#            preview.append({**r, 'is_duplicate': is_dup})
-#            if is_dup:
-#                dup_count += 1
-#
-#       token = str(uuid4())
-#        # im Session-Speicher für Commit vorhalten
-#        session.setdefault('import_previews', {})
-#        session['import_previews'][token] = {
-#            'rows': rows_to_insert,
-#            'replace_all': replace_all,
-#            'created_at': time.time()
-#        }
-#        session.modified = True
-#
-#        return render_template(
-#            'import_preview.html',
-#            preview_rows=preview,
-#            token=token,
-#            replace_all=replace_all,
-#            dup_count=dup_count,
-#            total=len(preview),
-#        )
-#    except Exception as e:
-#        logger.exception("Import-Preview fehlgeschlagen: %s", e)
-#        flash(f"{_('Vorschau fehlgeschlagen:')} {e}")
-#        return redirect(url_for('bbalance_routes.index'))
-
-#@app.post('/import/commit')
-#@login_required
-#@require_perms('import:csv')
-#def import_commit():
-#    token = (request.form.get('token') or '').strip()
-#    mode = (request.form.get('mode') or 'skip_dups').strip()  # 'skip_dups' | 'insert_all'
-#    if not token or 'import_previews' not in session or token not in session['import_previews']:
-#        flash(_('Vorschau abgelaufen oder nicht gefunden.'))
-#        return redirect(url_for('bbalance_routes.index'))
-
- #   stash = session['import_previews'].pop(token, None)
- #   session.modified = True
- #   if not stash:
- #       flash(_('Vorschau abgelaufen oder bereits verwendet.'))
- #       return redirect(url_for('bbalance_routes.index'))
-
-  #  rows_to_insert = stash['rows']
-  #  replace_all = bool(stash.get('replace_all'))
-
-#    try:
-#        inserted = 0
-#        with engine.begin() as conn:
-#            if replace_all:
-#                conn.execute(text('DELETE FROM entries'))
-
-#            if mode == 'skip_dups' and not replace_all:
-#                existing = _fetch_existing_signature_set(conn)
-#            else:
-#                existing = set()
-
-#            for r in rows_to_insert:
-#                if not replace_all and mode == 'skip_dups' and _signature(r) in existing:
-#                    continue
-#                conn.execute(text("""
-#                    INSERT INTO entries (datum, vollgut, leergut, einnahme, ausgabe, bemerkung)
-#                    VALUES (:datum,:vollgut,:leergut,:einnahme,:ausgabe,:bemerkung)
-#                """), r)
-#                inserted += 1
-
-#        log_action(session.get('user_id'), 'import:csv', None,
-#                   f"commit: inserted={inserted}, replace_all={replace_all}, mode={mode}")
-#        flash(_(f'Import erfolgreich: {inserted} Zeilen übernommen.'))
-#        return redirect(url_for('bbalance_routes.index'))
-#    except Exception as e:
-#        logger.exception("Import-Commit fehlgeschlagen: %s", e)
-#        flash(f"{_('Import fehlgeschlagen:')} {e}")
-#        return redirect(url_for('bbalance_routes.index'))
 
 @app.get('/import/sample')
 @login_required
 @require_perms('import:csv')
 def import_sample():
     """
-    Liefert eine Beispiel-CSV im langen Format mit allen Spalten.
+    Provides a sample CSV file in long format with all columns.
     """
     output = io.StringIO()
     writer = csv.writer(output, delimiter=';', lineterminator='\n')
-    writer.writerow(['Datum','Vollgut','Leergut','Inventar','Einnahme','Ausgabe','Kassenbestand','Bemerkung'])
+    writer.writerow(['Date','Full','Empty','Inventory','Revenue','Expense','Cash balance','Note'])
     today = date.today()
     samples = [
-        (today - timedelta(days=4), 10, 0, 'Getränkeeinkauf'),
-        (today - timedelta(days=3), 0, 2, 'Leergutabgabe'),
-        (today - timedelta(days=2), 0, 0, 'Kasse Start'),
-        (today - timedelta(days=1), 5, 0, 'Nachkauf'),
-        (today, 0, 1, 'Entnahme'),
+        (today - timedelta(days=4), 10, 0, 'Bottle purchasing'),
+        (today - timedelta(days=3), 0, 2, 'Return empties'),
+        (today - timedelta(days=2), 0, 0, 'Cash register start'),
+        (today - timedelta(days=1), 5, 0, 'Repurchase'),
+        (today, 0, 1, 'Withdrawal'),
     ]
     inv = 0
     kas = Decimal('0.00')
     for d, voll, leer, note in samples:
         inv += (voll - leer)
-        einnahme = Decimal('12.50') if voll else Decimal('0')
-        ausgabe = Decimal('1.20') if leer else Decimal('0')
-        kas = (kas + einnahme - ausgabe).quantize(Decimal('0.01'))
+        revenue = Decimal('12.50') if voll else Decimal('0')
+        expense = Decimal('1.20') if leer else Decimal('0')
+        kas = (kas + revenue - expense).quantize(Decimal('0.01'))
         writer.writerow([
             d.strftime('%d.%m.%Y'), voll, leer, inv,
-            str(einnahme).replace('.', ','), str(ausgabe).replace('.', ','), str(kas).replace('.', ','),
+            str(revenue).replace('.', ','), str(expense).replace('.', ','), str(kas).replace('.', ','),
             note
         ])
     mem = io.BytesIO()
     mem.write(output.getvalue().encode('utf-8-sig'))
     mem.seek(0)
-    return send_file(mem, as_attachment=True, download_name='bottlebalance_beispiel.csv', mimetype='text/csv')
-
-
+    return send_file(mem, as_attachment=True, download_name='{_('AppTitle')}_{_('example')}.csv', mimetype='text/csv')
 
 @app.post('/import/preview')
 @login_required
@@ -1267,53 +1092,53 @@ def import_sample():
 @require_csrf
 def import_preview():
     """
-    Zeigt die Vorschau für den CSV-Import mit Auto-Mapping und manuellem Remapping.
-    - Erster Aufruf: Datei wird gelesen, Auto-Mapping ermittelt, CSV in /tmp abgelegt.
-    - Remap: Mapping-Indices aus dem Formular übernehmen, CSV aus /tmp erneut parsen.
+    Shows the preview for CSV import with auto-mapping and manual remapping.
+    - First call: File is read, auto-mapping is determined, CSV is stored in /tmp.
+    - Remap: Apply mapping indices from the form, parse CSV from /tmp again.
     """
-    # Falls Vorschau via Feature-Switch deaktiviert ist -> Legacy-Import verwenden
+    # If preview is disabled via feature switch -> use legacy import
     if not IMPORT_USE_PREVIEW: 
-        flash(_('CSV-Preview ist deaktiviert.'))
+        flash(_('CSV preview is disabled.'))
         return redirect(url_for('bbalance_routes.index'))
 
     replace_all = request.form.get('replace_all') == 'on'
     token = (request.form.get('token') or '').strip()
     is_remap = request.form.get('remap') == '1'
 
-    # ---------- REMAP-PFAD (CSV erneut parsen mit manuellem Mapping) ----------
+    # ---------- REMAP PATH (Parse CSV again with manual mapping) ----------
     if is_remap and token:
         stash = session.get('import_previews', {}).get(token)
         if not stash:
-            flash(_('Vorschau abgelaufen oder nicht gefunden.'))
+            flash(_('Preview expired or not found.'))
             return redirect(url_for('bbalance_routes.index'))
 
         tmp_path = stash.get('csv_path')
         if not tmp_path or not os.path.exists(tmp_path):
-            flash(_('CSV-Datei nicht gefunden.'))
+            flash(_('CSV file not found.'))
             return redirect(url_for('bbalance_routes.index'))
 
-        # CSV laden
+        # Load CSV
         try:
             with open(tmp_path, 'r', encoding='utf-8-sig') as f:
                 content = f.read()
         except Exception as e:
-            logger.exception("CSV lesen fehlgeschlagen: %s", e)
-            flash(_('CSV konnte nicht gelesen werden.'))
+            logger.exception("CSV read failed: %s", e)
+            flash(_('CSV could not be read.'))
             return redirect(url_for('bbalance_routes.index'))
 
-        # Mapping aus Formular übernehmen
+        # Apply mapping from form
         if IMPORT_ALLOW_MAPPING:
             def _opt_int(v):
                 return int(v) if (v not in (None, '', '__none__')) else None
             def _get(name):
                 return request.form.get(f'map_{name.lower()}')
             mapping = {
-                'Datum':     _opt_int(_get('Datum')),
-                'Vollgut':   _opt_int(_get('Vollgut')),
-                'Leergut':   _opt_int(_get('Leergut')),
-                'Einnahme':  _opt_int(_get('Einnahme')),
-                'Ausgabe':   _opt_int(_get('Ausgabe')),
-                'Bemerkung': _opt_int(_get('Bemerkung')),
+                'Date':     _opt_int(_get('Date')),
+                'Full':   _opt_int(_get('Full')),
+                'Empty':   _opt_int(_get('Empty')),
+                'Revenue':  _opt_int(_get('Revenue')),
+                'Expense':   _opt_int(_get('Expense')),
+                'Note': _opt_int(_get('Note')),
             }
         else:
             mapping = None
@@ -1321,11 +1146,11 @@ def import_preview():
         try:
             preview_rows, headers, dup_count = _parse_csv_with_mapping(content, replace_all, mapping)
         except Exception as e:
-            logger.exception("Import-Preview (remap) fehlgeschlagen: %s", e)
-            flash(f"{_('Vorschau fehlgeschlagen:')} {e}")
+            logger.exception("Import preview (remap) failed: %s", e)
+            flash(f"{_('Preview failed:')} {e}")
             return redirect(url_for('bbalance_routes.index'))
 
-        # Stash aktualisieren
+        # Update Stash
         session['import_previews'][token]['mapping'] = mapping
         session['import_previews'][token]['replace_all'] = replace_all
         session.modified = True
@@ -1339,33 +1164,33 @@ def import_preview():
             total=len(preview_rows),
             headers=headers,
             allow_mapping=IMPORT_ALLOW_MAPPING,
-            mapping=mapping  # <- für Auto-Vorauswahl in den Dropdowns
+            mapping=mapping  # <- for auto-preselection in the drop-down menus
         )
 
-    # ---------- ERSTER UPLOAD (Datei kommt vom Client) ----------
+    # ---------- FIRST UPLOAD (file comes from the client) ----------
     file = request.files.get('file')
     if not file or file.filename == '':
-        flash(_('Bitte eine CSV-Datei auswählen.'))
+        flash(_('Please select a CSV file.'))
         return redirect(url_for('bbalance_routes.index'))
 
     try:
-        # Inhalt einlesen
+        # Load content
         content = file.read().decode('utf-8-sig')
 
-        # Vorschau ohne explizites Mapping -> Auto-Mapping im Parser
+        # Preview without explicit mapping -> Auto-mapping in the parser
         preview_rows, headers, dup_count = _parse_csv_with_mapping(content, replace_all, mapping=None)
 
-        # Token erzeugen
+        # Generate tokens
         token = str(uuid4())
 
-        # CSV serverseitig in /tmp ablegen (keine großen Sessions)
+        # Store CSV on the server side in /tmp (no large sessions)
         tmp_dir = '/tmp'
         os.makedirs(tmp_dir, exist_ok=True)
         tmp_path = os.path.join(tmp_dir, f"bb_import_{token}.csv")
         with open(tmp_path, 'w', encoding='utf-8-sig') as f:
             f.write(content)
 
-        # Auto-Mapping separat berechnen und für die UI im Stash speichern
+        # Calculate auto-mapping separately and save it in Stash for the UI
         auto_map = compute_auto_mapping(headers) if IMPORT_ALLOW_MAPPING else {}
         session.setdefault('import_previews', {})
         session['import_previews'][token] = {
@@ -1385,13 +1210,12 @@ def import_preview():
             total=len(preview_rows),
             headers=headers,
             allow_mapping=IMPORT_ALLOW_MAPPING,
-            mapping=session['import_previews'][token].get('mapping')  # <- Auto-Vorauswahl
+            mapping=session['import_previews'][token].get('mapping')  # <- Auto preselection
         )
     except Exception as e:
-        logger.exception("Import-Preview fehlgeschlagen: %s", e)
-        flash(f"{_('Vorschau fehlgeschlagen:')} {e}")
+        logger.exception("Import preview failed: %s", e)
+        flash(f"{_('Preview failed:')} {e}")
         return redirect(url_for('bbalance_routes.index'))
-
 
 @app.post('/import/commit')
 @login_required
@@ -1403,13 +1227,13 @@ def import_commit():
     import_invalid = request.form.get('import_invalid') == 'on'
 
     if not token or 'import_previews' not in session or token not in session['import_previews']:
-        flash(_('Vorschau abgelaufen oder nicht gefunden.'))
+        flash(_('Preview expired or not found.'))
         return redirect(url_for('bbalance_routes.index'))
 
     stash = session['import_previews'].pop(token, None)
     session.modified = True
     if not stash:
-        flash(_('Vorschau abgelaufen oder bereits verwendet.'))
+        flash(_('Preview expired or already used.'))
         return redirect(url_for('bbalance_routes.index'))
 
     tmp_path = stash.get('csv_path')
@@ -1417,7 +1241,7 @@ def import_commit():
     mapping = stash.get('mapping')
 
     if not tmp_path or not os.path.exists(tmp_path):
-        flash(_('CSV-Datei nicht gefunden.'))
+        flash(_('CSV file not found.'))
         return redirect(url_for('bbalance_routes.index'))
 
     try:
@@ -1442,12 +1266,12 @@ def import_commit():
                     if _signature(r) in existing:
                         continue
                 conn.execute(text("""
-                    INSERT INTO entries (datum, vollgut, leergut, einnahme, ausgabe, bemerkung)
-                    VALUES (:datum,:vollgut,:leergut,:einnahme,:ausgabe,:bemerkung)
-                """), {k: r[k] for k in ('datum','vollgut','leergut','einnahme','ausgabe','bemerkung')})
+                    INSERT INTO entries (date, full, empty, revenue, expense, note)
+                    VALUES (:date,:full,:empty,:revenue,:expense,:note)
+                """), {k: r[k] for k in ('date','full','empty','revenue','expense','note')})
                 inserted += 1
 
-        # Temporäre Datei löschen
+        # Delete temporary file
         try:
             os.remove(tmp_path)
         except Exception:
@@ -1461,13 +1285,13 @@ def import_commit():
         )
 
         # Success message with placeholder
-        flash(_('Import erfolgreich: %(rows)d Zeilen übernommen.', rows=inserted))
+        flash(_('Import successful: %(rows)d lines transferred.', rows=inserted))
         return redirect(url_for('bbalance_routes.index'))
 
     except Exception as e:
-        logger.exception("Import-Commit fehlgeschlagen: %s", e)
+        logger.exception("Import commit failed: %s", e)
         # Error message with placeholder
-        flash(_('Import fehlgeschlagen: %(error)s', error=str(e)))
+        flash(_('Import failed: %(error)s', error=str(e)))
         return redirect(url_for('bbalance_routes.index'))
 
 @app.post('/api/import/dry-run')
@@ -1489,10 +1313,10 @@ def api_import_dry_run():
 
     replace_all = (request.args.get('replace_all') == '1') or (request.form.get('replace_all') == 'on')
 
-    # NEU: mapping vorinitialisieren
+    # NEW: Pre-initialize mapping
     content = None
     mapping = None
-    # Datenquellen …
+    # Data sources …
     if 'file' in request.files and request.files['file'].filename:
         content = request.files['file'].read().decode('utf-8-sig')
     elif request.is_json:
@@ -1510,15 +1334,15 @@ def api_import_dry_run():
         elif 'rows' in body and isinstance(body['rows'], list):
             si = io.StringIO()
             w = csv.writer(si, delimiter=';', lineterminator='\n')
-            w.writerow(['Datum','Vollgut','Leergut','Einnahme','Ausgabe','Bemerkung'])
+            w.writerow(['Date','Full','Empty','Revenue','Expense','Note'])
             for r in body['rows']:
                 w.writerow([
-                    r.get('Datum',''),
-                    r.get('Vollgut',''),
-                    r.get('Leergut',''),
-                    r.get('Einnahme',''),
-                    r.get('Ausgabe',''),
-                    r.get('Bemerkung',''),
+                    r.get('Date',''),
+                    r.get('Full',''),
+                    r.get('Empty',''),
+                    r.get('Revenue',''),
+                    r.get('Expense',''),
+                    r.get('Note',''),
                 ])
             content = si.getvalue()
         mapping = body.get('mapping')
@@ -1545,12 +1369,12 @@ def api_import_dry_run():
             'rows': [
                 {
                     'line_no': r['line_no'],
-                    'datum': r['datum'].strftime('%Y-%m-%d') if r['datum'] else None,
-                    'vollgut': r['vollgut'],
-                    'leergut': r['leergut'],
-                    'einnahme': r['einnahme'],
-                    'ausgabe': r['ausgabe'],
-                    'bemerkung': r['bemerkung'],
+                    'date': r['date'].strftime('%Y-%m-%d') if r['date'] else None,
+                    'full': r['full'],
+                    'empty': r['empty'],
+                    'revenue': r['revenue'],
+                    'expense': r['expense'],
+                    'note': r['note'],
                     'is_duplicate': r['is_duplicate'],
                     'errors': r['errors'],
                 } for r in preview_rows
@@ -1575,7 +1399,6 @@ def _pdf_logo_path():
 @login_required
 @require_perms('export:pdf')
 def export_pdf():
-
     q = (request.args.get('q') or '').strip()
     df = request.args.get('from')
     dt = request.args.get('to')
@@ -1614,90 +1437,85 @@ def export_pdf():
         story.append(RLImage(logo_path, width=40*mm, height=12*mm))
         story.append(Spacer(1, 6))
 
-    # --- Titel (echtes Markup, keine HTML-Entities) ---
-    story.append(Paragraph(f"<b>{_('BottleBalanceTitle')}{_(' - Export')}</b>", styles['Title']))
+    # --- Title (real markup, no HTML entities) ---
+    story.append(Paragraph(f"<b>{_('AppTitle')}{_(' - Export')}</b>", styles['Title']))
     story.append(Spacer(1, 6))
 
-    # ---- HILFSFORMATIERER: nur geänderte Zellen anzeigen ----
+    # ---- HELP FORMATTER: Show only changed cells ----
     def fmt_fl(n: int | None) -> str:
-        """Flaschen-Anzahl; leer wenn 0/None, sonst 'N Fl.' (lokalisiert)."""
+        """Number of bottles; empty if 0/None, otherwise 'N bottles' (localized)."""
         n = int(n or 0)
         return '' if n == 0 else f"{n} {_('Fl.')}"
 
-
-
     def fmt_money(d: Decimal | None) -> str:
-        """Währung; leer wenn 0/None, sonst formatiert."""
+        """Currency; empty if 0/None, otherwise formatted."""
         d = d if d is not None else Decimal('0')
         return '' if d == 0 else format_eur_de(d)
 
-    # ---- Optionales Verhalten: Inventar/Kassenbestand ausblenden,
-    #      wenn die Zeile keine Änderungen aufweist (Vollgut, Leergut, Einnahme, Ausgabe alle 0)
     HIDE_CUMULATIVE_WHEN_UNCHANGED = True
 
-    # ---- Tabelle aufbauen ----
+    # ---- Build table ----
     data = [[
-        _('Datum'), _('Vollgut'), _('Leergut'), _('Inventar'),
-        _('Einnahme'), _('Ausgabe'), _('Kassenbestand'), _('Bemerkung')
+        _('Date'), _('Full'), _('Empty'), _('Inventory'),
+        _('Revenue'), _('Expense'), _('Cash balance'), _('Note')
     ]]
 
     for e in entries:
-        # „geändert“-Kriterium
+        # "changed" criterion
         changed = any([
-            int(e['vollgut'] or 0) != 0,
-            int(e['leergut'] or 0) != 0,
-            Decimal(e['einnahme'] or 0) != 0,
-            Decimal(e['ausgabe'] or 0) != 0
+            int(e['full'] or 0) != 0,
+            int(e['empty'] or 0) != 0,
+            Decimal(e['revenue'] or 0) != 0,
+            Decimal(e['expense'] or 0) != 0
         ])
 
-        # Zellenwerte (mit optionalem Ausblenden)
-        inv_cell = '' if (HIDE_CUMULATIVE_WHEN_UNCHANGED and not changed) else fmt_fl(e['inventar'])
-        kas_cell = '' if (HIDE_CUMULATIVE_WHEN_UNCHANGED and not changed) else format_eur_de(e['kassenbestand'])
+        # Cell values ​​(with optional hiding)
+        inv_cell = '' if (HIDE_CUMULATIVE_WHEN_UNCHANGED and not changed) else fmt_fl(e['inventory'])
+        kas_cell = '' if (HIDE_CUMULATIVE_WHEN_UNCHANGED and not changed) else format_eur_de(e['cashBalance'])
 
         data.append([
-            # Datum immer anzeigen
-            format_date_de(e['datum']),
+            # Date always display
+            format_date_de(e['date']),
 
-            # nur geänderte Felder (0 -> leer)
-            fmt_fl(e['vollgut']),
-            fmt_fl(e['leergut']),
+            # Only changed fields (0 -> empty)
+            fmt_fl(e['full']),
+            fmt_fl(e['empty']),
 
-            # Inventar: optional leeren, wenn Zeile unverändert
+            # Inventory: Optionally clear the line if it remains unchanged.
             inv_cell,
+            fmt_money(e['revenue']),
+            fmt_money(e['expense']),
 
-            fmt_money(e['einnahme']),
-            fmt_money(e['ausgabe']),
-
-            # Kassenbestand: optional leeren, wenn Zeile unverändert
+            # Cash balance: optional emptyif cell unchanged
             kas_cell,
 
-            # Bemerkung: leer wenn None/''; linksbündig
-            Paragraph(e['bemerkung'] or '', styles['Normal'])
+            # Note: empty if None/''; left aligned
+            Paragraph(e['note'] or '', styles['Normal'])
         ])
 
-    # Dynamische Spaltenbreiten (passen sicher in den Satzspiegel)
+    # Dynamic column widths (fit securely into the type area)
     table_width = doc.width
     col_widths = [table_width * w for w in [
-        0.10,  # Datum
-        0.08,  # Vollgut
-        0.08,  # Leergut
-        0.09,  # Inventar
-        0.10,  # Einnahme
-        0.10,  # Ausgabe
-        0.14,  # Kassenbestand
-        0.21,  # Bemerkung
+        0.10,  # Date
+        0.08,  # Full
+        0.08,  # Empty
+        0.09,  # Inventory
+        0.10,  # Revenue
+        0.10,  # Expense
+        0.14,  # Cash balance
+        0.21,  # Note
     ]]
 
     table = Table(data, colWidths=col_widths, repeatRows=1)
     table.setStyle(TableStyle([
-        # Kopfzeile zentrieren
+        # Center header
         ('ALIGN', (0,0), (-1,0), 'CENTER'),
 
-        # Datenzeilen: alles rechtsbündig, außer Bemerkung links
+        # Data rows: everything right-aligned, except for the note on the left
         ('ALIGN', (0,1), (6,-1), 'RIGHT'),
         ('ALIGN', (7,1), (7,-1), 'LEFT'),
 
-        # Kopfzeilen-Styling
+        # Header styling
         ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#f1f3f5')),
         ('TEXTCOLOR', (0,0), (-1,0), colors.HexColor('#212529')),
         ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
@@ -1717,7 +1535,7 @@ def export_pdf():
     doc.build(story)
     buffer.seek(0)
 
-    filename = f"bottlebalance_{date.today().strftime('%Y%m%d')}.pdf"
+    filename = f"{_('AppTitle')}_{_('export')}_{date.today().strftime('%Y%m%d')}.pdf"
     return send_file(buffer, as_attachment=True, download_name=filename, mimetype='application/pdf')
 
 @app.post('/profile/lang')
@@ -1733,21 +1551,11 @@ def set_language():
             with engine.begin() as conn:
                 conn.execute(text("UPDATE users SET locale=:lang, updated_at=NOW() WHERE id=:id"),
                              {'lang': lang, 'id': uid})
-        flash(_('Sprache geändert.'))
+        flash(_('Language changed.'))
     return redirect(url_for('profile'))
 
-
-
-
-
 # -----------------------
-# Temporäre Attachments für "Datensatz hinzufügen"
-# -----------------------
-
-
-
-# -----------------------
-# Zahlungsfreigabe
+# Payment requests
 # -----------------------
 def parse_date_iso_or_today(s: str | None) -> date:
     try:
@@ -1755,34 +1563,29 @@ def parse_date_iso_or_today(s: str | None) -> date:
     except Exception:
         return date.today()
 
-
-
-
-
-
 # -----------------------
-# SMTP Test Mail if paraam SEND_TEST_MAIL is set to true
+# SMTP Test Mail if param SEND_TEST_MAIL is set to true
 # -----------------------
 @app.route("/admin/tools", methods=["GET", "POST"])
 @login_required
 @require_perms('admin:tools')
 def admin_tools():
     """
-    Einstellungen für administrative Werkzeuge:
-      - SMTP-Testmail senden
-      - Datenbank-Dump erzeugen und herunterladen
-      - Bemerkungsoptionen vollständig überschreiben
+    Settings for administrative tools:
+        - Send SMTP test email
+        - Create and download database dump
+        - Completely override notes
 
-    Sicherheit:
-      - Login + Rollenberechtigung (admin:tools) sind Pflicht.
-      - CSRF-Schutz nur für POST-Aktionen.
+    Safety:
+        - Login and role permissions (admin:tools) are required.
+        - CSRF protection is only available for POST actions.
     """
-    status = None
-    current_options = []
+    state = None
+    current_notes = []
 
-    # --- POST-AKTIONEN ---
+    # --- POST-ACTIONS ---
     if request.method == "POST":
-        # CSRF nur bei POST prüfen
+        # Only check CSRF for POST
         require_csrf(lambda: None)()
 
         action = (request.form.get("action") or "").strip()
@@ -1800,19 +1603,19 @@ def admin_tools():
                         else SMTP(SMTP_HOST, SMTP_PORT, timeout=SMTP_TIMEOUT)
                     )
 
-                    # TLS nur starten, wenn keine SSL-Verbindung genutzt wird
+                    # Only start TLS if no SSL connection is being used
                     if SMTP_TLS and not SMTP_SSL_ON:
                         server.starttls(context=ssl.create_default_context())
 
                     server.login(SMTP_USER, SMTP_PASS)
 
-                    # Testmail vorbereiten
+                    # Prepare test email
                     message = MIMEText(
-                        "This is a test message to check the SMTP configuration.",
+                        _("This is a test message to check the SMTP configuration."),
                         "plain",
                         "utf-8"
                     )
-                    message["Subject"] = Header("SMTP test by BottleBalance", "utf-8")
+                    message["Subject"] = Header(_("SMTP test by %(app)s", app=_("AppTitle")), "utf-8")
                     message["From"] = FROM_EMAIL
                     message["To"] = SMTP_USER
 
@@ -1823,13 +1626,13 @@ def admin_tools():
             except Exception as e:
                 flash(_("SMTP test failed: ") + str(e), "error")
 
-        # 2) Datenbank-Dump
+        # 2) Database dump
         elif action == "dump":
-            dump_file = "/tmp/bottlebalance_dump.sql"
+            dump_file = f"/tmp/{_('AppTitle')}_{_('dump')}.sql"
             env = os.environ.copy()
             env["PGPASSWORD"] = DB_PASS
             try:
-                # Dump erzeugen
+                # Create dump
                 with open(dump_file, "w") as f:
                     subprocess.run(
                         ["pg_dump", "-U", DB_USER, "-h", DB_HOST, DB_NAME],
@@ -1839,38 +1642,39 @@ def admin_tools():
                     )
 
                 # Audit + Download
-                log_action(session.get('user_id'), 'db:export', None, f'Dump von {DB_NAME} erzeugt')
+                log_action(session.get('user_id'), 'db:export', None, f'Dump from {DB_NAME} created')
                 flash(_('Database dump successfully generated.'), "success")
-                return send_file(dump_file, as_attachment=True, download_name="bottlebalance_dump.sql")
+                download_name = f"{_('AppTitle')}_{_('dump')}.sql"
+                return send_file(dump_file, as_attachment=True, download_name=download_name)
 
             except subprocess.CalledProcessError as e:
                 flash(_('Error during database dump: %(error)s', error=str(e)), "error")
                 log_action(session.get('user_id'), 'db:export:error', None, f'Dump failed: {e}')
 
-        # 3) Bemerkungsoptionen überschreiben
-        elif action == "update_bemerkungen":
+        # 3) Override notes
+        elif action == "update_notes":
             raw = request.form.get("options") or ""
             lines = [line.strip() for line in raw.splitlines() if line.strip()]
             try:
                 with engine.begin() as conn:
-                    conn.execute(text("DELETE FROM bemerkungsoptionen"))
+                    conn.execute(text("DELETE FROM notes"))
                     for line in lines:
                         conn.execute(
-                            text("INSERT INTO bemerkungsoptionen (text) VALUES (:t)"),
+                            text("INSERT INTO notes (text) VALUES (:t)"),
                             {'t': line}
                         )
-                flash(_("Bemerkungsoptionen aktualisiert."), "success")
+                flash(_("Updated notes."), "success")
             except Exception as e:
-                flash(_("Fehler beim Speichern der Bemerkungsoptionen: %(error)s", error=str(e)), "error")
+                flash(_("Error saving notes: %(error)s", error=str(e)), "error")
 
-        # 4) Branding-Logo hochladen
+        # 4) Upload branding logo
         elif action == "branding_upload":
             file = request.files.get("logo")
             if not file or file.filename == "":
-                flash(_("Bitte eine Bilddatei auswählen."), "danger")
+                flash(_("Please select an image file."), "danger")
                 return redirect(url_for("admin_tools"))
 
-            # Größe prüfen (falls Funktion vorhanden): MAX_CONTENT_LENGTH deckelt ohnehin serverseitig
+            # Check size (if function available): MAX_CONTENT_LENGTH caps on the server side anyway
             try:
                 from modules.core_utils import validate_file
                 if not validate_file(file):
@@ -1878,10 +1682,10 @@ def admin_tools():
             except Exception:
                 pass
 
-            # Endung strikt gegen deine ALLOWED_LOGO_EXTS prüfen
+            # Strictly check the extension against your ALLOWED_LOGO_EXTS
             ext = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else ''
             if ext not in ALLOWED_LOGO_EXTS:
-                flash(_("Ungültiges Dateiformat. Erlaubt sind: SVG, PNG, JPG, WEBP."), "danger")
+                flash(_("Invalid file format. Permitted formats: SVG, PNG, JPG, WEBP."), "danger")
                 return redirect(url_for("admin_tools"))
 
             target_name = f"logo.{ext}"
@@ -1900,9 +1704,9 @@ def admin_tools():
             try:
                 os.makedirs(BRANDING_DIR, exist_ok=True)
                 file.save(target_path)
-                flash(_("Logo erfolgreich hochgeladen."), "success")
+                flash(_("Logo successfully uploaded."), "success")
             except Exception as e:
-                flash(_("Upload fehlgeschlagen: %(error)s", error=str(e)), "danger")
+                flash(_("Upload failed: %(error)s", error=str(e)), "danger")
 
             return redirect(url_for("admin_tools"))
         
@@ -1921,50 +1725,45 @@ def admin_tools():
 
             if removed_files:
                 log_action(session.get('user_id'), 'branding:remove', None, f"removed={removed_files}")
-                flash(_("Eigenes Logo entfernt. Fallback auf Standard-Logo aktiv."), "success")
+                flash(_("Custom logo removed. Fallback to default logo active."), "success")
             elif errors:
                 # Mindestens eine Datei war da, aber löschen schlug fehl
                 for msg in errors:
-                    flash(_("Konnte Datei nicht löschen: %(msg)s", msg=msg), "danger")
+                    flash(_("Could not delete file: %(msg)s", msg=msg), "danger")
                 log_action(session.get('user_id'), 'branding:remove:error', None, "; ".join(errors))
             else:
-                flash(_("Kein eigenes Logo gefunden."), "info")
+                flash(_("No logo found."), "info")
 
             return redirect(url_for("admin_tools"))
         
-        # Fallback bei unbekannter Aktion
+        # Fallback for unknown action
         else:
-            flash(_("Unbekannte Aktion."), "error")
+            flash(_("Unknown action."), "error")
 
-        # Nach jeder POST-Aktion Redirect, um Doppeleinreichungen zu vermeiden
+        # Redirect after each POST action to avoid duplicate submissions
         return redirect(url_for("admin_tools"))
 
-    # --- GET: Status & aktuelle Optionen anzeigen ---
+    # --- GET: View state & current options ---
     if not SMTP_HOST or not SMTP_PORT or not SMTP_USER or not SMTP_PASS:
-        status = _("SMTP configuration incomplete.")
+        state = _("SMTP configuration incomplete.")
     else:
-        status = _("SMTP configuration detected for host {}:{}.".format(SMTP_HOST, SMTP_PORT))
+        state = _("SMTP configuration detected for host {}:{}.".format(SMTP_HOST, SMTP_PORT))
 
     try:
         with engine.begin() as conn:
-            current_options = conn.execute(
-                text("SELECT text FROM bemerkungsoptionen ORDER BY text ASC")
+            current_notes = conn.execute(
+                text("SELECT text FROM notes ORDER BY text ASC")
             ).scalars().all()
     except Exception:
-        current_options = []   # ← deine Zeile hatte Tippfehler („current        current_options“)
+        current_notes = []
 
-    return render_template("admin_tools.html", status=status, current_options=current_options)
-
-
-
-
-
+    return render_template("admin_tools.html", state=state, current_notes=current_notes)
 
 @app.template_filter('strftime')
 def _jinja2_filter_datetime(value, format='%Y-%m-%d'):
     """
-    Formatiert ein datetime/date-Objekt mit strftime.
-    Gibt leeren String zurück, wenn value None ist.
+    Formats a datetime/date object with strftime.
+    Returns an empty string if value is None.
     """
     if value is None:
         return ''
@@ -1973,16 +1772,6 @@ def _jinja2_filter_datetime(value, format='%Y-%m-%d'):
     except AttributeError:
         return str(value)
 
-
-
-
-
-
-
-
-
-
-
 @app.route('/view/<path:filename>')
 def view_file(filename):
     response = send_from_directory(app.config['UPLOAD_FOLDER'], filename)
@@ -1990,11 +1779,10 @@ def view_file(filename):
     response.headers['Content-Security-Policy'] = "default-src 'self'; img-src 'self' data:;"
     return response
 
-
 @app.route("/attachments/<int:att_id>/view")
 @login_required
 def attachments_view(att_id: int):
-    # 1) Details aus DB holen
+    # 1) Get details from DB
     with engine.begin() as conn:
         r = conn.execute(text("""
             SELECT a.id, a.entry_id, a.stored_name, a.original_name, a.content_type
@@ -2005,16 +1793,16 @@ def attachments_view(att_id: int):
     if not r:
         abort(404)
 
-    # 2) Zugriffsrecht prüfen
+    # 2) Check access rights
     if not _user_can_view_entry(r['entry_id']):
         abort(403)
 
-    # 3) Dateipfad auflösen & prüfen
+    # 3) Resolve & check file path
     path = os.path.join(_entry_dir(r['entry_id']), r['stored_name'])
     if not os.path.exists(path):
         abort(404)
 
-    # 4) MIME-Type bestimmen (DB-Wert bevorzugen, sonst raten)
+    # 4) Determine MIME type (prefer DB value, otherwise guess)
     mimetype = r.get('content_type') or (
         mimetypes.guess_type(r['original_name'])[0] or 'application/octet-stream'
     )
@@ -2022,15 +1810,15 @@ def attachments_view(att_id: int):
     # 5) Audit-Log
     log_action(session.get('user_id'), 'attachments:view', r['entry_id'], f"att_id={att_id}")
 
-    # 6) Inline anzeigen + Sicherheits-Header
+    # 6) Display inline + security header
     resp = send_file(
         path,
         as_attachment=False,
         mimetype=mimetype,
-        download_name=r['original_name']  # optional: hilft Browsern beim Anzeigen
+        download_name=r['original_name']  # Optional: helps browsers display
     )
     resp.headers['X-Content-Type-Options'] = 'nosniff'
-    # Optional: CSP, wenn du sehr restriktiv sein willst
+    # Optional: CSP, if you want to be very restrictive
     # resp.headers['Content-Security-Policy'] = "default-src 'self'; img-src 'self' data:;"
 
     return resp

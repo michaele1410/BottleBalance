@@ -24,7 +24,7 @@ admin_routes = Blueprint('admin_routes', __name__)
 
 @admin_routes.get('/admin/export-db')
 @login_required
-@require_perms('export:db')  # oder eigene Permission wie 'db:export'
+@require_perms('export:db')
 def admin_export_page():
     return render_template('admin_export.html')
 
@@ -39,7 +39,7 @@ def admin_export_dump():
     db_host = DB_HOST
     db_pass = DB_PASS
 
-    # Passwort für pg_dump setzen
+    # Set password for pg_dump
     env = os.environ.copy()
     env["PGPASSWORD"] = db_pass
 
@@ -52,7 +52,7 @@ def admin_export_dump():
                 db_name
             ], stdout=f, env=env, check=True)
 
-        # Audit-Log-Eintrag
+        # audit log entry
         log_action(session.get('user_id'), 'db:export', None, f'Dump von {db_name} erzeugt')
 
         flash(_('Datenbank-Dump erfolgreich erzeugt.'))

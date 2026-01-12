@@ -2,17 +2,17 @@
 {% extends "base.html" %}
 {% block content %}
 
-<!-- OBERER 3er-CLUSTER: Inventar / Kasse / Neuer Datensatz -->
+<!-- UPPER CLUSTER OF 3: Inventory / Cash register / New data record -->
 <div class="row g-3 mb-3">
-  <!-- Inventar -->
+  <!-- Inventory -->
   <div class="col-6 col-md-4">
     <div class="card shadow-sm h-100">
       <div class="card-header d-flex justify-content-between align-items-center">
-        <span>{{ _('Inventar:') }}</span>
+        <span>{{ _('Inventory:') }}</span>
         <span class="badge bg-primary">
-          {{ inv_aktuell }} {{ _('Fl.') }}
+          {{ inv_current }} {{ _('Btl.') }}
           {% if delta_inv and (from or to) %}
-            <small class="text-muted">(Δ {{ delta_inv }} im Zeitraum)</small>
+            <small class="text-muted">(Δ {{ delta_inv }} during period)</small>
           {% endif %}
         </span>
       </div>
@@ -24,15 +24,15 @@
     </div>
   </div>
 
-  <!-- Kassenbestand -->
+  <!-- Cash balance -->
   <div class="col-6 col-md-4">
     <div class="card shadow-sm h-100">
       <div class="card-header d-flex justify-content-between align-items-center">
-        <span>{{ _('Kasse:') }}</span>
+        <span>{{ _('Cash register:') }}</span>
         <span class="badge bg-success">
-          {{ format_eur_de(kas_aktuell) }}
-          {% if delta_kas and (from or to) %}
-            <small class="text-muted">(Δ {{ format_eur_de(delta_kas) }} im Zeitraum)</small>
+          {{ format_eur_de(kas_current) }}
+          {% if delta_cashbalance and (from or to) %}
+            <small class="text-muted">(Δ {{ format_eur_de(delta_cashbalance) }} in period)</small>
           {% endif %}
         </span>
       </div>
@@ -44,12 +44,12 @@
     </div>
   </div>
 
-  <!-- Formular für neuen Datensatz -->
+  <!-- Form for new record -->
   {% if can_add %}
   <div class="col-12 col-md-4">
     <div class="card shadow-sm h-100">
       <div class="card-header d-flex justify-content-between align-items-center">
-        <span>{{ _('Neuen Datensatz hinzufügen') }}</span>
+        <span>{{ _('Add new record') }}</span>
         <button class="btn btn-sm btn-outline-secondary d-md-none"
                 type="button"
                 data-bs-toggle="collapse"
@@ -64,62 +64,62 @@
           <!-- Formular -->
           <form method="post" action="{{ url_for('bbalance_routes.add') }}" id="transaction-form" novalidate>
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <!-- Datum -->
+            <!-- Date -->
             <div class="input-group mb-3 w-100">
               <span class="input-group-text"><i class="bi bi-calendar"></i></span>
               <div class="form-floating flex-grow-1">
-                <input type="text" name="datum" class="form-control" placeholder="Datum" id="datum" value="{{ default_date }}" required autofocus>
-                <label for="datum">{{ _('Datum') }}</label>
+                <input type="text" name="date" class="form-control" placeholder="Date" id="date" value="{{ default_date }}" required autofocus>
+                <label for="date">{{ _('Date') }}</label>
               </div>
             </div>
-            <!-- Vollgut -->
+            <!-- Full bottles -->
             <div class="input-group mb-3 w-100">
               <span class="input-group-text"><i class="bi bi-cup-straw"></i></span>
               <div class="form-floating flex-grow-1">
-                <input name="vollgut" type="number" class="form-control" placeholder="0" id="vollgut">
-                <label for="vollgut">{{ _('Vollgut') }}</label>
+                <input name="full" type="number" class="form-control" placeholder="0" id="full">
+                <label for="full">{{ _('Full bottles') }}</label>
               </div>
             </div>
-            <!-- Leergut -->
+            <!-- Empty bottles -->
             <div class="input-group mb-3 w-100">
               <span class="input-group-text"><i class="bi bi-cup-straw"></i></span>
               <div class="form-floating flex-grow-1">
-                <input name="leergut" type="number" class="form-control" placeholder="0" id="leergut">
-                <label for="leergut">{{ _('Leergut') }}</label>
+                <input name="empty" type="number" class="form-control" placeholder="0" id="empty">
+                <label for="empty">{{ _('Empty') }}</label>
               </div>
             </div>
-            <!-- Einnahme -->
+            <!-- Revenue -->
             <div class="input-group mb-3 w-100">
               <span class="input-group-text"><i class="bi bi-plus-circle"></i></span>
               <div class="form-floating flex-grow-1">
-                <input name="einnahme" type="number" step="0.01" class="form-control" placeholder="0.00" id="einnahme">
-                <label for="einnahme">{{ _('Einnahme') }}</label>
+                <input name="revenue" type="number" step="0.01" class="form-control" placeholder="0.00" id="revenue">
+                <label for="revenue">{{ _('Revenue') }}</label>
               </div>
             </div>
-            <!-- Ausgabe -->
+            <!-- Expense -->
             <div class="input-group mb-3 w-100">
               <span class="input-group-text"><i class="bi bi-dash-circle"></i></span>
               <div class="form-floating flex-grow-1">
-                <input name="ausgabe" type="number" step="0.01" class="form-control" placeholder="0.00" id="ausgabe">
-                <label for="ausgabe">{{ _('Ausgabe') }}</label>
+                <input name="expense" type="number" step="0.01" class="form-control" placeholder="0.00" id="expense">
+                <label for="expense">{{ _('Expense') }}</label>
               </div>
             </div>
-            <!-- Bemerkung -->
+            <!-- Note -->
             <div class="input-group mb-3 w-100">
               <span class="input-group-text"><i class="bi bi-chat-text"></i></span>
               <div class="form-floating flex-grow-1">
-                <select id="bemerkung" name="bemerkung" class="form-select">
-                  {% for option in bemerkungsoptionen %}
+                <select id="note" name="note" class="form-select">
+                  {% for option in notes %}
                     <option value="{{ option }}">{{ option }}</option>
                   {% endfor %}
                 </select>
-                <label for="bemerkung">{{ _('Bemerkung') }}</label>
+                <label for="note">{{ _('Note') }}</label>
               </div>
             </div>
             <!-- Buttons -->
             <div class="d-flex gap-2 w-100">
               <button type="submit" class="btn btn-success flex-grow-1" disabled>
-                <i class="bi-plus-lg me-1"></i> {{ _('Hinzufügen') }}
+                <i class="bi-plus-lg me-1"></i> {{ _('Add') }}
               </button>
               <button type="button" class="btn btn-outline-primary position-relative" data-bs-toggle="modal"
                 data-bs-target="#uploadModal" id="uploadBtn">
@@ -142,7 +142,7 @@
     <div class="card shadow-sm h-100">
       <div class="card-header d-flex justify-content-between align-items-center">
         <span>{{ _('Filter') }}</span>
-        <span id="filterBadge" class="badge bg-primary ms-2 d-none">{{ _('Aktiv') }}</span>
+        <span id="filterBadge" class="badge bg-primary ms-2 d-none">{{ _('Active') }}</span>
         <button class="btn btn-sm btn-outline-secondary d-md-none" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFilters">
           <i class="bi-chevron-down"></i>
         </button>
@@ -153,18 +153,18 @@
             <form method="get"
                   class="row row-cols-1 row-cols-md-auto row-cols-lg-auto g-2 align-items-end form-compact"
                   id="filtersForm"
-                  aria-label="{{ _('Filter für Einträge') }}">
+                  aria-label="{{ _('Filter for entries') }}">
 
               <!-- Suche -->
               <div class="col">
-                <label for="filter_q" class="form-label mb-1">{{ _('Suche') }}</label>
+                <label for="filter_q" class="form-label mb-1">{{ _('Search') }}</label>
                 <div class="input-group">
                   <span class="input-group-text"><i class="bi-search"></i></span>
                   <input type="text"
                         id="filter_q"
                         name="q"
                         class="form-control"
-                        placeholder="{{ _('Datum/Bemerkung') }}"
+                        placeholder="{{ _('Date/Note') }}"
                         value="{{ request.args.get('q','') }}"
                         autocomplete="off">
                 </div>
@@ -172,7 +172,7 @@
 
               <!-- Zeitraum -->
               <div class="col">
-                <label for="filter_daterange" class="form-label mb-1">{{ _('Zeitraum') }}</label>
+                <label for="filter_daterange" class="form-label mb-1">{{ _('Time period') }}</label>
                 <div class="input-group">
                   <span class="input-group-text"><i class="bi-calendar"></i></span>
                   <input type="text"
@@ -187,9 +187,9 @@
                 </div>
               </div>
 
-               <!-- Jahr -->
+               <!-- Year -->
               <div class="col">
-                <label for="filter_year" class="form-label mb-1">{{ _('Jahr') }}</label>
+                <label for="filter_year" class="form-label mb-1">{{ _('Year') }}</label>
                 <div class="input-group">
                   <span class="input-group-text"><i class="bi-calendar"></i></span>
                   <select id="filter_year" name="year" class="form-select" onchange="this.form.submit()">
@@ -201,23 +201,23 @@
                 </div>
               </div>
 
-              <!-- Anhänge -->
+              <!-- Attachments -->
               <div class="col">
-                <label for="filter_attachments" class="form-label mb-1">{{ _('Anhänge') }}</label>
+                <label for="filter_attachments" class="form-label mb-1">{{ _('Attachments') }}</label>
                 <div class="input-group">
                   <span class="input-group-text"><i class="bi-paperclip"></i></span>
                   <select id="filter_attachments" name="attachments" class="form-select">
-                    <option value="" {{ '' if request.args.get('attachments') else 'selected' }}>{{ _('Alle') }}</option>
-                    <option value="only" {{ 'selected' if request.args.get('attachments')=='only' else '' }}>{{ _('Nur mit Anhang') }}</option>
-                    <option value="none" {{ 'selected' if request.args.get('attachments')=='none' else '' }}>{{ _('Ohne Anhang') }}</option>
+                    <option value="" {{ '' if request.args.get('attachments') else 'selected' }}>{{ _('All') }}</option>
+                    <option value="only" {{ 'selected' if request.args.get('attachments')=='only' else '' }}>{{ _('With attachment') }}</option>
+                    <option value="none" {{ 'selected' if request.args.get('attachments')=='none' else '' }}>{{ _('Without attachment') }}</option>
                   </select>
                 </div>
               </div>
 
-              <!-- Aktionen: Zurücksetzen + Export/Import -->
+              <!-- Actions: Reset + Export/Import -->
               <div class="col d-flex flex-wrap gap-2 ms-auto justify-content-end">
                 <a class="btn btn-outline-secondary" href="{{ url_for('bbalance_routes.index') }}">
-                  <i class="bi-x-circle me-1"></i>{{ _('Filter zurücksetzen') }}
+                  <i class="bi-x-circle me-1"></i>{{ _('Reset filter') }}
                 </a>
 
                 <div class="btn-group">
@@ -233,7 +233,7 @@
                     <button type="button" class="btn btn-outline-danger dropdown-toggle dropdown-toggle-split"
                             data-bs-toggle="dropdown" aria-expanded="false"
                             aria-label="{{ _('Weitere Exportoptionen') }}">
-                      <span class="visually-hidden">{{ _('Weitere Exportoptionen') }}</span>
+                      <span class="visually-hidden">{{ _('Additional export options') }}</span>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end">
                     {% if can_export_csv %}
@@ -245,7 +245,7 @@
                       </li>
                     {% endif %}
 
-                    <!-- CSV importieren -->
+                    <!-- CSV import -->
                     {% if can_import_csv %}
                       <li>
                         <a class="dropdown-item"
@@ -268,124 +268,124 @@
 </div>
 
 
-<!-- EINTRÄGE -->
+<!-- Entries -->
 <div class="row g-3 mb-3">
   <div class="col-12">
     <div class="card shadow-sm h-100">
       <div class="card-header d-flex justify-content-between align-items-center">
-        <span>{{ _('Einträge') }}</span>
+        <span>{{ _('Entries') }}</span>
       </div>
       <div class="card-body">
         <div class="table-responsive w-100">
           <table class="table table-sm table-striped table-hover align-middle table-stacked">
             <thead class="table-light">
               <tr>
-                <th class="text-center">{{ _('Datum') }}</th>
-                <th class="text-center">{{ _('Bestandsänderung') }}</th>
-                <th class="text-center">{{ _('Inventar') }}</th>
-                <th class="text-center">{{ _('Zahlung') }}</th>
-                <th class="text-center">{{ _('Kassenbestand') }}</th>
-                <th class="text-center">{{ _('Bemerkung') }}</th>
-                <th class="text-center">{{ _('Aktionen') }}</th>
+                <th class="text-center">{{ _('Date') }}</th>
+                <th class="text-center">{{ _('Inventory change') }}</th>
+                <th class="text-center">{{ _('Inventory') }}</th>
+                <th class="text-center">{{ _('Payment') }}</th>
+                <th class="text-center">{{ _('Cash balance') }}</th>
+                <th class="text-center">{{ _('Note') }}</th>
+                <th class="text-center">{{ _('Actions') }}</th>
               </tr>
             </thead>
             <tbody>
               {% for e in entries %}
-                {% set changed = (e.vollgut != 0 or e.leergut != 0 or e.einnahme != 0 or e.ausgabe != 0) %}
+                {% set changed = (e.full != 0 or e.empty != 0 or e.revenue != 0 or e.expense != 0) %}
                 <tr
                   data-changed="{{ 1 if changed else 0 }}"
-                  data-vollgut="{{ 1 if e.vollgut != 0 else 0 }}"
-                  data-leergut="{{ 1 if e.leergut != 0 else 0 }}"
-                  data-einnahme="{{ 1 if e.einnahme != 0 else 0 }}"
-                  data-ausgabe="{{ 1 if e.ausgabe != 0 else 0 }}"
-                  data-vollgut-val="{{ e.vollgut or 0 }}"
-                  data-leergut-val="{{ e.leergut or 0 }}"
-                  data-einnahme-val="{{ e.einnahme or 0 }}"
-                  data-ausgabe-val="{{ e.ausgabe or 0 }}"
+                  data-full="{{ 1 if e.full != 0 else 0 }}"
+                  data-empty="{{ 1 if e.empty != 0 else 0 }}"
+                  data-revenue="{{ 1 if e.revenue != 0 else 0 }}"
+                  data-expense="{{ 1 if e.expense != 0 else 0 }}"
+                  data-full-val="{{ e.full or 0 }}"
+                  data-empty-val="{{ e.empty or 0 }}"
+                  data-revenue-val="{{ e.revenue or 0 }}"
+                  data-expense-val="{{ e.expense or 0 }}"
                 >
                   
-                <td class="text-end" data-label="{{ _('Datum') }}" data-col="date"
-                    data-sort="{{ e.datum.isoformat() if e.datum else '' }}">
-                  <span class="badge-compact badge-datum badge-soft">
-                    {{ format_date_de(e.datum) }}
+                <td class="text-end" data-label="{{ _('Date') }}" data-col="date"
+                    data-sort="{{ e.date.isoformat() if e.date else '' }}">
+                  <span class="badge-compact badge-date badge-soft">
+                    {{ format_date_de(e.date) }}
                   </span>
                 </td>
 
 
-                  {# --- NEU: Bestandsänderung (Vollgut/Leergut) --- #}
-                  <td class="text-end" data-label="{{ _('Bestandsänderung') }}" data-col="delta-inv">
+                  {# --- New: stock change (full/empty) --- #}
+                  <td class="text-end" data-label="{{ _('Inventory change') }}" data-col="delta-inv">
                     <span class="d-inline-flex flex-nowrap gap-1">
-                      {% if e.vollgut != 0 %}
-                        <span class="badge delta delta-pos" title="{{ _('Vollgut') }}">
-                          +{{ e.vollgut }} {{ _('Fl.') }}
-                          <span class="visually-hidden">{{ _('Vollgut') }}</span>
+                      {% if e.full != 0 %}
+                        <span class="badge delta delta-pos" title="{{ _('Full bottles') }}">
+                          +{{ e.full }} {{ _('Btl.') }}
+                          <span class="visually-hidden">{{ _('Full bottles') }}</span>
                         </span>
                       {% endif %}
-                      {% if e.leergut != 0 %}
-                        <span class="badge delta delta-neg" title="{{ _('Leergut') }}">
-                          −{{ e.leergut }} {{ _('Fl.') }}
-                          <span class="visually-hidden">{{ _('Leergut') }}</span>
+                      {% if e.empty != 0 %}
+                        <span class="badge delta delta-neg" title="{{ _('Empty') }}">
+                          −{{ e.empty }} {{ _('Btl.') }}
+                          <span class="visually-hidden">{{ _('Empty') }}</span>
                         </span>
                       {% endif %}
-                      {% if e.vollgut == 0 and e.leergut == 0 %}
+                      {% if e.full == 0 and e.empty == 0 %}
                         <span class="text-muted">—</span>
                       {% endif %}
                     </span>
                   </td>
 
-                  <td class="text-end" data-label="{{ _('Inventar') }}" data-col="inventar">
-                    <span class="badge badge-compact badge-inventar badge-soft">
-                      {{ e.inventar }} {{ _('Fl.') }}
+                  <td class="text-end" data-label="{{ _('Inventory') }}" data-col="inventory">
+                    <span class="badge badge-compact badge-inventory badge-soft">
+                      {{ e.inventory }} {{ _('Btl.') }}
                       <span class="dir-arrow" aria-hidden="true"></span>
                     </span>
                   </td>
 
-                  {# --- NEU: Zahlung (Einnahme/Ausgabe) --- #}
-                  <td class="text-end" data-label="{{ _('Zahlung') }}" data-col="delta-kasse">
+                  {# --- NEW: Payment (Revenue/Expense) --- #}
+                  <td class="text-end" data-label="{{ _('Payment') }}" data-col="delta-kasse">
                     <span class="d-inline-flex flex-nowrap gap-1">
-                      {% if e.einnahme != 0 %}
-                        <span class="badge delta delta-pos" title="{{ _('Einnahme') }}">
-                          +{{ format_eur_de(e.einnahme) }}
-                          <span class="visually-hidden">{{ _('Einnahme') }}</span>
+                      {% if e.revenue != 0 %}
+                        <span class="badge delta delta-pos" title="{{ _('Revenue') }}">
+                          +{{ format_eur_de(e.revenue) }}
+                          <span class="visually-hidden">{{ _('Revenue') }}</span>
                         </span>
                       {% endif %}
-                      {% if e.ausgabe != 0 %}
-                        <span class="badge delta delta-neg" title="{{ _('Ausgabe') }}">
-                          −{{ format_eur_de(e.ausgabe) }}
-                          <span class="visually-hidden">{{ _('Ausgabe') }}</span>
+                      {% if e.expense != 0 %}
+                        <span class="badge delta delta-neg" title="{{ _('Expense') }}">
+                          −{{ format_eur_de(e.expense) }}
+                          <span class="visually-hidden">{{ _('Expense') }}</span>
                         </span>
                       {% endif %}
-                      {% if e.einnahme == 0 and e.ausgabe == 0 %}
+                      {% if e.revenue == 0 and e.expense == 0 %}
                         <span class="text-muted">—</span>
                       {% endif %}
                     </span>
                   </td>
 
-                  <td class="text-end" data-label="{{ _('Kassenbestand') }}" data-col="kassenbestand">
+                  <td class="text-end" data-label="{{ _('Cash balance') }}" data-col="cashBalance">
                     <span class="badge badge-compact badge-kasse badge-soft">
-                      {{ format_eur_de(e.kassenbestand) }}
+                      {{ format_eur_de(e.cashBalance) }}
                       <span class="dir-arrow" aria-hidden="true"></span>
                     </span>
                   </td>
 
-                  <td class="text-start" data-label="{{ _('Bemerkung') }}" data-col="bemerkung"
-                      data-sort="{{ (e.bemerkung or '').lower() }}">
-                    {% if e.bemerkung %}
-                      <span class="badge-compact badge-bemerkung badge-soft" title="{{ e.bemerkung }}">
-                        {{ e.bemerkung }}
+                  <td class="text-start" data-label="{{ _('Note') }}" data-col="note"
+                      data-sort="{{ (e.note or '').lower() }}">
+                    {% if e.note %}
+                      <span class="badge-compact badge-note badge-soft" title="{{ e.note }}">
+                        {{ e.note }}
                       </span>
                     {% else %}
                       <span class="text-muted">—</span>
                     {% endif %}
                   </td>
 
-                  {# Aktionen unverändert #}
-                    <td class="text-start" data-label="{{ _('Aktionen') }}" data-col="aktionen">
+                  {# Actions unchanged #}
+                    <td class="text-start" data-label="{{ _('Actions') }}" data-col="actions">
                       {% set role = current_user().get('role') %}
                       {% if role in ['Editor', 'Manager', 'Admin'] %}
                       <a class="btn btn-sm btn-outline-primary"
                         href="{{ url_for('bbalance_routes.edit', entry_id=e.id) }}"
-                        title="{{ _('Bearbeiten') }}">
+                        title="{{ _('Edit') }}">
                         <i class="bi-pencil-square"></i>
                       </a>
                       {% endif %}
@@ -393,7 +393,7 @@
                       <button class="btn btn-sm btn-outline-secondary position-relative"
                               type="button"
                               onclick="openAttachments({{ e.id }})"
-                              title="{{ _('Dokumente öffnen') }}">
+                              title="{{ _('Open documents') }}">
                         <i class="bi-paperclip"></i>
                         {% if e.attachment_count and e.attachment_count > 0 %}
                         <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-secondary">
@@ -406,9 +406,9 @@
                       <form method="post"
                             action="{{ url_for('bbalance_routes.delete', entry_id=e.id) }}"
                             class="d-inline"
-                            onsubmit="return confirm('{{ _('Eintrag wirklich löschen?') }}');">
+                            onsubmit="return confirm('{{ _('Delete entry permanently?') }}');">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <button class="btn btn-sm btn-outline-danger" title="{{ _('Löschen') }}">
+                        <button class="btn btn-sm btn-outline-danger" title="{{ _('Delete') }}">
                           <i class="bi-trash"></i>
                         </button>
                       </form>
@@ -417,7 +417,7 @@
                 </tr>
               {% else %}
                 <tr>
-                  <td colspan="7" class="text-center text-muted">{{ _('Keine Einträge vorhanden.') }}</td>
+                  <td colspan="7" class="text-center text-muted">{{ _('No entries available.') }}</td>
                 </tr>
               {% endfor %}
             </tbody>
@@ -437,39 +437,39 @@
 
           <!-- Header -->
           <div class="modal-header">
-            <h5 class="modal-title" id="csvImportModalLabel">{{ _('CSV-Datei importieren') }}</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Schließen') }}"></button>
+            <h5 class="modal-title" id="csvImportModalLabel">{{ _('CSV file import') }}</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Close') }}"></button>
           </div>
 
           <!-- Body -->
           <div class="modal-body">
-            <!-- Datei-Upload -->
+            <!-- File upload -->
             <div class="input-group  mb-3">
               <span class="input-group-text"><i class="bi bi-file-earmark-spreadsheet"></i></span>
               <div class="form-floating flex-grow-1">
                 <input id="csvFile" name="file" type="file" accept=".csv,text/csv" required class="form-control"
                 placeholder="CSV-Datei auswählen">
-                <label for="csvFile" class="form-label">{{ _('CSV-Datei auswählen') }}</label>
+                <label for="csvFile" class="form-label">{{ _('Select CSV file') }}</label>
               </div>
               <small class="form-text text-muted">
-                {{ _("Erwartete Header:") }}
-                <code>Datum;Vollgut;Leergut;Inventar;Einnahme;Ausgabe;Kassenbestand;Bemerkung</code>
-                {{ _("oder Kurzform ohne Inventar/Kassenbestand.") }}
+                {{ _("Expected headers:") }}
+                <code>Date;Full;Empty;Inventory;Revenue;Expense;Cash balance;Note</code>
+                {{ _("or short form without Inventory/Cash balance.") }}
               </small>
             </div>
             <div class="form-check mb-3">
               <input class="form-check-input" type="checkbox" name="replace_all" id="replaceAll">
               <label class="form-check-label" for="replaceAll">
-                {{ _('Bestehende Einträge komplett ersetzen') }}
+                {{ _('Completely replace existing entries') }}
               </label>
             </div>
           </div>
           <div class="modal-footer d-flex justify-content-between">
             <a href="{{ url_for('import_sample') }}" class="btn btn-link">
-              <i class="bi bi-download me-1"></i> {{ _('Beispiel-CSV herunterladen') }}
+              <i class="bi bi-download me-1"></i> {{ _('Download sample CSV file') }}
             </a>
             <button type="submit" class="btn btn-primary">
-              <i class="bi bi-eye me-1"></i> {{ _('Vorschau anzeigen') }}
+              <i class="bi bi-eye me-1"></i> {{ _('Show preview') }}
             </button>
           </div>
         </form>
@@ -477,19 +477,19 @@
     </div>
   </div>
 
-  <!-- NEU: Attachments Modal -->
+  <!-- Attachments Modal -->
   <div class="modal fade" id="attachmentsModal" tabindex="-1" aria-labelledby="attachmentsModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-md">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="attachmentsModalLabel">{{ _('Anhänge') }}</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Schließen') }}"></button>
+          <h5 class="modal-title" id="attachmentsModalLabel">{{ _('Attachments') }}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Close') }}"></button>
         </div>
         <div class="modal-body">
           <ul id="attachmentsList" class="list-group"></ul>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Schließen') }}</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Close') }}</button>
         </div>
       </div>
     </div>
@@ -500,8 +500,8 @@
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="uploadModalLabel">{{ _('Anhänge hochladen') }}</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Schließen') }}"></button>
+          <h5 class="modal-title" id="uploadModalLabel">{{ _('Upload attachments') }}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Close') }}"></button>
         </div>
 
         <div class="modal-body">
@@ -509,18 +509,18 @@
             <input class="form-control" type="file" id="add_temp_files" multiple
               accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.heic,.heif,.svg,.txt,.csv,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.xml,.json">
             <button class="btn btn-outline-primary" type="button" id="btnTempUpload">
-              <i class="bi-upload me-1"></i> {{ _('Hochladen') }}
+              <i class="bi-upload me-1"></i> {{ _('Upload') }}
             </button>
           </div>
           <div class="form-text">
-            {{ _('Zulässige Formate:') }} PDF, Bilder, Office, Text. {{ _('Mehrere Dateien möglich.') }}
+            {{ _('Acceptable formats:') }} PDF, images, Office, text. {{ _('Multiple files possible.') }}
           </div>
 
           <ul id="addTempAttachmentsList" class="list-group mt-3"></ul>
         </div>
 
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Schließen') }}</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Close') }}</button>
         </div>
       </div>
     </div>
@@ -531,7 +531,7 @@
   {% endblock %}
 
   {% block scripts %}
-  <!-- Neuen Datensatz hinzufügen zugeklappt -->
+  <!-- Add new record - closed -->
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const el = document.getElementById('collapseNewEntry');
@@ -541,7 +541,8 @@
       }
   });
   </script>
-  <!-- Filter zugeklappt-->
+
+    <!-- Filter - closed-->
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const el = document.getElementById('collapseFilters');
@@ -551,9 +552,10 @@
       }
   });
   </script>
-  <!-- Plugin für gestrichelte Nullinie -->
+
+  <!-- Plugin for dashed zero line -->
   <script>
-    // Einfache gestrichelte Nulllinie für Y=0
+    // Simple dashed zero line for Y=0
     const zeroLinePlugin = {
       id: 'zeroLinePlugin',
       afterDatasetsDraw(chart, args, pluginOptions) {
@@ -561,15 +563,15 @@
         const yScale = scales?.y;
         if (!yScale) return;
 
-        // Pixelposition der Nulllinie berechnen
+        // Calculate pixel position of the zero line
         const yZero = yScale.getPixelForValue(0);
 
-        // Nur zeichnen, wenn 0 im sichtbaren Bereich liegt
+        // Only draw if 0 is in the visible range
         if (yZero < chartArea.top || yZero > chartArea.bottom) return;
 
         ctx.save();
         ctx.beginPath();
-        ctx.setLineDash([6, 4]);            // gestrichelt
+        ctx.setLineDash([6, 4]);            // dashed
         ctx.lineWidth = 1.5;
         ctx.strokeStyle = (getComputedStyle(document.documentElement)
           .getPropertyValue('--bs-secondary') || '#6c757d').trim();
@@ -580,34 +582,34 @@
       }
     };
 
-    // global registrieren
+    // register globally
     if (window.Chart) Chart.register(zeroLinePlugin);
   </script>
 
   <script>
-    // Daten aus Flask (Jinja rendert nur die Werte)
+    // Data from Flask (Jinja only renders the values))
     const labelsRaw = {{ labels_all | tojson | safe }};
     const dataInv   = {{ series_inv | tojson | safe }};
-    const dataKas   = {{ series_kas | tojson | safe }};
+    const dataCashbalance   = {{ series_cashbalance | tojson | safe }};
 
-    // Optional: ISO-Währung aus Kontext (Fallback EUR)
+    // Optional: ISO currency from context (fallback EUR)
     const CURRENCY_CODE = "{{ currency_code | default('EUR') }}";
 
-    // Labels stabil gegen UTC-Shift: interpretier Datum als lokale Mitternacht
+    // Labels stable against UTC shift: Interpret date as local midnight
     const labels = (Array.isArray(labelsRaw) ? labelsRaw : []).map(d => {
-        if (!d) return '';                          // leer → kein Datum
-        const parsed = new Date(`${d}T00:00:00`);   // lokale Mitternacht
+        if (!d) return '';                          // empty -> no date
+        const parsed = new Date(`${d}T00:00:00`);   // local midnight
         return isNaN(parsed) ? '' : parsed.toLocaleDateString('de-DE');
     });
 
 
-    // Bootstrap-Farben aus CSS-Variablen
+    // Bootstrap colors from CSS variables
     const css = getComputedStyle(document.documentElement);
     const colorPrimary = (css.getPropertyValue('--bs-primary') || '#0d6efd').trim();
     const colorSuccess = (css.getPropertyValue('--bs-success') || '#198754').trim();
     const gridColor    = (css.getPropertyValue('--bs-border-color') || '#dee2e6').trim();
 
-    // Gemeinsame Chart-Optionen für beide Sparklines
+    // Common chart options for both sparklines
     const baseOptions = {
       responsive: true,
       maintainAspectRatio: false,
@@ -622,9 +624,9 @@
               const n = Number(val);
               const safe = Number.isFinite(n) ? n.toFixed(2) : '0.00';
 
-              if (ctx.dataset?.label === 'Kassenbestand') {
-                // Einfacher: Wert + Symbol aus Jinja
-                return `${safe} {{ _('waehrung') }}`;
+              if (ctx.dataset?.label === 'Cash balance') {
+                // Simpler: Value + symbol from Jinja
+                return `${safe} {{ _('currency') }}`;
               }
               return `${val} {{ _('Fl.') }}`;
             }
@@ -634,37 +636,37 @@
       },
       scales: {
         x: {
-          display: true,                   // ← sichtbar
+          display: true,                   // visible
           grid: { display: false },
           ticks: {
-            maxTicksLimit: 6,              // kompakt
+            maxTicksLimit: 6,              // compact
             autoSkip: true
           }
         },
         y: {
-          display: true,                   // ← sichtbar
+          display: true,                   // visible
           grid: {
             color: gridColor,
             lineWidth: 1
           },
           ticks: {
-            maxTicksLimit: 5,              // kompakt
+            maxTicksLimit: 5,              // compact
           }
         }
       }
     };
 
 
-    // Sanfte Flächenfüllung
+    // Gentle surface filling
     function makeGradient(ctx, baseColor) {
       const h = ctx?.canvas?.height || 80;
       const g = ctx.createLinearGradient(0, 0, 0, h);
-      g.addColorStop(0, baseColor + '33'); // ~20% Deckkraft
-      g.addColorStop(1, baseColor + '00'); // 0% Deckkraft
+      g.addColorStop(0, baseColor + '33'); // ~20% opacity
+      g.addColorStop(1, baseColor + '00'); // 0% opacity
       return g;
     }
 
-    // Inventar-Sparkline
+    // Inventory-Sparkline
     (function renderInv() {
       const invCanvas = document.getElementById('sparklineInv');
       if (!invCanvas || !window.Chart) return;
@@ -674,7 +676,7 @@
         data: {
           labels,
           datasets: [{
-            label: 'Inventar',
+            label: 'Inventory',
             data: dataInv || [],
             borderColor: colorPrimary,
             backgroundColor: makeGradient(invCtx, colorPrimary),
@@ -689,7 +691,7 @@
       });
     })();
 
-    // Kassenbestand-Sparkline
+    // Cash balance-Sparkline
     (function renderKas() {
       const kasCanvas = document.getElementById('sparklineKas');
       if (!kasCanvas || !window.Chart) return;
@@ -699,8 +701,8 @@
         data: {
           labels,
           datasets: [{
-            label: 'Kassenbestand',
-            data: dataKas || [],
+            label: 'Cash balance',
+            data: dataCashbalance || [],
             borderColor: colorSuccess,
             backgroundColor: makeGradient(kasCtx, colorSuccess),
             borderWidth: 2,
@@ -718,7 +720,7 @@
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const form = document.getElementById('transaction-form');
-      const orderIds = ['datum', 'vollgut', 'leergut', 'einnahme', 'ausgabe', 'bemerkung'];
+      const orderIds = ['date', 'full', 'empty', 'revenue', 'expense', 'note'];
       const fields = orderIds.map(id => document.getElementById(id) || form?.querySelector(`[name="${id}"]`)).filter(Boolean);
 
       // Auto-Tab
@@ -744,9 +746,9 @@
       function toggleCalendarDark(calEl, dark) { if (calEl) calEl.classList.toggle('flatpickr-dark', !!dark); }
       if (window.flatpickr) {
         if (flatpickr.l10ns?.de) flatpickr.localize(flatpickr.l10ns.de);
-        const fp = flatpickr('#datum', {
+        const fp = flatpickr('#date', {
           allowInput: true, dateFormat: 'd.m.Y', clickOpens: true, disableMobile: false,
-          onClose: () => focusByOffset(document.getElementById('datum'), 1),
+          onClose: () => focusByOffset(document.getElementById('date'), 1),
           onOpen: (s, d, i) => toggleCalendarDark(i.calendarContainer, isDark())
         });
         new MutationObserver(() => {
@@ -758,12 +760,12 @@
       });
       }
 
-      // Haptik
+      // Haptics
       function hapticFeedback() { if (navigator.vibrate) navigator.vibrate(10); }
       form?.querySelectorAll('input, textarea, select').forEach(el => el.addEventListener('focus', hapticFeedback));
 
-      // Pflichtfelder-Gruppe
-      const feldIds = ['einnahme', 'ausgabe', 'vollgut', 'leergut'];
+      // Required fields group
+      const feldIds = ['revenue', 'expense', 'full', 'empty'];
       const felder = feldIds.map(id => document.getElementById(id)).filter(Boolean);
       function getNumericValue(el) {
         const raw = (el?.value ?? '').toString().trim().replace(',', '.');
@@ -774,12 +776,12 @@
 
       function setInlineInvalid(on) {
         felder.forEach(el => { el.classList.toggle('is-invalid', on); el.setAttribute('aria-invalid', on ? 'true' : 'false'); });
-        const ausgabeWrap = document.getElementById('ausgabe')?.closest('.input-group, .form-floating');
-        if (on && ausgabeWrap && !ausgabeWrap.querySelector('.invalid-feedback')) {
+        const expenseWrap = document.getElementById('expense')?.closest('.input-group, .form-floating');
+        if (on && expenseWrap && !expenseWrap.querySelector('.invalid-feedback')) {
           const fb = document.createElement('div');
           fb.className = 'invalid-feedback';
-          fb.textContent = '{{ _("Bitte mindestens einen Wert bei Einnahme, Ausgabe, Vollgut oder Leergut angeben.") }}';
-          (ausgabeWrap.parentElement || ausgabeWrap).appendChild(fb);
+          fb.textContent = '{{ _("Please enter at least one value for revenue, expenditure, full or empty bottles.") }}';
+          (expenseWrap.parentElement || expenseWrap).appendChild(fb);
         }
       }
       function showGlobalError(msg) {
@@ -803,14 +805,14 @@
         if (alert) { alert.classList.add('d-none'); alert.textContent = ''; }
       }
 
-      // Submit-Button deaktivieren bis >0
+      // Disable submit button until >0
       const submitBtn = form?.querySelector('.btn.btn-success.flex-grow-1');
       function updateSubmit() {
         if (!submitBtn) return;
         const enabled = anyPositive();
         submitBtn.disabled = !enabled;
         submitBtn.setAttribute('aria-disabled', String(!enabled));
-        submitBtn.title = enabled ? '' : '{{ _("Bitte mindestens einen Wert bei Einnahme, Ausgabe, Vollgut oder Leergut angeben.") }}';
+        submitBtn.title = enabled ? '' : '{{ _("Please enter at least one value for revenue, expenditure, full or empty.") }}';
       }
 
       feldIds.forEach(id => {
@@ -826,7 +828,7 @@
       // Submit-Handler
       if (form) {
 
-        // Safari/Back-Forward-Cache: Spinner entfernen, wenn Nutzer per "Zurück" auf die Seite kommt
+        // Safari/Back-Forward Cache: Remove spinner when users return to the page using the "Back" button
         window.addEventListener('pageshow', (e) => {
           if (e.persisted) form.classList.remove('is-submitting');
         });
@@ -835,7 +837,7 @@
           if (!anyPositive()) {
             event.preventDefault(); event.stopPropagation();
             setInlineInvalid(true);
-            showGlobalError('{{ _("Bitte mindestens einen Wert bei Einnahme, Ausgabe, Vollgut oder Leergut angeben.") }}');
+            showGlobalError('{{ _("Please enter at least one value for revenue, expenditure, full or empty.") }}');
             form.classList.add('was-validated');
             updateSubmit();
             return;
@@ -848,14 +850,13 @@
             return;
           }
 
-          // ✅ Alles ok: Spinner-Klasse setzen (wird serverseitig durch Redirect automatisch beendet)
+          // Everything OK: Set spinner class (automatically terminated on the server side by redirect)
           form.classList.add('is-submitting');
           form.classList.add('was-validated');
         }, false);
       }
     });
   </script>
-
 
   <script>
   function sortTableByDate() {
@@ -870,7 +871,7 @@
       const cellB = b.querySelector('td[data-col="date"]');
       const sortA = cellA?.getAttribute('data-sort') || '';
       const sortB = cellB?.getAttribute('data-sort') || '';
-      // ISO-String: lexikographisch sortierbar
+      // ISO string: lexicographically sortable
       return isAsc ? sortA.localeCompare(sortB) : sortB.localeCompare(sortA);
     });
 
@@ -882,7 +883,7 @@
     async function openAttachments(entryId) {
       try {
         const resp = await fetch(`{{ url_for('attachments_routes.attachments_list', entry_id=0) }}`.replace('0', entryId));
-        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        if (!resp.ok) throw new Error('HTTP ' + resp.state);
         const list = await resp.json();
 
         const ul = document.getElementById('attachmentsList');
@@ -895,13 +896,13 @@
         }
 
         if (list.length === 1) {
-          const targetUrl = list[0].view_url || list[0].url;  // Inline bevorzugen
-          const w = window.open('', '_blank');                // synchron aus Click-Kontext
+          const targetUrl = list[0].view_url || list[0].url;  // Prefer inline
+          const w = window.open('', '_blank');                // synchronously from click context
           if (w) {
             try { w.opener = null; } catch (e) {}
             w.location.href = targetUrl;
           } else {
-            window.location.assign(targetUrl);                // Fallback: gleicher Tab
+            window.location.assign(targetUrl);                // Fallback: same tab
           }
           return;
         }
@@ -970,7 +971,7 @@
         if (!resp.ok) return;
         const items = await resp.json();
         listEl.innerHTML = '';
-        updateBadge(items.length); // ← Badge aktualisieren
+        updateBadge(items.length); // Update badge
         if (!items || items.length === 0) {
           listEl.innerHTML = `<li class="list-group-item text-muted">{{ _('Keine Anhänge vorhanden.') }}</li>`;
           updateBadge(0);
@@ -986,11 +987,11 @@
           const nameSpan = document.createElement('span'); nameSpan.textContent = it.name;
           left.append(icon, nameSpan);
           const actions = document.createElement('div'); actions.className = 'd-flex gap-2';
-          const openA = document.createElement('a'); openA.className = 'btn btn-sm btn-outline-primary'; openA.href = it.url; openA.target = '_blank'; openA.textContent = "{{ _('Öffnen') }}";
-          const delBtn = document.createElement('button'); delBtn.className = 'btn btn-sm btn-outline-danger'; delBtn.dataset.id = it.id; delBtn.textContent = "{{ _('Löschen') }}";
+          const openA = document.createElement('a'); openA.className = 'btn btn-sm btn-outline-primary'; openA.href = it.url; openA.target = '_blank'; openA.textContent = "{{ _('Open') }}";
+          const delBtn = document.createElement('button'); delBtn.className = 'btn btn-sm btn-outline-danger'; delBtn.dataset.id = it.id; delBtn.textContent = "{{ _('Delete') }}";
           delBtn.addEventListener('click', async (ev) => {
             ev.preventDefault();
-            if (!confirm('{{ _("Anhang wirklich löschen?") }}')) return;
+            if (!confirm('{{ _("Delete attachment for real?") }}')) return;
             const attId = delBtn.dataset.id;
             await fetch(`{{ url_for('attachments_routes.attachments_temp_delete', att_id=0) }}`.replace('0', attId), { method: 'POST', headers: { 'X-CSRF-Token': "{{ csrf_token() }}" }, credentials: 'same-origin' });
             refreshTempList();
@@ -1012,7 +1013,7 @@
           fd.append('csrf_token', csrf);
           const url = "{{ url_for('attachments_routes.attachments_temp_upload', token='__T__') }}".replace('__T__', token);
           const resp = await fetch(url, { method: 'POST', body: fd, credentials: 'same-origin' });
-          if (!resp.ok) { alert(await resp.text() || 'Upload fehlgeschlagen'); break; }
+          if (!resp.ok) { alert(await resp.text() || 'Upload failed'); break; }
         }
         fileEl.value = '';
         refreshTempList();
@@ -1022,7 +1023,6 @@
     });
   </script>
 
-
   <script>
   document.addEventListener('DOMContentLoaded', () => {
     const form    = document.getElementById('filtersForm');
@@ -1031,7 +1031,7 @@
     const elTo    = document.getElementById('filter_to');
 
     // -----------------------------
-    // Auto-Submit: Anhänge
+    // Auto-Submit: Attachments
     // -----------------------------
     const attachmentsSelect = document.getElementById('filter_attachments');
     if (attachmentsSelect && form) {
@@ -1041,7 +1041,7 @@
     }
 
     // -----------------------------
-    // Auto-Submit: Jahr
+    // Auto-Submit: Year
     // -----------------------------
     const yearSelect = document.getElementById('filter_year');
     if (yearSelect && form) {
@@ -1051,12 +1051,12 @@
     }
 
     // -----------------------------
-    // Suche (filter_q):
-    // submit bei change/blur + optional Debounce beim Tippen
+    // Search (filter_q):
+    // Submit on change/blur + optional debounce on typing
     // -----------------------------
     const searchInput = document.getElementById('filter_q');
 
-    // Debounce-Helfer
+    // Debounce helper
     function debounce(fn, wait = 500) {
       let t = null;
       return function (...args) {
@@ -1065,10 +1065,10 @@
       };
     }
 
-    // letzter erfolgreich übermittelter q-Wert (Loop-/Doppel-Submit-Schutz)
+    // Last successfully transmitted q value (loop/double submit protection)
     let lastSubmittedQ = (searchInput?.value || '').trim();
 
-    // Submits nur, wenn sich der Wert wirklich geändert hat
+    // Only submits if the value has actually changed
     const submitIfQChanged = () => {
       if (!form || !searchInput) return;
       const q = searchInput.value.trim();
@@ -1078,21 +1078,21 @@
     };
 
     if (searchInput && form) {
-      // 1) CHANGE: Nutzer bestätigt/verlässt Feld mit geändertem Wert
+      // 1) CHANGE: User confirms/exits field with changed value
       searchInput.addEventListener('change', submitIfQChanged);
 
-      // 2) BLUR: Beim Verlassen des Feldes (nur wenn Wert anders)
+      // 2) BLUR: When leaving the field (only if value is different)
       searchInput.addEventListener('blur', submitIfQChanged);
 
-      // 3) (OPTIONAL) Debounce beim Tippen: nach 500ms Inaktivität filtern
-      //    Wenn du KEIN Live-Filtering willst, kommentiere die nächste Zeile aus.
+      // 3) (OPTIONAL) Debounce when typing: filter after 500ms of inactivity
+      //    If you do NOT want live filtering, comment out the next line.
       searchInput.addEventListener('input', debounce(submitIfQChanged, 1500));
     }
 
     // -----------------------------
-    // Zeitraum / Flatpickr
+    // Period / Flatpickr
     // -----------------------------
-    // Lokales YYYY-MM-DD (kein UTC-Shift)
+    // Local YYYY-MM-DD (no UTC shift)
     const fmtLocal = (d) => {
       if (!d) return '';
       const y = d.getFullYear();
@@ -1101,7 +1101,7 @@
       return `${y}-${m}-${day}`;
     };
 
-    // Re-Submit nur bei echter Änderung von from/to (Loop-Schutz)
+    // Re-submit only if there is a genuine change from/to (loop protection)
     const submitIfDateChanged = (() => {
       let lastKey = `${elFrom?.value || ''}|${elTo?.value || ''}`;
       return () => {
@@ -1112,7 +1112,7 @@
       };
     })();
 
-    // Flatpickr für Zeitraum initialisieren
+    // Initialize flatpickr for period
     if (!window.flatpickr || !elRange) return;
     if (flatpickr.l10ns?.de) flatpickr.localize(flatpickr.l10ns.de);
     const isDark = () => document.documentElement.getAttribute('data-bs-theme') === 'dark';
@@ -1134,7 +1134,6 @@
         if (!hydrating && from && to) submitIfDateChanged();
       }
     });
-
     
     const preset = [elFrom.value, elTo.value].filter(Boolean);
       if (preset.length) fp.setDate(preset, false, 'Y-m-d');
@@ -1148,46 +1147,42 @@
     });
   </script>
 
-
   <script>
     function applyStackedVisibility() {
       const isStacked = window.matchMedia('(max-width: 768px)').matches;
       const rows = document.querySelectorAll('table.table-stacked tbody tr');
 
       rows.forEach(tr => {
-        // vorhandene Flags wie bisher
-        const vV = Number(tr.getAttribute('data-vollgut-val')   || 0);
-        const lV = Number(tr.getAttribute('data-leergut-val')   || 0);
-        const eV = Number(tr.getAttribute('data-einnahme-val')  || 0);
-        const aV = Number(tr.getAttribute('data-ausgabe-val')   || 0);
+        // existing flags as before
+        const vV = Number(tr.getAttribute('data-full-val')   || 0);
+        const lV = Number(tr.getAttribute('data-empty-val')   || 0);
+        const eV = Number(tr.getAttribute('data-revenue-val')  || 0);
+        const aV = Number(tr.getAttribute('data-expense-val')   || 0);
 
-        // Zellen
-        const tdInv = tr.querySelector('td[data-col="inventar"]');
-        const tdKas = tr.querySelector('td[data-col="kassenbestand"]');
+        // Cells
+        const tdInv = tr.querySelector('td[data-col="inventory"]');
+        const tdKas = tr.querySelector('td[data-col="cashBalance"]');
 
-        // Pfeil-Span im Badge holen
+        // Get the arrow chip in the badge
         const invArrow = tdInv?.querySelector('.dir-arrow');
         const kasArrow = tdKas?.querySelector('.dir-arrow');
 
-        // Inventar: Vollgut vs. Leergut
+        // Inventory: full vs. empty
         if (invArrow) {
           if (vV > lV) { invArrow.textContent = '▲'; invArrow.classList.add('dir-up'); invArrow.classList.remove('dir-down'); }
           else if (lV > vV) { invArrow.textContent = '▼'; invArrow.classList.add('dir-down'); invArrow.classList.remove('dir-up'); }
           else { invArrow.textContent = ''; invArrow.classList.remove('dir-up','dir-down'); }
         }
 
-        // Kasse: Einnahme vs. Ausgabe
+        // Cash register: Revenue vs. Expense
         if (kasArrow) {
           if (eV > aV) { kasArrow.textContent = '▲'; kasArrow.classList.add('dir-up'); kasArrow.classList.remove('dir-down'); }
           else if (aV > eV) { kasArrow.textContent = '▼'; kasArrow.classList.add('dir-down'); kasArrow.classList.remove('dir-up'); }
           else { kasArrow.textContent = ''; kasArrow.classList.remove('dir-up','dir-down'); }
         }
-
-        // --- deine bisherige Sichtbarkeitslogik (Stacked) kann unverändert bleiben ---
-        // ... (delta-inv / delta-kasse anzeigen/ausblenden, ALWAYS_SHOW etc.)
       });
 
-      // Desktop-Sichtbarkeit zurücksetzen wie bisher
+      // Reset desktop visibility
       if (!isStacked) {
         rows.forEach(tr => tr.querySelectorAll('td[data-col]').forEach(td => td.style.removeProperty('display')));
       }
@@ -1200,7 +1195,7 @@
     });
   </script>
 
-  <!-- Tabelle auf Stacked umschalten bei zu kleiner Breite -->
+  <!-- Switch table to stacked if width is too small -->
   <script>
     function toggleStackedTable() {
       const table = document.querySelector('table.table-stacked');
@@ -1210,7 +1205,7 @@
       table.classList.toggle('is-stacked', tableWidth > containerWidth);
     }
 
-    // Initial, nach vollständigem Laden, und bei Resize
+    // Initially, after complete loading, and during resizing
     document.addEventListener('DOMContentLoaded', toggleStackedTable);
     window.addEventListener('load', toggleStackedTable);
     window.addEventListener('resize', () => {
@@ -1218,7 +1213,7 @@
       window.__stackedTO = setTimeout(toggleStackedTable, 100);
     });
 
-    // Reagiert auch auf Größenänderungen des Elterncontainers (z. B. Collapse/Filter)
+    // Also reacts to size changes of the parent container (e.g., collapse/filter)
     const tableParent = document.querySelector('table.table-stacked')?.parentElement;
     if (tableParent && 'ResizeObserver' in window) {
       const ro = new ResizeObserver(() => toggleStackedTable());
@@ -1241,5 +1236,4 @@
     }
   });
   </script>
-
   {% endblock %}

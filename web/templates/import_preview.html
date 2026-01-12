@@ -4,36 +4,36 @@
 
 <div class="card shadow-sm mb-3">
   <div class="card-body">
-    <!-- Titel + Zurück-Button -->
+    <!-- Title + Back button -->
     <div class="d-flex justify-content-between align-items-center mb-3">
-      <h1 class="h5 mb-0">{{ _('CSV-Import – Vorschau') }}</h1>
+      <h1 class="h5 mb-0">{{ _('CSV import – Preview') }}</h1>
       <a href="{{ url_for('bbalance_routes.index') }}" class="btn btn-outline-secondary">
-        <i class="bi bi-arrow-left me-1"></i> {{ _('Zurück') }}
+        <i class="bi bi-arrow-left me-1"></i> {{ _('Back') }}
       </a>
     </div>
 
-    <!-- Zusammenfassung -->
+    <!-- Summary -->
     <div class="mb-2 text-muted">
-      <span class="me-3">{{ _('Gesamt:') }} <strong>{{ total }}</strong></span>
-      <span class="me-3">{{ _('potentielle Duplikate:') }} <strong>{{ dup_count }}</strong></span>
+      <span class="me-3">{{ _('Total:') }} <strong>{{ total }}</strong></span>
+      <span class="me-3">{{ _('potential duplicates:') }} <strong>{{ dup_count }}</strong></span>
       {% if replace_all %}
-        <span class="fw-semibold text-danger">{{ _('Modus: Alle bestehenden Einträge werden ersetzt') }}</span>
+        <span class="fw-semibold text-danger">{{ _('Mode: All existing entries will be replaced') }}</span>
       {% else %}
-        <span>{{ _('Modus: Anhängen (bestehende Einträge bleiben erhalten)') }}</span>
+        <span>{{ _('Mode: Append (existing entries are retained))') }}</span>
       {% endif %}
     </div>
 
-    <!-- Legende -->
+    <!-- Legend -->
     <div class="d-flex flex-wrap gap-2 mb-3">
-      <span class="badge bg-warning-subtle text-warning-emphasis border">{{ _('Duplikat') }}</span>
-      <span class="badge bg-danger-subtle text-danger-emphasis border">{{ _('Fehler in Zeile') }}</span>
+      <span class="badge bg-warning-subtle text-warning-emphasis border">{{ _('Duplicate') }}</span>
+      <span class="badge bg-danger-subtle text-danger-emphasis border">{{ _('Error in line') }}</span>
     </div>
 
-    <!-- Mapping-Bereich -->
+    <!-- Mapping area -->
     {% if allow_mapping %}
     <div class="card mb-3">
       <div class="card-header">
-        <strong>{{ _('Feldzuordnung (Mapping)') }}</strong>
+        <strong>{{ _('Field mapping') }}</strong>
       </div>
       <div class="card-body">
         <form method="post" action="{{ url_for('import_preview') }}">
@@ -43,12 +43,12 @@
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
           {% set fields = [
-            {'key': 'Datum',     'label': _('Datum')},
-            {'key': 'Vollgut',   'label': _('Vollgut')},
-            {'key': 'Leergut',   'label': _('Leergut')},
-            {'key': 'Einnahme',  'label': _('Einnahme')},
-            {'key': 'Ausgabe',   'label': _('Ausgabe')},
-            {'key': 'Bemerkung', 'label': _('Bemerkung')}
+            {'key': 'Date',   'label': _('Date')},
+            {'key': 'Full',   'label': _('Full')},
+            {'key': 'Empty',  'label': _('Empty')},
+            {'key': 'Revenue', 'label': _('Revenue')},
+            {'key': 'Expense', 'label': _('Expense')},
+            {'key': 'Note',    'label': _('Note')}
           ] %}
 
           <div class="row g-3">
@@ -57,7 +57,7 @@
               <div class="col-12 col-md-4">
                 <div class="form-floating">
                   <select class="form-select" name="map_{{ field_id }}" id="map_{{ field_id }}">
-                    <option value="__none__">– {{ _('keine') }} –</option>
+                    <option value="__none__">– {{ _('none') }} –</option>
                     {% for h in headers %}
                       <option value="{{ loop.index0 }}"
                         {% if mapping and (mapping.get(f.key) is not none) and mapping.get(f.key) == loop.index0 %}selected{% endif %}>
@@ -73,7 +73,7 @@
 
           <div class="text-end mt-3">
             <button type="submit" class="btn btn-primary">
-              <i class="bi bi-arrow-repeat me-1"></i> {{ _('Mapping anwenden & Vorschau aktualisieren') }}
+              <i class="bi bi-arrow-repeat me-1"></i> {{ _('Apply mapping & refresh preview') }}
             </button>
           </div>
         </form>
@@ -81,10 +81,10 @@
     </div>
     {% endif %}
 
-    <!-- Vorschau-Tabelle -->
+    <!-- Preview table -->
     <div class="card mb-3">
       <div class="card-header">
-        <strong>{{ _('Vorschau') }}</strong>
+        <strong>{{ _('Preview') }}</strong>
       </div>
       <div class="card-body p-0">
         <div class="table-responsive border-top">
@@ -92,13 +92,13 @@
             <thead class="table-light">
               <tr>
                 <th>#</th>
-                <th>{{ _('Datum') }}</th>
-                <th class="text-end">{{ _('Vollgut') }}</th>
-                <th class="text-end">{{ _('Leergut') }}</th>
-                <th class="text-end">{{ _('Einnahme') }}</th>
-                <th class="text-end">{{ _('Ausgabe') }}</th>
-                <th>{{ _('Bemerkung') }}</th>
-                <th>{{ _('Status') }}</th>
+                <th>{{ _('Date') }}</th>
+                <th class="text-end">{{ _('Full') }}</th>
+                <th class="text-end">{{ _('Empty') }}</th>
+                <th class="text-end">{{ _('Revenue') }}</th>
+                <th class="text-end">{{ _('Expense') }}</th>
+                <th>{{ _('Note') }}</th>
+                <th>{{ _('State') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -106,26 +106,26 @@
                 {% set row_class = 'table-danger' if r.errors|length > 0 else ('table-warning' if r.is_duplicate and not replace_all else '') %}
                 <tr class="{{ row_class }}">
                   <td>{{ r.line_no }}</td>
-                  <td>{{ r.datum and format_date_de(r.datum) or '–' }}</td>
-                  <td class="text-end">{{ r.vollgut }}</td>
-                  <td class="text-end">{{ r.leergut }}</td>
-                  <td class="text-end">{{ r.einnahme }}</td>
-                  <td class="text-end">{{ r.ausgabe }}</td>
-                  <td>{{ r.bemerkung }}</td>
+                  <td>{{ r.date and format_date_de(r.date) or '–' }}</td>
+                  <td class="text-end">{{ r.full }}</td>
+                  <td class="text-end">{{ r.empty }}</td>
+                  <td class="text-end">{{ r.revenue }}</td>
+                  <td class="text-end">{{ r.expense }}</td>
+                  <td>{{ r.note }}</td>
                   <td>
                     {% if r.errors|length > 0 %}
-                      <div class="fw-semibold">{{ _('Fehler:') }}</div>
+                      <div class="fw-semibold">{{ _('Error:') }}</div>
                       <ul class="mb-0 ps-3">
                         {% for e in r.errors %}<li>{{ e }}</li>{% endfor %}
                       </ul>
                     {% else %}
                       {% if replace_all %}
-                        {{ _('wird importiert') }}
+                        {{ _('is being imported') }}
                       {% else %}
                         {% if r.is_duplicate %}
-                          {{ _('Duplikat – wird übersprungen (Standard)') }}
+                          {{ _('Duplicate – skipped (default)') }}
                         {% else %}
-                          {{ _('neu – wird importiert') }}
+                          {{ _('new – being imported') }}
                         {% endif %}
                       {% endif %}
                     {% endif %}
@@ -147,11 +147,11 @@
         <div class="d-flex flex-column">
           <label class="d-flex align-items-center gap-2">
             <input type="radio" name="mode" value="skip_dups" checked>
-            <span>{{ _('Duplikate überspringen (empfohlen)') }}</span>
+            <span>{{ _('Skip duplicates (recommended)') }}</span>
           </label>
           <label class="d-flex align-items-center gap-2">
             <input type="radio" name="mode" value="insert_all">
-            <span>{{ _('Alle einfügen (auch Duplikate)') }}</span>
+            <span>{{ _('Insert all (including duplicates)') }}</span>
           </label>
         </div>
       {% else %}
@@ -160,15 +160,15 @@
 
       <label class="d-flex align-items-center gap-2 mb-0">
         <input type="checkbox" name="import_invalid">
-        <span>{{ _('Auch Zeilen mit Fehlern importieren (nicht empfohlen)') }}</span>
+        <span>{{ _('Import lines with errors (not recommended))') }}</span>
       </label>
 
       <div class="ms-auto d-flex flex-wrap gap-2">
         <button type="submit" class="btn btn-success">
-          <i class="bi bi-check-lg me-1"></i> {{ _('Import jetzt durchführen') }}
+          <i class="bi bi-check-lg me-1"></i> {{ _('Import now') }}
         </button>
         <a href="{{ url_for('bbalance_routes.index') }}" class="btn btn-outline-secondary">
-          {{ _('Abbrechen') }}
+          {{ _('Cancel') }}
         </a>
       </div>
     </form>

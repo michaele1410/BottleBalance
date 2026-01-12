@@ -1,8 +1,6 @@
 # -----------------------
 # Data Access
-# -----------------------
-
-# modules/bbalance_utils.py
+# ----------------------
 from decimal import Decimal
 from flask import request, session
 from sqlalchemy import text
@@ -12,7 +10,6 @@ from uuid import uuid4
 from modules.core_utils import engine, ROLES
 from modules.csv_utils import today_ddmmyyyy, format_eur_de, format_date_de
 from modules.auth_utils import current_user
-
 
 def fetch_entries(
     search=None,
@@ -25,18 +22,18 @@ def fetch_entries(
     where = []
     params = {}
 
-    # Filter (außen, Alias "ar")
+    # Filter (external, alias "ar")
     if search:
-        where.append("(ar.bemerkung ILIKE :q OR to_char(ar.datum, 'DD.MM.YYYY') ILIKE :q)")
+        where.append("(ar.note ILIKE :q OR to_char(ar.date, 'DD.MM.YYYY') ILIKE :q)")
         params['q'] = f"%{search}%"
     if date_from:
-        where.append("ar.datum >= :df")
+        where.append("ar.date >= :df")
         params['df'] = date_from
     if date_to:
-        where.append("ar.datum <= :dt")
+        where.append("ar.date <= :dt")
         params['dt'] = date_to
     if year is not None:
-        where.append("EXTRACT(YEAR FROM ar.datum) = :year")
+        where.append("EXTRACT(YEAR FROM ar.date) = :year")
         params['year'] = year
     if attachments_filter == 'only':
         where.append("COALESCE(a.cnt, 0) > 0")
@@ -45,7 +42,7 @@ def fetch_entries(
 
     where_sql = ("WHERE " + " AND ".join(where)) if where else ""
 
-    # Sortierung (Profil) + Override
+    # Sorting (profile) + override
     user = current_user()
     sort_order_desc = bool(user.get('sort_order_desc')) if user else False
     order_dir = 'DESC' if sort_order_desc else 'ASC'
@@ -53,7 +50,7 @@ def fetch_entries(
         od = str(force_order_dir).upper()
         order_dir = 'ASC' if od == 'ASC' else 'DESC'
 
-    # CTE: Window-Functions über *alle* Zeilen (kein WHERE hier!)
+    # CTE: Window functions over *all* rows (no WHERE here!)
     sql = f"""
         WITH att AS (
             SELECT entry_id, COUNT(*) AS cnt
@@ -63,35 +60,35 @@ def fetch_entries(
         all_rows AS (
             SELECT
                 e.id,
-                e.datum,
-                e.vollgut,
-                e.leergut,
-                e.einnahme,
-                e.ausgabe,
-                e.bemerkung,
+                e.date,
+                e.full,
+                e.empty,
+                e.revenue,
+                e.expense,
+                e.note,
                 e.created_by,
-                SUM(e.einnahme - e.ausgabe)
-                    OVER (ORDER BY e.datum, e.id  ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS kassenbestand,
-                SUM(e.vollgut - e.leergut)
-                    OVER (ORDER BY e.datum, e.id ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS inventar
+                SUM(e.revenue - e.expense)
+                    OVER (ORDER BY e.date, e.id  ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS cashBalance,
+                SUM(e.full - e.empty)
+                    OVER (ORDER BY e.date, e.id ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS inventory
             FROM entries e
         )
         SELECT
             ar.id,
-            ar.datum,
-            ar.vollgut,
-            ar.leergut,
-            ar.einnahme,
-            ar.ausgabe,
-            ar.bemerkung,
+            ar.date,
+            ar.full,
+            ar.empty,
+            ar.revenue,
+            ar.expense,
+            ar.note,
             ar.created_by,
-            ar.kassenbestand,
-            ar.inventar,
+            ar.cashBalance,
+            ar.inventory,
             COALESCE(a.cnt, 0) AS attachment_count
         FROM all_rows ar
         LEFT JOIN att a ON a.entry_id = ar.id
         {where_sql}
-        ORDER BY ar.datum {order_dir}, ar.id {order_dir}
+        ORDER BY ar.date {order_dir}, ar.id {order_dir}
     """
 
     with engine.begin() as conn:
@@ -101,52 +98,49 @@ def fetch_entries(
     for r in rows:
         result.append({
             'id': r['id'],
-            'datum': r['datum'],
-            'vollgut': int(r['vollgut'] or 0),
-            'leergut': int(r['leergut'] or 0),
-            'einnahme': Decimal(r['einnahme'] or 0),
-            'ausgabe': Decimal(r['ausgabe'] or 0),
-            'bemerkung': r['bemerkung'] or '',
-            'inventar': int(r['inventar'] or 0),  # Inventar in Flaschen
-            'kassenbestand': Decimal(r['kassenbestand'] or 0).quantize(Decimal('0.01')),
+            'date': r['date'],
+            'full': int(r['full'] or 0),
+            'empty': int(r['empty'] or 0),
+            'revenue': Decimal(r['revenue'] or 0),
+            'expense': Decimal(r['expense'] or 0),
+            'note': r['note'] or '',
+            'inventory': int(r['inventory'] or 0),  # Inventory in bottles
+            'cashBalance': Decimal(r['cashBalance'] or 0).quantize(Decimal('0.01')),
             'created_by': r['created_by'],
             'attachment_count': int(r['attachment_count'] or 0),
         })
     return result
 
-
 def get_global_totals():
-    """Berechnet Inventar und Kassenbestand aus der gesamten Historie."""
+    """Calculates inventory and cash balance from the entire history."""
     with engine.begin() as conn:
         row = conn.execute(text("""
             SELECT
-                COALESCE(SUM(vollgut) - SUM(leergut), 0) AS inventar,
-                COALESCE(SUM(einnahme) - SUM(ausgabe), 0) AS kassenbestand
+                COALESCE(SUM(full) - SUM(empty), 0) AS inventory,
+                COALESCE(SUM(revenue) - SUM(expense), 0) AS cashBalance
             FROM entries
         """)).mappings().first()
-    return row['inventar'], row['kassenbestand']
-
+    return row['inventory'], row['cashBalance']
 
 def get_delta_for_filter(date_from=None, date_to=None):
-    """Berechnet die Veränderung im gewählten Zeitraum (optional für Anzeige)."""
+    """Calculates the change in the selected period (optional for display)."""
     query = """
         SELECT
-            COALESCE(SUM(vollgut) - SUM(leergut), 0) AS delta_inv,
-            COALESCE(SUM(einnahme) - SUM(ausgabe), 0) AS delta_kas
+            COALESCE(SUM(full) - SUM(empty), 0) AS delta_inv,
+            COALESCE(SUM(revenue) - SUM(expense), 0) AS delta_cashbalance
         FROM entries
         WHERE 1=1
     """
     params = {}
     if date_from:
-        query += " AND datum >= :df"
+        query += " AND date >= :df"
         params['df'] = date_from
     if date_to:
-        query += " AND datum <= :dt"
+        query += " AND date <= :dt"
         params['dt'] = date_to
     with engine.begin() as conn:
         row = conn.execute(text(query), params).mappings().first()
-    return row['delta_inv'], row['delta_kas']
-
+    return row['delta_inv'], row['delta_cashbalance']
 
 def _user_can_edit_entry(entry_id: int) -> bool:
     """RBAC-Check: edit:any oder edit:own wenn created_by = current_user."""
@@ -165,7 +159,6 @@ def _user_can_edit_entry(entry_id: int) -> bool:
         return owner == user['id']
     return False
 
-
 def _user_can_view_entry(entry_id: int) -> bool:
     allowed = ROLES.get(session.get('role'), set())
     return 'entries:view' in allowed
@@ -179,7 +172,7 @@ def _build_index_context(default_date: str | None = None, temp_token: str | None
 
     filter_attachments = request.args.get('attachments')
 
-    # Jahresfilter aus URL
+    # Annual filter from URL
     year_raw = (request.args.get('year') or '').strip().lower()
     year_val: int | None = None
     if year_raw not in ('', 'all'):
@@ -188,17 +181,17 @@ def _build_index_context(default_date: str | None = None, temp_token: str | None
         except ValueError:
             year_val = None
     
-    #Default nur anwenden, wenn der Nutzer KEIN 'year' übergeben hat
+    #Only apply default if the user has NOT passed 'year'
     year_param_present = 'year' in request.args
     if (not year_param_present) and (not df) and (not dt):
         user = current_user()
-        # TRUE = Alle anzeigen, FALSE = aktuelles Jahr
+        # TRUE = Show all, FALSE = Current year
         if user and user.get('default_filter'):
-            year_val = None  # Alle
+            year_val = None  # All
         else:
             year_val = date.today().year
 
-    # Einträge für Tabelle (mit Profil-Sortierung)
+    # Entries for table (with profile sorting)
     entries = fetch_entries(
         q or None, df, dt,
         attachments_filter=filter_attachments,
@@ -206,10 +199,10 @@ def _build_index_context(default_date: str | None = None, temp_token: str | None
     )
 
     years = get_available_years()
-    inv_aktuell, kas_aktuell = get_global_totals()
-    delta_inv, delta_kas = get_delta_for_filter(df, dt)
+    inv_current, kas_current = get_global_totals()
+    delta_inv, delta_cashbalance = get_delta_for_filter(df, dt)
 
-    # Sparklines: Jahr berücksichtigen, aber immer chronologisch (ASC)
+    # Sparklines: Consider the year, but always chronologically (ASC)
     entries_for_chart = fetch_entries(
         None,
         None if year_val is not None else df,
@@ -218,18 +211,18 @@ def _build_index_context(default_date: str | None = None, temp_token: str | None
         year=year_val,
         force_order_dir='ASC'
     )
-    entries_for_chart.sort(key=lambda e: (e['datum'] or date.min, e['id']))
+    entries_for_chart.sort(key=lambda e: (e['date'] or date.min, e['id']))
 
-    series_inv = [e['inventar'] for e in entries_for_chart]
-    series_kas = [float(e['kassenbestand']) for e in entries_for_chart]
-    labels_all = [e['datum'].isoformat() if e['datum'] else '' for e in entries_for_chart]
+    series_inv = [e['inventory'] for e in entries_for_chart]
+    series_cashbalance = [float(e['cashBalance']) for e in entries_for_chart]
+    labels_all = [e['date'].isoformat() if e['date'] else '' for e in entries_for_chart]
 
     if entries:
-        last = max(entries, key=lambda e: (e['datum'], e['id']))
-        finv = last['inventar']
-        fkas = last['kassenbestand']
+        last = max(entries, key=lambda e: (e['date'], e['id']))
+        finv = last['inventory']
+        fcashbalance = last['cashBalance']
     else:
-        finv, fkas = 0, Decimal('0')
+        finv, fcashbalance = 0, Decimal('0')
 
     role = session.get('role')
     allowed = ROLES.get(role, set())
@@ -239,12 +232,12 @@ def _build_index_context(default_date: str | None = None, temp_token: str | None
 
     return {
         'entries': entries,
-        'inv_aktuell': inv_aktuell,
-        'kas_aktuell': kas_aktuell,
+        'inv_current': inv_current,
+        'kas_current': kas_current,
         'delta_inv': delta_inv,
-        'delta_kas': delta_kas,
+        'delta_cashbalance': delta_cashbalance,
         'filter_inv': finv,
-        'filter_kas': fkas,
+        'filter_cashbalance': fcashbalance,
         'default_date': default_date or today_ddmmyyyy(),
         'format_eur_de': format_eur_de,
         'format_date_de': format_date_de,
@@ -254,7 +247,7 @@ def _build_index_context(default_date: str | None = None, temp_token: str | None
         'can_import_csv': ('import:csv' in allowed),
         'role': role,
         'series_inv': series_inv,
-        'series_kas': series_kas,
+        'series_cashbalance': series_cashbalance,
         'labels_all': labels_all,
         'temp_token': token,
         'years': years,
@@ -263,14 +256,13 @@ def _build_index_context(default_date: str | None = None, temp_token: str | None
         'to': date_to_s or '',
     }
 
-
 def get_available_years() -> list[int]:
-    """Liefert alle vorhandenen Jahre aus entries.datum aufsteigend sortiert."""
+    """Returns all existing years from entries.date sorted in ascending order."""
     with engine.begin() as conn:
         rows = conn.execute(text("""
-            SELECT DISTINCT EXTRACT(YEAR FROM datum)::int AS year
+            SELECT DISTINCT EXTRACT(YEAR FROM date)::int AS year
             FROM entries
-            WHERE datum IS NOT NULL
+            WHERE date IS NOT NULL
             ORDER BY year ASC
         """)).mappings().all()
     return [r['year'] for r in rows]

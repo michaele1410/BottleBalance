@@ -1,23 +1,22 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-BottleBalance Konsistenz-Check
+BottleBalance consistency check
 
-Prüft:
-- Blueprints: Definitionen, Nutzungen (@bp.route/get/post/...), Registrierung in web/app.py
-- Interne Imports: from modules.<name> -> web/modules/<name>.py vorhanden?
-- Top-Level-Module: from <name> import ... -> web/<name>.py vorhanden?
-- Templates: render_template('...') -> Datei existiert unter web/templates/
-- Doppelte Funktionsnamen (Hinweis)
-- AST-Parsefehler (harte Fehler)
-- Saubere Zusammenfassung; Warnung wenn 0 Dateien gescannt
+Check:
+- Blueprints: definitions, uses (@bp.route/get/post/...), registration in web/app.py
+- Internal imports: from modules.<name> -> web/modules/<name>.py available?
+- Top-level modules: from <name> import ... -> web/<name>.py exists?
+- Templates: render_template('...') -> file exists under web/templates/
+- Duplicate function names (note)
+- AST parsing errors (hard errors)
+- Clean summary; warning if 0 files scanned
 
-Aufrufbeispiele:
+Call examples:
   python check_consistency.py
   python check_consistency.py --root .
   python check_consistency.py --json report.json
   python scripts/check_consistency.py --root /var/lib/docker/volumes/bottlebalance-dev
-
 """
 
 from __future__ import annotations
@@ -29,13 +28,13 @@ from typing import Dict, List, Set, Optional
 import json
 import sys
 
-# --------------------------- Datenmodelle ---------------------------
+# --------------------------- Data models ---------------------------
 
 @dataclass
 class BlueprintDef:
-    var: str                # Variablenname (z.B. payment_routes)
-    name: str               # Blueprint-Name im Konstruktor
-    file: Path              # Datei der Definition
+    var: str                # Variable name (e.g., payment_routes)
+    name: str               # Blueprint name in the constructor
+    file: Path              # Definition file
 
 @dataclass
 class FileReport:
@@ -43,15 +42,15 @@ class FileReport:
     blueprints_defined: Dict[str, BlueprintDef] = field(default_factory=dict)
     blueprints_used: Set[str] = field(default_factory=set)
     functions_defined: Set[str] = field(default_factory=set)
-    imports_internal_modules: Set[str] = field(default_factory=set)  # modules.<name>
-    imports_top_modules: Set[str] = field(default_factory=set)       # e.g. auth, bbalance
+    imports_internal_modules: Set[str] = field(default_factory=set)
+    imports_top_modules: Set[str] = field(default_factory=set)
     templates_referenced: Set[str] = field(default_factory=set)
     parse_error: Optional[str] = None
 
 @dataclass
 class AppRegistration:
     file: Path
-    blueprints_registered: List[str] = field(default_factory=list)   # Variablennamen
+    blueprints_registered: List[str] = field(default_factory=list)
 
 @dataclass
 class ProjectReport:
@@ -91,10 +90,10 @@ class ModuleAnalyzer(ast.NodeVisitor):
             self.generic_visit(node)
 
     def visit_FunctionDef(self, node: ast.FunctionDef):
-        # Funktionen auf Modulebene
+        # Functions at module level
         self.report.functions_defined.add(node.name)
 
-        # Dekoratoren nach Blueprint-Nutzung: @<bp>.<route>/<get>/<post>...
+        # Decorators based on blueprint usage: @<bp>.<route>/<get>/<post>...
         for dec in node.decorator_list:
             # @bp.route('/..')  oder  @bp.get('/..')
             if isinstance(dec, ast.Attribute) and isinstance(dec.value, ast.Name):
@@ -103,7 +102,7 @@ class ModuleAnalyzer(ast.NodeVisitor):
             elif isinstance(dec, ast.Call) and isinstance(dec.func, ast.Attribute) and isinstance(dec.func.value, ast.Name):
                 self.report.blueprints_used.add(dec.func.value.id)
 
-        # render_template('xyz.html') im Funktionskörper
+        # render_template('xyz.html') in the functional body
         for call in ast.walk(node):
             if isinstance(call, ast.Call):
                 func = call.func
@@ -117,7 +116,7 @@ class ModuleAnalyzer(ast.NodeVisitor):
         self.generic_visit(node)
 
     def visit_Call(self, node: ast.Call):
-        # render_template() auch auf Modulebene (falls vorhanden)
+        # render_template() also at module level (if available)
         func = node.func
         if isinstance(func, ast.Name) and func.id == "render_template":
             if node.args and isinstance(node.args[0], ast.Constant) and isinstance(node.args[0].value, str):
@@ -128,13 +127,13 @@ class ModuleAnalyzer(ast.NodeVisitor):
         self.generic_visit(node)
 
     def visit_ImportFrom(self, node: ast.ImportFrom):
-        # from modules.foo import bar  → foo in web/modules/foo.py?
+        # from modules.foo import bar  -> foo in web/modules/foo.py?
         if node.module and node.module.startswith("modules."):
             parts = node.module.split(".")
             if len(parts) >= 2:
                 self.report.imports_internal_modules.add(parts[1])
         else:
-            # from auth import auth_routes → web/auth.py?
+            # from auth import auth_routes -> web/auth.py?
             if node.module and "." not in node.module:
                 self.report.imports_top_modules.add(node.module)
         self.generic_visit(node)
@@ -157,14 +156,14 @@ class AppRegistrationAnalyzer(ast.NodeVisitor):
 
     @staticmethod
     def _rightmost_attr(n: ast.AST) -> Optional[str]:
-        # auth.auth_routes → "auth_routes"
+        # auth.auth_routes -> "auth_routes"
         cur = n
         last = None
         while isinstance(cur, ast.Attribute):
             last = cur.attr if isinstance(cur.attr, str) else None
             cur = cur.value
         if isinstance(cur, ast.Name):
-            # z. B. bp_var.attr → last bleibt attr
+            # z. B. bp_var.attr -> last remains attr
             return last or cur.id
         return last
 
@@ -182,16 +181,16 @@ class AppRegistrationAnalyzer(ast.NodeVisitor):
         finally:
             self.generic_visit(node)
 
-# --------------------------- Scanner / Logik ---------------------------
+# --------------------------- Scanner / Logic ---------------------------
 
 def find_repo_root(cli_root: Optional[str]) -> Path:
     if cli_root:
         return Path(cli_root).resolve()
     here = Path(__file__).resolve()
-    # Wenn Skript in scripts/ liegt → Repo-Root = parent of parent
+    # If script is located in scripts/ -> Repo root = parent of parent
     if here.parent.name == "scripts":
         return here.parent.parent
-    # sonst: aktuelles Verzeichnis
+    # otherwise: current directory
     return here.parent
 
 def collect_python_files(web_dir: Path) -> List[Path]:
@@ -201,7 +200,7 @@ def analyze_file(path: Path) -> FileReport:
     try:
         src = path.read_text(encoding="utf-8")
     except Exception as e:
-        fr = FileReport(path=path, parse_error=f"Lesefehler: {e}")
+        fr = FileReport(path=path, parse_error=f"Reading error: {e}")
         return fr
     try:
         tree = ast.parse(src, filename=str(path))
@@ -241,7 +240,7 @@ def build_report(root: Path, json_out: Optional[Path]) -> ProjectReport:
 
     if not web_dir.exists():
         problems["no_python_files_found"].append(
-            f"Erwarteter Ordner 'web/' fehlt unter Root: {root}"
+            f"Expected folder 'web/' missing under root: {root}"
         )
         return ProjectReport(
             files=[], app_reg=None, problems=problems, duplicates={}, summary={"files_scanned": 0}
@@ -250,7 +249,7 @@ def build_report(root: Path, json_out: Optional[Path]) -> ProjectReport:
     files = collect_python_files(web_dir)
     if not files:
         problems["no_python_files_found"].append(
-            f"Keine Python-Dateien unter {web_dir} gefunden."
+            f"No Python files under {web_dir} found."
         )
         return ProjectReport(
             files=[], app_reg=None, problems=problems, duplicates={}, summary={"files_scanned": 0}
@@ -278,47 +277,45 @@ def build_report(root: Path, json_out: Optional[Path]) -> ProjectReport:
     registered_vars: Set[str] = set(app_reg.blueprints_registered) if app_reg else set()
 
     
-    # Blueprints: genutzt aber nicht definiert
-    # Ignoriere bekannte Nicht-Blueprints (z. B. Flask-App-Instanz 'app')
+    # Blueprints: used but not defined
+    # Ignore known non-blueprints (e.g., Flask app instance 'app')
     ignore_non_blueprints = {"app"}
     for used_var, used_in in bp_used_all.items():
         if used_var in ignore_non_blueprints:
             continue
         if used_var not in bp_defs_all:
             problems["blueprint_used_not_defined"].append(
-                f"Blueprint-Variable '{used_var}' wird verwendet in: {', '.join(sorted(used_in))}, aber nirgends definiert."
+                f"Blueprint-Variable '{used_var}' is used in: {', '.join(sorted(used_in))}, but nowhere defined."
             )
 
-    # Blueprints: definiert aber nicht registriert
+    # Blueprints: defined but not registered
     for var, bp in bp_defs_all.items():
         if var not in registered_vars:
             problems["blueprint_defined_not_registered"].append(
-                f"Blueprint '{bp.name}' ({var}) definiert in {bp.file.relative_to(root)} ist NICHT in web/app.py registriert."
+                f"Blueprint '{bp.name}' ({var}) defined in {bp.file.relative_to(root)} is NOT registered in web/app.py."
             )
 
-    # Registrierungen auf unbekannte Variablen
+    # Registrations for unknown variables
     if app_reg:
         for var in app_reg.blueprints_registered:
             if var not in bp_defs_all:
                 problems["registration_unknown_blueprint"].append(
-                    f"web/app.py registriert '{var}', aber es gibt keine entsprechende Blueprint-Variable in den Modulen."
+                    f"web/app.py registriert '{var}', but there is no corresponding blueprint variable in the modules."
                 )
 
     # Interne Imports: modules.*
     internal_modules = {p.stem for p in modules_dir.glob("*.py")}
-    top_modules = {p.stem for p in web_dir.glob("*.py")}  # alle top-level .py unter web/
+    top_modules = {p.stem for p in web_dir.glob("*.py")}  # all top-level .py files under web/
 
     
     stdlib_common = {
         "os", "sys", "re", "json", "typing", "argparse", "pathlib", "ast",
         "secrets", "base64", "subprocess", "logging", "datetime", "decimal",
         "uuid", "time", "csv", "io",
-        # ergänzt für dein Projekt
         "ssl", "types", "mimetypes", "functools", "smtplib"
     }
     third_party_common = {
         "flask", "flask_babel", "sqlalchemy", "werkzeug", "reportlab", "pyotp", "qrcode",
-        # ergänzt
         "flask_mail"
     }
 
@@ -331,19 +328,19 @@ def build_report(root: Path, json_out: Optional[Path]) -> ProjectReport:
                 )
 
         for tm in fr.imports_top_modules:
-            # ignoriere häufige stdlib/3rd-party imports
+            # ignore frequent stdlib/3rd-party imports
             if tm in stdlib_common or tm in third_party_common:
                 continue
             candidates = {tm, tm.replace("-", "_")}
             if not any((web_dir / f"{c}.py").exists() for c in candidates):
                 problems["missing_top_module"].append(
-                    f"{fr.path.relative_to(root)}: 'from {tm} import ...' – erwartet web/{tm}.py (oder {tm.replace('-', '_')}.py)."
+                    f"{fr.path.relative_to(root)}: 'from {tm} import ...' – expected web/{tm}.py (oder {tm.replace('-', '_')}.py)."
                 )
 
         for tpl in fr.templates_referenced:
             if not (templates_dir / tpl).exists():
                 problems["missing_template"].append(
-                    f"{fr.path.relative_to(root)}: Template '{tpl}' nicht gefunden unter web/templates/."
+                    f"{fr.path.relative_to(root)}: Template '{tpl}' Not found under web/templates/."
                 )
 
     duplicates = {fn: paths for fn, paths in func_defs_map.items() if len(paths) > 1}
@@ -373,9 +370,9 @@ def build_report(root: Path, json_out: Optional[Path]) -> ProjectReport:
 # --------------------------- CLI ---------------------------
 
 def main():
-    ap = argparse.ArgumentParser(description="BottleBalance Konsistenz-Check")
+    ap = argparse.ArgumentParser(description="BottleBalance consistency check")
     ap.add_argument("--root", help="Repo-Root (Standard: auto)", default=None)
-    ap.add_argument("--json", help="Optional: Ergebnisse als JSON exportieren", default=None)
+    ap.add_argument("--json", help="Optional: Export results as JSON", default=None)
     args = ap.parse_args()
 
     root = find_repo_root(args.root)
@@ -383,9 +380,9 @@ def main():
 
     report = build_report(root, json_out)
 
-    print("🔍 Starte Konsistenz-Check...\n")
+    print("🔍 Start consistency check...\n")
     print("📁 Root:", root)
-    print("🔎 Zusammenfassung:", json.dumps(report.summary, indent=2, ensure_ascii=False))
+    print("🔎 Summary:", json.dumps(report.summary, indent=2, ensure_ascii=False))
 
     def dump(title: str, items: List[str]):
         if items:
@@ -393,16 +390,16 @@ def main():
             for it in items:
                 print("   -", it)
         else:
-            print(f"\n✅ {title}: keine Probleme")
+            print(f"\n✅ {title}: no issues")
 
-    dump("Kein Python-Code gefunden", report.problems.get("no_python_files_found", []))
-    dump("Blueprint genutzt aber nicht definiert", report.problems.get("blueprint_used_not_defined", []))
-    dump("Blueprint definiert aber nicht registriert", report.problems.get("blueprint_defined_not_registered", []))
-    dump("Registrierung verweist auf unbekannte Blueprint-Variable", report.problems.get("registration_unknown_blueprint", []))
-    dump("Interner Import (modules.*) fehlt", report.problems.get("missing_internal_module", []))
-    dump("Top-Level Modul fehlt (erwartet web/<name>.py)", report.problems.get("missing_top_module", []))
-    dump("Fehlende Templates", report.problems.get("missing_template", []))
-    dump("Parse-Fehler", report.problems.get("parse_errors", []))
+    dump("No Python code found", report.problems.get("no_python_files_found", []))
+    dump("Blueprint used but not defined", report.problems.get("blueprint_used_not_defined", []))
+    dump("Blueprint defined but not registered", report.problems.get("blueprint_defined_not_registered", []))
+    dump("Registration refers to unknown blueprint variable", report.problems.get("registration_unknown_blueprint", []))
+    dump("Internal import (modules.*) missing", report.problems.get("missing_internal_module", []))
+    dump("Top-level module missing (expected web/<name>.py))", report.problems.get("missing_top_module", []))
+    dump("Missing templates", report.problems.get("missing_template", []))
+    dump("Parse error", report.problems.get("parse_errors", []))
 
     if report.duplicates:
         print("\n🟨 Potenziell doppelte Funktionsnamen (Hinweis):")
@@ -411,7 +408,7 @@ def main():
     else:
         print("\n✅ Keine doppelten Funktionsnamen auf Modulebene gefunden")
 
-    # Harte Fehler → Exitcode 1 (für CI nutzbar)
+    # Hard errors -> Exit code 1 (usable for CI)
     hard_errors = any([
         report.problems.get("no_python_files_found"),
         report.problems.get("blueprint_used_not_defined"),

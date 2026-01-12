@@ -1,7 +1,6 @@
 # -----------------------
 # CORE Configuration
 # -----------------------
-
 import os
 import pytz
 from flask import session,flash, abort, request
@@ -34,8 +33,8 @@ def localize_dt(dt, tz_name=None):
 
 def localize_dt_str(dt, tz_name=None, fmt='%Y-%m-%d %H:%M:%S'):
     """
-    Gibt einen lokalisierten Zeitstempel als formatierten String zurück.
-    Standardformat: '2025-09-10 19:44:47'
+    Returns a localized timestamp as a formatted string.
+    Default format: '2025-09-10 19:44:47'
     """
     if not dt:
         return ''
@@ -99,11 +98,11 @@ def allowed_file(filename: str) -> bool:
 
 def validate_file(file):
     if file.content_length > MAX_FILE_SIZE:
-        flash(_("Datei zu groß. Maximal erlaubt: 10 MB."), "danger")
+        flash(_("File too large. Maximum allowed: 10 MB."), "danger")
         return False
     return True
 
-# --- Verzeichnisse ---
+# --- Directories ---
 def _entry_dir(entry_id: int) -> str:
     p = os.path.join(UPLOAD_FOLDER, str(entry_id))
     os.makedirs(p, exist_ok=True)
@@ -127,7 +126,7 @@ def log_action(user_id: int | None, action: str, entry_id: int | None, detail: s
         """), {'u': user_id, 'a': action, 'e': entry_id, 'd': detail})
 
 def build_base_url():
-    # bevorzuge APP_BASE_URL, fallback auf request.url_root
+    # prefer APP_BASE_URL, fallback to request.url_root
     try:
         base = os.getenv("APP_BASE_URL") or request.url_root
     except RuntimeError:

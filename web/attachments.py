@@ -25,7 +25,6 @@ from werkzeug.utils import secure_filename
 from uuid import uuid4
 import mimetypes
 
-
 from modules.auth_utils import (
     login_required,
     require_csrf,
@@ -44,7 +43,7 @@ def attachments_upload(entry_id: int):
 
     files = request.files.getlist('files')  # name="files" (multiple)
     if not files:
-        flash(_('Bitte Datei(en) auswählen.'))
+        flash(_('Please select files.'))
         return redirect(request.referrer or url_for('bbalance_routes.edit', entry_id=entry_id))
 
     saved = 0
@@ -55,7 +54,7 @@ def attachments_upload(entry_id: int):
             if not f or not f.filename:
                 continue
             if not allowed_file(f.filename):
-                flash(_('Ungültiger Dateityp: %(filename)s', filename=f.filename))
+                flash(_('Invalid file type: %(filename)s', filename=f.filename))
                 continue
    
             name = f.filename or ''
@@ -76,9 +75,9 @@ def attachments_upload(entry_id: int):
 
     if saved:
         log_action(session.get('user_id'), 'attachments:upload', entry_id, f'files={saved}')
-        flash(_('%(num)d Datei(en) hochgeladen.', num=saved))
+        flash(_('%(num)d Files uploaded.', num=saved))
     else:
-        flash(_('Keine Dateien hochgeladen.'))
+        flash(_('No files uploaded.'))
 
     return redirect(request.referrer or url_for('bbalance_routes.edit', entry_id=entry_id))
 
@@ -126,7 +125,6 @@ def attachments_download(att_id: int):
                      mimetype=r.get('content_type') or 'application/octet-stream')
 
 #Delete
-# app.py
 @attachments_routes.post('/attachments/<int:att_id>/delete')
 @login_required
 @require_csrf
@@ -154,9 +152,8 @@ def attachments_delete(att_id: int):
     return redirect(request.referrer or url_for('bbalance_routes.edit', entry_id=r['entry_id']))
 
 # -----------------------
-# Temporäre Attachments für "Datensatz hinzufügen"
+# Temporary attachments for "Add record"
 # -----------------------
-
 @attachments_routes.post('/attachments/temp/<token>/upload')
 @login_required
 @require_csrf
@@ -165,7 +162,7 @@ def attachments_temp_upload(token: str):
 
     files = request.files.getlist('files') or []
     if not files:
-        return ('Keine Datei übermittelt', 400)
+        return ('No file transmitted.', 400)
 
     saved = 0
     tdir = _temp_dir(token)
@@ -193,7 +190,7 @@ def attachments_temp_upload(token: str):
             saved += 1
 
     if saved == 0:
-        return ('Keine Dateien akzeptiert.', 400)
+        return ('No files accepted.', 400)
     return jsonify({'ok': True, 'saved': saved}), 200
 
 @attachments_routes.get('/attachments/temp/<token>/open/<path:stored_name>')
@@ -204,7 +201,7 @@ def attachments_temp_open(token: str, stored_name: str):
     path = os.path.join(tdir, stored_name)
     if not os.path.exists(path):
         abort(404)
-    # Hinweis: Hier kein "as_attachment", um direkt anzusehen
+    # Note: No "as_attachment" here, for direct viewing
     guessed = mimetypes.guess_type(stored_name)[0] or 'application/octet-stream'
     return send_file(path, as_attachment=False, mimetype=guessed)
 
@@ -233,7 +230,7 @@ def attachments_temp_list(token: str):
 @login_required
 @require_csrf
 def attachments_temp_delete(att_id: int):
-    # Hole Datensatz + prüfe Besitzer
+    # Get record + check owner
     with engine.begin() as conn:
         r = conn.execute(text("""
             SELECT id, temp_token, stored_name, uploaded_by
@@ -253,7 +250,7 @@ def attachments_temp_delete(att_id: int):
     with engine.begin() as conn:
         conn.execute(text("DELETE FROM attachments_temp WHERE id=:id"), {'id': att_id})
 
-    # Versuche evtl. leeren Ordner zu löschen
+    # Try deleting any empty folders
     try:
         if os.path.isdir(tdir) and not os.listdir(tdir):
             os.rmdir(tdir)

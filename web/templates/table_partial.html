@@ -5,53 +5,53 @@
     <thead class="table-light">
       <tr>
         <th class="text-center" style="cursor:pointer;" onclick="sortTableByDate()">
-          {{ _('Datum') }} <i class="bi bi-arrow-down-up"></i>
+          {{ _('Date') }} <i class="bi bi-arrow-down-up"></i>
         </th>
-        <th class="text-center">{{ _('Vollgut') }}</th>
-        <th class="text-center">{{ _('Leergut') }}</th>
-        <th class="text-center">{{ _('Inventar') }}</th>
-        <th class="text-center">{{ _('Einnahme') }}</th>
-        <th class="text-center">{{ _('Ausgabe') }}</th>
-        <th class="text-center">{{ _('Kassenbestand') }}</th>
-        <th class="text-center">{{ _('Bemerkung') }}</th>
-        <th class="text-center">{{ _('Aktionen') }}</th>
+        <th class="text-center">{{ _('Full') }}</th>
+        <th class="text-center">{{ _('Empty') }}</th>
+        <th class="text-center">{{ _('Inventory') }}</th>
+        <th class="text-center">{{ _('Revenue') }}</th>
+        <th class="text-center">{{ _('Expense') }}</th>
+        <th class="text-center">{{ _('Cash balance') }}</th>
+        <th class="text-center">{{ _('Note') }}</th>
+        <th class="text-center">{{ _('Actions') }}</th>
       </tr>
     </thead>
     <tbody>
       {% for e in entries %}
-      <!--genau einmal pro Zeile definieren-->
-      {% set changed = (e.vollgut != 0 or e.leergut != 0 or e.einnahme != 0 or e.ausgabe != 0) %}
+      <!-- Define exactly once per line -->
+      {% set changed = (e.full != 0 or e.empty != 0 or e.revenue != 0 or e.expense != 0) %}
       <tr
           data-changed="{{ 1 if changed else 0 }}"
-          data-vollgut="{{ 1 if e.vollgut != 0 else 0 }}"
-          data-leergut="{{ 1 if e.leergut != 0 else 0 }}"
-          data-einnahme="{{ 1 if e.einnahme != 0 else 0 }}"
-          data-ausgabe="{{ 1 if e.ausgabe != 0 else 0 }}"
+          data-full="{{ 1 if e.full != 0 else 0 }}"
+          data-empty="{{ 1 if e.empty != 0 else 0 }}"
+          data-revenue="{{ 1 if e.revenue != 0 else 0 }}"
+          data-expense="{{ 1 if e.expense != 0 else 0 }}"
       >
-        <td class="text-end" data-label="{{ _('Datum') }}" data-col="date">{{ format_date_de(e.datum) }}</td>
+        <td class="text-end" data-label="{{ _('Date') }}" data-col="date">{{ format_date_de(e.date) }}</td>
 
-        <!-- Nur anzeigen, wenn Wert != 0 -->
-        <td class="text-end" data-label="{{ _('Vollgut') }}" data-col="vollgut">{{ e.vollgut ~ ' ' ~ _('Fl.') if e.vollgut != 0 else '' }}</td>
-        <td class="text-end" data-label="{{ _('Leergut') }}" data-col="leergut">{{ e.leergut ~ ' ' ~ _('Fl.') if e.leergut != 0 else '' }}</td>
+        <!-- Only show ifvalue != 0 -->
+        <td class="text-end" data-label="{{ _('Full') }}" data-col="full">{{ e.full ~ ' ' ~ _('Fl.') if e.full != 0 else '' }}</td>
+        <td class="text-end" data-label="{{ _('Empty') }}" data-col="empty">{{ e.empty ~ ' ' ~ _('Fl.') if e.empty != 0 else '' }}</td>
 
-        <!-- Inventar: immer anzeigen oder optional ausblenden -->
-        <td class="text-end" data-label="{{ _('Inventar') }}" data-col="inventar">{{ e.inventar ~ ' ' ~ _('Fl.') if changed else '' }}</td>
+        <!-- Inventory: Always show or optionally hide -->
+        <td class="text-end" data-label="{{ _('Inventory') }}" data-col="inventory">{{ e.inventory ~ ' ' ~ _('Fl.') if changed else '' }}</td>
 
-        <!-- Einnahme/Ausgabe: nur anzeigen, wenn != 0 -->
-        <td class="text-end" data-label="{{ _('Einnahme') }}" data-col="einnahme">{{ format_eur_de(e.einnahme) if e.einnahme != 0 else '' }}</td>
-        <td class="text-end" data-label="{{ _('Ausgabe') }}" data-col="ausgabe">{{ format_eur_de(e.ausgabe) if e.ausgabe != 0 else '' }}</td>
+        <!-- Revenue/Expense: show only if != 0 -->
+        <td class="text-end" data-label="{{ _('Revenue') }}" data-col="revenue">{{ format_eur_de(e.revenue) if e.revenue != 0 else '' }}</td>
+        <td class="text-end" data-label="{{ _('Expense') }}" data-col="expense">{{ format_eur_de(e.expense) if e.expense != 0 else '' }}</td>
 
-        <!-- Kassenbestand: immer anzeigen oder optional ausblenden -->
-        <td class="text-end" data-label="{{ _('Kassenbestand') }}" data-col="kassenbestand">{{ format_eur_de(e.kassenbestand) if changed else '' }}</td>
+        <!-- Cash balance: Always show or optionally hide -->
+        <td class="text-end" data-label="{{ _('Cash balance') }}" data-col="cashBalance">{{ format_eur_de(e.cashBalance) if changed else '' }}</td>
 
-        <!-- Bemerkung: immer anzeigen -->
-        <td class="text-start" data-label="{{ _('Bemerkung') }}" data-col="bemerkung">{{ e.bemerkung }}</td>
-          <td class="text-center" data-label="{{ _('Aktionen') }}" data-col="aktionen">
+        <!-- Note: Always display -->
+        <td class="text-start" data-label="{{ _('Note') }}" data-col="note">{{ e.note }}</td>
+          <td class="text-center" data-label="{{ _('Actions') }}" data-col="actions">
             {% set role = current_user().get('role') %}
             {% if role in ['Editor', 'Manager', 'Admin'] %}
             <a class="btn btn-sm btn-outline-primary"
               href="{{ url_for('bbalance_routes.edit', entry_id=e.id) }}"
-              title="{{ _('Bearbeiten') }}">
+              title="{{ _('Edit') }}">
               <i class="bi-pencil-square"></i>
             </a>
             {% endif %}
@@ -59,7 +59,7 @@
             <button class="btn btn-sm btn-outline-secondary position-relative"
                     type="button"
                     onclick="openAttachments({{ e.id }})"
-                    title="{{ _('Dokumente öffnen') }}">
+                    title="{{ _('Open documents') }}">
               <i class="bi-paperclip"></i>
               {% if e.attachment_count and e.attachment_count > 0 %}
               <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-secondary">
@@ -72,9 +72,9 @@
             <form method="post"
                   action="{{ url_for('bbalance_routes.delete', entry_id=e.id) }}"
                   class="d-inline"
-                  onsubmit="return confirm('{{ _('Eintrag wirklich löschen?') }}');">
+                  onsubmit="return confirm('{{ _('Delete entry permanently?') }}');">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <button class="btn btn-sm btn-outline-danger" title="{{ _('Löschen') }}">
+              <button class="btn btn-sm btn-outline-danger" title="{{ _('Delete') }}">
                 <i class="bi-trash"></i>
               </button>
             </form>
@@ -83,7 +83,7 @@
         </tr>
         {% else %}
         <tr>
-          <td data-label="{{ _('Keine Einträge vorhanden.') }}" colspan="9" class="text-center text-muted">{{ _('Keine Einträge vorhanden.') }}</td>
+          <td data-label="{{ _('No entries available.') }}" colspan="9" class="text-center text-muted">{{ _('No entries available.') }}</td>
         </tr>
         {% endfor %}
       </tbody>

@@ -1,24 +1,24 @@
 #!/bin/bash
 
-# Wechsle in das Verzeichnis, in dem dieses Script liegt
-cd "$(dirname "$0")" || { echo "Verzeichnis nicht gefunden"; exit 1; }
+# Change to the directory where this script is located.
+cd "$(dirname "$0")" || { echo "Directory not found"; exit 1; }
 
-# Name des Volumes
+# Volume name
 VOLUME_NAME="bottlebalance-dev_bottlebalance-dev-app"
 
-echo ">>> Container stoppen (aber Volumes behalten)..."
+echo ">>> Stop containers (but keep volumes)..."
 docker compose -f docker-compose-dev.yml down
 
-echo ">>> Lösche nur das Volume: $VOLUME_NAME"
+echo ">>> Delete only the volume: $VOLUME_NAME"
 if docker volume ls --format "{{.Name}}" | grep -q "^${VOLUME_NAME}$"; then
     docker volume rm "$VOLUME_NAME"
-    echo "Volume $VOLUME_NAME erfolgreich entfernt."
+    echo "Volume $VOLUME_NAME successfully removed."
 else
-    echo "Volume $VOLUME_NAME nicht gefunden oder bereits entfernt."
+    echo "Volume $VOLUME_NAME not found or already removed."
 fi
 
-echo ">>> Neu bauen und starten..."
+echo ">>> Build new and start over..."
 docker compose -f docker-compose-dev.yml --env-file .env up --build -d
 
-echo ">>> Logs (Strg+C zum Beenden)"
+echo ">>> Logs (Ctrl+C to exit)"
 docker compose logs -f

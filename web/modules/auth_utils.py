@@ -5,6 +5,7 @@ from flask import session, redirect, url_for, request, abort, Blueprint, render_
 from flask_babel import _
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy import text
+
 from modules.core_utils import (
     log_action,
     ROLES,
@@ -52,7 +53,7 @@ def require_perms(*perms):
 def require_csrf(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):
-        # Nur für state-changing requests
+        # Only for state-changing requests
         if request.method in ('POST', 'PUT', 'PATCH', 'DELETE'):
             session_tok = session.get('_csrf_token') or ''
             sent_tok = request.form.get('csrf_token') or request.headers.get('X-CSRF-Token') or ''
@@ -62,7 +63,7 @@ def require_csrf(fn):
     return wrapper
 
 def csrf_token():
-    # für Jinja: {{ csrf_token() }}
+    # for Jinja: {{ csrf_token() }}
     return _ensure_csrf_token()
 
 def _ensure_csrf_token():
@@ -76,8 +77,8 @@ def _ensure_csrf_token():
 # Auth & 2FA & Session
 # -----------------------
 def _finalize_login(user_id: int, role: str):
-    """Setzt Session, aktualisiert last_login_at und schreibt Audit-Log.
-       Leitet NICHT um – nur Status setzen."""
+    """Sets session, updates last_login_at and writes audit log.
+       Does NOT redirect – only sets sate."""
     session.pop('pending_2fa_user_id', None)
     session['user_id'] = user_id
     session['role'] = role
@@ -86,7 +87,7 @@ def _finalize_login(user_id: int, role: str):
     log_action(user_id, 'auth_routes.login', None, None)
 
 def generate_and_store_backup_codes(uid: int) -> list[str]:
-    """Erzeugt 10 Backup-Codes, speichert nur Hashes in DB und liefert die Klartext-Codes zurück (einmalige Anzeige)."""
+    """Generates 10 backup codes, stores only hashes in the database, and returns the plaintext codes (one-time display)."""
     codes = [secrets.token_hex(4).lower() for _ in range(10)]
     hashes = [generate_password_hash(c) for c in codes]
     with engine.begin() as conn:

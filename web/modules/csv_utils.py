@@ -20,25 +20,24 @@ from modules.core_utils import (
 # -----------------------
 IMPORT_ALLOW_MAPPING = os.getenv("IMPORT_ALLOW_MAPPING", "true").lower() in ("1", "true", "yes", "on")
 
-# Kanonische Zielfelder
-CANONICAL_FIELDS = ['Datum', 'Vollgut', 'Leergut', 'Einnahme', 'Ausgabe', 'Bemerkung']
+# Canonical target fields
+CANONICAL_FIELDS = ['Date', 'Full', 'Empty', 'Revenue', 'Expense', 'Note']
 
-# Synonyme (frei erweiterbar)
+# Synonyms (freely expandable)
 HEADER_SYNONYMS = {
-    'Datum':     {'datum', 'date', 'ttmmjjjj', 'tt.mm.jjjj', 'day', 'tag'},
-    'Vollgut':   {'vollgut', 'voll', 'in', 'eingang', 'bestandszugang', 'bottlesin'},
-    'Leergut':   {'leergut', 'leer', 'out', 'ausgang', 'bestandsabgang', 'bottlesout', 'pfand'},
-    'Einnahme':  {'einnahme', 'einzahlung', 'revenue', 'income', 'cashin'},
-    'Ausgabe':   {'ausgabe', 'auszahlung', 'expense', 'cost', 'cashout'},
-    'Bemerkung': {'bemerkung', 'notiz', 'kommentar', 'comment', 'note', 'description', 'desc'},
+    'Date':     {'date', 'datum', 'ttmmjjjj', 'tt.mm.jjjj', 'day', 'tag'},
+    'Full':   {'full bottles', 'full', 'plus', 'revenue', 'inventoryin', 'bottlesin'},
+    'Empty':   {'empty', 'leer', 'out', 'ausgang', 'bestandsabgang', 'bottlesout', 'pfand'},
+    'Revenue':  {'revenue', 'einzahlung', 'revenue', 'revenue', 'cashin'},
+    'Expense':   {'expense', 'auszahlung', 'expense', 'cost', 'cashout'},
+    'Note': {'note', 'notiz', 'kommentar', 'comment', 'note', 'description', 'desc'},
 }
 
 _money_re = re.compile(r'^\s*[+-]?\d{1,3}([.,]\d{3})*([.,]\d{1,2})?\s*(€)?\s*$')
 
 # -----------------------
-# Hilfsfunktionen
+# Helpers
 # -----------------------
-
 def _norm(h: str) -> str:
     return re.sub(r'[^a-z0-9]', '', (h or '').strip().lower())
 
@@ -54,16 +53,16 @@ def format_eur_de(value: Decimal | float | int) -> str:
     d = abs(d)
     whole, frac = divmod(int(d * 100), 100)
     whole_str = f"{whole:,}".replace(',', '.')
-    return f"{sign}{whole_str},{frac:02d} {_('waehrung')}"
+    return f"{sign}{whole_str},{frac:02d} {_('currency')}"
 
 def parse_date_de_strict(s: str) -> date:
     s = (s or '').strip()
     if not s:
-        raise ValueError(_('Datum fehlt'))
+        raise ValueError(_('Date missing.'))
     try:
         return datetime.strptime(s, '%d.%m.%Y').date()
     except Exception:
-        raise ValueError(_('Ungültiges Datum (erwartet TT.MM.JJJJ): ') + s)
+        raise ValueError(_('Invalid date (expected DD.MM.YYYY): ') + s)
 
 def parse_date_de_or_none(s: str | None) -> date | None:
     if not s or not s.strip():
@@ -86,11 +85,11 @@ def try_int_strict(s: str, field: str) -> int:
     if ss == '':
         return 0
     if not re.fullmatch(r'[+-]?\d+', ss):
-        raise ValueError(_(f'Ungültige Ganzzahl für {field}: ') + ss)
+        raise ValueError(_(f'Invalid integer for {field}: ') + ss)
     return int(ss)
 
 def parse_money(value: str | None) -> Decimal:
-    waehrung_variants = [_("waehrung"), "€", "EUR", "USD"]
+    currency_variants = [_("currency"), "€", "EUR", "USD"]
     if value is None:
         return Decimal('0')
 
@@ -98,7 +97,7 @@ def parse_money(value: str | None) -> Decimal:
     if s == '':
         return Decimal('0')
 
-    for w in waehrung_variants:
+    for w in currency_variants:
         s = s.replace(w, '')
 
     s = re.sub(r'[\s\u00A0\u202F]', '', s)
@@ -135,18 +134,18 @@ def parse_money(value: str | None) -> Decimal:
 
 def _signature(row: dict) -> tuple:
     return (
-        row['datum'],
-        int(row['vollgut']),
-        int(row['leergut']),
-        str(Decimal(row['einnahme'] or 0).quantize(Decimal('0.01'))),
-        str(Decimal(row['ausgabe'] or 0).quantize(Decimal('0.01'))),
-        (row['bemerkung'] or '').strip().lower()
+        row['date'],
+        int(row['full']),
+        int(row['empty']),
+        str(Decimal(row['revenue'] or 0).quantize(Decimal('0.01'))),
+        str(Decimal(row['expense'] or 0).quantize(Decimal('0.01'))),
+        (row['note'] or '').strip().lower()
     )
 
 def _fetch_existing_signature_set(conn) -> set[tuple]:
     existing = conn.execute(text("""
-        SELECT datum, COALESCE(vollgut,0), COALESCE(leergut,0),
-               COALESCE(einnahme,0), COALESCE(ausgabe,0), COALESCE(bemerkung,'')
+        SELECT date, COALESCE(full,0), COALESCE(empty,0),
+               COALESCE(revenue,0), COALESCE(expense,0), COALESCE(note,'')
         FROM entries
     """)).fetchall()
 
@@ -169,7 +168,7 @@ def compute_auto_mapping(headers: list[str]) -> dict:
         candidates = { _norm(c) for c in HEADER_SYNONYMS.get(canon, set()) } | {_norm(canon)}
         idx = next((i for i, nh in enumerate(norm_headers) if nh in candidates), None)
         if idx is None:
-            if canon in ('Einnahme', 'Ausgabe', 'Bemerkung'):
+            if canon in ('Revenue', 'Expense', 'Note'):
                 mapping[canon] = None
                 continue
             return {}
@@ -180,18 +179,18 @@ def _parse_csv_with_mapping(content: str, replace_all: bool, mapping: dict | Non
     reader = csv.reader(io.StringIO(content), delimiter=';')
     headers = next(reader, None)
     if not headers:
-        raise ValueError(_('Leere CSV oder fehlender Header.'))
+        raise ValueError(_('Empty CSV or missing header.'))
 
     if mapping is None:
         auto_map = compute_auto_mapping(headers) if IMPORT_ALLOW_MAPPING else {}
         mapping = auto_map if auto_map else {}
 
-    idx_datum     = mapping.get('Datum')
-    idx_vollgut   = mapping.get('Vollgut')
-    idx_leergut   = mapping.get('Leergut')
-    idx_einnahme  = mapping.get('Einnahme')
-    idx_ausgabe   = mapping.get('Ausgabe')
-    idx_bemerkung = mapping.get('Bemerkung')
+    idx_date     = mapping.get('Date')
+    idx_full   = mapping.get('Full')
+    idx_empty   = mapping.get('Empty')
+    idx_revenue  = mapping.get('Revenue')
+    idx_expense   = mapping.get('Expense')
+    idx_note = mapping.get('Note')
 
     preview_rows = []
     dup_count = 0
@@ -208,47 +207,47 @@ def _parse_csv_with_mapping(content: str, replace_all: bool, mapping: dict | Non
             continue
         errors = []
 
-        v_datum     = raw[idx_datum]     if idx_datum     is not None and idx_datum     < len(raw) else ''
-        v_vollgut   = raw[idx_vollgut]   if idx_vollgut   is not None and idx_vollgut   < len(raw) else ''
-        v_leergut   = raw[idx_leergut]   if idx_leergut   is not None and idx_leergut   < len(raw) else ''
-        v_einnahme  = raw[idx_einnahme]  if idx_einnahme  is not None and idx_einnahme  < len(raw) else ''
-        v_ausgabe   = raw[idx_ausgabe]   if idx_ausgabe   is not None and idx_ausgabe   < len(raw) else ''
-        v_bemerkung = raw[idx_bemerkung] if idx_bemerkung is not None and idx_bemerkung < len(raw) else ''
+        v_date     = raw[idx_date]     if idx_date     is not None and idx_date     < len(raw) else ''
+        v_full   = raw[idx_full]   if idx_full   is not None and idx_full   < len(raw) else ''
+        v_empty   = raw[idx_empty]   if idx_empty   is not None and idx_empty   < len(raw) else ''
+        v_revenue  = raw[idx_revenue]  if idx_revenue  is not None and idx_revenue  < len(raw) else ''
+        v_expense   = raw[idx_expense]   if idx_expense   is not None and idx_expense   < len(raw) else ''
+        v_note = raw[idx_note] if idx_note is not None and idx_note < len(raw) else ''
 
         try:
-            datum = parse_date_de_strict(v_datum)
+            date = parse_date_de_strict(v_date)
         except ValueError as e:
             errors.append(str(e))
-            datum = None
+            date = None
 
         try:
-            vollgut = try_int_strict(v_vollgut, 'Vollgut')
+            full = try_int_strict(v_full, 'Full')
         except ValueError as e:
             errors.append(str(e))
-            vollgut = 0
+            full = 0
 
         try:
-            leergut = try_int_strict(v_leergut, 'Leergut')
+            empty = try_int_strict(v_empty, 'Empty')
         except ValueError as e:
             errors.append(str(e))
-            leergut = 0
+            empty = 0
 
-        if not is_valid_money_str(v_einnahme):
-            errors.append(_('Ungültiges Geldformat für Einnahme: ') + (v_einnahme or ''))
-        if not is_valid_money_str(v_ausgabe):
-            errors.append(_('Ungültiges Geldformat für Ausgabe: ') + (v_ausgabe or ''))
+        if not is_valid_money_str(v_revenue):
+            errors.append(_('Invalid money format for revenue: ') + (v_revenue or ''))
+        if not is_valid_money_str(v_expense):
+            errors.append(_('Invalid money format for expense: ') + (v_expense or ''))
 
-        einnahme = parse_money(v_einnahme or '0')
-        ausgabe  = parse_money(v_ausgabe or '0')
-        bemerkung = (v_bemerkung or '').strip()
+        revenue = parse_money(v_revenue or '0')
+        expense  = parse_money(v_expense or '0')
+        note = (v_note or '').strip()
 
         row_obj = {
-            'datum': datum,
-            'vollgut': vollgut,
-            'leergut': leergut,
-            'einnahme': str(einnahme),
-            'ausgabe': str(ausgabe),
-            'bemerkung': bemerkung,
+            'date': date,
+            'full': full,
+            'empty': empty,
+            'revenue': str(revenue),
+            'expense': str(expense),
+            'note': note,
             'line_no': line_no,
             'errors': errors,
             'is_duplicate': False
@@ -267,14 +266,14 @@ def _parse_csv_with_mapping(content: str, replace_all: bool, mapping: dict | Non
 def export_audit_entries_to_csv(audit_entries: list[dict], tz_name: str = 'Europe/Berlin') -> str:
     output = io.StringIO()
     writer = csv.writer(output, delimiter=';', quoting=csv.QUOTE_MINIMAL)
-    writer.writerow(['Zeitpunkt', 'Aktion', 'Benutzer', 'Details'])
+    writer.writerow(['Timestamp', 'Action', 'User', 'Details'])
 
     for entry in audit_entries:
         formatted_time = localize_dt_str(entry.get('timestamp'), tz_name, '%d.%m.%Y %H:%M:%S')
         writer.writerow([
             formatted_time,
             entry.get('action', ''),
-            entry.get('username', 'Unbekannt'),
+            entry.get('username', 'Unknown'),
             (entry.get('detail') or '').replace('\n', ' ')
         ])
 

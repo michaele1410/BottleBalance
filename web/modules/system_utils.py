@@ -1,7 +1,6 @@
 # -----------------------
 # System
 # -----------------------
-
 def get_version_old():
     try:
         with open("version.txt", "r") as f:

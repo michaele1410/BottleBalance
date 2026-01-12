@@ -32,14 +32,14 @@ mail_routes = Blueprint('mail_routes', __name__)
 @require_perms('admin:tools')
 @require_csrf
 def admin_smtp():
-    status = None
+    state = None
     if request.method == "POST":
         try:
             if not SMTP_HOST or not SMTP_PORT or not SMTP_USER or not SMTP_PASS:
-                flash(_("SMTP-Konfiguration unvollständig."), "error")
+                flash(_("SMTP configuration incomplete."), "error")
                 return redirect(url_for("admin_smtp"))
 
-            # Verbindung aufbauen
+            # Establish connection
             if SMTP_SSL_ON:
                 context = ssl.create_default_context()
                 server = SMTP_SSL(SMTP_HOST, SMTP_PORT, timeout=SMTP_TIMEOUT, context=context)
@@ -50,9 +50,9 @@ def admin_smtp():
 
             server.login(SMTP_USER, SMTP_PASS)
 
-            # UTF-8 sicheres Test-Mail-Objekt
-            subject = Header("SMTP test by BottleBalance", "utf-8")
-            body_text = "This is a test message to check the SMTP configuration."
+            # UTF-8 secure test mail object
+            subject = Header(_("SMTP test by %(app)s", app=_("AppTitle")), "utf-8")
+            body_text = _("This is a test message to check the SMTP configuration.")
             message = MIMEText(body_text, "plain", "utf-8")
             message["Subject"] = subject
             message["From"] = FROM_EMAIL
@@ -61,14 +61,14 @@ def admin_smtp():
             server.sendmail(FROM_EMAIL, SMTP_USER, message.as_string())
             server.quit()
 
-            flash(_("SMTP-Test erfolgreich – Test-E-Mail gesendet."), "success")
+            flash(_("SMTP test successful – test email sent."), "success")
         except Exception as e:
-            flash(_('SMTP-Test fehlgeschlagen: %(error)s', error=escape(str(e))), "error")
+            flash(_('SMTP test failed: %(error)s', error=escape(str(e))), "error")
         return redirect(url_for("admin_smtp"))
 
     if not SMTP_HOST or not SMTP_PORT or not SMTP_USER or not SMTP_PASS:
-        status = "SMTP configuration incomplete."
+        state = "SMTP configuration incomplete."
     else:
-        status = f"SMTP configuration detected for host {SMTP_HOST}:{SMTP_PORT}."
+        state = f"SMTP configuration detected for host {SMTP_HOST}:{SMTP_PORT}."
 
-    return render_template("admin_smtp.html", status=status)
+    return render_template("admin_smtp.html", state=state)

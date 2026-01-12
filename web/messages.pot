@@ -5,5 +5,5 @@ msgstr ""
 "Language: en\n"
 
 #: template_babel_snippet.html:1
-msgid "Willkommen bei BottleBalance"
+msgid "Welcome to BottleBalance"
 msgstr ""

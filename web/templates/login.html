@@ -10,75 +10,66 @@
         <form method="post" action="{{ url_for('auth_routes.login') }}">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           
-          <!--div class="mb-3">
-            <label class="form-label">{{ _('Benutzername') }}</label>
-            <input id="login_username" name="username" class="form-control" autocomplete="username" required>
-          </div-->
           <div class="input-group mb-3">
             <span class="input-group-text"><i class="bi bi-person"></i></span>
             <div class="form-floating flex-grow-1">
               <input id="login_username" name="username" type="text" class="form-control" required>
-              <label for="vollgut">{{ _('Benutzername') }}</label>
+              <label for="full">{{ _('Username') }}</label>
             </div>
           </div>
 
-          <!--div class="mb-3">
-            <label class="form-label">{{ _('Passwort') }}</label>
-            <input type="password" name="password" class="form-control" autocomplete="current-password" required>
-          </div-->
           <div class="input-group mb-3">
             <span class="input-group-text"><i class="bi bi-key"></i></span>
             <div class="form-floating flex-grow-1">
               <input name="password" type="password" class="form-control" autocomplete="current-password" required>
-              <label for="vollgut">{{ _('Passwort') }}</label>
+              <label for="full">{{ _('Password') }}</label>
             </div>
           </div>
 
           <button class="btn btn-primary w-100">{{ _('Login') }}</button>
         </form>
 
-        <!-- "Passwort vergessen?" -->
+        <!-- "Forgot your password?" -->
         <div class="mt-3 text-end">
           <button class="btn btn-link p-0"
                   type="button"
                   data-bs-toggle="modal"
                   data-bs-target="#forgotPwdModal">
-            {{ _('Passwort vergessen?') }}
+            {{ _('Forgot your password?') }}
           </button>
         </div>
 
-        <!-- Modal: Passwort zurücksetzen anfordern -->
+        <!-- Modal: Request password reset -->
         <div class="modal fade" id="forgotPwdModal" tabindex="-1" aria-labelledby="forgotPwdLabel" aria-hidden="true">
           <div class="modal-dialog">
             <div class="modal-content">
               <form method="post" action="{{ url_for('auth_routes.request_reset') }}" id="forgotPwdForm" novalidate>
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="modal-header">
-                  <h5 class="modal-title" id="forgotPwdLabel">{{ _('Passwort zurücksetzen anfordern') }}</h5>
-                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Schließen') }}"></button>
+                  <h5 class="modal-title" id="forgotPwdLabel">{{ _('Request password reset') }}</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Close') }}"></button>
                 </div>
                 <div class="modal-body">
                   <div class="input-group mb-3">
                     <span class="input-group-text"><i class="bi bi-person"></i></span>
                     <div class="form-floating flex-grow-1">
                       <input type="text" class="form-control" id="forgot_username" name="username" required>
-                      <label for="forgot_username">{{ _('Benutzername') }}</label>
+                      <label for="forgot_username">{{ _('Username') }}</label>
                     </div>
                   </div>
-                  <div class="invalid-feedback">{{ _('Bitte Benutzername angeben') }}.</div>
+                  <div class="invalid-feedback">{{ _('Please enter your username') }}.</div>
                   <small class="text-muted">
-                    {{ _('Wenn die Angaben korrekt sind, wird ein Reset-Link per E-Mail gesendet.') }}
+                    {{ _('If the information is correct, a reset link will be sent by email..') }}
                   </small>
                 </div>
                 <div class="modal-footer d-flex justify-content-between">
                   <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ _('Abbrechen') }}</button>
-                  <button type="submit" class="btn btn-primary">{{ _('Reset-Link senden') }}</button>
+                  <button type="submit" class="btn btn-primary">{{ _('Send reset link') }}</button>
                 </div>
               </form>
             </div>
           </div>
         </div>
-
       </div>
     </div>
   </div>
@@ -86,7 +77,7 @@
 
 {% block scripts %}
 <script>
-  // Prefill: Benutzername aus dem Login-Feld ins Modal übernehmen
+  // Prefill: Transfer username from the login field to the modal
   document.addEventListener('DOMContentLoaded', () => {
     const modalEl = document.getElementById('forgotPwdModal');
     if (!modalEl) return;
@@ -99,7 +90,7 @@
       }
     });
 
-    // Einfache Client-Validierung
+    // Simple client validation
     const form = document.getElementById('forgotPwdForm');
     form?.addEventListener('submit', (e) => {
       if (!form.checkValidity()) {
@@ -109,7 +100,7 @@
       }
     });
 
-    // Enter-Submit im Modal (nur bei Eingaben)
+    // Enter-Submit in modal (only for entries)
     modalEl.addEventListener('keydown', (e) => {
       const tag = (e.target.tagName || '').toLowerCase();
       if (e.key === 'Enter' && (tag === 'input' || tag === 'select' || tag === 'textarea')) {

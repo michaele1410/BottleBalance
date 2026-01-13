@@ -344,6 +344,7 @@ CREATE TABLE IF NOT EXISTS entries (
 );
 """
 
+
 CREATE_TABLE_USERS = """
 CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
@@ -352,11 +353,26 @@ CREATE TABLE IF NOT EXISTS users (
     password_hash TEXT NOT NULL,
     role TEXT NOT NULL,
     active BOOLEAN NOT NULL DEFAULT TRUE,
+
+    -- Preferences
     sort_order_desc BOOLEAN DEFAULT FALSE,
     default_filter BOOLEAN DEFAULT TRUE,
-    must_change_password BOOLEAN NOT NULL DEFAULT FALSE,
+    theme_preference TEXT DEFAULT 'system',
+    locale TEXT,
+    timezone TEXT,
+
+    -- 2FA
     totp_secret TEXT,
     totp_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+    backup_codes TEXT DEFAULT '[]',
+
+    -- Approvals
+    can_approve BOOLEAN NOT NULL DEFAULT FALSE,
+
+    -- Login tracking
+    last_login_at TIMESTAMP,
+
+    -- Timestamps
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
@@ -497,10 +513,6 @@ CREATE_INDEX_PAYMENT_REQUESTS_ACTION_USER = """
 CREATE INDEX IF NOT EXISTS idx_za_payment_requests_action_user
 ON payment_requests_audit(request_id, action, user_id);
 """
-CREATE_INDEX_ATTACHMENTS_TEMP = """
-CREATE INDEX IF NOT EXISTS idx_attachments_temp_token_user
-ON attachments_temp (temp_token, uploaded_by, created_at);
-"""
 
 def migrate_columns(conn):
     conn.execute(text(CREATE_TABLE_ATTACHMENTS))
@@ -516,22 +528,7 @@ def migrate_columns(conn):
     conn.execute(text(CREATE_INDEX_ATTACHMENTS_TEMP))
     conn.execute(text(CREATE_INDEX_PAYMENT_REQUESTS_ATTACHMENTS))
     conn.execute(text(CREATE_INDEX_PAYMENT_REQUESTS_ACTION_USER))
-    conn.execute(text(CREATE_INDEX_ATTACHMENT_ATTACHMENT_TEMP))
 
-    #conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS email TEXT"))
-    #conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS totp_secret TEXT"))
-    #conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS totp_enabled BOOLEAN NOT NULL DEFAULT FALSE"))
-    #conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS backup_codes TEXT"))
-    #conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS locale TEXT"))
-    #conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS timezone TEXT"))
-    #conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS theme_preference TEXT DEFAULT 'system'"))
-    #conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login_at TIMESTAMP"))
-    #conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS can_approve BOOLEAN NOT NULL DEFAULT FALSE"))
-    #conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS sort_order_desc BOOLEAN DEFAULT FALSE"))
-    #conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS default_filter BOOLEAN NOT NULL DEFAULT TRUE"))
-    #conn.execute(text("ALTER TABLE entries ADD COLUMN IF NOT EXISTS created_by INTEGER"))
-    #conn.execute(text("ALTER TABLE entries ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT NOW()"))
-    #conn.execute(text("ALTER TABLE entries ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP NOT NULL DEFAULT NOW()"))
     #conn.execute(text("ALTER TABLE payment_requests ADD COLUMN IF NOT EXISTS approver_snapshot JSONB"))
     
     try:

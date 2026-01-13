@@ -11,8 +11,8 @@ msgstr ""
 "POT-Creation-Date: 2026-01-13 12:25+0100\n"
 "PO-Revision-Date: 2026-01-13 08:55+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language: en\n"
-"Language-Team: en <LL@li.org>\n"
+"Language: de\n"
+"Language-Team: de <LL@li.org>\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
@@ -45,14 +45,15 @@ msgid ""
 "\n"
 "Please check the request in the system."
 msgstr ""
-„Ein neuer Zahlungsfreigabeantrag wurde erstellt.\n“
-„\n“
-„Anforderer: %(requester)s\n“
-„Betrag: %(amount).2f EUR\n“
-„Datum: %(date)s\n“
-„Anforderungs-ID: %(id)d\n“
-„\n“
-„Bitte überprüfen Sie die Anfrage im System.“
+"Ein neuer Zahlungsfreigabeantrag wurde erstellt.\n"
+"\n"
+"Anforderer: %(requester)s\n"
+"Betrag: %(amount).2f EUR\n"
+"Datum: %(date)s\n"
+"Anforderungs-ID: %(id)d\n"
+"\n"
+"Bitte überprüfen Sie die Anfrage im System."
+
 
 #: app.py:528
 msgid "Withdrew money"
@@ -704,14 +705,15 @@ msgid ""
 "%(token)s\n"
 "\n"
 "This token is valid for 30 minutes.\n"
-"Please use the following link: %(url)s"
+"Please use the following link: %(url)s"    
 msgstr ""
-„Ihr Passwort-Zurücksetzen-Token lautet:\n“
-„\n“
-„%(token)s\n“
-„\n“
-„Dieses Token ist 30 Minuten lang gültig.\n“
-„Bitte verwenden Sie den folgenden Link: %(url)s“
+"Ihr Passwort-Zurücksetzen-Token lautet:\n"
+"\n"
+"%(token)s\n"
+"\n"
+"Dieses Token ist 30 Minuten lang gültig.\n"
+"Bitte verwenden Sie den folgenden Link: %(url)s"
+
 
 #: user.py:223
 msgid "Reset link sent by email."
@@ -774,9 +776,10 @@ msgid ""
 "\n"
 "Link: %(link)s"
 msgstr ""
-„Ihr Zahlungsfreigabeantrag #id %(id)d wurde an „%(state)s“ gesendet.\n“
-„\n“
-„Link: %(link)s“
+"Ihr Zahlungsfreigabeantrag #%(id)d wurde an '%(state)s' gesendet.\n"
+"\n"
+"Link: %(link)s"
+
 
 #: modules/mail_utils.py:143
 #, python-format
@@ -784,12 +787,13 @@ msgid ""
 "Subject: %(subject)s\r\n"
 "Content-Type: text/plain; charset=utf-8\r\n"
 "\r\n"
-"%(body)s"
+"%(body)s"  
 msgstr ""
-„Betreff: %(subject)s\r\n“
-„Content-Type: text/plain; charset=utf-8\r\n“
-„\r\n“
-„%(body)s“
+"Betreff: %(subject)s\r\n"
+"Content-Type: text/plain; charset=utf-8\r\n"
+"\r\n"
+"%(body)s"
+
 
 #: modules/mail_utils.py:149
 msgid ""
@@ -813,13 +817,14 @@ msgid ""
 "\n"
 "Best regards, %(app)s"
 msgstr ""
-„Hallo,\n“
-„\n“
-„Eine neuer Zahlungsfreigabeantrag (#%(id)d) wurde gerade erstellt.\n“
-„Zur Überprüfung/Freigabe:\n“
-„%(link)s\n“
-„\n“
-„Mit freundlichen Grüßen, %(app)s“
+"Hallo,\n"
+"\n"
+"Ein neuer Zahlungsfreigabeantrag (#%(id)d) wurde gerade erstellt.\n"
+"Zur Überprüfung/Freigabe:\n"
+"%(link)s\n"
+"\n"
+"Mit freundlichen Grüßen, %(app)s"
+
 
 #: templates/2fa.html:8
 msgid "Two-factor authentication"

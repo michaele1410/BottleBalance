@@ -1,3 +1,4 @@
+# modules/core_utils.py
 # -----------------------
 # CORE Configuration
 # -----------------------
@@ -9,7 +10,8 @@ from flask_babel import _
 from sqlalchemy import text
 from sqlalchemy.engine import Engine, create_engine
 from datetime import datetime
-from functools import lru_cac
+from functools import lru_cache
+
 APP_BASE_URL = os.getenv("APP_BASE_URL") or "http://localhost:5000"
 
 SECRET_KEY = os.getenv("SECRET_KEY") or secrets.token_hex(24)
@@ -146,3 +148,36 @@ def build_base_url():
     except RuntimeError:
         base = os.getenv("APP_BASE_URL") or "http://localhost:5000/"
     return base.rstrip("/") + "/"
+
+@lru_cache(maxsize=256)
+def get_setting(key: str, default: str | None = None) -> str | None:
+    """
+    Liest einen App-Setting-Wert aus der Tabelle 'settings'.
+    Gibt 'default' zurück, wenn nicht vorhanden oder DB noch nicht erreichbar.
+    """
+    try:
+        with engine.begin() as conn:
+            val = conn.execute(
+                text("SELECT value FROM settings WHERE key = :k"),
+                {'k': key}
+            ).scalar_one_or_none()
+        return val if val is not None else default
+    except Exception:
+        # robust gegen Import-/Init-Reihenfolge (z.B. Tabelle noch nicht angelegt)
+        return default
+
+def set_setting(key: str, value: str) -> None:
+    """
+    Schreibt/aktualisiert einen Setting-Wert und invalidiert den Cache.
+    """
+    with engine.begin() as conn:
+        conn.execute(text("""
+            INSERT INTO settings (key, value)
+            VALUES (:k, :v)
+            ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value
+        """), {'k': key, 'v': value})
+    # Cache leeren, damit get_setting sofort den neuen Wert liefert
+    try:
+        get_setting.cache_clear()
+    except Exception:
+        pass

@@ -24,7 +24,6 @@ from modules.auth_utils import (
     login_required,
     require_csrf,
     _finalize_login,
-    check_password_hash,
     generate_and_store_backup_codes
 )
 
@@ -50,6 +49,9 @@ def login():
         return render_template('login.html')
     
     # POST logic
+    if request.method == 'POST':
+        require_csrf(lambda: None)()  # nur für POST prüfen
+
     username = (request.form.get('username') or '').strip()
     password = (request.form.get('password') or '').strip()
     with engine.begin() as conn:
@@ -61,6 +63,15 @@ def login():
     if not user or not check_password_hash(user['password_hash'], password) or not user['active']:
         flash(_('Login failed.'), 'danger')
         return redirect(url_for('auth_routes.login'))
+
+    # Update last login timestamp   
+    with engine.begin() as conn:
+            conn.execute(text("""
+                UPDATE users
+                SET last_login_at = NOW(),
+                    updated_at     = NOW()
+                WHERE id = :id
+            """), {'id': user['id']})
 
     # If password needs to be changed: Set info + flag for later forwarding
     force_profile = False
@@ -124,7 +135,14 @@ def login_2fa_post():
     totp = pyotp.TOTP(user['totp_secret'])
 
     # Check TOTP
-    if totp.verify(code, valid_window=1):
+    if totp.verify(code, valid_window=1):        
+        conn.execute(text("""
+                UPDATE users
+                SET last_login_at = NOW(),
+                    updated_at     = NOW()
+                WHERE id = :id
+            """), {'id': user['id']})
+
         _finalize_login(user['id'], user['role'])
         # Evaluate flag
         if session.pop('force_profile_after_login', None):

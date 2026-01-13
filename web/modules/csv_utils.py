@@ -25,12 +25,12 @@ CANONICAL_FIELDS = ['Date', 'Full', 'Empty', 'Revenue', 'Expense', 'Note']
 
 # Synonyms (freely expandable)
 HEADER_SYNONYMS = {
-    'Date':     {'date', 'datum', 'ttmmjjjj', 'tt.mm.jjjj', 'day', 'tag'},
-    'Full':   {'full bottles', 'full', 'plus', 'revenue', 'inventoryin', 'bottlesin'},
+    'Date':    {'date', 'datum', 'ttmmjjjj', 'tt.mm.jjjj', 'day', 'tag'},
+    'Full':    {'full bottles', 'full', 'plus', 'inventoryin', 'bottlesin'},
     'Empty':   {'empty', 'leer', 'out', 'ausgang', 'bestandsabgang', 'bottlesout', 'pfand'},
-    'Revenue':  {'revenue', 'einzahlung', 'revenue', 'revenue', 'cashin'},
-    'Expense':   {'expense', 'auszahlung', 'expense', 'cost', 'cashout'},
-    'Note': {'note', 'notiz', 'kommentar', 'comment', 'note', 'description', 'desc'},
+    'Revenue': {'revenue', 'einzahlung', 'cashin'},
+    'Expense': {'expense', 'auszahlung', 'cost', 'cashout'},
+    'Note':    {'note', 'notiz', 'kommentar', 'comment', 'description', 'desc'},
 }
 
 _money_re = re.compile(r'^\s*[+-]?\d{1,3}([.,]\d{3})*([.,]\d{1,2})?\s*(€)?\s*$')
@@ -278,21 +278,3 @@ def export_audit_entries_to_csv(audit_entries: list[dict], tz_name: str = 'Europ
         ])
 
     return output.getvalue()
-
-# For defining AppTile in Settings
-@lru_cache()
-def get_setting(key: str, default=None):
-    with engine.begin() as conn:
-        row = conn.execute(text("SELECT value FROM settings WHERE key=:k"), {'k': key}).fetchone()
-    return row[0] if row else default
-
-def set_setting(key: str, value: str):
-    with engine.begin() as conn:
-        conn.execute(text("""
-            INSERT INTO settings (key, value)
-            VALUES (:k, :v)
-            ON CONFLICT (key)
-            DO UPDATE SET value=:v
-        """), {'k': key, 'v': value})
-    # Delete cache to ensure updated value is fetched next time
-    get_setting.cache_clear()

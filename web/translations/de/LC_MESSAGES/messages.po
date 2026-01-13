@@ -61,7 +61,7 @@ msgstr "Entnahme"
 #: app.py:529 app.py:1472 templates/index.html:285 templates/index.html:336
 #: templates/table_partial.html:12 templates/table_partial.html:38
 msgid "Inventory"
-msgstr "Inventur"
+msgstr "Inventar"
 
 #: app.py:530
 msgid "Count cash register"
@@ -238,14 +238,14 @@ msgstr "Leergut"
 #: templates/index.html:347 templates/index.html:349
 #: templates/table_partial.html:13 templates/table_partial.html:40
 msgid "Revenue"
-msgstr "Einnahmen"
+msgstr "Einnahme"
 
 #: app.py:1473 templates/edit.html:67 templates/import_preview.html:50
 #: templates/import_preview.html:99 templates/index.html:104
 #: templates/index.html:353 templates/index.html:355
 #: templates/table_partial.html:14 templates/table_partial.html:41
 msgid "Expense"
-msgstr "Ausgaben"
+msgstr "Ausgabe"
 
 #: app.py:1473 templates/index.html:287 templates/index.html:364
 #: templates/table_partial.html:15 templates/table_partial.html:44
@@ -828,12 +828,8 @@ msgid "Set up 2FA"
 msgstr "2FA einrichten"
 
 #: templates/2fa_enroll.html:9
-msgid ""
-"Scan the QR code with your authenticator app (e.g., Microsoft "
-"Authenticator, Google Authenticator) and then enter the 6-digit code."
-msgstr ""
-„Scannen Sie den QR-Code mit Ihrer Authentifizierungs-App (z. B. Microsoft „
-Authenticator, Google Authenticator) und geben Sie dann den 6-stelligen Code ein.“
+msgid "Scan the QR code with your authenticator app (e.g., Microsoft Authenticator, Google Authenticator) and then enter the 6-digit code."
+msgstr "Scannen Sie den QR-Code mit Ihrer Authentifizierungs-App (z. B. Microsoft Authenticator, Google Authenticator) und geben Sie anschließend den 6-stelligen Code ein.“
 
 #: templates/2fa_enroll.html:11
 msgid "2FA secret key:"
@@ -1076,11 +1072,8 @@ msgid "Webseite:"
 msgstr "Website:"
 
 #: templates/base.html:160
-msgid ""
-" is a web application for managing beverage cash registers and payment "
-"requests."
-msgstr ""
-„ist eine Webanwendung zur Verwaltung von Getränkekassen und Zahlungsfreigabeanträgen.
+msgid "is a web application for managing beverage cash registers and payment requests."
+msgstr "ist eine Webanwendung zur Verwaltung von Getränkekassen und Zahlungsfreigabeanträgen."
 
 #: templates/base.html:163
 msgid "Buy me a coffee"
@@ -1121,7 +1114,7 @@ msgstr "Leergut"
 #: templates/payment_authorization.html:253 templates/profile.html:47
 #: templates/profile.html:162 templates/reset.html:32 templates/users.html:67
 msgid "Cancel"
-msgstr "bbrechen"
+msgstr "Abbrechen"
 
 #: templates/edit.html:98 templates/index.html:206 templates/index.html:485
 #: templates/payment_authorization_detail.html:190
@@ -1299,7 +1292,7 @@ msgstr "Fl."
 
 #: templates/index.html:31
 msgid "Cash register:"
-msgstr "Kasse"
+msgstr "Kasse:"
 
 #: templates/index.html:52
 msgid "Add new record"
@@ -1653,7 +1646,7 @@ msgstr "Freigaben"
 
 #: templates/payment_authorization_detail.html:170
 msgid "Chairmans"
-msgstr "Vorsitzende"
+msgstr "Geschäftsführende"
 
 #: templates/payment_authorization_detail.html:182
 msgid "pending"
@@ -1761,7 +1754,7 @@ msgstr "Neuen Benutzer hinzufügen"
 
 #: templates/users.html:86 templates/users.html:131
 msgid "Chairman"
-msgstr "Vorsitzender"
+msgstr "Geschäftsführend"
 
 #: templates/users.html:87 templates/users.html:148
 msgid "Created"

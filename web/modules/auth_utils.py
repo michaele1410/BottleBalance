@@ -1,10 +1,11 @@
 import secrets
 import json
 from functools import wraps
-from flask import session, redirect, url_for, request, abort, Blueprint, render_template, flash
+from flask import session, redirect, url_for, request, abort, Blueprint, render_template, flash, current_app
 from flask_babel import _
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy import text
+from sqlalchemy.exc import ProgrammingError
 
 from modules.core_utils import (
     log_action,
@@ -23,17 +24,32 @@ def login_required(fn):
         return fn(*args, **kwargs)
     return wrapper
 
+
 def current_user():
+    # If DB has not yet been initialized: no accesses
+    if not current_app.config.get('DB_INITIALIZED', False):
+        return None
+
     uid = session.get('user_id')
     if not uid:
         return None
-    with engine.begin() as conn:
-        row = conn.execute(text("""
-            SELECT id, username, email, role, active, must_change_password, totp_enabled,backup_codes, locale, timezone, theme_preference, can_approve, last_login_at, sort_order_desc, default_filter
-            FROM users
-            WHERE id = :id
-        """), {'id': uid}).mappings().first()
-    return dict(row) if row else None
+
+    try:
+        with engine.begin() as conn:
+            row = conn.execute(text("""
+                SELECT id, username, email, role, active, must_change_password,
+                       totp_enabled, backup_codes, locale, timezone, theme_preference,
+                       can_approve, last_login_at, sort_order_desc, default_filter
+                FROM users
+                WHERE id = :id
+            """), {'id': uid}).mappings().first()
+        return dict(row) if row else None
+
+    except ProgrammingError as e:
+        msg = str(getattr(e, 'orig', e)).lower()
+        if 'relation "users" does not exist' in msg or 'undefinedtable' in msg:
+            current_app.logger.warning("Users table not available yet; returning anonymous user.")
+            return None
 
 def require_perms(*perms):
     def decorator(fn):

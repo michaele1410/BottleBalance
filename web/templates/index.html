@@ -193,7 +193,7 @@
                 <div class="input-group">
                   <span class="input-group-text"><i class="bi-calendar"></i></span>
                   <select id="filter_year" name="year" class="form-select" onchange="this.form.submit()">
-                    <option value="all" {{ 'selected' if selected_year == 'all' else '' }}>{{ _('Alle') }}</option>
+                    <option value="all" {{ 'selected' if selected_year == 'all' else '' }}>{{ _('All') }}</option>
                     {% for y in years %}
                       <option value="{{ y }}" {{ 'selected' if selected_year == y|string else '' }}>{{ y }}</option>
                     {% endfor %}
@@ -217,14 +217,14 @@
               <!-- Actions: Reset + Export/Import -->
               <div class="col d-flex flex-wrap gap-2 ms-auto justify-content-end">
                 <a class="btn btn-outline-secondary" href="{{ url_for('bbalance_routes.index') }}">
-                  <i class="bi-x-circle me-1"></i>{{ _('Reset filter') }}
+                  <i class="bi bi-eraser me-1"></i>{{ _('Reset filter') }}
                 </a>
 
                 <div class="btn-group">
                   {% if can_export_pdf %}
                   <a class="btn btn-outline-danger"
                     href="{{ url_for('export_pdf') }}?{{ request.query_string.decode() if request.query_string else '' }}"
-                    title="{{ _('PDF exportieren') }}">
+                    title="{{ _('PDF export') }}">
                     <i class="bi-file-earmark-pdf me-1 text-danger"></i>{{ _('PDF export') }}
                   </a>
                   {% endif %}
@@ -232,7 +232,7 @@
                   {% if can_export_csv or can_import_csv %}
                     <button type="button" class="btn btn-outline-danger dropdown-toggle dropdown-toggle-split"
                             data-bs-toggle="dropdown" aria-expanded="false"
-                            aria-label="{{ _('Weitere Exportoptionen') }}">
+                            aria-label="{{ _('Additional export options') }}">
                       <span class="visually-hidden">{{ _('Additional export options') }}</span>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end">
@@ -496,6 +496,7 @@
   </div>
 
   <!-- Upload-Modal -->
+  <input type="hidden" id="temp_token" value="{{ temp_token }}">
   <div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
@@ -628,7 +629,7 @@
                 // Simpler: Value + symbol from Jinja
                 return `${safe} {{ _('currency') }}`;
               }
-              return `${val} {{ _('Fl.') }}`;
+              return `${val} {{ _('Btl.') }}`;
             }
           }
         }
@@ -890,7 +891,7 @@
         ul.innerHTML = '';
 
         if (!list || list.length === 0) {
-          ul.innerHTML = `<li class="list-group-item text-muted">{{ _('Keine Anhänge vorhanden.') }}</li>`;
+          ul.innerHTML = `<li class="list-group-item text-muted">{{ _('No attachments available.') }}</li>`;
           new bootstrap.Modal(document.getElementById('attachmentsModal')).show();
           return;
         }
@@ -927,7 +928,7 @@
           openA.className = 'btn btn-sm btn-outline-primary';
           openA.href = it.view_url; //inline
           openA.target = '_blank';
-          openA.textContent = "{{ _('Öffnen') }}";
+          openA.textContent = "{{ _('Open') }}";
 
           li.append(left, openA);
           ul.appendChild(li);
@@ -936,7 +937,7 @@
         new bootstrap.Modal(document.getElementById('attachmentsModal')).show();
       } catch (e) {
         console.error(e);
-        alert('Fehler beim Laden der Anhänge.');
+        alert("{{ _('Error loading attachments.') }}");
       }
     }
   </script>
@@ -973,7 +974,7 @@
         listEl.innerHTML = '';
         updateBadge(items.length); // Update badge
         if (!items || items.length === 0) {
-          listEl.innerHTML = `<li class="list-group-item text-muted">{{ _('Keine Anhänge vorhanden.') }}</li>`;
+          listEl.innerHTML = `<li class="list-group-item text-muted">{{ _('No attachments available.') }}</li>`;
           updateBadge(0);
           return;
         }
@@ -1013,7 +1014,7 @@
           fd.append('csrf_token', csrf);
           const url = "{{ url_for('attachments_routes.attachments_temp_upload', token='__T__') }}".replace('__T__', token);
           const resp = await fetch(url, { method: 'POST', body: fd, credentials: 'same-origin' });
-          if (!resp.ok) { alert(await resp.text() || 'Upload failed'); break; }
+          alert(await resp.text() || '{{ _("Upload failed") }}');
         }
         fileEl.value = '';
         refreshTempList();

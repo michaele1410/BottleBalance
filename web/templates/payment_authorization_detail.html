@@ -5,28 +5,28 @@
     <!-- Payment request -->
     <dl class="row">
       
-      <form method="post" action="{{ url_for('payment_routes.edit_payment_request', request_id=payment_requests.id) }}">
+      <form method="post" action="{{ url_for('payment_routes.edit_payment_request', request_id=payment_request.id) }}">
         <div class="d-flex justify-content-between align-items-center mb-3">
-        <h1 class="h5 mb-3">{{ _('Payment request') }} #{{ payment_requests.id }} - {{ _('State') }}: <span class="badge badge-state-{{ payment_requests.state|replace(' ', '_') }}">{{ payment_requests.state }}</span></h1>
+        <h1 class="h5 mb-3">{{ _('Payment request') }} #{{ payment_request.id }} - {{ _('State') }}: <span class="badge badge-state-{{ payment_request.state|replace(' ', '_') }}">{{ payment_request.state }}</span></h1>
         
         <div class="d-flex gap-2">
-          {% if payment_requests.state not in ['approved', 'completed', 'rejected', 'withdrawn'] and approvals_done == 0 %}
+          {% if payment_request.state not in ['approved', 'completed', 'rejected', 'withdrawn'] and approvals_done == 0 %}
           <button type="submit" class="btn btn-primary">{{ _('Save') }}</button>
           {% endif %}
-          <a href="{{ url_for('payment_routes.export_single_request_pdf', request_id=payment_requests.id) }}"
+          <a href="{{ url_for('payment_routes.export_single_request_pdf', request_id=payment_request.id) }}"
             class="btn btn-outline-danger">
             <i class="bi bi-filetype-pdf me-1 text-danger"></i> {{ _('PDF export') }}
           </a>
-          <a href="{{ url_for('payment_routes.payment_request') }}" class="btn btn-outline-secondary">{{ _('Back') }}</a>
+          <a href="{{ url_for('payment_routes.payment_requests') }}" class="btn btn-outline-secondary">{{ _('Back') }}</a>
         </div>
 
       </div>
-        {% if payment_requests.state not in ['approved', 'completed', 'rejected', 'withdrawn'] and approvals_done == 0 %}
+        {% if payment_request.state not in ['approved', 'completed', 'rejected', 'withdrawn'] and approvals_done == 0 %}
         <div class="input-group mb-3">
           <span class="input-group-text"><i class="bi bi-person"></i></span>
           <div class="form-floating flex-grow-1">
             <input type="text" name="requestor"  inputmode="text" class="form-control"
-              placeholder="{{ _('Requestor') }}" value="{{ payment_requests.requestor or '' }}" readonly>
+              placeholder="{{ _('Requestor') }}" value="{{ payment_request.requestor or '' }}" readonly>
               <label for="requestor">{{ _('Requestor') }}</label>
           </div>
         </div>
@@ -34,7 +34,7 @@
         <div class="input-group mb-3">
           <span class="input-group-text"><i class="bi bi-calendar"></i></span>
           <div class="form-floating flex-grow-1">
-            <input type="date" name="date" value="{{ payment_requests.date|strftime('%Y-%m-%d') if payment_requests.date else '' }}"
+            <input type="date" name="date" value="{{ payment_request.date|strftime('%Y-%m-%d') if payment_request.date else '' }}"
             class="form-control" readonly>
               <label for="date">{{ _('Date') }}</label>
           </div>
@@ -45,7 +45,7 @@
           <span class="input-group-text"><i class="bi bi-text-paragraph"></i></span>
           <div class="form-floating flex-grow-1">
             <input type="text" name="paragraph"  inputmode="text" class="form-control"
-              placeholder="{{ _('Paragraph') }}" value="{{ payment_requests.paragraph or '' }}">
+              placeholder="{{ _('Paragraph') }}" value="{{ payment_request.paragraph or '' }}">
               <label for="paragraph">{{ _('Paragraph') }}</label>
           </div>
         </div>
@@ -54,7 +54,7 @@
           <span class="input-group-text"><i class="bi bi-chat-text"></i></span>
           <div class="form-floating flex-grow-1">
             <input type="text" name="purpose"  inputmode="text" class="form-control"
-              placeholder="{{ _('Purpose') }}" value="{{ payment_requests.purpose or '' }}">
+              placeholder="{{ _('Purpose') }}" value="{{ payment_request.purpose or '' }}">
               <label for="purpose">{{ _('Purpose') }}</label>
           </div>
         </div>
@@ -63,7 +63,7 @@
           <span class="input-group-text"><i class="bi bi-wallet2"></i></span>
           <div class="form-floating flex-grow-1">
             <input type="number" name="amount"  inputmode="decimal" inputmode="decimal" step="0.01" class="form-control"
-              placeholder="0.00" value="{{ payment_requests.amount or '' }}" autocomplete="off">
+              placeholder="0.00" value="{{ payment_request.amount or '' }}" autocomplete="off">
               <label for="amount">{{ _('Amount') }}</label>
           </div>
         </div>
@@ -72,7 +72,7 @@
           <span class="input-group-text"><i class="bi bi-building"></i></span>
           <div class="form-floating flex-grow-1">
             <input type="text" name="supplier"  inputmode="text" class="form-control"
-              placeholder="{{ _('Supplier') }}" value="{{ payment_requests.supplier or '' }}">
+              placeholder="{{ _('Supplier') }}" value="{{ payment_request.supplier or '' }}">
               <label for="supplier">{{ _('Supplier') }}</label>
           </div>
         </div>
@@ -81,7 +81,7 @@
           <span class="input-group-text"><i class="bi bi-chat-quote"></i></span>
           <div class="form-floating flex-grow-1">
             <input type="text" name="justification"  inputmode="text" class="form-control"
-              placeholder="{{ _('Justification') }}" rows="3" value="{{ payment_requests.justification or '' }}">
+              placeholder="{{ _('Justification') }}" rows="3" value="{{ payment_request.justification or '' }}">
               <label for="justification">{{ _('Justification') }}</label>
           </div>
         </div>
@@ -91,7 +91,7 @@
           <span class="input-group-text"><i class="bi bi-person"></i></span>
           <div class="form-floating flex-grow-1">
             <input type="text" name="requestor"  inputmode="text" class="form-control"
-              placeholder="{{ _('Requestor') }}" value="{{ payment_requests.requestor or '' }}" readonly>
+              placeholder="{{ _('Requestor') }}" value="{{ payment_request.requestor or '' }}" readonly>
               <label for="requestor">{{ _('Requestor') }}</label>
           </div>
         </div>
@@ -99,7 +99,7 @@
         <div class="input-group mb-3">
           <span class="input-group-text"><i class="bi bi-calendar"></i></span>
           <div class="form-floating flex-grow-1">
-            <input type="text" name="date" inputmode="decimal" value="{{ payment_requests.date|strftime('%Y-%m-%d') if payment_requests.date else '' }}"
+            <input type="text" name="date" inputmode="decimal" value="{{ payment_request.date|strftime('%Y-%m-%d') if payment_request.date else '' }}"
             class="form-control" readonly>
               <label for="date">{{ _('Date') }}</label>
           </div>
@@ -111,7 +111,7 @@
           <span class="input-group-text"><i class="bi bi-text-paragraph"></i></span>
           <div class="form-floating flex-grow-1">
             <input type="text" name="paragraph"  inputmode="text" class="form-control"
-              placeholder="{{ _('Paragraph') }}" value="{{ payment_requests.paragraph or '' }}" readonly>
+              placeholder="{{ _('Paragraph') }}" value="{{ payment_request.paragraph or '' }}" readonly>
               <label for="paragraph">{{ _('Paragraph') }}</label>
           </div>
         </div>
@@ -120,7 +120,7 @@
           <span class="input-group-text"><i class="bi bi-chat-text"></i></span>
           <div class="form-floating flex-grow-1">
             <input type="text" name="purpose"  inputmode="text" class="form-control"
-              placeholder="{{ _('Purpose') }}" value="{{ payment_requests.purpose or '' }}" readonly>
+              placeholder="{{ _('Purpose') }}" value="{{ payment_request.purpose or '' }}" readonly>
               <label for="purpose">{{ _('Purpose') }}</label>
           </div>
         </div>
@@ -129,7 +129,7 @@
           <span class="input-group-text"><i class="bi bi-cash"></i></span>
           <div class="form-floating flex-grow-1">
             <input type="number" name="amount"  inputmode="number" inputmode="decimal" class="form-control"
-              placeholder="{{ _('Amount') }}" value="{{ payment_requests.amount or '' }}" readonly>
+              placeholder="{{ _('Amount') }}" value="{{ payment_request.amount or '' }}" readonly>
               <label for="amount">{{ _('Amount') }}</label>
           </div>
         </div>
@@ -138,7 +138,7 @@
           <span class="input-group-text"><i class="bi bi-building"></i></span>
           <div class="form-floating flex-grow-1">
             <input type="text" name="supplier"  inputmode="text" class="form-control"
-              placeholder="{{ _('Supplier') }}" value="{{ payment_requests.supplier or '' }}" readonly>
+              placeholder="{{ _('Supplier') }}" value="{{ payment_request.supplier or '' }}" readonly>
               <label for="supplier">{{ _('Supplier') }}</label>
           </div>
         </div>
@@ -147,7 +147,7 @@
           <span class="input-group-text"><i class="bi bi-chat-quote"></i></span>
           <div class="form-floating flex-grow-1">
             <input type="text" name="justification"  inputmode="text" class="form-control"
-              placeholder="{{ _('Justification') }}" value="{{ payment_requests.justification or '' }}" readonly>
+              placeholder="{{ _('Justification') }}" value="{{ payment_request.justification or '' }}" readonly>
               <label for="justification">{{ _('Justification') }}</label>
           </div>
         </div>
@@ -190,8 +190,8 @@
     <h5 class="mt-5">{{ _('Attachments') }}</h5>
 
     <!-- Upload-Form -->
-    {% if payment_requests.state not in ['completed', 'rejected', 'withdrawn'] %}
-    <form action="{{ url_for('payment_routes.upload_payment_requests_attachment', request_id=payment_requests.id) }}" method="post"
+    {% if payment_request.state not in ['completed', 'rejected', 'withdrawn'] %}
+    <form action="{{ url_for('payment_routes.upload_payment_requests_attachment', request_id=payment_request.id) }}" method="post"
       enctype="multipart/form-data" class="mb-3">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div class="input-group">
@@ -223,7 +223,7 @@
           <a href="{{ url_for('payment_routes.view_payment_requests_attachment', att_id=att.id) }}" target="_blank"
             class="btn btn-sm btn-outline-primary">{{ _('View') }}</a>
         </div>
-        {% if payment_requests.status not in ['completed', 'rejected', 'withdrawn'] %}
+        {% if payment_request.state not in ['completed', 'rejected', 'withdrawn'] %}
         <form method="post" action="{{ url_for('payment_routes.delete_payment_requests_attachment', att_id=att.id) }}"
           onsubmit="return confirm('{{ _('Are you sure to delete the attachment?') }}');">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

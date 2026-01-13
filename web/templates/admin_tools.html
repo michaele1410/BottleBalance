@@ -3,24 +3,6 @@
 <div class="card shadow-sm">
   <div class="card-body">
     <h1 class="h5 mb-3">{{ _('Settings') }}</h1>
-
-    {# Flash-Messages #}
-    {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-    <div class="mb-3">
-      {% for category, message in messages %}
-      {% set bs = 'danger' if category in ['error','danger'] else (
-        'warning' if category == 'warning' else (
-        'success' if category == 'success' else 'info')) %}
-      <div class="alert alert-{{ bs }} alert-dismissible fade show" role="alert">
-        {{ message|safe }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ _('Close') }}"></button>
-      </div>
-      {% endfor %}
-    </div>
-    {% endif %}
-    {% endwith %}
-
     <div class="row g-4">
       {# ---------- Notes (full width) ---------- #}
       <div class="col-12">
@@ -54,7 +36,7 @@
                     </button>
                     <button type="button" class="btn btn-outline-secondary"
                       onclick="document.getElementById('options').value='';">
-                      <i class="bi bi-eraser me-1"></i>{{ _('Empty') }}
+                      <i class="bi bi-eraser me-1"></i>{{ _('Clear List') }}
                     </button>
                   </div>
                 </form>
@@ -109,8 +91,7 @@
             <form method="post" action="{{ url_for('admin_tools') }}">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <input type="hidden" name="action" value="dump">
-              <button type="submit" class="btn btn-primary"
-                onclick="return confirm('{{ _('Create dump now?') }}')">
+              <button type="submit" class="btn btn-primary" onclick="return confirm('{{ _('Create dump now?') }}')">
                 <i class="bi bi-download me-1"></i>{{ _('Create & download dump') }}
               </button>
             </form>
@@ -139,16 +120,14 @@
 
               <div class="col-md-6">
                 <!-- Upload-Form -->
-                <form method="post"
-                      action="{{ url_for('admin_tools') }}"
-                      enctype="multipart/form-data"
-                      class="d-flex flex-column gap-2">
+                <form method="post" action="{{ url_for('admin_tools') }}" enctype="multipart/form-data"
+                  class="d-flex flex-column gap-2">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                   <input type="hidden" name="action" value="branding_upload">
 
                   <label class="form-label" for="logo">{{ _('Select logo file') }}</label>
                   <input class="form-control" type="file" id="logo" name="logo"
-                        accept="image/svg+xml,image/png,image/jpeg,image/webp" required>
+                    accept="image/svg+xml,image/png,image/jpeg,image/webp" required>
 
                   <div class="d-flex gap-2">
                     <button type="submit" class="btn btn-primary">
@@ -163,14 +142,11 @@
                 </form>
 
                 <!-- Remove form as siblings, not within the upload form -->
-                <form method="post"
-                      action="{{ url_for('admin_tools') }}"
-                      class="mt-2 d-inline">
+                <form method="post" action="{{ url_for('admin_tools') }}" class="mt-2 d-inline">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                   <input type="hidden" name="action" value="branding_remove">
-                  <button type="submit"
-                          class="btn btn-outline-danger"
-                          onclick="return confirm('{{ _('Remove your own logo?') }}')">
+                  <button type="submit" class="btn btn-outline-danger"
+                    onclick="return confirm('{{ _('Remove your own logo?') }}')">
                     <i class="bi bi-trash me-1"></i> {{ _('Remove') }}
                   </button>
                 </form>

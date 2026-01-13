@@ -68,9 +68,10 @@ def fetch_entries(
                 e.note,
                 e.created_by,
                 SUM(e.revenue - e.expense)
-                    OVER (ORDER BY e.date, e.id  ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS cashBalance,
-                SUM(e.full - e.empty)
+                    OVER (ORDER BY e.date, e.id ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS "cashBalance",
+                SUM(e."full" - e."empty")
                     OVER (ORDER BY e.date, e.id ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS inventory
+
             FROM entries e
         )
         SELECT
@@ -82,7 +83,7 @@ def fetch_entries(
             ar.expense,
             ar.note,
             ar.created_by,
-            ar.cashBalance,
+            ar."cashBalance",
             ar.inventory,
             COALESCE(a.cnt, 0) AS attachment_count
         FROM all_rows ar
@@ -116,18 +117,19 @@ def get_global_totals():
     with engine.begin() as conn:
         row = conn.execute(text("""
             SELECT
-                COALESCE(SUM(full) - SUM(empty), 0) AS inventory,
-                COALESCE(SUM(revenue) - SUM(expense), 0) AS cashBalance
+                COALESCE(SUM("full") - SUM("empty"), 0) AS inventory,
+                COALESCE(SUM(revenue) - SUM(expense), 0) AS "cashBalance"
             FROM entries
         """)).mappings().first()
+
     return row['inventory'], row['cashBalance']
 
 def get_delta_for_filter(date_from=None, date_to=None):
     """Calculates the change in the selected period (optional for display)."""
     query = """
         SELECT
-            COALESCE(SUM(full) - SUM(empty), 0) AS delta_inv,
-            COALESCE(SUM(revenue) - SUM(expense), 0) AS delta_cashbalance
+            COALESCE(SUM("full") - SUM("empty"), 0) AS delta_inv,
+            COALESCE(SUM(revenue) - SUM(expense), 0) AS "delta_cashbalance"
         FROM entries
         WHERE 1=1
     """

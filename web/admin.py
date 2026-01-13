@@ -55,10 +55,10 @@ def admin_export_dump():
         # audit log entry
         log_action(session.get('user_id'), 'db:export', None, f'Dump von {db_name} erzeugt')
 
-        flash(_('Datenbank-Dump erfolgreich erzeugt.'))
+        flash(_('Database dump successfully created.'), 'success')
         return send_file(dump_file, as_attachment=True, download_name="bottlebalance_dump.sql")
 
     except subprocess.CalledProcessError as e:
-        flash(_('Fehler beim Datenbank-Dump: %(error)s', error=str(e)))
+        flash(_('Error during database dump: %(error)s', error=str(e)), 'danger')
         log_action(session.get('user_id'), 'db:export:error', None, f'Dump fehlgeschlagen: {e}')
         return redirect(url_for('admin_export_page'))

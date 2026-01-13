@@ -193,7 +193,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (pwdField.value !== pwdConfirmField.value) {
         e.preventDefault();
         e.stopPropagation();
-        alert("Die Passwörter stimmen nicht überein.");
+        alert("{{ _('Passwords do not match.') }}");
         pwdConfirmField.focus();
       }
     }

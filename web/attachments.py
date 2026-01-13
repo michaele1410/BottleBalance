@@ -43,7 +43,7 @@ def attachments_upload(entry_id: int):
 
     files = request.files.getlist('files')  # name="files" (multiple)
     if not files:
-        flash(_('Please select files.'))
+        flash(_('Please select files.'), 'info')
         return redirect(request.referrer or url_for('bbalance_routes.edit', entry_id=entry_id))
 
     saved = 0
@@ -54,7 +54,7 @@ def attachments_upload(entry_id: int):
             if not f or not f.filename:
                 continue
             if not allowed_file(f.filename):
-                flash(_('Invalid file type: %(filename)s', filename=f.filename))
+                flash(_('Invalid file type: %(filename)s', filename=f.filename), 'danger')
                 continue
    
             name = f.filename or ''
@@ -75,9 +75,9 @@ def attachments_upload(entry_id: int):
 
     if saved:
         log_action(session.get('user_id'), 'attachments:upload', entry_id, f'files={saved}')
-        flash(_('%(num)d Files uploaded.', num=saved))
+        flash(_('%(num)d Files uploaded.', num=saved), 'success')
     else:
-        flash(_('No files uploaded.'))
+        flash(_('No files uploaded.'), 'warning')
 
     return redirect(request.referrer or url_for('bbalance_routes.edit', entry_id=entry_id))
 
@@ -148,7 +148,7 @@ def attachments_delete(att_id: int):
     with engine.begin() as conn:
         conn.execute(text("DELETE FROM attachments WHERE id=:id"), {'id': att_id})
     log_action(session.get('user_id'), 'attachments:delete', r['entry_id'], f"att_id={att_id}")
-    flash(_('Anhang gelöscht.'))
+    flash(_('Attachment deleted.'), 'success')
     return redirect(request.referrer or url_for('bbalance_routes.edit', entry_id=r['entry_id']))
 
 # -----------------------

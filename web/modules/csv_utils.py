@@ -62,7 +62,7 @@ def parse_date_de_strict(s: str) -> date:
     try:
         return datetime.strptime(s, '%d.%m.%Y').date()
     except Exception:
-        raise ValueError(_('Invalid date (expected DD.MM.YYYY): ') + s)
+        raise ValueError(_('Invalid date (expected DD.MM.YYYY): %(value)s', value=s))
 
 def parse_date_de_or_none(s: str | None) -> date | None:
     if not s or not s.strip():
@@ -85,7 +85,7 @@ def try_int_strict(s: str, field: str) -> int:
     if ss == '':
         return 0
     if not re.fullmatch(r'[+-]?\d+', ss):
-        raise ValueError(_(f'Invalid integer for {field}: ') + ss)
+        raise ValueError(_('Invalid integer for %(field)s: %(value)s', field=field, value=ss))
     return int(ss)
 
 def parse_money(value: str | None) -> Decimal:
@@ -144,7 +144,7 @@ def _signature(row: dict) -> tuple:
 
 def _fetch_existing_signature_set(conn) -> set[tuple]:
     existing = conn.execute(text("""
-        SELECT date, COALESCE(full,0), COALESCE(empty,0),
+        SELECT date, COALESCE("full",0), COALESCE("empty",0),
                COALESCE(revenue,0), COALESCE(expense,0), COALESCE(note,'')
         FROM entries
     """)).fetchall()
@@ -233,9 +233,9 @@ def _parse_csv_with_mapping(content: str, replace_all: bool, mapping: dict | Non
             empty = 0
 
         if not is_valid_money_str(v_revenue):
-            errors.append(_('Invalid money format for revenue: ') + (v_revenue or ''))
+            errors.append(_('Invalid money format for revenue: %(value)s', value=(v_revenue or '')))
         if not is_valid_money_str(v_expense):
-            errors.append(_('Invalid money format for expense: ') + (v_expense or ''))
+            errors.append(_('Invalid money format for expense: %(value)s', value=(v_expense or '')))
 
         revenue = parse_money(v_revenue or '0')
         expense  = parse_money(v_expense or '0')

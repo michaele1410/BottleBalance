@@ -59,7 +59,7 @@ def login():
         """), {'u': username}).mappings().first()
 
     if not user or not check_password_hash(user['password_hash'], password) or not user['active']:
-        flash(_('Login failed.'))
+        flash(_('Login failed.'), 'danger')
         return redirect(url_for('auth_routes.login'))
 
     # If password needs to be changed: Set info + flag for later forwarding
@@ -118,7 +118,7 @@ def login_2fa_post():
         """), {'id': uid}).mappings().first()
 
     if not user or not user['totp_secret']:
-        flash(_('2FA not active.'))
+        flash(_('2FA disabled.'), 'danger')
         return redirect(url_for('auth_routes.login'))
 
     totp = pyotp.TOTP(user['totp_secret'])
@@ -162,7 +162,7 @@ def login_2fa_post():
             return redirect(url_for('profile'))
         return redirect(url_for('profile'))
 
-    flash(_('Invalid 2FA code or backup code.'))
+    flash(_('Invalid 2FA code or backup code.'), 'danger')
     return redirect(url_for('auth_routes.login_2fa_get'))
 
 @auth_routes.post('/profile/2fa/regen')
@@ -173,7 +173,7 @@ def regen_backup_codes():
     codes = generate_and_store_backup_codes(uid)
     # One-time display in profile
     session['new_backup_codes'] = codes
-    flash(_('New backup codes have been generated. Please keep them safe.'))
+    flash(_('New backup codes have been generated. Please keep them safe.'), 'success')
     return redirect(url_for('profile'))
 
 @auth_routes.post('/logout')
@@ -213,7 +213,7 @@ def reset_post(token: str):
     pwd2 = (request.form.get('password2') or '').strip()
 
     if len(pwd) < 8:
-        flash(_('Password must be at least 8 characters long.') + '.', 'danger')
+        flash(_('Password must be at least 8 characters long.'), 'danger')
         return redirect(url_for('auth_routes.reset_get', token=token))
     if pwd != pwd2:
         flash(_('Passwords do not match.'), 'danger')

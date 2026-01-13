@@ -31,12 +31,11 @@
         <td class="text-end" data-label="{{ _('Date') }}" data-col="date">{{ format_date_de(e.date) }}</td>
 
         <!-- Only show ifvalue != 0 -->
-        <td class="text-end" data-label="{{ _('Full') }}" data-col="full">{{ e.full ~ ' ' ~ _('Fl.') if e.full != 0 else '' }}</td>
-        <td class="text-end" data-label="{{ _('Empty') }}" data-col="empty">{{ e.empty ~ ' ' ~ _('Fl.') if e.empty != 0 else '' }}</td>
+        <td class="text-end" data-label="{{ _('Full') }}" data-col="full">{{ e.full ~ ' ' ~ _('Btl.') if e.full != 0 else '' }}</td>
+        <td class="text-end" data-label="{{ _('Empty') }}" data-col="empty">{{ e.empty ~ ' ' ~ _('Btl.') if e.empty != 0 else '' }}</td>
 
         <!-- Inventory: Always show or optionally hide -->
-        <td class="text-end" data-label="{{ _('Inventory') }}" data-col="inventory">{{ e.inventory ~ ' ' ~ _('Fl.') if changed else '' }}</td>
-
+        <td class="text-end" data-label="{{ _('Inventory') }}" data-col="inventory">{{ e.inventory ~ ' ' ~ _('Btl.') if changed else '' }}</td>
         <!-- Revenue/Expense: show only if != 0 -->
         <td class="text-end" data-label="{{ _('Revenue') }}" data-col="revenue">{{ format_eur_de(e.revenue) if e.revenue != 0 else '' }}</td>
         <td class="text-end" data-label="{{ _('Expense') }}" data-col="expense">{{ format_eur_de(e.expense) if e.expense != 0 else '' }}</td>

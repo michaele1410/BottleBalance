@@ -38,7 +38,7 @@
             <td data-label="{{ _('Requestor') }}" colspan="5">
               <div class="mb-2">
                 <strong>{{ _('Approval progress') }}:</strong>
-                {{ a.approvals_count }} {{ _('von') }} {{ a.approvals_total }} {{ _('approved') }}
+                {{ a.approvals_count }} {{ _('from') }} {{ a.approvals_total }} {{ _('approved') }}
                 {% if a.approved_by_me %}
                 • <i class="bi bi-person-check text-success"></i> {{ _('from you') }}
                 {% endif %}
@@ -181,7 +181,7 @@
 <!-- Modal: New request -->
 <div class="modal fade" id="payment_requestModal" tabindex="-1" aria-labelledby="payment_requestModalLabel" aria-hidden="true">
   <div class="modal-dialog">
-    <form method="post" action="{{ url_for('payment_routes.payment_request') }}" id="payment_requestForm"
+    <form method="post" action="{{ url_for('payment_routes.payment_requests_request') }}" id="payment_requestForm"
       class="needs-validation" novalidate>
       <div class="modal-content">
         <div class="modal-header">

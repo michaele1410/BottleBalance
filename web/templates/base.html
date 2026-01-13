@@ -109,6 +109,20 @@
 
 <!-- Main -->
 <main class="container-fluid my-4 px-2 px-md-3">
+  <!-- Flash-Messages -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="container mt-3">
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ message|safe }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+  <!-- Flash-Messages -->
   {% block content %}{% endblock %}
 </main>
 
@@ -244,6 +258,14 @@ document.addEventListener('DOMContentLoaded', () => {
   systemDark.addEventListener('change', applyTheme);
 });
 </script>
+
+<!-- Auto-dismiss flash messages after 5 seconds -->
+<script>
+  setTimeout(() => {
+    document.querySelectorAll('.alert').forEach(el => el.remove());
+  }, 5000);
+</script>
+
 
 {% block scripts %}{% endblock %}
 

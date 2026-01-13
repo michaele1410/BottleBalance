@@ -44,9 +44,9 @@ from modules.payment_utils import (
     _approved_by_user,
     _require_approver,
     _approvals_done,
-    _user_can_edit_payment_requests,
-    _user_can_view_payment_requests,
-    get_payment_requests_email,
+    _user_can_edit_payment_request,
+    _user_can_view_payment_request,
+    get_payment_request_email,
     send_new_request_notifications    
 )
 from modules.mail_utils import (
@@ -145,7 +145,7 @@ def payment_requests():
                                     and r['state'] in ('pending', 'on_hold')),
             })
 
-    return render_template('payment_authorization.html', payment_request=payment_requests, today=today)
+    return render_template('payment_authorization.html', payment_requests=payment_requests, today=today)
 
 @payment_routes.post('/approve/<int:request_id>')
 @login_required
@@ -241,7 +241,7 @@ def on_hold_payment_request(request_id):
 @payment_routes.post('/complete/<int:request_id>')
 @login_required
 @require_csrf
-def acomplete_payment_request(request_id):
+def complete_payment_request(request_id):
     user = current_user()
     _require_approver(user)
     with engine.begin() as conn:
@@ -283,11 +283,11 @@ def delete_payment_request(request_id: int):
         conn.execute(text("DELETE FROM payment_requests WHERE id=:id"), {'id': request_id})
         conn.execute(text("""
             INSERT INTO payment_requests_audit (request_id, user_id, action, timestamp)
-            VALUES (:aid, :uid, 'geloescht', NOW())
+            VALUES (:aid, :uid, 'deleted', NOW())
         """), {'aid': request_id, 'uid': user['id']})
 
         if (email := get_payment_request_email(request_id)):
-            send_status_email(email, request_id, 'geloescht')
+            send_status_email(email, request_id, 'deleted')
 
     flash(_('Payment request was deleted.'), 'danger')
     return redirect(url_for('payment_routes.payment_requests'))
@@ -387,13 +387,13 @@ def continue_payment_request(request_id: int):
         # Audit: continued
         conn.execute(
             text("""INSERT INTO payment_requests_audit (request_id, user_id, action, timestamp, detail)
-                    VALUES (:aid, :uid, 'fortgesetzt', NOW(), NULL)"""),
+                    VALUES (:aid, :uid, 'continued', NOW(), NULL)"""),
             {'aid': request_id, 'uid': user['id']}
         )
 
         # Best-effort Mail
         if (email := get_payment_request_email(request_id)):
-            send_status_email(email, request_id, 'fortgesetzt', cc_approvers=True)
+            send_status_email(email, request_id, 'continued', cc_approvers=True)
 
     flash(_('The payment request was continued and is pending again.'), 'info')
     return redirect(url_for('payment_routes.payment_requests'))
@@ -472,7 +472,7 @@ def export_single_request_pdf(request_id: int):
     story.append(details_table)
     story.append(Spacer(1, 10))
 
-    story.append(Paragraph(_("Audit History"), styles['Heading3']))
+    story.append(Paragraph(_("Audit history"), styles['Heading3']))
     story.append(Spacer(1, 4))
     story.append(build_audit_table(audits, styles))
     story.append(Spacer(1, 10))
@@ -494,9 +494,6 @@ def upload_payment_requests_attachment(request_id: int):
     user = current_user()
 
     # Check state
-        with engine.begin() as conn:
-                state = conn.execute(
-                Check state
     with engine.begin() as conn:
         state = conn.execute(
             text("SELECT state FROM payment_requests WHERE id=:id"),
@@ -550,7 +547,7 @@ def upload_payment_requests_attachment(request_id: int):
         if saved:
             conn.execute(text("""
                 INSERT INTO payment_requests_audit (request_id, user_id, action, timestamp, detail)
-                VALUES (:aid, :uid, 'anhang_hochgeladen', NOW(), :det)
+                VALUES (:aid, :uid, 'attachment_uploaded', NOW(), :det)
             """), {'aid': request_id, 'uid': user['id'], 'det': f'files={saved}'})
 
     if saved:
@@ -669,7 +666,7 @@ def delete_payment_requests_attachment(att_id: int):
         conn.execute(text("DELETE FROM payment_requests_attachments WHERE id=:id"), {'id': att_id})
         conn.execute(text("""
             INSERT INTO payment_requests_audit (request_id, user_id, action, timestamp, detail)
-            VALUES (:aid, :uid, 'anhang_geloescht', NOW(), :det)
+            VALUES (:aid, :uid, 'attachment_deleted', NOW(), :det)
         """), {'aid': r['request_id'], 'uid': session.get('user_id'),
                'det': f"att_id={att_id}, name={r['original_name']}"})
     flash(_('Attachment deleted.'), 'info')
@@ -694,7 +691,7 @@ def edit_payment_request(request_id):
         if not row:
             abort(404)
         if row['state'] in ('approved', 'completed', 'rejected', 'withdrawn'):
-            flash(_('Bearbeitung nicht mehr möglich.'), 'warning')
+            flash(_('Editing is no longer possible.'), 'warning')
             return redirect(url_for('payment_routes.payment_request_detail', request_id=request_id))
         if user['id'] != row['requestor_id'] and not user.get('can_approve'):
             abort(403)
@@ -725,7 +722,7 @@ def edit_payment_request(request_id):
         date_obj = parse_date_flexible(date_str)
 
     except InvalidOperation:
-        flash(_('Invalid amount') + '.', 'danger')
+        flash(_('Invalid amount.'), 'danger')
         return redirect(url_for('payment_routes.payment_request_detail', request_id=request_id))
     except Exception as e:
         flash(_('Invalid input: %(error)s', error=escape(str(e))), 'danger')
@@ -795,7 +792,7 @@ def edit_payment_request(request_id):
 
         conn.execute(text("""
             INSERT INTO payment_requests_audit (request_id, user_id, action, timestamp, detail)
-            VALUES (:aid, :uid, 'edit', NOW(), :detail)
+            VALUES (:aid, :uid, 'edited', NOW(), :detail)
         """), {'aid': request_id, 'uid': user['id'], 'detail': detail_text})
 
     flash(_('Payment request saved.'), 'success')
@@ -880,11 +877,11 @@ def export_all_payment_requests_pdf():
         blocks.append(Spacer(1, 10))
 
         blocks.append(Paragraph(_("Audit history"), styles['Heading3']))
-        blocks.append(build_audit_table(audit_by_payment_requests.get(r['id'], []), styles))
+        blocks.append(build_audit_table(audit_by_payment_request.get(r['id'], []), styles))
         blocks.append(Spacer(1, 10))
 
         # Attachments including PDF pages
-        blocks = embed_pdf_attachments(r['id'], attachments_by_payment_requests.get(r['id'], []), blocks, styles)
+        blocks = embed_pdf_attachments(r['id'], attachments_by_payment_request.get(r['id'], []), blocks, styles)
 
         story.append(KeepTogether(blocks))
         if idx < len(payment_requests) - 1:
@@ -964,7 +961,7 @@ def payment_requests_request():
         # Audit entry
         conn.execute(text("""
             INSERT INTO payment_requests_audit (request_id, user_id, action, timestamp, detail)
-            VALUES (:aid, :uid, 'erstellt', NOW(), NULL)
+            VALUES (:aid, :uid, 'created', NOW(), NULL)
         """), {'aid': request_id, 'uid': user['id']})
 
     # Notification to approver (best effort)

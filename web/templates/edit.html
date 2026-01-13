@@ -120,7 +120,7 @@
               <i class="bi bi-paperclip me-1"></i>
               <a href="{{ att.url }}" target="_blank">{{ att.name }}</a>
               <small class="text-muted">({{ att.size }} Bytes)</small>
-              <a href="{{ att.view_url }}" target="_blank" class="btn btn-sm btn-outline-primary">{{ _('Ansehen') }}</a>
+              <a href="{{ att.view_url }}" target="_blank" class="btn btn-sm btn-outline-primary">{{ _('View') }}</a>
             </div>
             <form method="post" action="{{ url_for('attachments_routes.attachments_delete', att_id=att.id) }}"
               onsubmit="return confirm('{{ _('Delete attachment for real?') }}');">
@@ -227,7 +227,7 @@
             <i class="bi bi-paperclip me-1"></i>
             <a href="${att.url}" target="_blank">${att.name}</a>
             <small class="text-muted">(${att.size} Bytes)</small>
-            <a href="${att.view_url}" target="_blank" class="btn btn-sm btn-outline-primary">{{ _('Wiew') }}</a>
+            <a href="${att.view_url}" target="_blank" class="btn btn-sm btn-outline-primary">{{ _('View') }}</a>
           </div>
           <form method="post" action="${deleteUrl}" onsubmit="return confirm('{{ _('Delete attachment for permanently?') }}');">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

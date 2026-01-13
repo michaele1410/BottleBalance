@@ -64,13 +64,13 @@ def users_add():
     role = (request.form.get('role') or 'Viewer').strip()
     pwd = (request.form.get('password') or '').strip()
     if not username:
-        flash(_('Username cannot be empty.'))
+        flash(_('Username cannot be empty.'), 'warning')
         return redirect(url_for('user_routes.users_list'))
     if role not in ROLES:
-        flash(_('Invalid role.'))
+        flash(_('Invalid role.'), 'danger')
         return redirect(url_for('user_routes.users_list'))
     if len(pwd) < 8:
-        flash(_('Password must be at least 8 characters long.'))
+        flash(_('Password must be at least 8 characters long.'), 'danger')
         return redirect(url_for('user_routes.users_list'))
     try:
         with engine.begin() as conn:
@@ -78,9 +78,9 @@ def users_add():
                 INSERT INTO users (username, email, password_hash, role, active, must_change_password, theme_preference)
                 VALUES (:u, :e, :ph, :r, TRUE, TRUE, 'system')
             """), {'u': username, 'e': email, 'ph': generate_password_hash(pwd), 'r': role})
-        flash(_('User created.'))
+        flash(_('User created.'), 'success')
     except Exception as e:
-        flash(_('Error: %(error)s', error=escape(str(e))))
+        flash(_('Error: %(error)s', error=escape(str(e))), 'danger')
     return redirect(url_for('user_routes.users_list'))
 
 @user_routes.route('/admin/users/<int:uid>/edit', methods=['GET', 'POST'])
@@ -99,7 +99,7 @@ def edit_user(uid):
         password = (request.form.get('password') or '').strip()
 
         if role not in ROLES.keys():
-            flash(_('Invalid role.'))
+            flash(_('Invalid role.'), 'danger')
             return redirect(url_for('edit_user', uid=uid))
 
         with engine.begin() as conn:
@@ -147,7 +147,7 @@ def edit_user(uid):
                     'id': uid
                 })
 
-        flash(_('User updated.'))
+        flash(_('User updated.'), 'success')
         return redirect(url_for('user_routes.users_list'))
 
     # GET part
@@ -169,13 +169,13 @@ def edit_user(uid):
 def users_delete(uid: int):
     current_uid = session.get('user_id')
     if uid == current_uid:
-        flash(_('You cannot delete yourself.'))
+        flash(_('You cannot delete yourself.'), 'warning')
         return redirect(url_for('user_routes.users_list'))
 
     with engine.begin() as conn:
         conn.execute(text("DELETE FROM users WHERE id=:id"), {'id': uid})
     log_action(current_uid, 'users:delete', None, f"user_id={uid}")
-    flash(_('User deleted.'))
+    flash(_('User deleted.'), 'success')
     return redirect(url_for('user_routes.users_list'))
 
 @user_routes.post('/admin/users/<int:uid>/resetpw')
@@ -185,12 +185,12 @@ def users_delete(uid: int):
 def users_reset_pw(uid: int):
     newpw = (request.form.get('password') or '').strip()
     if len(newpw) < 8:
-        flash(_('New password must be at least 8 characters long.'))
+        flash(_('New password must be at least 8 characters long.'), 'danger')
         return redirect(url_for('user_routes.users_list'))
     with engine.begin() as conn:
         conn.execute(text("UPDATE users SET password_hash=:ph, must_change_password=FALSE, updated_at=NOW() WHERE id=:id"),
                      {'ph': generate_password_hash(newpw), 'id': uid})
-    flash(_('New password set.'))
+    flash(_('New password set.'), 'success')
     return redirect(url_for('user_routes.users_list'))
 
 @user_routes.post('/admin/users/<int:uid>/resetlink')
@@ -220,12 +220,12 @@ def users_reset_link(uid: int):
     if email and SMTP_HOST:
         sent = send_mail(email, _("Reset password"), body)
         if sent:
-            flash(_('Reset link sent by email.'))
+            flash(_('Reset link sent by email.'), 'success')
         else:
-            flash(_('Reset-Link: %(url)s', url=escape(reset_url)))
+            flash(_('Reset-Link: %(url)s', url=escape(reset_url)), 'info')
             logger.warning("Email delivery failed – token displayed in UI (user_id=%s).", uid)
     else:
-        flash(_('Reset-Link: %(url)s', url=escape(reset_url)))
+        flash(_('Reset-Link: %(url)s', url=escape(reset_url)), 'info')
         logger.warning("No email address or SMTP_HOST token displayed in the UI (user_id=%s).", uid)
 
     return redirect(url_for('user_routes.users_list'))
@@ -237,7 +237,7 @@ def users_reset_link(uid: int):
 def users_toggle(uid: int):
     current_uid = session.get('user_id')
     if uid == current_uid:
-        flash(_('You cannot deactivate yourself.'))
+        flash(_('You cannot deactivate yourself.'), 'warning')
         return redirect(url_for('user_routes.users_list'))
 
     with engine.begin() as conn:
@@ -251,7 +251,7 @@ def users_toggle(uid: int):
 def users_change_role(uid: int):
     role = (request.form.get('role') or 'Viewer').strip()
     if role not in ROLES:
-        flash(_('Invalid role.'))
+        flash(_('Invalid role.'), 'danger')
         return redirect(url_for('user_routes.users_list'))
     with engine.begin() as conn:
         conn.execute(text("UPDATE users SET role=:r, updated_at=NOW() WHERE id=:id"), {'r': role, 'id': uid})

@@ -15,6 +15,7 @@ from decimal import Decimal, InvalidOperation
 
 from time import time
 from flask_socketio import emit
+from uuid import uuid4
 
 from modules.utils import (
     parse_money
@@ -57,6 +58,11 @@ bbalance_routes = Blueprint('bbalance_routes', __name__)
 @login_required
 def index():
     # Basic context
+    temp_token = session.get('temp_token')
+    if not temp_token:
+            temp_token = uuid4().hex
+            session['temp_token'] = temp_token
+
     ctx = _build_index_context(default_date=today_ddmmyyyy())
     ctx['notes'] = get_notes()
 
@@ -65,8 +71,8 @@ def index():
     if role == 'Payment Viewer':
         return redirect(url_for('payment_routes.payment_requests'))
 
-    return render_template('index.html', **ctx, now=int(time()))
-            
+    return render_template('index.html', **ctx, now=int(time())), 400
+
 @bbalance_routes.get('/api/table')
 @login_required
 def api_table():
@@ -99,7 +105,7 @@ def add():
         expense  = parse_money(request.form.get('expense') or '0')
         note = (request.form.get('note') or '').strip()
     except Exception as e:
-        flash(_("Eingabefehler: %(error)s", error=str(e)), "danger")
+        flash(_("Input error: %(error)s", error=str(e)), "danger")
         # In case of error: render same page, retain temp_token
         ctx = _build_index_context(default_date=(date_s or today_ddmmyyyy()),
                                    temp_token=temp_token)
@@ -130,7 +136,7 @@ def add():
     # Save Datarecord
     with engine.begin() as conn:
         res = conn.execute(text("""
-            INSERT INTO entries (date, full, empty, revenue, expense, note, created_by)
+            INSERT INTO entries (date, "full", "empty", revenue, expense, note, created_by)
             VALUES (:date,:full,:empty,:revenue,:expense,:note,:cb)
             RETURNING id
         """), {
@@ -193,9 +199,9 @@ def add():
 
     log_action(user['id'], 'entries:add', new_id, f'attachments_moved={moved}')
     if moved:
-        flash(_('Datensatz gespeichert, {count} Datei(en) übernommen.').format(count=moved), 'success')
+        flash(_('Record saved, {count} file(s) transferred.').format(count=moved), 'success')
     else:
-        flash(_('Datensatz wurde gespeichert.'), 'success')
+        flash(_('Record saved.'), 'success')
 
     # Invalidate token for this page (one-shot)
     session.pop('add_temp_token', None)
@@ -208,7 +214,7 @@ def edit(entry_id: int):
     with engine.begin() as conn:
         # Load the entry
         row = conn.execute(text("""
-            SELECT id, date, full, empty, revenue, expense, note, created_by
+            SELECT id, date, "full", "empty", revenue, expense, note, created_by
             FROM entries
             WHERE id = :id
         """), {'id': entry_id}).mappings().first()
@@ -231,7 +237,7 @@ def edit(entry_id: int):
         """), {'id': entry_id}).mappings().all()
 
     if not row:
-        flash(_('Entry not found.'))
+        flash(_('Entry not found.'), 'danger')
         return redirect(url_for('bbalance_routes.index'))
 
     # Entry data for the form
@@ -267,7 +273,7 @@ def edit_post(entry_id: int):
     # 1) Load old values
     with engine.begin() as conn:
         row = conn.execute(text("""
-            SELECT id, date, full, empty, revenue, expense, note, created_by
+            SELECT id, date, "full", "empty", revenue, expense, note, created_by
             FROM entries
             WHERE id=:id
         """), {'id': entry_id}).mappings().first()
@@ -358,8 +364,8 @@ def edit_post(entry_id: int):
         conn.execute(text("""
             UPDATE entries
             SET date=:date,
-                full=:full,
-                empty=:empty,
+                "full"=:full,
+                "empty"=:empty,
                 revenue=:revenue,
                 expense=:expense,
                 note=:note,
@@ -462,7 +468,7 @@ def import_csv():
     file = request.files.get('file')
     replace_all = request.form.get('replace_all') == 'on'
     if not file or file.filename == '':
-        flash(_('Please select a CSV file.'))
+        flash(_('Please select a CSV file.'), 'info')
         return redirect(url_for('bbalance_routes.index'))
     try:
         content = file.read().decode('utf-8-sig')
@@ -511,7 +517,7 @@ def import_csv():
                 conn.execute(text('DELETE FROM entries'))
             for r in rows_to_insert:
                 conn.execute(text("""
-                    INSERT INTO entries (date, full, empty, revenue, expense, note)
+                    INSERT INTO entries (date, "full", "empty", revenue, expense, note)
                     VALUES (:date,:full,:empty,:revenue,:expense,:note)
                 """), r)
 

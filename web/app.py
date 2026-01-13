@@ -84,9 +84,9 @@ from modules.auth_utils import (
 )
 
 from modules.payment_utils import (
-    _user_can_view_payment_requests,
-    _user_can_edit_payment_requests,
-    get_payment_requests_email,
+    _user_can_view_payment_request,
+    _user_can_edit_payment_request,
+    get_payment_request_email,
     _require_approver,
     _approvals_done,
     _approvals_total
@@ -227,7 +227,7 @@ IMPORT_API_TOKEN     = os.getenv("IMPORT_API_TOKEN")  # empty = no token allowed
 
 def serialize_attachment(att):
     return {
-        "filenrequest_idame": att.original_name,
+        "filename": att.original_name,
         "download_url": url_for('download_file', filename=att.filename),
         "view_url": url_for('view_file', filename=att.filename),
         "mime_type": att.mime_type,
@@ -237,6 +237,7 @@ def serialize_attachment(att):
 # -----------------------
 # Payment requests
 # -----------------------
+
 def notify_managing_users(request_id, requestor, amount, date):
     subject = _('New payment request from %(requester)s', requester=requestor)
     body = _(
@@ -256,9 +257,16 @@ def notify_managing_users(request_id, requestor, amount, date):
             WHERE role = 'manager' AND active = TRUE AND email IS NOT NULL
         """)).scalars().all()
 
-    for to_addr in emails:
-        msg = Message(subject=subject, recipients=[to_addr], body=body, sender=FROM_EMAIL)
+    recipients = sorted({(e or "").strip() for e in emails if (e or "").strip()})
+    if not recipients:
+        current_app.logger.warning("No manager emails found for request %s", request_id)
+        return
+
+    for to_addr in recipients:
+        msg = Message(subject=str(subject), recipients=[to_addr], body=str(body), sender=FROM_EMAIL or SMTP_USER)
         mail.send(msg)
+
+    current_app.logger.info("Manager notifications for request %s sent to %s", request_id, ", ".join(recipients))
 
 def get_locale():
     user = current_user()
@@ -318,8 +326,8 @@ CREATE_TABLE_ENTRIES = """
 CREATE TABLE IF NOT EXISTS entries (
     id SERIAL PRIMARY KEY,
     date DATE NOT NULL,
-    full INTEGER NOT NULL DEFAULT 0,
-    empty INTEGER NOT NULL DEFAULT 0,
+    "full" INTEGER NOT NULL DEFAULT 0,
+    "empty" INTEGER NOT NULL DEFAULT 0,
     revenue NUMERIC(12,2) NOT NULL DEFAULT 0,
     expense NUMERIC(12,2) NOT NULL DEFAULT 0,
     note TEXT,
@@ -552,11 +560,13 @@ def init_db():
 
 _initialized = False
 
+
 def init_db_with_retry(retries: int = 10, delay_seconds: float = 1.0):
     last_err = None
     for _ in range(retries):
         try:
             init_db()
+            current_app.config['DB_INITIALIZED'] = True
             return
         except OperationalError as err:
             last_err = err
@@ -569,12 +579,13 @@ def _ensure_init_once():
     global _initialized
     if not _initialized:
         init_db_with_retry()
-        # Base URL Hygiene Check (information log only)
-        if "localhost" in (APP_BASE_URL or "") or APP_BASE_URL.strip() == "":
+        # Base URL hygiene check (for information only)
+        if "localhost" in (APP_BASE_URL or "") or (APP_BASE_URL or "").strip() == "":
             logging.warning(
                 _("APP_BASE_URL is not set to production-ready (currently '%(url)s'). "
                   "Set a publicly accessible base URL so that hints/links in emails are correct.",
-                APP_BASE_URL,
+                  url=(APP_BASE_URL or "")
+                )
             )
         _initialized = True
 
@@ -629,7 +640,7 @@ def not_found(e):
 
 @app.errorhandler(413)
 def request_entity_too_large(e):
-    flash(_('File too large. Please upload a smaller file.'))
+    flash(_('File too large. Please upload a smaller file.'), 'info')
     return redirect(request.referrer or url_for('bbalance_routes.index'))
 
 @app.errorhandler(500)
@@ -693,10 +704,10 @@ def profile_post():
 
     if pwd or pwd2:
         if len(pwd) < 8:
-            flash(_('Password must be at least 8 characters long.'))
+            flash(_('Password must be at least 8 characters long.'), 'info')
             return redirect(url_for('profile'))
         if pwd != pwd2:
-            flash(_('Passwords do not match.'))
+            flash(_('Passwords do not match.'), 'info')
             return redirect(url_for('profile'))
 
     with engine.begin() as conn:
@@ -709,7 +720,7 @@ def profile_post():
             # After changing your password: Activate 2FA if not already active
             user = conn.execute(text("SELECT totp_enabled FROM users WHERE id=:id"), {'id': uid}).mappings().first()
             if user and not user['totp_enabled']:
-                flash(_('Please enable two-factor authentication (2FA) to provide additional protection for your account.'))
+                flash(_('Please enable two-factor authentication (2FA) to provide additional protection for your account.'), 'info')
                 return redirect(url_for('enable_2fa'))  # <-- Immediate return
         else:
             conn.execute(text("""
@@ -717,7 +728,7 @@ def profile_post():
                 WHERE id=:id
             """), {'em': email or None, 'id': uid})
 
-    flash(_('Profile updated.'))
+    flash(_('Profile updated.'), 'success')
     return redirect(url_for('bbalance_routes.index'))
 
 @app.get('/profile/2fa/enable')
@@ -733,7 +744,7 @@ def enable_2fa_get():
         ).scalar_one_or_none()
 
     if username is None:
-        flash(_('User not found.'))
+        flash(_('User not found.'), 'warning')
         return redirect(url_for('profile'))
 
     issuer = _('AppTitle')
@@ -758,7 +769,7 @@ def enable_2fa():
         ).scalar_one_or_none()
 
     if username is None:
-        flash(_('Benutzer nicht gefunden.'))
+        flash(_('User not found.'), 'warning')
         return redirect(url_for('profile'))
 
     issuer = _('AppTitle')
@@ -776,12 +787,12 @@ def confirm_2fa():
     uid = session['user_id']
     secret = session.get('enroll_totp_secret')
     if not secret:
-        flash(_('No 2FA setup active.'))
+        flash(_('No 2FA setup active.'), 'warning')
         return redirect(url_for('profile'))
     code = (request.form.get('code') or '').strip()
     totp = pyotp.TOTP(secret)
     if not totp.verify(code, valid_window=1):
-        flash(_('Invalid 2FA code.'))
+        flash(_('Invalid 2FA code.'), 'warning')
         return redirect(url_for('enable_2fa'))
     with engine.begin() as conn:
         conn.execute(text("UPDATE users SET totp_secret=:s, totp_enabled=TRUE, updated_at=NOW() WHERE id=:id"),
@@ -790,7 +801,7 @@ def confirm_2fa():
     # Generate new codes and display them once in the profile
     codes = generate_and_store_backup_codes(uid)
     session['new_backup_codes'] = codes
-    flash(_('2FA enabled.'))
+    flash(_('2FA enabled.'), 'success')
     log_action(uid, '2fa:enabled', None, None)
     return redirect(url_for('profile'))
 
@@ -809,7 +820,7 @@ def disable_2fa():
         ).mappings().first()
 
     if not user or not check_password_hash(user['password_hash'], pwd):
-        flash(_('Password verification failed.'))
+        flash(_('Password verification failed.'), 'warning')
         return redirect(url_for('profile'))
 
     # Disable 2FA + delete backup codes
@@ -825,7 +836,7 @@ def disable_2fa():
 
     flash(_('2FA disabled.'))
     log_action(uid, '2fa:disabled', None, None)
-    return redirect(url_for('profile'))
+    return redirect(url_for('profile'), 'success')
 
 @app.post('/profile/theme')
 @login_required
@@ -833,13 +844,13 @@ def disable_2fa():
 def update_theme():
     theme = request.form.get('theme')
     if theme not in ['light', 'dark', 'system']:
-        flash(_('Invalid theme selection.'))
+        flash(_('Invalid theme selection.'), 'danger')
         return redirect(url_for('profile'))
     uid = session.get('user_id')
     with engine.begin() as conn:
         conn.execute(text("UPDATE users SET theme_preference=:t, updated_at=NOW() WHERE id=:id"),
                      {'t': theme, 'id': uid})
-    flash(_('Theme settings saved.'))
+    flash(_('Theme settings saved.'), 'success')
     return redirect(url_for('profile'))
 
 @app.post('/profile/preferences')
@@ -856,11 +867,11 @@ def update_preferences():
     default_filter = (request.form.get('default_filter') != 'on')
 
     if language not in ['de', 'en']:
-        flash(_('Invalid language.'))
+        flash(_('Invalid language.'), 'danger')
         return redirect(url_for('profile'))
 
     if theme not in ['light', 'dark', 'system']:
-        flash(_('Invalid theme selection.'))
+        flash(_('Invalid theme selection.'), 'danger')
         return redirect(url_for('profile'))
 
     with engine.begin() as conn:
@@ -880,7 +891,7 @@ def update_preferences():
             'id': uid
         })
 
-    flash(_('Settings saved.'))
+    flash(_('Settings saved.'), 'success')
     return redirect(url_for('profile'))
 
 @app.context_processor
@@ -1008,7 +1019,7 @@ def audit_list():
 def users_toggle_approve(uid: int):
     with engine.begin() as conn:
         conn.execute(text("UPDATE users SET can_approve = NOT can_approve, updated_at=NOW() WHERE id=:id"), {'id': uid})
-    flash(_('Approval authorization changed.'))
+    flash(_('Approval authorization changed.'), 'success')
     return redirect(url_for('user_routes.users_list'))
 
 # -----------------------
@@ -1084,7 +1095,9 @@ def import_sample():
     mem = io.BytesIO()
     mem.write(output.getvalue().encode('utf-8-sig'))
     mem.seek(0)
-    return send_file(mem, as_attachment=True, download_name='{_('AppTitle')}_{_('example')}.csv', mimetype='text/csv')
+    download_name = f"{_('AppTitle')}_{_('example')}.csv"
+    return send_file(mem, as_attachment=True, download_name=download_name, mimetype='text/csv')
+
 
 @app.post('/import/preview')
 @login_required
@@ -1098,7 +1111,7 @@ def import_preview():
     """
     # If preview is disabled via feature switch -> use legacy import
     if not IMPORT_USE_PREVIEW: 
-        flash(_('CSV preview is disabled.'))
+        flash(_('CSV preview is disabled.'), 'info')
         return redirect(url_for('bbalance_routes.index'))
 
     replace_all = request.form.get('replace_all') == 'on'
@@ -1109,12 +1122,12 @@ def import_preview():
     if is_remap and token:
         stash = session.get('import_previews', {}).get(token)
         if not stash:
-            flash(_('Preview expired or not found.'))
+            flash(_('Preview expired or not found.'), 'warning')
             return redirect(url_for('bbalance_routes.index'))
 
         tmp_path = stash.get('csv_path')
         if not tmp_path or not os.path.exists(tmp_path):
-            flash(_('CSV file not found.'))
+            flash(_('CSV file not found.'), 'danger')
             return redirect(url_for('bbalance_routes.index'))
 
         # Load CSV
@@ -1123,7 +1136,7 @@ def import_preview():
                 content = f.read()
         except Exception as e:
             logger.exception("CSV read failed: %s", e)
-            flash(_('CSV could not be read.'))
+            flash(_('CSV could not be read.'), 'danger')
             return redirect(url_for('bbalance_routes.index'))
 
         # Apply mapping from form
@@ -1147,7 +1160,7 @@ def import_preview():
             preview_rows, headers, dup_count = _parse_csv_with_mapping(content, replace_all, mapping)
         except Exception as e:
             logger.exception("Import preview (remap) failed: %s", e)
-            flash(f"{_('Preview failed:')} {e}")
+            flash(f"{_('Preview failed:')} {e}", 'danger')
             return redirect(url_for('bbalance_routes.index'))
 
         # Update Stash
@@ -1170,7 +1183,7 @@ def import_preview():
     # ---------- FIRST UPLOAD (file comes from the client) ----------
     file = request.files.get('file')
     if not file or file.filename == '':
-        flash(_('Please select a CSV file.'))
+        flash(_('Please select a CSV file.'), 'info')
         return redirect(url_for('bbalance_routes.index'))
 
     try:
@@ -1214,7 +1227,7 @@ def import_preview():
         )
     except Exception as e:
         logger.exception("Import preview failed: %s", e)
-        flash(f"{_('Preview failed:')} {e}")
+        flash(f"{_('Preview failed:')} {e}", 'danger')
         return redirect(url_for('bbalance_routes.index'))
 
 @app.post('/import/commit')
@@ -1227,13 +1240,13 @@ def import_commit():
     import_invalid = request.form.get('import_invalid') == 'on'
 
     if not token or 'import_previews' not in session or token not in session['import_previews']:
-        flash(_('Preview expired or not found.'))
+        flash(_('Preview expired or not found.'), 'warning')
         return redirect(url_for('bbalance_routes.index'))
 
     stash = session['import_previews'].pop(token, None)
     session.modified = True
     if not stash:
-        flash(_('Preview expired or already used.'))
+        flash(_('Preview expired or already used.'), 'warning')
         return redirect(url_for('bbalance_routes.index'))
 
     tmp_path = stash.get('csv_path')
@@ -1241,7 +1254,7 @@ def import_commit():
     mapping = stash.get('mapping')
 
     if not tmp_path or not os.path.exists(tmp_path):
-        flash(_('CSV file not found.'))
+        flash(_('CSV file not found.'), 'danger')
         return redirect(url_for('bbalance_routes.index'))
 
     try:
@@ -1266,7 +1279,7 @@ def import_commit():
                     if _signature(r) in existing:
                         continue
                 conn.execute(text("""
-                    INSERT INTO entries (date, full, empty, revenue, expense, note)
+                    INSERT INTO entries (date, "full", "empty", revenue, expense, note)
                     VALUES (:date,:full,:empty,:revenue,:expense,:note)
                 """), {k: r[k] for k in ('date','full','empty','revenue','expense','note')})
                 inserted += 1
@@ -1285,13 +1298,13 @@ def import_commit():
         )
 
         # Success message with placeholder
-        flash(_('Import successful: %(rows)d lines transferred.', rows=inserted))
+        flash(_('Import successful: %(rows)d lines transferred.', rows=inserted), 'success')
         return redirect(url_for('bbalance_routes.index'))
 
     except Exception as e:
         logger.exception("Import commit failed: %s", e)
         # Error message with placeholder
-        flash(_('Import failed: %(error)s', error=str(e)))
+        flash(_('Import failed: %(error)s', error=str(e)), 'danger')
         return redirect(url_for('bbalance_routes.index'))
 
 @app.post('/api/import/dry-run')
@@ -1445,7 +1458,7 @@ def export_pdf():
     def fmt_fl(n: int | None) -> str:
         """Number of bottles; empty if 0/None, otherwise 'N bottles' (localized)."""
         n = int(n or 0)
-        return '' if n == 0 else f"{n} {_('Fl.')}"
+        return '' if n == 0 else f"{n} {_('Btl.')}"
 
     def fmt_money(d: Decimal | None) -> str:
         """Currency; empty if 0/None, otherwise formatted."""
@@ -1551,7 +1564,7 @@ def set_language():
             with engine.begin() as conn:
                 conn.execute(text("UPDATE users SET locale=:lang, updated_at=NOW() WHERE id=:id"),
                              {'lang': lang, 'id': uid})
-        flash(_('Language changed.'))
+        flash(_('Language changed.'), 'success')
     return redirect(url_for('profile'))
 
 # -----------------------
@@ -1671,7 +1684,7 @@ def admin_tools():
         elif action == "branding_upload":
             file = request.files.get("logo")
             if not file or file.filename == "":
-                flash(_("Please select an image file."), "danger")
+                flash(_("Please select an image file."), "info")
                 return redirect(url_for("admin_tools"))
 
             # Check size (if function available): MAX_CONTENT_LENGTH caps on the server side anyway
@@ -1746,8 +1759,9 @@ def admin_tools():
     # --- GET: View state & current options ---
     if not SMTP_HOST or not SMTP_PORT or not SMTP_USER or not SMTP_PASS:
         state = _("SMTP configuration incomplete.")
-    else:
-        state = _("SMTP configuration detected for host {}:{}.".format(SMTP_HOST, SMTP_PORT))
+    else:        
+        state = _("SMTP configuration detected for host %(host)s:%(port)s.",
+                host=SMTP_HOST, port=SMTP_PORT)
 
     try:
         with engine.begin() as conn:

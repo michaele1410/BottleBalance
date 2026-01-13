@@ -143,6 +143,6 @@ def send_new_request_notifications(request_id: int, approver_emails: list[str]) 
         smtp.send_message(msg)
 
     current_app.logger.info(
-        "Notifications for payment request %s sent to %s."
+        "Notifications for payment request %s sent to %s.",
         request_id, approver_emails
     )

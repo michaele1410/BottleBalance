@@ -62,3 +62,17 @@ def admin_export_dump():
         flash(_('Error during database dump: %(error)s', error=str(e)), 'danger')
         log_action(session.get('user_id'), 'db:export:error', None, f'Dump fehlgeschlagen: {e}')
         return redirect(url_for('admin_export_page'))
+
+@admin_routes.post('/settings/app_title')
+@login_required
+@require_perms('admin:tools')
+@require_csrf
+def set_app_title():
+    new_title = (request.form.get('app_title') or '').strip()
+    if not new_title:
+        flash(_("App title cannot be empty."), "danger")
+        return redirect(request.referrer)
+
+    set_setting('app_title', new_title)
+    flash(_("Application title updated."), "success")
+    return redirect(request.referrer)

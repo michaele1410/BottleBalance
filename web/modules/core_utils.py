@@ -3,13 +3,13 @@
 # -----------------------
 import os
 import pytz
+import secrets
 from flask import session,flash, abort, request
 from flask_babel import _
 from sqlalchemy import text
 from sqlalchemy.engine import Engine, create_engine
 from datetime import datetime
-import secrets
-
+from functools import lru_cac
 APP_BASE_URL = os.getenv("APP_BASE_URL") or "http://localhost:5000"
 
 SECRET_KEY = os.getenv("SECRET_KEY") or secrets.token_hex(24)
@@ -20,6 +20,24 @@ DB_PASS = os.getenv("DB_PASS", "admin")
 DATABASE_URL = f"postgresql+psycopg2://{DB_USER}:{DB_PASS}@{DB_HOST}:5432/{DB_NAME}"
 
 engine: Engine = create_engine(DATABASE_URL, future=True, pool_pre_ping=True)
+
+def _require_temp_token(token: str) -> None:
+    """
+    Validiert, dass der übergebene Token syntaktisch korrekt ist und
+    exakt der Session-Token ist, der beim Rendern gesetzt wurde.
+    """
+    if not token:
+        abort(403)
+
+    # 1) Syntax: 32-64 Zeichen Hex (anpassen an deine Erzeugung)
+    allowed_len = {32, 64}
+    if len(token) not in allowed_len or any(c not in '0123456789abcdef' for c in token.lower()):
+        abort(403)
+
+    # 2) Session-Match
+    sess_tok = session.get('temp_token')
+    if not sess_tok or token != sess_tok:
+        abort(403)
 
 def localize_dt(dt, tz_name=None):
     if not dt:
@@ -112,10 +130,6 @@ def _temp_dir(token: str) -> str:
     p = os.path.join(UPLOAD_FOLDER, "temp", token)
     os.makedirs(p, exist_ok=True)
     return p
-
-def _require_temp_token(token: str):
-    if not token or session.get('add_temp_token') != token:
-        abort(403)
 
 # --- Audit-Log ---
 def log_action(user_id: int | None, action: str, entry_id: int | None, detail: str | None = None):

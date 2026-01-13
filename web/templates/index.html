@@ -64,6 +64,10 @@
           <!-- Formular -->
           <form method="post" action="{{ url_for('bbalance_routes.add') }}" id="transaction-form" novalidate>
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <!-- NEU: Token + Liste der Temp-IDs (JSON-Array) -->
+            <input type="hidden" name="attachments_token" id="attachments_token" value="{{ temp_token }}">
+            <input type="hidden" name="temp_attachment_ids" id="temp_attachment_ids" value="[]">
+
             <!-- Date -->
             <div class="input-group mb-3 w-100">
               <span class="input-group-text"><i class="bi bi-calendar"></i></span>
@@ -860,7 +864,7 @@
   </script>
 
   <script>
-  function sortTableByDate() {
+    function sortTableByDate() {
     const table = document.querySelector("table");
     const tbody = table.querySelector("tbody");
     const rows = Array.from(tbody.querySelectorAll("tr"));
@@ -877,14 +881,14 @@
     });
 
     rows.forEach(r => tbody.appendChild(r));
-  }
+    }
   </script>
 
   <script>
     async function openAttachments(entryId) {
       try {
         const resp = await fetch(`{{ url_for('attachments_routes.attachments_list', entry_id=0) }}`.replace('0', entryId));
-        if (!resp.ok) throw new Error('HTTP ' + resp.state);
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
         const list = await resp.json();
 
         const ul = document.getElementById('attachmentsList');
@@ -942,18 +946,34 @@
     }
   </script>
 
+  
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      const csrf = "{{ csrf_token() }}";
-      const token = document.getElementById('temp_token')?.value || '';
+      const csrf  = "{{ csrf_token() }}";
+      const token = document.getElementById('attachments_token')?.value || document.getElementById('temp_token')?.value || '';
       const listEl = document.getElementById('addTempAttachmentsList');
-      const badge = document.getElementById('uploadBadge');
+      const badge  = document.getElementById('uploadBadge');
       const fileEl = document.getElementById('add_temp_files');
-      const btnUp = document.getElementById('btnTempUpload');
+      const btnUp  = document.getElementById('btnTempUpload');
+      const hiddenIdsEl = document.getElementById('temp_attachment_ids');
 
       function toggleBtn() { if (btnUp) btnUp.disabled = !(fileEl?.files?.length > 0); }
       fileEl?.addEventListener('change', toggleBtn);
       toggleBtn();
+
+      function getHiddenIds() {
+        try { return JSON.parse(hiddenIdsEl?.value || '[]'); } catch { return []; }
+      }
+      function setHiddenIds(arr) {
+        if (hiddenIdsEl) hiddenIdsEl.value = JSON.stringify(Array.from(new Set(arr.map(Number))).filter(n => Number.isFinite(n)));
+      }
+      function addHiddenIds(ids) {
+        const cur = getHiddenIds();
+        setHiddenIds(cur.concat(ids || []));
+      }
+      function removeHiddenId(id) {
+        setHiddenIds(getHiddenIds().filter(x => Number(x) !== Number(id)));
+      }
 
       function updateBadge(count) {
         if (!badge) return;
@@ -971,32 +991,51 @@
         const resp = await fetch(url, { credentials: 'same-origin' });
         if (!resp.ok) return;
         const items = await resp.json();
+
+        // Hidden-IDs aus der Serverliste „hydrieren“ (damit auch Reload/anderes Tab sauber ist)
+        setHiddenIds((items || []).map(it => it.id));
+
         listEl.innerHTML = '';
-        updateBadge(items.length); // Update badge
+        updateBadge(items.length || 0);
+
         if (!items || items.length === 0) {
           listEl.innerHTML = `<li class="list-group-item text-muted">{{ _('No attachments available.') }}</li>`;
-          updateBadge(0);
           return;
         }
-        updateBadge(items.length);
         items.forEach(it => {
           const li = document.createElement('li');
           li.className = 'list-group-item d-flex justify-content-between align-items-center';
+
           const left = document.createElement('div');
-          left.className = 'text-truncate'; left.style.maxWidth = '70%';
-          const icon = document.createElement('i'); icon.className = 'bi-paperclip me-1';
-          const nameSpan = document.createElement('span'); nameSpan.textContent = it.name;
-          left.append(icon, nameSpan);
-          const actions = document.createElement('div'); actions.className = 'd-flex gap-2';
-          const openA = document.createElement('a'); openA.className = 'btn btn-sm btn-outline-primary'; openA.href = it.url; openA.target = '_blank'; openA.textContent = "{{ _('Open') }}";
-          const delBtn = document.createElement('button'); delBtn.className = 'btn btn-sm btn-outline-danger'; delBtn.dataset.id = it.id; delBtn.textContent = "{{ _('Delete') }}";
+          left.className = 'text-truncate';
+          left.style.maxWidth = '70%';
+          left.innerHTML = `<i class="bi-paperclip me-1"></i><span>${it.name}</span>`;
+
+          const actions = document.createElement('div');
+          actions.className = 'd-flex gap-2';
+
+          const openA = document.createElement('a');
+          openA.className = 'btn btn-sm btn-outline-primary';
+          openA.href = it.url;
+          openA.target = '_blank';
+          openA.textContent = "{{ _('Open') }}";
+
+          const delBtn = document.createElement('button');
+          delBtn.className = 'btn btn-sm btn-outline-danger';
+          delBtn.textContent = "{{ _('Delete') }}";
           delBtn.addEventListener('click', async (ev) => {
             ev.preventDefault();
             if (!confirm('{{ _("Delete attachment for real?") }}')) return;
-            const attId = delBtn.dataset.id;
-            await fetch(`{{ url_for('attachments_routes.attachments_temp_delete', att_id=0) }}`.replace('0', attId), { method: 'POST', headers: { 'X-CSRF-Token': "{{ csrf_token() }}" }, credentials: 'same-origin' });
-            refreshTempList();
+            const delUrl = "{{ url_for('attachments_routes.attachments_temp_delete', att_id=0) }}".replace('0', it.id);
+            const r = await fetch(delUrl, { method: 'POST', headers: { 'X-CSRF-Token': csrf }, credentials: 'same-origin' });
+            if (r.ok || r.status === 204) {
+              removeHiddenId(it.id);
+              refreshTempList();
+            } else {
+              alert("{{ _('Upload failed') }}");
+            }
           });
+
           actions.append(openA, delBtn);
           li.append(left, actions);
           listEl.appendChild(li);
@@ -1005,27 +1044,58 @@
 
       const uploadModalEl = document.getElementById('uploadModal');
       if (uploadModalEl) uploadModalEl.addEventListener('shown.bs.modal', refreshTempList);
+        btnUp?.addEventListener('click', async () => {
+          if (!token || !fileEl || !fileEl.files?.length) return;
 
-      btnUp?.addEventListener('click', async () => {
-        if (!token || !fileEl || !fileEl.files?.length) return;
-        for (const f of fileEl.files) {
           const fd = new FormData();
-          fd.append('files', f);
-          fd.append('csrf_token', csrf);
-          const url = "{{ url_for('attachments_routes.attachments_temp_upload', token='__T__') }}".replace('__T__', token);
-          const resp = await fetch(url, { method: 'POST', body: fd, credentials: 'same-origin' });
-          alert(await resp.text() || '{{ _("Upload failed") }}');
-        }
-        fileEl.value = '';
-        refreshTempList();
-      });
+          for (const f of fileEl.files) fd.append('files', f);
 
+          const url = "{{ url_for('attachments_routes.attachments_temp_upload', token='__T__') }}"
+                      .replace('__T__', token);
+
+          try {
+            const resp = await fetch(url, {
+              method: 'POST',
+              body: fd,
+              credentials: 'same-origin',
+              headers: {
+                'X-CSRF-Token': "{{ csrf_token() }}"   // <-- einziger gültiger Token
+              }
+            });
+
+            const ctype = resp.headers.get('content-type') || '';
+
+            if (!resp.ok) {
+              // JSON Fehler
+              if (ctype.includes('application/json')) {
+                const err = await resp.json();
+                alert(err?.error || '{{ _("Upload failed") }}');
+              } else {
+                // HTML-Fehlerseite NICHT anzeigen
+                alert('{{ _("Upload failed") }}');
+              }
+              return;
+            }
+
+            const data = await resp.json();
+            if (data?.ok && Array.isArray(data.items)) {
+              addHiddenIds(data.items.map(x => x.id));
+            }
+
+          } catch (e) {
+            console.error(e);
+            alert('{{ _("Upload failed") }}');
+          } finally {
+            fileEl.value = '';
+            refreshTempList();
+          }
+        });
       refreshTempList();
     });
   </script>
 
   <script>
-  document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', () => {
     const form    = document.getElementById('filtersForm');
     const elRange = document.getElementById('filter_daterange');
     const elFrom  = document.getElementById('filter_from');
@@ -1223,7 +1293,7 @@
   </script>
 
   <script>
-  document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', () => {
     const badge = document.getElementById('filterBadge');
     const params = new URLSearchParams(window.location.search);
 

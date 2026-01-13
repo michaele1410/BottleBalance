@@ -3,21 +3,21 @@
 # -----------------------
 import os
 import io
+import json
+import csv
+
 from flask import render_template, request, redirect, url_for, session, send_file, flash, abort, Blueprint
 from flask_babel import gettext as _
 from flask_babel import ngettext
 from markupsafe import escape
 from sqlalchemy import text, func, asc
 from datetime import datetime, date
-import csv
-
 from decimal import Decimal, InvalidOperation
-
 from time import time
 from flask_socketio import emit
 from uuid import uuid4
 
-from modules.utils import (
+from modules.csv_utils import (
     parse_money
 )
 from modules.core_utils import (
@@ -52,6 +52,8 @@ from modules.csv_utils import (
     format_date_de
 )
 
+from modules.core_utils import get_setting
+
 bbalance_routes = Blueprint('bbalance_routes', __name__)
 
 @bbalance_routes.get('/')
@@ -60,18 +62,19 @@ def index():
     # Basic context
     temp_token = session.get('temp_token')
     if not temp_token:
-            temp_token = uuid4().hex
-            session['temp_token'] = temp_token
+        temp_token = uuid4().hex
+        session['temp_token'] = temp_token
 
     ctx = _build_index_context(default_date=today_ddmmyyyy())
     ctx['notes'] = get_notes()
+    ctx['temp_token'] = temp_token
 
     # Role Redirect
     role = session.get('role')
     if role == 'Payment Viewer':
         return redirect(url_for('payment_routes.payment_requests'))
 
-    return render_template('index.html', **ctx, now=int(time())), 400
+    return render_template('index.html', **ctx, now=int(time()))
 
 @bbalance_routes.get('/api/table')
 @login_required
@@ -92,34 +95,35 @@ def api_table():
 def add():
     user = current_user()
 
-    # Save raw values ​​for clean re-rendering in case of errors
-    date_s   = (request.form.get('date') or '').strip()
-    temp_token = (request.form.get('temp_token') or '').strip()
+    # Save raw values for clean re-rendering in case of errors
+    date_s = (request.form.get('date') or '').strip()
+
+    # Read specific fields from the form
+    temp_token = (request.form.get('attachments_token') or '').strip()
+    ids_json   = request.form.get('temp_attachment_ids') or '[]'
+    try:
+        temp_ids = [int(x) for x in (json.loads(ids_json) if ids_json else [])]
+    except Exception:
+        temp_ids = []
 
     try:
         date    = parse_date_de_or_today(date_s)
-        # Alternatively, strict parsers: parse_int_strict(...) or 0
-        full  = int((request.form.get('full') or '0').strip() or '0')
-        empty  = int((request.form.get('empty') or '0').strip() or '0')
+        full    = int((request.form.get('full') or '0').strip() or '0')
+        empty   = int((request.form.get('empty') or '0').strip() or '0')
         revenue = parse_money(request.form.get('revenue') or '0')
-        expense  = parse_money(request.form.get('expense') or '0')
-        note = (request.form.get('note') or '').strip()
+        expense = parse_money(request.form.get('expense') or '0')
+        note    = (request.form.get('note') or '').strip()
     except Exception as e:
         flash(_("Input error: %(error)s", error=str(e)), "danger")
-        # In case of error: render same page, retain temp_token
-        ctx = _build_index_context(default_date=(date_s or today_ddmmyyyy()),
-                                   temp_token=temp_token)
+        ctx = _build_index_context(default_date=(date_s or today_ddmmyyyy()))
+        ctx['temp_token'] = temp_token
         return render_template('index.html', **ctx, now=int(time())), 400
 
-    # Optional: Hardening against DevTools manipulation (enforce front-end min=0 server side)
     full  = max(0, full)
-    empty  = max(0, empty)
-    if revenue < 0:
-        revenue = Decimal('0')
-    if expense < 0:
-        expense = Decimal('0')
+    empty = max(0, empty)
+    if revenue < 0: revenue = Decimal('0')
+    if expense < 0: expense = Decimal('0')
 
-    # Minimum requirement: at least one of the fields > 0
     any_filled = any([
         (revenue is not None and revenue != 0),
         (expense  is not None and expense  != 0),
@@ -128,12 +132,11 @@ def add():
     ])
     if not any_filled:
         flash(_('Please enter at least one value for revenue, expenditure, full or empty.'), 'danger')
-        # NO redirect – render with identical temp_token, otherwise temp files will be lost.
-        ctx = _build_index_context(default_date=(date_s or today_ddmmyyyy()),
-                                   temp_token=temp_token)
+        ctx = _build_index_context(default_date=(date_s or today_ddmmyyyy()))
+        ctx['temp_token'] = temp_token
         return render_template('index.html', **ctx, now=int(time())), 400
 
-    # Save Datarecord
+    # Create data record
     with engine.begin() as conn:
         res = conn.execute(text("""
             INSERT INTO entries (date, "full", "empty", revenue, expense, note, created_by)
@@ -150,30 +153,53 @@ def add():
         })
         new_id = res.scalar_one()
 
-    # Emit event für Live-Updates
+    # Live-Update
     emit('entry_changed', {'message': 'New entry added'}, namespace='/', broadcast=True)
 
-    # Accept temporary attachments (only if session token matches)
+    # Claim temp attachments (without incorrect session comparison)
     moved = 0
-    if temp_token and session.get('add_temp_token') == temp_token:
-        target_dir = _entry_dir(new_id)
+    if temp_token:
         tdir = _temp_dir(temp_token)
+        edir = _entry_dir(new_id)
+        os.makedirs(edir, exist_ok=True)
+
+        # Select candidates: only the specified IDs (if available),
+        # otherwise all for tokens+users
         with engine.begin() as conn:
-            rows = conn.execute(text("""
-                SELECT id, stored_name, original_name, content_type, size_bytes
-                FROM attachments_temp
-                WHERE temp_token=:t AND uploaded_by=:u
-                ORDER BY created_at ASC, id ASC
-            """), {'t': temp_token, 'u': session.get('user_id')}).mappings().all()
+            if temp_ids:
+                rows = conn.execute(text("""
+                    SELECT id, stored_name, original_name, content_type, size_bytes
+                    FROM attachments_temp
+                    WHERE id = ANY(:ids)
+                    AND temp_token = :t
+                    AND (uploaded_by = :u OR uploaded_by IS NULL)
+                    ORDER BY id
+                """), {'ids': temp_ids, 't': temp_token, 'u': session.get('user_id')}).mappings().all()
+            else:
+                rows = conn.execute(text("""
+                    SELECT id, stored_name, original_name, content_type, size_bytes
+                    FROM attachments_temp
+                    WHERE temp_token = :t
+                    AND (uploaded_by = :u OR uploaded_by IS NULL)
+                    ORDER BY id
+                """), {'t': temp_token, 'u': session.get('user_id')}).mappings().all()
+
+        if not rows:
+            current_app.logger.info(
+                "No temp attachments found for token=%s user_id=%s (ids=%s)",
+                temp_token, session.get('user_id'), temp_ids
+            )
 
         for r in rows:
             src = os.path.join(tdir, r['stored_name'])
-            dst = os.path.join(target_dir, r['stored_name'])
+            dst = os.path.join(edir, r['stored_name'])
             try:
-                os.replace(src, dst)
-                moved += 1
+                if os.path.exists(src):
+                    os.replace(src, dst)  # atomar verschieben
+                else:
+                    # Datei fehlt? überspringen
+                    continue
             except Exception:
-                # If move fails → skip this data record
                 continue
 
             with engine.begin() as conn:
@@ -189,8 +215,9 @@ def add():
                     'ub': session.get('user_id')
                 })
                 conn.execute(text("DELETE FROM attachments_temp WHERE id=:id"), {'id': r['id']})
+            moved += 1
 
-        # Clean up temp folder if necessary
+        # Temp-Verzeichnis ggf. leeren
         try:
             if os.path.isdir(tdir) and not os.listdir(tdir):
                 os.rmdir(tdir)
@@ -199,12 +226,9 @@ def add():
 
     log_action(user['id'], 'entries:add', new_id, f'attachments_moved={moved}')
     if moved:
-        flash(_('Record saved, {count} file(s) transferred.').format(count=moved), 'success')
+        flash(_('Record saved, %(count)d file(s) transferred.', count=moved), 'success')
     else:
         flash(_('Record saved.'), 'success')
-
-    # Invalidate token for this page (one-shot)
-    session.pop('add_temp_token', None)
 
     return redirect(url_for('bbalance_routes.index'))
 
@@ -457,7 +481,7 @@ def export_csv():
     mem = io.BytesIO()
     mem.write(output.getvalue().encode('utf-8-sig'))
     mem.seek(0)
-    filename = f"{_('AppTitle')}_{_('export')}_{date.today().strftime('%Y%m%d')}.csv"
+    filename = f"{get_setting('app_title', 'BottleBalance')}_{_('export')}_{date.today().strftime('%Y%m%d')}.csv"
     return send_file(mem, as_attachment=True, download_name=filename, mimetype='text/csv')
 
 @bbalance_routes.post('/import')

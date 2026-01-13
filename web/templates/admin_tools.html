@@ -98,6 +98,29 @@
           </div>
         </div>
       </div>
+      
+      <div class="col-12">
+        <div class="card shadow-sm">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            {{ _('Application title') }}
+            <span class="text-muted small">{{ _('Shown in titles, exports, emails, and 2FA issuer.') }}</span>
+          </div>
+          <div class="card-body">
+            <form method="post" action="{{ url_for('admin_tools') }}" class="d-flex flex-column gap-2">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="hidden" name="action" value="set_app_title">
+              <label for="appTitle" class="form-label">{{ _('Application title') }}</label>
+              <input id="appTitle" name="app_title" type="text" class="form-control"
+                    value="{{ app_title }}" required maxlength="100">
+              <div class="d-flex gap-2 mt-2">
+                <button type="submit" class="btn btn-primary">
+                  <i class="bi bi-save me-1"></i> {{ _('Save') }}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
 
       <!-- ---------- Branding: Upload custom logo ---------- -->
       <div class="col-12">

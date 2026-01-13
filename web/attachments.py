@@ -154,44 +154,133 @@ def attachments_delete(att_id: int):
 # -----------------------
 # Temporary attachments for "Add record"
 # -----------------------
+
 @attachments_routes.post('/attachments/temp/<token>/upload')
 @login_required
 @require_csrf
 def attachments_temp_upload(token: str):
     _require_temp_token(token)
-
     files = request.files.getlist('files') or []
     if not files:
         return ('No file transmitted.', 400)
 
-    saved = 0
     tdir = _temp_dir(token)
+    os.makedirs(tdir, exist_ok=True)
+    items = []
 
     with engine.begin() as conn:
         for f in files:
-            if not f or not f.filename:
+            if not f or not f.filename or not allowed_file(f.filename):
                 continue
-            if not allowed_file(f.filename):
-                continue
-
             ext = f.filename.rsplit('.', 1)[-1].lower() if '.' in f.filename else 'bin'
             stored_name = f"{uuid4().hex}.{ext}"
             original_name = secure_filename(f.filename) or f"file.{ext}"
-
             path = os.path.join(tdir, stored_name)
             f.save(path)
             size = os.path.getsize(path)
             ctype = f.mimetype or mimetypes.guess_type(original_name)[0] or 'application/octet-stream'
 
-            conn.execute(text("""
+            new_id = conn.execute(text("""
                 INSERT INTO attachments_temp (temp_token, stored_name, original_name, content_type, size_bytes, uploaded_by)
                 VALUES (:t,:sn,:on,:ct,:sz,:ub)
-            """), {'t': token, 'sn': stored_name, 'on': original_name, 'ct': ctype, 'sz': size, 'ub': session.get('user_id')})
-            saved += 1
+                RETURNING id
+            """), {
+                't': token, 'sn': stored_name, 'on': original_name,
+                'ct': ctype, 'sz': size, 'ub': session.get('user_id')
+            }).scalar_one()
 
-    if saved == 0:
+            items.append({
+                'id': new_id,
+                'stored_name': stored_name,
+                'original_name': original_name,
+                'size': size,
+                'content_type': ctype,
+                'open_url': url_for('attachments_routes.attachments_temp_open', token=token, stored_name=stored_name)
+            })
+
+    if not items:
         return ('No files accepted.', 400)
-    return jsonify({'ok': True, 'saved': saved}), 200
+    return jsonify({'ok': True, 'saved': len(items), 'items': items}), 200
+
+@attachments_routes.post('/attachments/temp/<token>/claim')
+@login_required
+@require_csrf
+def attachments_temp_claim(token: str):
+    """
+    Claim-Endpoint: verschiebt Temp-Attachments (token) zu einem persistenten Entry.
+    JSON-Body: { "entry_id": 53, "ids": [1,2,3] } ; ids optional -> alle für token+user
+    """
+    _require_temp_token(token)
+    data = request.get_json(force=True, silent=True) or {}
+    entry_id = data.get('entry_id')
+    ids = data.get('ids')  # optional
+
+    if not isinstance(entry_id, int) or entry_id <= 0:
+        return jsonify({'ok': False, 'error': 'invalid entry_id'}), 400
+
+    if not _user_can_edit_entry(entry_id):
+        abort(403)
+
+    user_id = session.get('user_id')
+    tdir = _temp_dir(token)
+    edir = _entry_dir(entry_id)
+    os.makedirs(edir, exist_ok=True)
+
+    with engine.begin() as conn:
+        if ids and isinstance(ids, list):
+            rows = conn.execute(text("""
+                SELECT id, stored_name, original_name, content_type, size_bytes
+                FROM attachments_temp
+                WHERE id = ANY(:ids) AND temp_token=:t AND uploaded_by=:u
+                ORDER BY id
+            """), {'ids': ids, 't': token, 'u': user_id}).mappings().all()
+        else:
+            rows = conn.execute(text("""
+                SELECT id, stored_name, original_name, content_type, size_bytes
+                FROM attachments_temp
+                WHERE temp_token=:t AND uploaded_by=:u
+                ORDER BY id
+            """), {'t': token, 'u': user_id}).mappings().all()
+
+        claimed = 0
+        new_ids = []
+
+        for r in rows:
+            temp_path = os.path.join(tdir, r['stored_name'])
+            target_path = os.path.join(edir, r['stored_name'])
+            try:
+                if os.path.exists(temp_path):
+                    os.replace(temp_path, target_path)  # atomar verschieben
+            except Exception:
+                continue
+
+            new_att_id = conn.execute(text("""
+                INSERT INTO attachments (entry_id, stored_name, original_name, content_type, size_bytes, uploaded_by)
+                VALUES (:e,:sn,:on,:ct,:sz,:ub)
+                RETURNING id
+            """), {
+                'e': entry_id,
+                'sn': r['stored_name'],
+                'on': r['original_name'],
+                'ct': r['content_type'],
+                'sz': r['size_bytes'],
+                'ub': user_id
+            }).scalar_one()
+
+            conn.execute(text("DELETE FROM attachments_temp WHERE id=:id"), {'id': r['id']})
+            claimed += 1
+            new_ids.append(new_att_id)
+
+    try:
+        if os.path.isdir(tdir) and not os.listdir(tdir):
+            os.rmdir(tdir)
+    except Exception:
+        pass
+
+    if claimed:
+        log_action(user_id, 'attachments:claim', entry_id, f'claimed={claimed}')
+
+    return jsonify({'ok': True, 'claimed': claimed, 'new_attachment_ids': new_ids}), 200
 
 @attachments_routes.get('/attachments/temp/<token>/open/<path:stored_name>')
 @login_required

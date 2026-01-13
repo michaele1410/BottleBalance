@@ -278,3 +278,21 @@ def export_audit_entries_to_csv(audit_entries: list[dict], tz_name: str = 'Europ
         ])
 
     return output.getvalue()
+
+# For defining AppTile in Settings
+@lru_cache()
+def get_setting(key: str, default=None):
+    with engine.begin() as conn:
+        row = conn.execute(text("SELECT value FROM settings WHERE key=:k"), {'k': key}).fetchone()
+    return row[0] if row else default
+
+def set_setting(key: str, value: str):
+    with engine.begin() as conn:
+        conn.execute(text("""
+            INSERT INTO settings (key, value)
+            VALUES (:k, :v)
+            ON CONFLICT (key)
+            DO UPDATE SET value=:v
+        """), {'k': key, 'v': value})
+    # Delete cache to ensure updated value is fetched next time
+    get_setting.cache_clear()

@@ -6,10 +6,9 @@ import ssl
 import logging
 from smtplib import SMTP, SMTP_SSL, SMTPException
 from email.message import EmailMessage
-from modules.core_utils import APP_BASE_URL, engine
+from modules.core_utils import APP_BASE_URL, engine, get_setting
 from sqlalchemy import text
 from flask_babel import _
-from smtplib import SMTP, SMTP_SSL
 
 # Configuration from environment variables
 SMTP_HOST = os.getenv("SMTP_HOST")
@@ -27,11 +26,14 @@ logger.setLevel(logging.INFO)
 handler = logging.StreamHandler()
 formatter = logging.Formatter("[SMTP Check] %(levelname)s: %(message)s")
 handler.setFormatter(formatter)
+if not logger.handlers:
+    logger.addHandler(handler)
 
 # -----------------------
 # SMTP Test Mail if paraam SEND_TEST_MAIL is set to true
 # -----------------------
 logger.info("ENV SEND_TEST_MAIL in .env  is set to %s", SEND_TEST_MAIL)
+
 
 def send_mail(to_email: str, subject: str, body: str) -> bool:
     if not SMTP_HOST:
@@ -42,6 +44,8 @@ def send_mail(to_email: str, subject: str, body: str) -> bool:
     msg["From"] = FROM_EMAIL
     msg["To"] = to_email
     msg["Subject"] = subject
+    # Branding header: App-Titel als X-Mailer
+    msg["X-Mailer"] = get_setting('app_title', 'BottleBalance')
     msg.set_content(body)
 
     try:
@@ -67,8 +71,8 @@ def send_mail(to_email: str, subject: str, body: str) -> bool:
         logger.error("SMTP error when sending mail (to=%s, subject=%s): %s", to_email, subject, e, exc_info=True)
         return False
 
-
 def send_status_email(to_email: str, request_id: int, state: str, cc_approvers: bool = False):
+    
     subject = _('Payment request #%(id)d – State: %(state)s', id=request_id, state=state.capitalize())
     body = _(
         "Your payment request #%(id)d was sent to '%(state)s'.\n\n"
@@ -82,6 +86,7 @@ def send_status_email(to_email: str, request_id: int, state: str, cc_approvers: 
     msg["From"] = FROM_EMAIL
     msg["To"] = to_email
     msg["Subject"] = subject
+    msg["X-Mailer"] = get_setting('app_title', 'BottleBalance')
     msg.set_content(body)
 
     # Optional CC to approvers
@@ -122,36 +127,42 @@ def send_status_email(to_email: str, request_id: int, state: str, cc_approvers: 
 # -----------------------
 # BottleBalance
 # -----------------------
-
-def check_smtp_configuration():
+def check_smtp_configuration(to_email: str | None = None):
+    """
+    Lightweight SMTP connectivity check (+ optional test email).
+    If to_email is provided, a UTF-8 test mail is sent.
+    """
     if not all([SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS]):
         logger.warning("SMTP configuration incomplete – connection not possible.")
         return
 
     try:
-        if SMTP_SSL:
+        # Connect
+        if SMTP_SSL_ON:
             context = ssl.create_default_context()
-            server = smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT, timeout=SMTP_TIMEOUT, context=context)
+            server = SMTP_SSL(SMTP_HOST, SMTP_PORT, timeout=SMTP_TIMEOUT, context=context)
         else:
-            server = smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=SMTP_TIMEOUT)
+            server = SMTP(SMTP_HOST, SMTP_PORT, timeout=SMTP_TIMEOUT)
             if SMTP_TLS:
-                server.starttls()
+                server.starttls(context=ssl.create_default_context())
 
         server.login(SMTP_USER, SMTP_PASS)
 
-        # Send UTF-8 encoded test email
-        message = _(
-            "Subject: %(subject)s\r\n"
-            "Content-Type: text/plain; charset=utf-8\r\n"
-            "\r\n"
-            "%(body)s",
-            subject=_("SMTP test by %(app)s", app=_("AppTitle")),
-            body=_("This is an automated test message to verify the SMTP configuration. "
-                "Includes special characters like Ü, Ä, Ö, and ß.")
-        ).encode("utf-8")
+        # Optional: send UTF-8 test message
+        if to_email:
+            subject = _("SMTP test by %(app)s", app=get_setting('app_title', 'BottleBalance'))
+            body    = _("This is an automated test message to verify the SMTP configuration. "
+                        "Includes special characters like Ü, Ä, Ö, and ß.")
+            message = (
+                f"Subject: {subject}\r\n"
+                "Content-Type: text/plain; charset=utf-8\r\n"
+                "\r\n"
+                f"{body}"
+            ).encode("utf-8")
+            server.sendmail(FROM_EMAIL, to_email, message)
 
-        server.sendmail(FROM_EMAIL, TO_EMAIL, message)
         server.quit()
-        logger.info("SMTP connection successful and test email sent.")
+        logger.info("SMTP connection successful%s.",
+                    " and test email sent" if to_email else "")
     except Exception as e:
-        logger.warning(f"SMTP test failed: {e}")
+        logger.warning("SMTP test failed: %s", e)

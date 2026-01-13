@@ -12,20 +12,24 @@ from email.utils import formataddr, make_msgid
 from smtplib import SMTP, SMTP_SSL
 
 from modules.auth_utils import login_required, require_perms, require_csrf
+
 from modules.mail_utils import (
     SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS,
     SMTP_TLS, SMTP_SSL_ON, SMTP_TIMEOUT, FROM_EMAIL
 )
+
+from modules.core_utils import get_setting
 
 mail_routes = Blueprint('mail_routes', __name__)
 
 @mail_routes.route("/admin/smtp", methods=["GET", "POST"])
 @login_required
 @require_perms('admin:tools')
-@require_csrf
 def admin_smtp():
     state = None
     if request.method == "POST":
+        # CSRF nur für POST prüfen (wie in app.py)
+        require_csrf(lambda: None)()
         try:
             if not SMTP_HOST or not SMTP_PORT or not SMTP_USER or not SMTP_PASS or not FROM_EMAIL:
                 flash(_("SMTP configuration incomplete."), "error")
@@ -43,15 +47,15 @@ def admin_smtp():
             server.login(SMTP_USER, SMTP_PASS)
 
             # 2) Build message UTF-8 correctly
-            subject = Header(_("SMTP test by %(app)s", app=_("AppTitle")), "utf-8")
+            subject = Header(_("SMTP test by %(app)s", app=get_setting('app_title', 'BottleBalance')), "utf-8")
             body_text = _("This is a test message to check the SMTP configuration.")
 
             msg = MIMEText(body_text, "plain", "utf-8")
             msg["Subject"] = str(subject)
 
             # Encode display names (UTF-8) correctly for headers:
-            from_display = str(Header(_("BottleBalance"), 'utf-8'))
-            to_display = str(Header(_("SMTP Recipient"), 'utf-8'))
+            from_display = str(Header(get_setting('app_title', 'BottleBalance'), 'utf-8'))
+            to_display   = str(Header(_("SMTP Recipient"), 'utf-8'))
 
             # Envelope addresses MUST be ASCII:
             from_envelope = FROM_EMAIL                 # e.g. 'mailer@example.com'
@@ -61,7 +65,7 @@ def admin_smtp():
             msg["From"] = formataddr((from_display, from_envelope))
             msg["To"] = formataddr((to_display, to_envelope))
             msg["Message-ID"] = make_msgid()
-            msg["X-Mailer"] = "BottleBalance"
+            msg["X-Mailer"] = get_setting('app_title', 'BottleBalance')
 
             #3) Send – preferably send_message (correctly formats headers/bytes)
             # If the server supports SMTPUTF8 and you have NON-ASCII in the header/display name:
@@ -90,9 +94,11 @@ def admin_smtp():
         return redirect(url_for("admin_smtp"))
 
     # GET: Status display
+    
     if not SMTP_HOST or not SMTP_PORT or not SMTP_USER or not SMTP_PASS:
-        state = "SMTP configuration incomplete."
+            state = _("SMTP configuration incomplete.")
     else:
-        state = f"SMTP configuration detected for host {SMTP_HOST}:{SMTP_PORT}."
+        state = _("SMTP configuration detected for host %(host)s:%(port)s.",
+                host=SMTP_HOST, port=SMTP_PORT)
 
     return render_template("admin_smtp.html", state=state)

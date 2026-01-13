@@ -18,6 +18,7 @@ from modules.mail_utils import (
 from modules.auth_utils import (
     current_user
 )
+from modules.core_utils import get_setting
 
 def _user_can_view_payment_request(request_id: int) -> bool:
     """Requestor or Approver can view."""

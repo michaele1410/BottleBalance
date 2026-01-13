@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-01-13 12:25+0100\n"
+"POT-Creation-Date: 2026-01-13 23:22+0100\n"
 "PO-Revision-Date: 2026-01-13 08:55+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -23,17 +23,25 @@ msgstr ""
 msgid "Database dump successfully created."
 msgstr ""
 
-#: admin.py:62 app.py:1664
+#: admin.py:62 app.py:1697
 #, python-format
 msgid "Error during database dump: %(error)s"
 msgstr ""
 
-#: app.py:242
+#: admin.py:73 app.py:1789
+msgid "App title cannot be empty."
+msgstr ""
+
+#: admin.py:77 app.py:1792
+msgid "Application title updated."
+msgstr ""
+
+#: app.py:249
 #, python-format
 msgid "New payment request from %(requester)s"
 msgstr ""
 
-#: app.py:243
+#: app.py:250
 #, python-format
 msgid ""
 "A new payment request has been created.\n"
@@ -46,159 +54,153 @@ msgid ""
 "Please check the request in the system."
 msgstr ""
 
-#: app.py:528
+#: app.py:552
 msgid "Withdrew money"
 msgstr ""
 
-#: app.py:529 app.py:1472 templates/index.html:285 templates/index.html:336
+#: app.py:553 app.py:1505 templates/index.html:289 templates/index.html:340
 #: templates/table_partial.html:12 templates/table_partial.html:38
 msgid "Inventory"
 msgstr ""
 
-#: app.py:530
+#: app.py:554
 msgid "Count cash register"
 msgstr ""
 
-#: app.py:531
+#: app.py:555
 msgid "Emptying cash register GR"
 msgstr ""
 
-#: app.py:532
+#: app.py:556
 msgid "Delivery of Bottles"
 msgstr ""
 
-#: app.py:533
+#: app.py:557
 msgid "Individual bottle purchase"
 msgstr ""
 
-#: app.py:534
+#: app.py:558
 msgid "Deposit PayPal"
 msgstr ""
 
-#: app.py:535
+#: app.py:559
 msgid "Donation"
 msgstr ""
 
-#: app.py:587
+#: app.py:616
 #, python-format
 msgid ""
 "APP_BASE_URL is not set to production-ready (currently '%(url)s'). Set a "
 "publicly accessible base URL so that hints/links in emails are correct."
 msgstr ""
 
-#: app.py:643
+#: app.py:672
 msgid "File too large. Please upload a smaller file."
 msgstr ""
 
-#: app.py:707 auth.py:216 user.py:73
+#: app.py:736 auth.py:234 user.py:73
 msgid "Password must be at least 8 characters long."
 msgstr ""
 
-#: app.py:710 auth.py:219 templates/profile.html:196
+#: app.py:739 auth.py:237 templates/profile.html:196
 msgid "Passwords do not match."
 msgstr ""
 
-#: app.py:723
+#: app.py:752
 msgid ""
 "Please enable two-factor authentication (2FA) to provide additional "
 "protection for your account."
 msgstr ""
 
-#: app.py:731
+#: app.py:760
 msgid "Profile updated."
 msgstr ""
 
-#: app.py:747 app.py:772
+#: app.py:776 app.py:801
 msgid "User not found."
 msgstr ""
 
-#: app.py:750 app.py:775 app.py:1631 mail.py:46 modules/mail_utils.py:148
-#: modules/payment_utils.py:117 templates/base.html:6 templates/base.html:149
-#: templates/base.html:160 templates/version.html:6 templates/version.html:20
-msgid "AppTitle"
-msgstr "BottleBalance"
-
-#: app.py:790
+#: app.py:819
 msgid "No 2FA setup active."
 msgstr ""
 
-#: app.py:795
+#: app.py:824
 msgid "Invalid 2FA code."
 msgstr ""
 
-#: app.py:804
+#: app.py:833
 msgid "2FA enabled."
 msgstr ""
 
-#: app.py:823
+#: app.py:852
 msgid "Password verification failed."
 msgstr ""
 
-#: app.py:837 auth.py:121
+#: app.py:866 auth.py:132
 msgid "2FA disabled."
 msgstr ""
 
-#: app.py:847 app.py:874
+#: app.py:876 app.py:903
 msgid "Invalid theme selection."
 msgstr ""
 
-#: app.py:853
+#: app.py:882
 msgid "Theme settings saved."
 msgstr ""
 
-#: app.py:870
+#: app.py:899
 msgid "Invalid language."
 msgstr ""
 
-#: app.py:894
+#: app.py:923
 msgid "Settings saved."
 msgstr ""
 
-#: app.py:1022
+#: app.py:1051
 msgid "Approval authorization changed."
 msgstr ""
 
-#: app.py:1039
+#: app.py:1068
 msgid "CSV header does not match the expected format."
 msgstr ""
 
-#: app.py:1114
+#: app.py:1143
 msgid "CSV preview is disabled."
 msgstr ""
 
-#: app.py:1125 app.py:1243
+#: app.py:1154 app.py:1272
 msgid "Preview expired or not found."
 msgstr ""
 
-#: app.py:1130 app.py:1257
+#: app.py:1159 app.py:1286
 msgid "CSV file not found."
 msgstr ""
 
-#: app.py:1139
+#: app.py:1168
 msgid "CSV could not be read."
 msgstr ""
 
-#: app.py:1186 bbalance.py:471
+#: app.py:1215 bbalance.py:495
 msgid "Please select a CSV file."
 msgstr ""
 
-#: app.py:1249
+#: app.py:1278
 msgid "Preview expired or already used."
 msgstr ""
 
-#: app.py:1301
+#: app.py:1330
 #, python-format
 msgid "Import successful: %(rows)d lines transferred."
 msgstr ""
 
-#: app.py:1307 bbalance.py:532
+#: app.py:1336 bbalance.py:556
 #, python-format
 msgid "Import failed: %(error)s"
 msgstr ""
 
-#: app.py:1472 templates/edit.html:25 templates/import_preview.html:46
-#: templates/import_preview.html:95 templates/index.html:72
-#: templates/index.html:283 templates/index.html:307
+#: app.py:1505 templates/edit.html:25 templates/import_preview.html:46
+#: templates/import_preview.html:95 templates/index.html:76
+#: templates/index.html:287 templates/index.html:311
 #: templates/payment_authorization.html:28
 #: templates/payment_authorization.html:57
 #: templates/payment_authorization.html:219
@@ -208,118 +210,118 @@ msgstr ""
 msgid "Date"
 msgstr ""
 
-#: app.py:1472 templates/import_preview.html:47
+#: app.py:1505 templates/import_preview.html:47
 #: templates/import_preview.html:96 templates/table_partial.html:10
 #: templates/table_partial.html:34
 msgid "Full"
 msgstr ""
 
-#: app.py:1472 templates/import_preview.html:48
-#: templates/import_preview.html:97 templates/index.html:88
-#: templates/index.html:325 templates/index.html:327
+#: app.py:1505 templates/import_preview.html:48
+#: templates/import_preview.html:97 templates/index.html:92
+#: templates/index.html:329 templates/index.html:331
 #: templates/table_partial.html:11 templates/table_partial.html:35
 msgid "Empty"
 msgstr ""
 
-#: app.py:1473 templates/edit.html:56 templates/import_preview.html:49
-#: templates/import_preview.html:98 templates/index.html:96
-#: templates/index.html:347 templates/index.html:349
+#: app.py:1506 templates/edit.html:56 templates/import_preview.html:49
+#: templates/import_preview.html:98 templates/index.html:100
+#: templates/index.html:351 templates/index.html:353
 #: templates/table_partial.html:13 templates/table_partial.html:40
 msgid "Revenue"
 msgstr ""
 
-#: app.py:1473 templates/edit.html:67 templates/import_preview.html:50
-#: templates/import_preview.html:99 templates/index.html:104
-#: templates/index.html:353 templates/index.html:355
+#: app.py:1506 templates/edit.html:67 templates/import_preview.html:50
+#: templates/import_preview.html:99 templates/index.html:108
+#: templates/index.html:357 templates/index.html:359
 #: templates/table_partial.html:14 templates/table_partial.html:41
 msgid "Expense"
 msgstr ""
 
-#: app.py:1473 templates/index.html:287 templates/index.html:364
+#: app.py:1506 templates/index.html:291 templates/index.html:368
 #: templates/table_partial.html:15 templates/table_partial.html:44
 msgid "Cash balance"
 msgstr ""
 
-#: app.py:1473 templates/edit.html:87 templates/import_preview.html:51
-#: templates/import_preview.html:100 templates/index.html:116
-#: templates/index.html:288 templates/index.html:371
+#: app.py:1506 templates/edit.html:87 templates/import_preview.html:51
+#: templates/import_preview.html:100 templates/index.html:120
+#: templates/index.html:292 templates/index.html:375
 #: templates/table_partial.html:16 templates/table_partial.html:47
 msgid "Note"
 msgstr ""
 
-#: app.py:1567
+#: app.py:1600
 msgid "Language changed."
 msgstr ""
 
-#: app.py:1610 app.py:1761 mail.py:31
+#: app.py:1643 app.py:1804 mail.py:35 mail.py:99
 msgid "SMTP configuration incomplete."
 msgstr ""
 
-#: app.py:1627 mail.py:47
+#: app.py:1660 mail.py:51
 msgid "This is a test message to check the SMTP configuration."
 msgstr ""
 
-#: app.py:1631 mail.py:46 modules/mail_utils.py:148
+#: app.py:1664 mail.py:50 modules/mail_utils.py:153
 #, python-format
 msgid "SMTP test by %(app)s"
 msgstr ""
 
-#: app.py:1638 mail.py:84
+#: app.py:1671 mail.py:88
 msgid "SMTP test successful – test email sent."
 msgstr ""
 
-#: app.py:1640
+#: app.py:1673
 msgid "SMTP test failed: "
 msgstr ""
 
-#: app.py:1659
+#: app.py:1692
 msgid "Database dump successfully generated."
 msgstr ""
 
-#: app.py:1679
+#: app.py:1712
 msgid "Updated notes."
 msgstr ""
 
-#: app.py:1681
+#: app.py:1714
 #, python-format
 msgid "Error saving notes: %(error)s"
 msgstr ""
 
-#: app.py:1687
+#: app.py:1720
 msgid "Please select an image file."
 msgstr ""
 
-#: app.py:1701
+#: app.py:1734
 msgid "Invalid file format. Permitted formats: SVG, PNG, JPG, WEBP."
 msgstr ""
 
-#: app.py:1720
+#: app.py:1753
 msgid "Logo successfully uploaded."
 msgstr ""
 
-#: app.py:1722
+#: app.py:1755
 #, python-format
 msgid "Upload failed: %(error)s"
 msgstr ""
 
-#: app.py:1741
+#: app.py:1774
 msgid "Custom logo removed. Fallback to default logo active."
 msgstr ""
 
-#: app.py:1745
+#: app.py:1778
 #, python-format
 msgid "Could not delete file: %(msg)s"
 msgstr ""
 
-#: app.py:1748
+#: app.py:1781
 msgid "No logo found."
 msgstr ""
 
-#: app.py:1754
+#: app.py:1797
 msgid "Unknown action."
 msgstr ""
 
-#: app.py:1763
+#: app.py:1806 mail.py:101
 #, python-format
 msgid "SMTP configuration detected for host %(host)s:%(port)s."
 msgstr ""
@@ -346,62 +348,62 @@ msgstr ""
 msgid "Attachment deleted."
 msgstr ""
 
-#: auth.py:48
+#: auth.py:47
 msgid ""
 "Default login: Username <strong>admin</strong> and password "
 "<strong>admin</strong> – please change immediately!"
 msgstr ""
 
-#: auth.py:62
+#: auth.py:64
 msgid "Login failed."
 msgstr ""
 
-#: auth.py:69
+#: auth.py:80
 #, python-format
 msgid ""
 "Please change the password <a href=\"%(link)s\" class=\"alert-link\">on "
 "profile</a>."
 msgstr ""
 
-#: auth.py:157
+#: auth.py:175
 msgid ""
 "Backup code used. New codes were generated automatically. Please keep "
 "them safe."
 msgstr ""
 
-#: auth.py:165
+#: auth.py:183
 msgid "Invalid 2FA code or backup code."
 msgstr ""
 
-#: auth.py:176
+#: auth.py:194
 msgid "New backup codes have been generated. Please keep them safe."
 msgstr ""
 
-#: auth.py:204
+#: auth.py:222
 msgid "Reset link is invalid or expired."
 msgstr ""
 
-#: auth.py:230
+#: auth.py:248
 msgid "Reset link is invalid or has expired."
 msgstr ""
 
-#: auth.py:247
+#: auth.py:265
 msgid "Password has been reset."
 msgstr ""
 
-#: auth.py:255
+#: auth.py:273
 msgid "If the information is correct, a reset link has been sent."
 msgstr ""
 
-#: auth.py:258
+#: auth.py:276
 msgid "Please enter your username."
 msgstr ""
 
-#: auth.py:290 templates/reset.html:7 user.py:221
+#: auth.py:308 templates/reset.html:7 user.py:221
 msgid "Reset password"
 msgstr ""
 
-#: auth.py:292
+#: auth.py:310
 #, python-format
 msgid ""
 "Please click on the following link to reset your password:\n"
@@ -411,40 +413,37 @@ msgid ""
 "The link is valid for 1 hour."
 msgstr ""
 
-#: bbalance.py:108
+#: bbalance.py:117
 #, python-format
 msgid "Input error: %(error)s"
 msgstr ""
 
-#: bbalance.py:130 templates/index.html:816 templates/index.html:841
+#: bbalance.py:134 templates/index.html:820 templates/index.html:845
 msgid "Please enter at least one value for revenue, expenditure, full or empty."
 msgstr ""
 
-#: bbalance.py:202
-msgid "Record saved, {count} file(s) transferred."
+#: bbalance.py:229
+#, python-format
+msgid "Record saved, %(count)d file(s) transferred."
 msgstr ""
 
-#: bbalance.py:204
+#: bbalance.py:231
 msgid "Record saved."
 msgstr ""
 
-#: bbalance.py:240
+#: bbalance.py:264
 msgid "Entry not found."
 msgstr ""
 
-#: bbalance.py:405
+#: bbalance.py:429
 msgid "Entry saved."
 msgstr ""
 
-#: mail.py:53
-msgid "BottleBalance"
-msgstr ""
-
-#: mail.py:54
+#: mail.py:58
 msgid "SMTP Recipient"
 msgstr ""
 
-#: mail.py:88
+#: mail.py:92
 #, python-format
 msgid "SMTP test failed: %(error)s"
 msgstr ""
@@ -688,7 +687,7 @@ msgstr ""
 msgid "You cannot deactivate yourself."
 msgstr ""
 
-#: modules/core_utils.py:101
+#: modules/core_utils.py:121
 msgid "File too large. Maximum allowed: 10 MB."
 msgstr ""
 
@@ -706,7 +705,7 @@ msgstr ""
 msgid "Invalid integer for %(field)s: %(value)s"
 msgstr ""
 
-#: modules/csv_utils.py:92 modules/utils.py:13 templates/index.html:630
+#: modules/csv_utils.py:92 modules/utils.py:13 templates/index.html:634
 msgid "currency"
 msgstr "$"
 
@@ -724,12 +723,12 @@ msgstr ""
 msgid "Invalid money format for expense: %(value)s"
 msgstr ""
 
-#: modules/mail_utils.py:72
+#: modules/mail_utils.py:76
 #, python-format
 msgid "Payment request #%(id)d – State: %(state)s"
 msgstr ""
 
-#: modules/mail_utils.py:73
+#: modules/mail_utils.py:77
 #, python-format
 msgid ""
 "Your payment request #%(id)d was sent to '%(state)s'.\n"
@@ -737,27 +736,18 @@ msgid ""
 "Link: %(link)s"
 msgstr ""
 
-#: modules/mail_utils.py:143
-#, python-format
-msgid ""
-"Subject: %(subject)s\r\n"
-"Content-Type: text/plain; charset=utf-8\r\n"
-"\r\n"
-"%(body)s"
-msgstr ""
-
-#: modules/mail_utils.py:149
+#: modules/mail_utils.py:154
 msgid ""
 "This is an automated test message to verify the SMTP configuration. "
 "Includes special characters like Ü, Ä, Ö, and ß."
 msgstr ""
 
-#: modules/payment_utils.py:109
+#: modules/payment_utils.py:110
 #, python-format
 msgid "New payment request #%(id)d"
 msgstr ""
 
-#: modules/payment_utils.py:110
+#: modules/payment_utils.py:111
 #, python-format
 msgid ""
 "Hello,\n"
@@ -768,6 +758,11 @@ msgid ""
 "\n"
 "Best regards, %(app)s"
 msgstr ""
+
+#: modules/payment_utils.py:118 templates/base.html:6 templates/base.html:149
+#: templates/base.html:160 templates/version.html:6 templates/version.html:20
+msgid "AppTitle"
+msgstr "BottleBalance"
 
 #: templates/2fa.html:8
 msgid "Two-factor authentication"
@@ -836,9 +831,10 @@ msgstr ""
 msgid "One option per line ..."
 msgstr ""
 
-#: templates/admin_tools.html:35 templates/edit.html:93
-#: templates/edit_user.html:51 templates/payment_authorization_detail.html:14
-#: templates/profile.html:48 templates/profile.html:163 templates/reset.html:33
+#: templates/admin_tools.html:35 templates/admin_tools.html:117
+#: templates/edit.html:93 templates/edit_user.html:51
+#: templates/payment_authorization_detail.html:14 templates/profile.html:48
+#: templates/profile.html:163 templates/reset.html:33
 msgid "Save"
 msgstr ""
 
@@ -876,69 +872,77 @@ msgstr ""
 msgid "Create & download dump"
 msgstr ""
 
+#: templates/admin_tools.html:105 templates/admin_tools.html:112
+msgid "Application title"
+msgstr "BottleBalance"
+
 #: templates/admin_tools.html:106
+msgid "Shown in titles, exports, emails, and 2FA issuer."
+msgstr ""
+
+#: templates/admin_tools.html:129
 msgid "Branding: Your own logo"
 msgstr ""
 
-#: templates/admin_tools.html:107
+#: templates/admin_tools.html:130
 msgid "SVG, PNG, JPG, WEBP – recommended: SVG or PNG"
 msgstr ""
 
-#: templates/admin_tools.html:112
+#: templates/admin_tools.html:135
 msgid "Current logo (preview)"
 msgstr ""
 
-#: templates/admin_tools.html:117
+#: templates/admin_tools.html:140
 msgid "If no custom logo is stored, the default logo will be used."
 msgstr ""
 
-#: templates/admin_tools.html:128
+#: templates/admin_tools.html:151
 msgid "Select logo file"
 msgstr ""
 
-#: templates/admin_tools.html:134 templates/edit.html:107
-#: templates/index.html:126 templates/index.html:513
+#: templates/admin_tools.html:157 templates/edit.html:107
+#: templates/index.html:130 templates/index.html:517
 #: templates/payment_authorization_detail.html:201
 msgid "Upload"
 msgstr ""
 
-#: templates/admin_tools.html:139
+#: templates/admin_tools.html:162
 msgid "Note: The logo is stored on the server side under uploads/branding/. "
 msgstr ""
 
-#: templates/admin_tools.html:140
+#: templates/admin_tools.html:163
 msgid "Cache is updated automatically."
 msgstr ""
 
-#: templates/admin_tools.html:149
+#: templates/admin_tools.html:172
 msgid "Remove your own logo?"
 msgstr ""
 
-#: templates/admin_tools.html:150
+#: templates/admin_tools.html:173
 msgid "Remove"
 msgstr ""
 
-#: templates/audit.html:8 templates/audit.html:49 templates/index.html:144
+#: templates/audit.html:8 templates/audit.html:49 templates/index.html:148
 msgid "Filter"
 msgstr ""
 
-#: templates/audit.html:25 templates/index.html:160
+#: templates/audit.html:25 templates/index.html:164
 msgid "Search"
 msgstr ""
 
-#: templates/audit.html:32 templates/index.html:167
+#: templates/audit.html:32 templates/index.html:171
 msgid "Date/Note"
 msgstr ""
 
-#: templates/audit.html:38 templates/audit.html:74 templates/index.html:175
+#: templates/audit.html:38 templates/audit.html:74
 msgid "Time period"
 msgstr ""
 
-#: templates/audit.html:42 templates/index.html:182
+#: templates/audit.html:42 templates/index.html:186
 msgid "TT.MM.JJJJ – TT.MM.JJJJ"
 msgstr ""
 
-#: templates/audit.html:52 templates/index.html:220
+#: templates/audit.html:52 templates/index.html:224
 msgid "Reset filter"
 msgstr ""
 
@@ -1044,8 +1048,8 @@ msgstr ""
 msgid "Buy me a coffee"
 msgstr ""
 
-#: templates/base.html:168 templates/index.html:441 templates/index.html:486
-#: templates/index.html:492 templates/index.html:505 templates/index.html:524
+#: templates/base.html:168 templates/index.html:445 templates/index.html:490
+#: templates/index.html:496 templates/index.html:509 templates/index.html:528
 #: templates/login.html:50 templates/users.html:24
 msgid "Close"
 msgstr ""
@@ -1064,8 +1068,8 @@ msgstr ""
 msgid "Back"
 msgstr ""
 
-#: templates/edit.html:35 templates/index.html:80 templates/index.html:319
-#: templates/index.html:321
+#: templates/edit.html:35 templates/index.html:84 templates/index.html:323
+#: templates/index.html:325
 msgid "Full bottles"
 msgstr ""
 
@@ -1081,17 +1085,17 @@ msgstr ""
 msgid "Cancel"
 msgstr ""
 
-#: templates/edit.html:98 templates/index.html:206 templates/index.html:485
+#: templates/edit.html:98 templates/index.html:210 templates/index.html:489
 #: templates/payment_authorization_detail.html:190
 msgid "Attachments"
 msgstr ""
 
-#: templates/edit.html:111 templates/index.html:517
+#: templates/edit.html:111 templates/index.html:521
 #: templates/payment_authorization_detail.html:205
 msgid "Acceptable formats:"
 msgstr ""
 
-#: templates/edit.html:111 templates/index.html:517
+#: templates/edit.html:111 templates/index.html:521
 #: templates/payment_authorization_detail.html:205
 msgid "Multiple files possible."
 msgstr ""
@@ -1101,19 +1105,19 @@ msgstr ""
 msgid "View"
 msgstr ""
 
-#: templates/edit.html:126 templates/index.html:995
+#: templates/edit.html:126 templates/index.html:1028
 msgid "Delete attachment for real?"
 msgstr ""
 
-#: templates/edit.html:128 templates/edit.html:234 templates/index.html:411
-#: templates/index.html:992 templates/payment_authorization.html:134
+#: templates/edit.html:128 templates/edit.html:234 templates/index.html:415
+#: templates/index.html:1025 templates/payment_authorization.html:134
 #: templates/payment_authorization_detail.html:231
 #: templates/table_partial.html:76
 msgid "Delete"
 msgstr ""
 
-#: templates/edit.html:133 templates/edit.html:215 templates/index.html:894
-#: templates/index.html:977
+#: templates/edit.html:133 templates/edit.html:215 templates/index.html:898
+#: templates/index.html:1002
 msgid "No attachments available."
 msgstr ""
 
@@ -1125,7 +1129,7 @@ msgstr ""
 msgid "Error loading attachments:"
 msgstr ""
 
-#: templates/edit.html:242 templates/index.html:940
+#: templates/edit.html:242 templates/index.html:944
 msgid "Error loading attachments."
 msgstr ""
 
@@ -1153,7 +1157,7 @@ msgstr ""
 msgid "Role"
 msgstr ""
 
-#: templates/edit_user.html:41 templates/index.html:145 templates/users.html:85
+#: templates/edit_user.html:41 templates/index.html:149 templates/users.html:85
 #: templates/users.html:115
 msgid "Active"
 msgstr ""
@@ -1248,8 +1252,8 @@ msgstr ""
 msgid "Inventory:"
 msgstr ""
 
-#: templates/index.html:13 templates/index.html:320 templates/index.html:326
-#: templates/index.html:338 templates/index.html:632
+#: templates/index.html:13 templates/index.html:324 templates/index.html:330
+#: templates/index.html:342 templates/index.html:636
 #: templates/table_partial.html:34 templates/table_partial.html:35
 #: templates/table_partial.html:38
 msgid "Btl."
@@ -1263,61 +1267,66 @@ msgstr ""
 msgid "Add new record"
 msgstr ""
 
-#: templates/index.html:122 templates/payment_authorization.html:255
+#: templates/index.html:126 templates/payment_authorization.html:255
 #: templates/users.html:69
 msgid "Add"
 msgstr ""
 
-#: templates/index.html:156
+#: templates/index.html:160
 msgid "Filter for entries"
 msgstr ""
 
-#: templates/index.html:192
+#: templates/index.html:179 templates/payment_authorization_audit.html:19
+#: templates/payment_authorization_audit.html:30
+msgid "Timestamp"
+msgstr ""
+
+#: templates/index.html:196
 msgid "Year"
 msgstr ""
 
-#: templates/index.html:196 templates/index.html:210
+#: templates/index.html:200 templates/index.html:214
 msgid "All"
 msgstr ""
 
-#: templates/index.html:211
+#: templates/index.html:215
 msgid "With attachment"
 msgstr ""
 
-#: templates/index.html:212
+#: templates/index.html:216
 msgid "Without attachment"
 msgstr ""
 
-#: templates/index.html:227 templates/index.html:228
+#: templates/index.html:231 templates/index.html:232
 #: templates/payment_authorization_detail.html:18
 msgid "PDF export"
 msgstr ""
 
-#: templates/index.html:235 templates/index.html:236
+#: templates/index.html:239 templates/index.html:240
 msgid "Additional export options"
 msgstr ""
 
-#: templates/index.html:243
+#: templates/index.html:247
 msgid "CSV export"
 msgstr ""
 
-#: templates/index.html:255
+#: templates/index.html:259
 msgid "CSV import"
 msgstr ""
 
-#: templates/index.html:276
+#: templates/index.html:280
 msgid "Entries"
 msgstr ""
 
-#: templates/index.html:284 templates/index.html:316
+#: templates/index.html:288 templates/index.html:320
 msgid "Inventory change"
 msgstr ""
 
-#: templates/index.html:286 templates/index.html:344
+#: templates/index.html:290 templates/index.html:348
 msgid "Payment"
 msgstr ""
 
-#: templates/index.html:289 templates/index.html:383
+#: templates/index.html:293 templates/index.html:387
 #: templates/payment_authorization.html:31
 #: templates/payment_authorization.html:62 templates/table_partial.html:17
 #: templates/table_partial.html:48 templates/users.html:89
@@ -1325,65 +1334,66 @@ msgstr ""
 msgid "Actions"
 msgstr ""
 
-#: templates/index.html:388 templates/table_partial.html:53
+#: templates/index.html:392 templates/table_partial.html:53
 msgid "Edit"
 msgstr ""
 
-#: templates/index.html:396 templates/table_partial.html:61
+#: templates/index.html:400 templates/table_partial.html:61
 msgid "Open documents"
 msgstr ""
 
-#: templates/index.html:409 templates/table_partial.html:74
+#: templates/index.html:413 templates/table_partial.html:74
 msgid "Delete entry permanently?"
 msgstr ""
 
-#: templates/index.html:420 templates/table_partial.html:85
+#: templates/index.html:424 templates/table_partial.html:85
 msgid "No entries available."
 msgstr ""
 
-#: templates/index.html:440
+#: templates/index.html:444
 msgid "CSV file import"
 msgstr ""
 
-#: templates/index.html:452
+#: templates/index.html:456
 msgid "Select CSV file"
 msgstr ""
 
-#: templates/index.html:455
+#: templates/index.html:459
 msgid "Expected headers:"
 msgstr ""
 
-#: templates/index.html:457
+#: templates/index.html:461
 msgid "or short form without Inventory/Cash balance."
 msgstr ""
 
-#: templates/index.html:463
+#: templates/index.html:467
 msgid "Completely replace existing entries"
 msgstr ""
 
-#: templates/index.html:469
+#: templates/index.html:473
 msgid "Download sample CSV file"
 msgstr ""
 
-#: templates/index.html:472
+#: templates/index.html:476
 msgid "Show preview"
 msgstr ""
 
-#: templates/index.html:504
+#: templates/index.html:508
 msgid "Upload attachments"
 msgstr ""
 
-#: templates/index.html:784
+#: templates/index.html:788
 msgid ""
 "Please enter at least one value for revenue, expenditure, full or empty "
 "bottles."
 msgstr ""
 
-#: templates/index.html:931 templates/index.html:991
+#: templates/index.html:935 templates/index.html:1021
 msgid "Open"
 msgstr ""
 
-#: templates/index.html:1017
+#: templates/index.html:1035 templates/index.html:1072
+#: templates/index.html:1075 templates/index.html:1087
 msgid "Upload failed"
 msgstr ""
 
@@ -1582,11 +1592,6 @@ msgstr ""
 #: templates/payment_authorization_audit.html:16
 #: templates/payment_authorization_audit.html:27
 msgid "Request"
-msgstr ""
-
-#: templates/payment_authorization_audit.html:19
-#: templates/payment_authorization_audit.html:30
-msgid "Timestamp"
 msgstr ""
 
 #: templates/payment_authorization_detail.html:48
@@ -1851,5 +1856,18 @@ msgstr ""
 #~ msgstr ""
 
 #~ msgid "2FA not active."
+#~ msgstr ""
+
+#~ msgid "Record saved, {count} file(s) transferred."
+#~ msgstr ""
+
+#~ msgid "BottleBalance"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Subject: %(subject)s\r\n"
+#~ "Content-Type: text/plain; charset=utf-8\r\n"
+#~ "\r\n"
+#~ "%(body)s"
 #~ msgstr ""
 

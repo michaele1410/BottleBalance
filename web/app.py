@@ -351,6 +351,7 @@ CREATE TABLE IF NOT EXISTS users (
     username TEXT UNIQUE NOT NULL,
     email TEXT,
     password_hash TEXT NOT NULL,
+    must_change_password BOOLEAN NOT NULL DEFAULT FALSE,
     role TEXT NOT NULL,
     active BOOLEAN NOT NULL DEFAULT TRUE,
 

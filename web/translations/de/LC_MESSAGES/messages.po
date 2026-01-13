@@ -1009,7 +1009,7 @@ msgstr "Details"
 #: templates/payment_authorization_detail.html:246
 #: templates/payment_authorization_detail.html:255
 msgid "Time"
-msgstr "Zeit"
+msgstr "Zeitpunkt"
 
 #: templates/audit.html:92
 msgid "No entries."
@@ -1025,7 +1025,7 @@ msgstr "Dashboard"
 
 #: templates/base.html:66
 msgid "Requests"
-msgstr "Antrag"
+msgstr "Anträge"
 
 #: templates/base.html:78
 msgid "Audit"
@@ -1068,13 +1068,11 @@ msgid "Webseite:"
 msgstr "Website:"
 
 #: templates/base.html:160
-#, fuzzy
 msgid ""
 " is a web application for managing beverage cash registers and payment "
 "requests."
 msgstr ""
-"ist eine Webanwendung zur Verwaltung von Getränkekassen und "
-"Zahlungsfreigabeanträgen."
+" ist eine Webanwendung zur Verwaltung von Getränkekassen und Zahlungsfreigabeanträgen. "
 
 #: templates/base.html:163
 msgid "Buy me a coffee"
@@ -1347,7 +1345,7 @@ msgstr "Einträge"
 
 #: templates/index.html:284 templates/index.html:316
 msgid "Inventory change"
-msgstr "Bestandsveränderung"
+msgstr "Bestandsänderung"
 
 #: templates/index.html:286 templates/index.html:344
 msgid "Payment"
@@ -1467,11 +1465,11 @@ msgstr "Zahlungsfreigabeantrag"
 
 #: templates/payment_authorization.html:10
 msgid "New payment request"
-msgstr "Neuer Zahlungsfreigabeantrag"
+msgstr "Neuer Antrag"
 
-#: templates/payment_authorization.html:13
+#: templates/payment_authorization.html:13 
 msgid "All payment request as PDF"
-msgstr "Alle Zahlungsfreigabeanträge als PDF"
+msgstr "Alle Anträge als PDF"
 
 #: templates/payment_authorization.html:17
 #: templates/payment_authorization_audit.html:6
@@ -1480,7 +1478,7 @@ msgstr "Änderungsprotokoll"
 
 #: templates/payment_authorization.html:27
 #: templates/payment_authorization.html:38
-#: templates/payment_authorization.html:56
+#: templates/payment_authorization.html:56^
 #: templates/payment_authorization_detail.html:29
 #: templates/payment_authorization_detail.html:30
 #: templates/payment_authorization_detail.html:94

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-01-13 11:54+0100\n"
+"POT-Creation-Date: 2026-01-13 12:19+0100\n"
 "PO-Revision-Date: 2026-01-13 08:55+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: de\n"
@@ -112,7 +112,7 @@ msgstr ""
 msgid "User not found."
 msgstr ""
 
-#: app.py:750 app.py:775 app.py:1631 mail.py:54 modules/mail_utils.py:148
+#: app.py:750 app.py:775 app.py:1631 mail.py:46 modules/mail_utils.py:148
 #: modules/payment_utils.py:117 templates/base.html:6 templates/base.html:149
 #: templates/base.html:160 templates/version.html:6 templates/version.html:20
 msgid "AppTitle"
@@ -251,20 +251,20 @@ msgstr ""
 msgid "Language changed."
 msgstr ""
 
-#: app.py:1610 app.py:1761 mail.py:39
+#: app.py:1610 app.py:1761 mail.py:31
 msgid "SMTP configuration incomplete."
 msgstr ""
 
-#: app.py:1627 mail.py:55
+#: app.py:1627 mail.py:47
 msgid "This is a test message to check the SMTP configuration."
 msgstr ""
 
-#: app.py:1631 mail.py:54 modules/mail_utils.py:148
+#: app.py:1631 mail.py:46 modules/mail_utils.py:148
 #, python-format
 msgid "SMTP test by %(app)s"
 msgstr ""
 
-#: app.py:1638 mail.py:64
+#: app.py:1638 mail.py:84
 msgid "SMTP test successful – test email sent."
 msgstr ""
 
@@ -436,7 +436,15 @@ msgstr ""
 msgid "Entry saved."
 msgstr ""
 
-#: mail.py:66
+#: mail.py:53
+msgid "BottleBalance"
+msgstr ""
+
+#: mail.py:54
+msgid "SMTP Recipient"
+msgstr ""
+
+#: mail.py:88
 #, python-format
 msgid "SMTP test failed: %(error)s"
 msgstr ""

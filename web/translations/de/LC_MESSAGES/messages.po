@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-01-13 11:54+0100\n"
+"POT-Creation-Date: 2026-01-13 12:19+0100\n"
 "PO-Revision-Date: 2026-01-13 08:55+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -45,14 +45,6 @@ msgid ""
 "\n"
 "Please check the request in the system."
 msgstr ""
-„Eine neue Zahlungsfreigabeantrag wurde erstellt.\n“
-„\n“
-„Antragsteller: %(requester)s\n“
-„Betrag: %(amount).2f EUR\n“
-„Datum: %(date)s\n“
-„Anforderungs-ID: %(id)d\n“
-„\n“
-„Bitte überprüfen Sie die Anforderung im System.“
 
 #: app.py:528
 msgid "Withdrew money"
@@ -93,8 +85,6 @@ msgid ""
 "APP_BASE_URL is not set to production-ready (currently '%(url)s'). Set a "
 "publicly accessible base URL so that hints/links in emails are correct."
 msgstr ""
-„APP_BASE_URL ist nicht für die Produktion bereit eingestellt (derzeit „%(url)s“). Legen Sie eine „
-öffentlich zugängliche Basis-URL fest, damit Hinweise/Links in E-Mails korrekt sind.“
 
 #: app.py:643
 msgid "File too large. Please upload a smaller file."
@@ -124,7 +114,7 @@ msgstr "Profil aktualisiert."
 msgid "User not found."
 msgstr "Benutzer nicht gefunden."
 
-#: app.py:750 app.py:775 app.py:1631 mail.py:54 modules/mail_utils.py:148
+#: app.py:750 app.py:775 app.py:1631 mail.py:46 modules/mail_utils.py:148
 #: modules/payment_utils.py:117 templates/base.html:6 templates/base.html:149
 #: templates/base.html:160 templates/version.html:6 templates/version.html:20
 msgid "AppTitle"
@@ -263,20 +253,20 @@ msgstr "Bemerkung"
 msgid "Language changed."
 msgstr "Sprache geändert."
 
-#: app.py:1610 app.py:1761 mail.py:39
+#: app.py:1610 app.py:1761 mail.py:31
 msgid "SMTP configuration incomplete."
 msgstr "SMTP-Konfiguration unvollständig."
 
-#: app.py:1627 mail.py:55
+#: app.py:1627 mail.py:47
 msgid "This is a test message to check the SMTP configuration."
 msgstr "Dies ist eine Testnachricht zur Überprüfung der SMTP-Konfiguration."
 
-#: app.py:1631 mail.py:54 modules/mail_utils.py:148
+#: app.py:1631 mail.py:46 modules/mail_utils.py:148
 #, python-format
 msgid "SMTP test by %(app)s"
 msgstr "SMTP-Test von %(app)s"
 
-#: app.py:1638 mail.py:64
+#: app.py:1638 mail.py:84
 msgid "SMTP test successful – test email sent."
 msgstr "SMTP-Test erfolgreich – Test-E-Mail gesendet."
 
@@ -376,16 +366,14 @@ msgid ""
 "Please change the password <a href=\"%(link)s\" class=\"alert-link\">on "
 "profile</a>."
 msgstr ""
-„Bitte ändern Sie das Passwort <a href=\"%(link)s\" class=\"alert-link\">in Ihrem „
-Profil</a>“.
-
+„Bitte ändern Sie das Passwort <a href=\"%(link)s\" class=\"alert-link\">in Ihrem "
+"Profil</a>."
 #: auth.py:157
 msgid ""
 "Backup code used. New codes were generated automatically. Please keep "
 "them safe."
 msgstr ""
-„Backup-Code verwendet. Neue Codes wurden automatisch generiert. Bitte bewahren Sie
-sie sicher auf.“
+"Backup-Code verwendet. Neue Codes wurden automatisch generiert. Bitte bewahren Sie diese sicher auf."
 
 #: auth.py:165
 msgid "Invalid 2FA code or backup code."
@@ -428,11 +416,6 @@ msgid ""
 "\n"
 "The link is valid for 1 hour."
 msgstr ""
-„Bitte klicken Sie auf den folgenden Link, um Ihr Passwort zurückzusetzen:\n“
-„\n“
-„%(url)s\n“
-„\n“
-„Der Link ist 1 Stunde lang gültig.“
 
 #: bbalance.py:108
 #, python-format
@@ -441,7 +424,9 @@ msgstr "Eingabefehler: %(error)s"
 
 #: bbalance.py:130 templates/index.html:816 templates/index.html:841
 msgid "Please enter at least one value for revenue, expenditure, full or empty."
-msgstr "Bitte geben Sie mindestens einen Wert für Einnahmen, Ausgaben, Voll- oder Leergut ein."
+msgstr ""
+"Bitte geben Sie mindestens einen Wert für Einnahmen, Ausgaben, Voll- oder"
+" Leergut ein."
 
 #: bbalance.py:202
 msgid "Record saved, {count} file(s) transferred."
@@ -459,7 +444,15 @@ msgstr "Eintrag nicht gefunden."
 msgid "Entry saved."
 msgstr "Eintrag gespeichert."
 
-#: mail.py:66
+#: mail.py:53
+msgid "BottleBalance"
+msgstr ""
+
+#: mail.py:54
+msgid "SMTP Recipient"
+msgstr ""
+
+#: mail.py:88
 #, python-format
 msgid "SMTP test failed: %(error)s"
 msgstr "SMTP-Test fehlgeschlagen: %(Fehler)s"
@@ -495,7 +488,9 @@ msgstr "Der Zahlungsfreigabeantrag wurde zurückgestellt."
 
 #: payment.py:250
 msgid "The payment request can only be completed after approval."
-msgstr "Der Zahlungsfreigabeantrag kann erst nach Genehmigung abgeschlossen werden."
+msgstr ""
+"Der Zahlungsfreigabeantrag kann erst nach Genehmigung abgeschlossen "
+"werden."
 
 #: payment.py:257
 msgid "Payment request has been completed."
@@ -503,7 +498,9 @@ msgstr "Der Zahlungsfreigabeantrag ist abgeschlossen."
 
 #: payment.py:279
 msgid "Rejected, approved, or completed payment requests cannot be deleted."
-msgstr "Abgelehnte, genehmigte oder abgeschlossene Zahlungsfreigabeanträge können nicht gelöscht werden."
+msgstr ""
+"Abgelehnte, genehmigte oder abgeschlossene Zahlungsfreigabeanträge können"
+" nicht gelöscht werden."
 
 #: payment.py:292
 msgid "Payment request was deleted."
@@ -511,7 +508,9 @@ msgstr "Der Zahlungsfreigabeantrag wurde gelöscht."
 
 #: payment.py:306
 msgid "Only pending or paused payment requests can be rejected."
-msgstr "Nur ausstehende oder pausierte Zahlungsfreigabeanträge können abgelehntwerden."
+msgstr ""
+"Nur ausstehende oder pausierte Zahlungsfreigabeanträge können "
+"abgelehntwerden."
 
 #: payment.py:309
 msgid "Please specify a reason for rejection."
@@ -523,7 +522,9 @@ msgstr "Der Zahlungsfreigabeantrag wurde abgelehnt."
 
 #: payment.py:341
 msgid "You can only withdraw your own, pending, or paused payment requests."
-msgstr "Sie können nur Ihre eigenen, ausstehenden oder pausierten Zahlungsfreigabeanträge zurückziehen."
+msgstr ""
+"Sie können nur Ihre eigenen, ausstehenden oder pausierten "
+"Zahlungsfreigabeanträge zurückziehen."
 
 #: payment.py:361
 msgid "Payment request was withdrawn."
@@ -575,8 +576,12 @@ msgid "Audit history"
 msgstr "Änderungsprotokoll"
 
 #: payment.py:507
-msgid "Attachments can no longer be uploaded because the request has been completed or rejected."
-msgstr "Anhänge können nicht mehr hochgeladen werden, da die Anfrage oder abgelehnt wurde."
+msgid ""
+"Attachments can no longer be uploaded because the request has been "
+"completed or rejected."
+msgstr ""
+"Anhänge können nicht mehr hochgeladen werden, da die Anfrage oder "
+"abgelehnt wurde."
 
 #: payment.py:516
 msgid "Please select file(s)."
@@ -620,7 +625,9 @@ msgstr "Bitte geben Sie einen gültigen Betrag ein."
 
 #: payment.py:930
 msgid "Invalid date format. Please enter in YYYY-MM-DD format."
-msgstr "Ungültiges Datumsformat. Bitte geben Sie das Datum im Format JJJJ-MM-TT ein."
+msgstr ""
+"Ungültiges Datumsformat. Bitte geben Sie das Datum im Format JJJJ-MM-TT "
+"ein."
 
 #: payment.py:936
 msgid "Invalid amount. Please enter a number."
@@ -689,12 +696,6 @@ msgid ""
 "This token is valid for 30 minutes.\n"
 "Please use the following link: %(url)s"
 msgstr ""
-„Ihr Token zum Zurücksetzen Ihres Passworts lautet:\n“
-„\n“
-„%(token)s\n“
-„\n“
-„Dieses Token ist 30 Minuten lang gültig.\n“
-„Bitte verwenden Sie den folgenden Link: %(url)s“
 
 #: user.py:223
 msgid "Reset link sent by email."
@@ -757,9 +758,6 @@ msgid ""
 "\n"
 "Link: %(link)s"
 msgstr ""
-„Ihr Zahlungsfreigabeantrag #%(id)d wurde an „%(state)s“ gesendet.\n“
-„\n“
-„Link: %(link)s“
 
 #: modules/mail_utils.py:143
 #, python-format
@@ -769,18 +767,12 @@ msgid ""
 "\r\n"
 "%(body)s"
 msgstr ""
-„Betreff: %(subject)s\r\n“
-„Content-Type: text/plain; charset=utf-8\r\n“
-„\r\n“
-„%(body)s“
 
 #: modules/mail_utils.py:149
 msgid ""
 "This is an automated test message to verify the SMTP configuration. "
 "Includes special characters like Ü, Ä, Ö, and ß."
 msgstr ""
-„Dies ist eine automatisierte Testnachricht zur Überprüfung der SMTP-Konfiguration.“
-„Enthält Sonderzeichen wie Ü, Ä, Ö und ß.“
 
 #: modules/payment_utils.py:109
 #, python-format
@@ -798,13 +790,6 @@ msgid ""
 "\n"
 "Best regards, %(app)s"
 msgstr ""
-„Hallo,\n“
-„\n“
-„Eine neue Zahlungsanforderung (#%(id)d) wurde gerade erstellt.\n“
-„Zur Überprüfung/Genehmigung:\n“
-„%(link)s\n“
-„\n“
-„Mit freundlichen Grüßen, %(app)s“
 
 #: templates/2fa.html:8
 msgid "Two-factor authentication"
@@ -828,8 +813,13 @@ msgid "Set up 2FA"
 msgstr "2FA einrichten"
 
 #: templates/2fa_enroll.html:9
-msgid "Scan the QR code with your authenticator app (e.g., Microsoft Authenticator, Google Authenticator) and then enter the 6-digit code."
-msgstr "Scannen Sie den QR-Code mit Ihrer Authentifizierungs-App (z. B. Microsoft Authenticator, Google Authenticator) und geben Sie anschließend den 6-stelligen Code ein.“
+msgid ""
+"Scan the QR code with your authenticator app (e.g., Microsoft "
+"Authenticator, Google Authenticator) and then enter the 6-digit code."
+msgstr ""
+"Scannen Sie den QR-Code mit Ihrer Authentifizierungs-App (z. B. Microsoft"
+" Authenticator, Google Authenticator) und geben Sie anschließend den "
+"6-stelligen Code ein."
 
 #: templates/2fa_enroll.html:11
 msgid "2FA secret key:"
@@ -927,7 +917,9 @@ msgstr "Aktuelles Logo (Vorschau)"
 
 #: templates/admin_tools.html:117
 msgid "If no custom logo is stored, the default logo will be used."
-msgstr "Wenn kein benutzerdefiniertes Logo gespeichert ist, wird das Standardlogo verwendet."
+msgstr ""
+"Wenn kein benutzerdefiniertes Logo gespeichert ist, wird das Standardlogo"
+" verwendet."
 
 #: templates/admin_tools.html:128
 msgid "Select logo file"
@@ -941,7 +933,9 @@ msgstr "Hochladen"
 
 #: templates/admin_tools.html:139
 msgid "Note: The logo is stored on the server side under uploads/branding/. "
-msgstr "Hinweis: Das Logo wird auf der Serverseite unter uploads/branding/ gespeichert. "
+msgstr ""
+"Hinweis: Das Logo wird auf der Serverseite unter uploads/branding/ "
+"gespeichert. "
 
 #: templates/admin_tools.html:140
 msgid "Cache is updated automatically."
@@ -1072,8 +1066,13 @@ msgid "Webseite:"
 msgstr "Website:"
 
 #: templates/base.html:160
-msgid "is a web application for managing beverage cash registers and payment requests."
-msgstr "ist eine Webanwendung zur Verwaltung von Getränkekassen und Zahlungsfreigabeanträgen."
+#, fuzzy
+msgid ""
+" is a web application for managing beverage cash registers and payment "
+"requests."
+msgstr ""
+"ist eine Webanwendung zur Verwaltung von Getränkekassen und "
+"Zahlungsfreigabeanträgen."
 
 #: templates/base.html:163
 msgid "Buy me a coffee"
@@ -1451,7 +1450,9 @@ msgstr "Bitte geben Sie Ihren Benutzernamen ein."
 
 #: templates/login.html:62
 msgid "If the information is correct, a reset link will be sent by email."
-msgstr "Wenn die Angaben korrekt sind, wird Ihnen per E-Mail ein Link zum Zurücksetzen zugesandt."
+msgstr ""
+"Wenn die Angaben korrekt sind, wird Ihnen per E-Mail ein Link zum "
+"Zurücksetzen zugesandt."
 
 #: templates/login.html:67
 msgid "Send reset link"

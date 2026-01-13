@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-01-13 12:19+0100\n"
+"POT-Creation-Date: 2026-01-13 12:25+0100\n"
 "PO-Revision-Date: 2026-01-13 08:55+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -365,15 +365,15 @@ msgstr "Anmeldung fehlgeschlagen."
 msgid ""
 "Please change the password <a href=\"%(link)s\" class=\"alert-link\">on "
 "profile</a>."
-msgstr ""
-„Bitte ändern Sie das Passwort <a href=\"%(link)s\" class=\"alert-link\">in Ihrem "
-"Profil</a>."
+msgstr "Profil</a>."
+
 #: auth.py:157
 msgid ""
 "Backup code used. New codes were generated automatically. Please keep "
 "them safe."
 msgstr ""
-"Backup-Code verwendet. Neue Codes wurden automatisch generiert. Bitte bewahren Sie diese sicher auf."
+"Backup-Code verwendet. Neue Codes wurden automatisch generiert. Bitte "
+"bewahren Sie diese sicher auf."
 
 #: auth.py:165
 msgid "Invalid 2FA code or backup code."
@@ -381,7 +381,9 @@ msgstr "Ungültiger 2FA-Code oder Backup-Code."
 
 #: auth.py:176
 msgid "New backup codes have been generated. Please keep them safe."
-msgstr "Es wurden neue Backup-Codes generiert. Bitte bewahren Sie diese sicher auf."
+msgstr ""
+"Es wurden neue Backup-Codes generiert. Bitte bewahren Sie diese sicher "
+"auf."
 
 #: auth.py:204
 msgid "Reset link is invalid or expired."

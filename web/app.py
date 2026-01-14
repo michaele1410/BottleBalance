@@ -496,8 +496,29 @@ CREATE TABLE IF NOT EXISTS settings (
 );
 """
 
+CREATE_UNIQUE_INDEX_USER_USERNAME = """
+CREATE UNIQUE INDEX IF NOT EXISTS idx_users_username_lower
+ON users (LOWER(username));
+"""
+
+CREATE_UNIQUE_INDEX_USERS_EMAIL = """
+CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email_lower_unique
+ON users (LOWER(email))
+WHERE email IS NOT NULL AND email <> '';
+"""
+
 CREATE_INDEX_ENTRIES_DATE = """
 CREATE INDEX IF NOT EXISTS idx_entries_date_id ON entries(date, id);
+"""
+
+CREATE_INDEX_USERNAME_LOWER = """
+CREATE INDEX IF NOT EXISTS idx_users_username_lower 
+ON users (LOWER(username));
+"""
+CREATE_INDEX_USERS_EMAIL = """
+CREATE INDEX IF NOT EXISTS idx_users_email_lower    
+ON users (LOWER(email)) 
+WHERE email IS NOT NULL AND email <> '';
 """
 
 CREATE_INDEX_ATTACHMENTS_TEMP = """
@@ -529,6 +550,8 @@ def migrate_columns(conn):
     conn.execute(text(CREATE_INDEX_ATTACHMENTS_TEMP))
     conn.execute(text(CREATE_INDEX_PAYMENT_REQUESTS_ATTACHMENTS))
     conn.execute(text(CREATE_INDEX_PAYMENT_REQUESTS_ACTION_USER))
+    conn.execute(text(CREATE_UNIQUE_INDEX_USER_USERNAME))
+    conn.execute(text(CREATE_UNIQUE_INDEX_USERS_EMAIL))
 
     #conn.execute(text("ALTER TABLE payment_requests ADD COLUMN IF NOT EXISTS approver_snapshot JSONB"))
     

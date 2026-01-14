@@ -4,97 +4,97 @@
 {% block content %}
 <div class="row g-3">
 
-  <!-- PROFIL -->
+  <!-- PROFILE -->
   <div class="col-12">
     <div class="card shadow-sm">
       <div class="card-body">
-        <h5 class="mb-3">{{ _('Profil') }}</h5>
+        <h5 class="mb-3">{{ _('Profile') }}</h5>
         <form id="profileForm" action="{{ url_for('profile_post') }}" method="post" class="needs-validation" novalidate>
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-          <!-- E-Mail -->
+          <!-- Email -->
           <div class="input-group mb-3">
             <span class="input-group-text"><i class="bi bi-envelope"></i></span>
             <div class="form-floating flex-grow-1">
               <input type="email" name="email" inputmode="text" class="form-control"
-                placeholder="{{ _('E-Mail') }}" value="{{ user.email or '' }}">
-              <label for="email">{{ _('E-Mail (für Passwort-Reset)') }}</label>
+                placeholder="{{ _('Email') }}" value="{{ user.email or '' }}">
+              <label for="email">{{ _('Email (for password reset)') }}</label>
             </div>
           </div>
 
-          <!-- Neues Passwort -->
+          <!-- New password -->
           <div class="input-group mb-3">
             <span class="input-group-text"><i class="bi bi-key"></i></span>
             <div class="form-floating flex-grow-1">
               <input type="password" id="password" name="password" class="form-control"
-                placeholder="{{ _('Neues Passwort eingeben') }}">
-              <label for="password">{{ _('Neues Passwort eingeben (optional)') }}</label>
+                placeholder="{{ _('Enter new password') }}">
+              <label for="password">{{ _('Enter new password (optional)') }}</label>
             </div>
           </div>
 
-          <!-- Passwort wiederholen (standardmäßig versteckt) -->
+          <!-- Repeat password (hidden by default) -->
           <div class="input-group mb-3 d-none" id="password-confirm-group">
             <span class="input-group-text"><i class="bi bi-key"></i></span>
             <div class="form-floating flex-grow-1">
               <input type="password" id="password2" name="password2" class="form-control"
-                placeholder="{{ _('Passwort wiederholen') }}">
-              <label for="password2">{{ _('Passwort wiederholen') }}</label>
+                placeholder="{{ _('Repeat password') }}">
+              <label for="password2">{{ _('Repeat password') }}</label>
             </div>
           </div>
 
           <!-- Buttons -->
           <div class="d-flex justify-content-start gap-2">
-            <a class="btn btn-outline-secondary" href="{{ url_for('bbalance_routes.index') }}">{{ _('Abbrechen') }}</a>
-            <button class="btn btn-primary">{{ _('Speichern') }}</button>
+            <a class="btn btn-outline-secondary" href="{{ url_for('bbalance_routes.index') }}">{{ _('Cancel') }}</a>
+            <button class="btn btn-primary">{{ _('Save') }}</button>
           </div>
         </form>
       </div>
     </div>
   </div>
 
-  <!-- SICHERHEIT -->
+  <!-- SAFETY -->
   <div class="col-12">
     <div class="card shadow-sm">
       <div class="card-body">
-        <h5 class="mb-3">{{ _('Sicherheit') }}</h5>
+        <h5 class="mb-3">{{ _('Safety') }}</h5>
         {% if user.get('totp_enabled') %}
           <p class="mb-3">
-            {{ _('2FA ist') }} <span class="badge bg-success">{{ _('aktiviert') }}</span>
+            {{ _('2FA is') }} <span class="badge bg-success">{{ _('activated') }}</span>
           </p>
           <form action="{{ url_for('disable_2fa') }}" method="post" class="row g-3">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-            <!-- Passwortfeld -->
+            <!-- Password field -->
             <div class="col-12">
               <div class="input-group mb-3">
                 <span class="input-group-text"><i class="bi bi-key"></i></span>
                 <div class="form-floating flex-grow-1">
                   <input id="confirmPassword" type="password" name="password" inputmode="text" class="form-control"
-                    placeholder="{{ _('Neues Passwort eingeben') }}" required>
-                  <label for="confirmPassword">{{ _('Bestätige mit Passwort') }}</label>
+                    placeholder="{{ _('Enter new password') }}" required>
+                  <label for="confirmPassword">{{ _('Confirm with password') }}</label>
                 </div>
               </div>
             </div>
 
-            <!-- Button unter dem Feld -->
+            <!-- Button below the field -->
             <div class="col-12">
-              <button class="btn btn-outline-danger w-100">{{ _('2FA deaktivieren') }}</button>
+              <button class="btn btn-outline-danger w-100">{{ _('Disable 2FA') }}</button>
             </div>
           </form>
 
         {% else %}
           <p class="mb-3">
-            {{ _('2FA ist aktuell') }} <span class="badge bg-secondary">{{ _('deaktiviert') }}</span>
+            {{ _('2FA is currently') }} <span class="badge bg-secondary">{{ _('deactivated') }}</span>
           </p>
           <form action="{{ url_for('enable_2fa') }}" method="post">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <button class="btn btn-outline-primary">{{ _('2FA einrichten') }}</button>
+            <button class="btn btn-outline-primary">{{ _('Set up 2FA') }}</button>
           </form>
         {% endif %}
 
         {% if new_backup_codes %}
           <div class="alert alert-warning mt-3">
-            <h6 class="mb-2">{{ _('Ihre neuen Backup-Codes (einmalig sichtbar):') }}</h6>
+            <h6 class="mb-2">{{ _('Your new backup codes (visible once):') }}</h6>
             <pre class="mb-0">{{ '\n'.join(new_backup_codes) }}</pre>
           </div>
         {% endif %}
@@ -110,64 +110,63 @@
         <form method="post" action="{{ url_for('update_preferences') }}" class="row g-3">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-          <!-- Sortierung -->
+          <!-- Sorting -->
           <div class="col-12">
             <div class="form-check form-switch mb-3">
               <input class="form-check-input" type="checkbox" id="sort_order_desc" name="sort_order_desc"
                     {% if user.get('sort_order_desc') %}checked{% endif %}>
               <label class="form-check-label" for="sort_order_desc">
-                {{ _('Einträge absteigend sortieren (neueste zuerst)') }}
+                {{ _('Sort entries in descending order (newest first)') }}
               </label>
             </div>
           </div>
 
-          <!-- Standardfilter für Einträge -->
+          <!-- Standard filter for entries -->
           <div class="col-12">
             <div class="form-check form-switch mb-3">
               <input class="form-check-input" type="checkbox" id="default_filter" name="default_filter"
                     {% if not user.get('default_filter') %}checked{% endif %}>
               <label class="form-check-label" for="default_filter">
-                {{ _('Einträge nur aus aktuellem Jahr anzeigen') }}
+                {{ _('Show entries from the current year only') }}
               </label>
             </div>
           </div>
 
-          <!-- Sprache -->
+          <!-- Language -->
           <div class="col-12">
-            <label for="language" class="form-label">{{ _('Sprache') }}</label>
+            <label for="language" class="form-label">{{ _('Language') }}</label>
             <select id="language" name="language" class="form-select">
-              <option value="de" {{ 'selected' if user['locale'] == 'de' else '' }}>{{ _('Deutsch') }}</option>
-              <option value="en" {{ 'selected' if user['locale'] == 'en' else '' }}>{{ _('Englisch') }}</option>
+              <option value="de" {{ 'selected' if user['locale'] == 'de' else '' }}>{{ _('German') }}</option>
+              <option value="en" {{ 'selected' if user['locale'] == 'en' else '' }}>{{ _('English') }}</option>
             </select>
           </div>
 
           <!-- Theme -->
           <div class="col-12">
-            <label for="system" class="form-label">{{ _('Darstellung') }}</label>
+            <label for="system" class="form-label">{{ _('Representation') }}</label>
             <div class="btn-group" role="group">
               <input type="radio" class="btn-check" name="theme" id="theme-system" value="system" autocomplete="off"
                     {% if theme_preference == 'system' %}checked{% endif %}>
               <label class="btn btn-outline-secondary" for="theme-system">{{ _('System') }}</label>
               <input type="radio" class="btn-check" name="theme" id="theme-light" value="light" autocomplete="off"
                     {% if theme_preference == 'light' %}checked{% endif %}>
-              <label class="btn btn-outline-secondary" for="theme-light">{{ _('Hell') }}</label>
+              <label class="btn btn-outline-secondary" for="theme-light">{{ _('Light') }}</label>
               <input type="radio" class="btn-check" name="theme" id="theme-dark" value="dark" autocomplete="off"
                     {% if theme_preference == 'dark' %}checked{% endif %}>
-              <label class="btn btn-outline-secondary" for="theme-dark">{{ _('Dunkel') }}</label>
+              <label class="btn btn-outline-secondary" for="theme-dark">{{ _('Dark') }}</label>
             </div>
           </div>
 
           <!-- Buttons -->
           <div class="col-12 d-flex justify-content-start gap-2 mt-3">
-            <a class="btn btn-outline-secondary" href="{{ url_for('bbalance_routes.index') }}">{{ _('Abbrechen') }}</a>
-            <button class="btn btn-primary">{{ _('Speichern') }}</button>
+            <a class="btn btn-outline-secondary" href="{{ url_for('bbalance_routes.index') }}">{{ _('Cancel') }}</a>
+            <button class="btn btn-primary">{{ _('Save') }}</button>
           </div>
         </form>
       </div>
     </div>
   </div>
   </div>
-
 </div>
 
 {% block scripts %}
@@ -178,23 +177,23 @@ document.addEventListener('DOMContentLoaded', () => {
   const pwdConfirmField = document.getElementById('password2');
   const form = document.getElementById('profileForm');
 
-  // Einblenden/Ausblenden des zweiten Feldes
+  // Show/hide the second field
   pwdField.addEventListener('input', () => {
     if (pwdField.value.trim() !== '') {
       confirmGroup.classList.remove('d-none');
     } else {
       confirmGroup.classList.add('d-none');
-      pwdConfirmField.value = ''; // zurücksetzen
+      pwdConfirmField.value = ''; // reset
     }
   });
 
-  // Validierung vor dem Absenden
+  // Validation before sending
   form.addEventListener('submit', (e) => {
     if (pwdField.value.trim() !== '') {
       if (pwdField.value !== pwdConfirmField.value) {
         e.preventDefault();
         e.stopPropagation();
-        alert("Die Passwörter stimmen nicht überein.");
+        alert("{{ _('Passwords do not match.') }}");
         pwdConfirmField.focus();
       }
     }

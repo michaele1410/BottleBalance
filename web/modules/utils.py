@@ -9,17 +9,17 @@ def parse_money(s: str | None) -> Decimal:
     if not s:
         return Decimal('0')
 
-    # Dynamisch übersetztes Währungssymbol entfernen
-    currency_symbol = _('waehrung')
+    # Remove dynamically translated currency symbol
+    currency_symbol = _('currency')
     s = s.replace(currency_symbol, '')
 
-    # Weitere bekannte Symbole entfernen (optional)
-    s = s.replace("_('waehrung')", '').replace("_('waehrung')", '')
+    # Remove other known symbols (optional)
+    s = s.replace("_('currency')", '').replace("_('currency')", '')
 
-    # Whitespace entfernen (inkl. NBSP, NNBSP, Narrow NBSP)
+    # Remove whitespace (including NBSP, NNBSP, Narrow NBSP)
     s = re.sub(r'[\s\u00A0\u202F]', '', s)
 
-    # Optionales führendes '+'
+    # Optional leading '+'
     if s.startswith('+'):
         s = s[1:]
 
@@ -48,4 +48,4 @@ def parse_money(s: str | None) -> Decimal:
     try:
         return Decimal(s)
     except InvalidOperation:
-        raise ValueError(f'Ungültige Zahl: {s}')
+        raise ValueError(f'Invalid number: {s}')

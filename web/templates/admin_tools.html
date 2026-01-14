@@ -1,61 +1,42 @@
 {% extends "base.html" %}
 {% block content %}
-<!--div class="container-fluid px-2 px-md-3"-->
 <div class="card shadow-sm">
   <div class="card-body">
-    <h1 class="h5 mb-3">{{ _('Einstellungen') }}</h1>
-
-    {# Flash-Messages #}
-    {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-    <div class="mb-3">
-      {% for category, message in messages %}
-      {% set bs = 'danger' if category in ['error','danger'] else (
-        'warning' if category == 'warning' else (
-        'success' if category == 'success' else 'info')) %}
-      <div class="alert alert-{{ bs }} alert-dismissible fade show" role="alert">
-        {{ message|safe }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ _('Schließen') }}"></button>
-      </div>
-      {% endfor %}
-    </div>
-    {% endif %}
-    {% endwith %}
-
+    <h1 class="h5 mb-3">{{ _('Settings') }}</h1>
     <div class="row g-4">
-      {# ---------- Bemerkungsoptionen (volle Breite) ---------- #}
+      {# ---------- Notes (full width) ---------- #}
       <div class="col-12">
         <div class="card shadow-sm">
           <div class="card-header d-flex justify-content-between align-items-center">
-            {{ _('Bemerkungsoptionen verwalten') }}
-            <span class="text-muted small">{{ _('Eine Option pro Zeile') }}</span>
+            {{ _('Manage notes') }}
+            <span class="text-muted small">{{ _('One option per line') }}</span>
           </div>
           <div class="card-body">
             <div class="row g-3 align-items-start">
               <div class="col-md-5 order-2 order-md-1">
-                <label class="form-label">{{ _('Aktuelle Optionen') }}</label>
+                <label class="form-label">{{ _('Current notes') }}</label>
                 <ul class="list-group list-group-flush border rounded">
-                  {% for opt in current_options %}
+                  {% for opt in current_notes %}
                   <li class="list-group-item py-1">{{ opt }}</li>
                   {% else %}
-                  <li class="list-group-item text-muted">{{ _('Keine Optionen vorhanden') }}</li>
+                  <li class="list-group-item text-muted">{{ _('No notes available') }}</li>
                   {% endfor %}
                 </ul>
               </div>
               <div class="col-md-7 order-1 order-md-2">
                 <form method="post" action="{{ url_for('admin_tools') }}" class="h-100 d-flex flex-column">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                  <input type="hidden" name="action" value="update_bemerkungen">
-                  <label for="options" class="form-label">{{ _('Optionen ersetzen') }}</label>
+                  <input type="hidden" name="action" value="update_notes">
+                  <label for="options" class="form-label">{{ _('Replace notes') }}</label>
                   <textarea id="options" name="options" class="form-control" rows="10"
-                    placeholder="{{ _('Eine Option pro Zeile ...') }}">{{ current_options|join('\n') }}</textarea>
+                    placeholder="{{ _('One option per line ...') }}">{{ current_notes|join('\n') }}</textarea>
                   <div class="mt-3 d-flex gap-2">
                     <button type="submit" class="btn btn-primary">
-                      <i class="bi bi-save me-1"></i>{{ _('Speichern') }}
+                      <i class="bi bi-save me-1"></i>{{ _('Save') }}
                     </button>
                     <button type="button" class="btn btn-outline-secondary"
                       onclick="document.getElementById('options').value='';">
-                      <i class="bi bi-eraser me-1"></i>{{ _('Leeren') }}
+                      <i class="bi bi-eraser me-1"></i>{{ _('Clear List') }}
                     </button>
                   </div>
                 </form>
@@ -65,34 +46,34 @@
         </div>
       </div>
 
-      {# ---------- SMTP-Test und DB-Dump nebeneinander ---------- #}
+      {# ---------- SMTP test and DB dump side by side ---------- #}
       <div class="col-md-6">
         <div class="card shadow-sm">
           <div class="card-header">
-            {{ _('SMTP-Konfiguration prüfen') }}
+            {{ _('Check SMTP configuration') }}
           </div>
           <div class="card-body">
             <p class="mb-3">
-              {% if status %}
-              {% set s_lower = status|string|lower %}
+              {% if state %}
+              {% set s_lower = state|string|lower %}
               {% if 'incomplete' in s_lower %}
-              <span class="badge bg-danger">{{ status }}</span>
+              <span class="badge bg-danger">{{ state }}</span>
               {% else %}
-              <span class="badge bg-success">{{ status }}</span>
+              <span class="badge bg-success">{{ state }}</span>
               {% endif %}
               {% else %}
-              <span class="badge bg-secondary">{{ _('Unbekannter SMTP-Status') }}</span>
+              <span class="badge bg-secondary">{{ _('Unknown SMTP status') }}</span>
               {% endif %}
             </p>
             <form method="post" action="{{ url_for('admin_tools') }}">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <input type="hidden" name="action" value="smtp">
               <button type="submit" class="btn btn-primary">
-                <i class="bi bi-envelope-check me-1"></i>{{ _('Test-Mail senden') }}
+                <i class="bi bi-envelope-check me-1"></i>{{ _('Send test email') }}
               </button>
             </form>
             <small class="text-muted d-block mt-2">
-              {{ _('Die Test-Mail wird an die konfigurierte SMTP-Benutzeradresse gesendet.') }}
+              {{ _('The test email is sent to the configured SMTP user address.') }}
             </small>
           </div>
         </div>
@@ -101,78 +82,95 @@
       <div class="col-md-6">
         <div class="card shadow-sm">
           <div class="card-header">
-            {{ _('PostgreSQL-Datenbankexport') }}
+            {{ _('PostgreSQL database export') }}
           </div>
           <div class="card-body">
             <p class="text-muted">
-              {{ _('Erzeugt einen SQL-Dump der aktuellen Datenbank und bietet ihn zum Download an.') }}
+              {{ _('Generates an SQL dump of the current database and makes it available for download.') }}
             </p>
             <form method="post" action="{{ url_for('admin_tools') }}">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <input type="hidden" name="action" value="dump">
-              <button type="submit" class="btn btn-primary"
-                onclick="return confirm('{{ _('Dump jetzt erzeugen?') }}')">
-                <i class="bi bi-download me-1"></i>{{ _('Dump erzeugen & herunterladen') }}
+              <button type="submit" class="btn btn-primary" onclick="return confirm('{{ _('Create dump now?') }}')">
+                <i class="bi bi-download me-1"></i>{{ _('Create & download dump') }}
               </button>
             </form>
           </div>
         </div>
       </div>
-
-      <!-- ---------- Branding: Custom-Logo hochladen ---------- -->
+      
       <div class="col-12">
         <div class="card shadow-sm">
           <div class="card-header d-flex justify-content-between align-items-center">
-            {{ _('Branding: Eigenes Logo') }}
-            <span class="text-muted small">{{ _('SVG, PNG, JPG, WEBP – empfohlen: SVG oder PNG') }}</span>
+            {{ _('Application title') }}
+            <span class="text-muted small">{{ _('Shown in titles, exports, emails, and 2FA issuer.') }}</span>
+          </div>
+          <div class="card-body">
+            <form method="post" action="{{ url_for('admin_tools') }}" class="d-flex flex-column gap-2">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="hidden" name="action" value="set_app_title">
+              <label for="appTitle" class="form-label">{{ _('Application title') }}</label>
+              <input id="appTitle" name="app_title" type="text" class="form-control"
+                    value="{{ app_title }}" required maxlength="100">
+              <div class="d-flex gap-2 mt-2">
+                <button type="submit" class="btn btn-primary">
+                  <i class="bi bi-save me-1"></i> {{ _('Save') }}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- ---------- Branding: Upload custom logo ---------- -->
+      <div class="col-12">
+        <div class="card shadow-sm">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            {{ _('Branding: Your own logo') }}
+            <span class="text-muted small">{{ _('SVG, PNG, JPG, WEBP – recommended: SVG or PNG') }}</span>
           </div>
           <div class="card-body">
             <div class="row g-3 align-items-start">
               <div class="col-md-6">
-                <div class="mb-2">{{ _('Aktuelles Logo (Vorschau)') }}</div>
+                <div class="mb-2">{{ _('Current logo (preview)') }}</div>
                 <div class="border rounded p-2 d-flex align-items-center" style="min-height:64px">
                   <img src="{{ brand_logo_url }}" alt="Logo" style="max-height:48px">
                 </div>
                 <small class="text-muted d-block mt-2">
-                  {{ _('Wenn kein eigenes Logo hinterlegt ist, wird das Standard-Logo verwendet.') }}
+                  {{ _('If no custom logo is stored, the default logo will be used.') }}
                 </small>
               </div>
 
               <div class="col-md-6">
                 <!-- Upload-Form -->
-                <form method="post"
-                      action="{{ url_for('admin_tools') }}"
-                      enctype="multipart/form-data"
-                      class="d-flex flex-column gap-2">
+                <form method="post" action="{{ url_for('admin_tools') }}" enctype="multipart/form-data"
+                  class="d-flex flex-column gap-2">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                   <input type="hidden" name="action" value="branding_upload">
 
-                  <label class="form-label" for="logo">{{ _('Logo-Datei auswählen') }}</label>
+                  <label class="form-label" for="logo">{{ _('Select logo file') }}</label>
                   <input class="form-control" type="file" id="logo" name="logo"
-                        accept="image/svg+xml,image/png,image/jpeg,image/webp" required>
+                    accept="image/svg+xml,image/png,image/jpeg,image/webp" required>
 
                   <div class="d-flex gap-2">
                     <button type="submit" class="btn btn-primary">
-                      <i class="bi bi-upload me-1"></i> {{ _('Hochladen') }}
+                      <i class="bi bi-upload me-1"></i> {{ _('Upload') }}
                     </button>
                   </div>
 
                   <small class="text-muted">
-                    {{ _('Hinweis: Das Logo wird serverseitig unter uploads/branding/ gespeichert. ') }}
-                    {{ _('Cache wird automatisch aktualisiert.') }}
+                    {{ _('Note: The logo is stored on the server side under uploads/branding/. ') }}
+                    {{ _('Cache is updated automatically.') }}
                   </small>
                 </form>
 
-                <!-- Entfernen-Form als Geschwister, nicht innerhalb der Upload-Form -->
-                <form method="post"
-                      action="{{ url_for('admin_tools') }}"
-                      class="mt-2 d-inline">
+                <!-- Remove form as siblings, not within the upload form -->
+                <form method="post" action="{{ url_for('admin_tools') }}" class="mt-2 d-inline">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                   <input type="hidden" name="action" value="branding_remove">
-                  <button type="submit"
-                          class="btn btn-outline-danger"
-                          onclick="return confirm('{{ _('Eigenes Logo entfernen?') }}')">
-                    <i class="bi bi-trash me-1"></i> {{ _('Entfernen') }}
+                  <button type="submit" class="btn btn-outline-danger"
+                    onclick="return confirm('{{ _('Remove your own logo?') }}')">
+                    <i class="bi bi-trash me-1"></i> {{ _('Remove') }}
                   </button>
                 </form>
               </div>

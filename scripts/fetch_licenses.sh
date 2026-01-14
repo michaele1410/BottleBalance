@@ -27,8 +27,8 @@ TMP_DE="${ROOT_DIR}/LICENSE_DE.raw.html"
 
 _echo_notice() {
   cat <<'NOTICE' >"${ROOT_DIR}/LICENSE_DE.md"
-> **Hinweis:** Dies ist eine inoffizielle Übersetzung der **GNU GPL v3**. Sie dient nur der Information. 
-> Rechtsverbindlich ist ausschließlich der englische Originaltext in **LICENSE**.
+> **Note:** This is an unofficial translation of the **GNU GPL v3**. It is provided for informational purposes only. 
+> Only the original English text in **LICENSE** is legally binding.
 
 NOTICE
 }
@@ -38,10 +38,10 @@ _echo_notice
 echo "Fetching GPL v3 (DE translation) → ${TMP_DE}";
 _fetch "$DE_URL" "$TMP_DE"
 
-# Append raw HTML (keine Konvertierung notwendig; GitHub stellt HTML in MD-Dateien nicht immer dar).
-# Wir hängen die HTML-Quelle an, damit der Text vollständig und nachvollziehbar ist.
+# Append raw HTML (no conversion necessary; GitHub does not always display HTML in MD files).
+# We attach the HTML source so that the text is complete and comprehensible.
 {
-  echo "\n<!-- Originalquelle: ${DE_URL} (Stand: $(date -u +%Y-%m-%d)) -->\n";
+  echo "\n<!-- Original source: ${DE_URL} (State: $(date -u +%Y-%m-%d)) -->\n";
   cat "$TMP_DE";
 } >> "${ROOT_DIR}/LICENSE_DE.md"
 

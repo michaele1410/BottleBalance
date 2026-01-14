@@ -3,20 +3,21 @@
 # -----------------------
 import os
 import io
+import json
+import csv
+
 from flask import render_template, request, redirect, url_for, session, send_file, flash, abort, Blueprint
 from flask_babel import gettext as _
 from flask_babel import ngettext
 from markupsafe import escape
 from sqlalchemy import text, func, asc
 from datetime import datetime, date
-import csv
-
 from decimal import Decimal, InvalidOperation
-
 from time import time
 from flask_socketio import emit
+from uuid import uuid4
 
-from modules.utils import (
+from modules.csv_utils import (
     parse_money
 )
 from modules.core_utils import (
@@ -43,7 +44,7 @@ from modules.csv_utils import (
 )
 
 from modules.payment_utils import (
-    get_bemerkungsoptionen
+    get_notes
 )
 
 from modules.csv_utils import (
@@ -51,28 +52,35 @@ from modules.csv_utils import (
     format_date_de
 )
 
-bbalance_routes = Blueprint('bbalance_routes', __name__)
+from modules.core_utils import get_setting
 
+bbalance_routes = Blueprint('bbalance_routes', __name__)
 
 @bbalance_routes.get('/')
 @login_required
 def index():
-    # Basis-Kontext
-    ctx = _build_index_context(default_date=today_ddmmyyyy())
-    ctx['bemerkungsoptionen'] = get_bemerkungsoptionen()
+    # Basic context
+    temp_token = session.get('temp_token')
+    if not temp_token:
+        temp_token = uuid4().hex
+        session['temp_token'] = temp_token
 
-    # Rollen-Redirect
+    ctx = _build_index_context(default_date=today_ddmmyyyy())
+    ctx['notes'] = get_notes()
+    ctx['temp_token'] = temp_token
+
+    # Role Redirect
     role = session.get('role')
     if role == 'Payment Viewer':
-        return redirect(url_for('payment_routes.zahlungsfreigabe'))
+        return redirect(url_for('payment_routes.payment_requests'))
 
     return render_template('index.html', **ctx, now=int(time()))
-            
+
 @bbalance_routes.get('/api/table')
 @login_required
 def api_table():
     ctx = _build_index_context()
-    # Nur die für die Tabelle nötigen Werte
+    # Only the values required for the table
     table_ctx = {
         'entries': ctx['entries'],
         'format_eur_de': ctx['format_eur_de'],
@@ -87,88 +95,111 @@ def api_table():
 def add():
     user = current_user()
 
-    # Rohwerte für sauberes Re-Render bei Fehlern merken
-    datum_s   = (request.form.get('datum') or '').strip()
-    temp_token = (request.form.get('temp_token') or '').strip()
+    # Save raw values for clean re-rendering in case of errors
+    date_s = (request.form.get('date') or '').strip()
+
+    # Read specific fields from the form
+    temp_token = (request.form.get('attachments_token') or '').strip()
+    ids_json   = request.form.get('temp_attachment_ids') or '[]'
+    try:
+        temp_ids = [int(x) for x in (json.loads(ids_json) if ids_json else [])]
+    except Exception:
+        temp_ids = []
 
     try:
-        datum    = parse_date_de_or_today(datum_s)
-        # Alternativ stricte Parser: parse_int_strict(...) or 0
-        vollgut  = int((request.form.get('vollgut') or '0').strip() or '0')
-        leergut  = int((request.form.get('leergut') or '0').strip() or '0')
-        einnahme = parse_money(request.form.get('einnahme') or '0')
-        ausgabe  = parse_money(request.form.get('ausgabe') or '0')
-        bemerkung = (request.form.get('bemerkung') or '').strip()
+        date    = parse_date_de_or_today(date_s)
+        full    = int((request.form.get('full') or '0').strip() or '0')
+        empty   = int((request.form.get('empty') or '0').strip() or '0')
+        revenue = parse_money(request.form.get('revenue') or '0')
+        expense = parse_money(request.form.get('expense') or '0')
+        note    = (request.form.get('note') or '').strip()
     except Exception as e:
-        flash(_("Eingabefehler: %(error)s", error=str(e)), "danger")
-        # ⬇️ bei Fehler: gleiche Seite rendern, temp_token beibehalten
-        ctx = _build_index_context(default_date=(datum_s or today_ddmmyyyy()),
-                                   temp_token=temp_token)
+        flash(_("Input error: %(error)s", error=str(e)), "danger")
+        ctx = _build_index_context(default_date=(date_s or today_ddmmyyyy()))
+        ctx['temp_token'] = temp_token
         return render_template('index.html', **ctx, now=int(time())), 400
 
-    # 🔐 Optional: Härtung gegen DevTools-Manipulation (Front-End min=0 serverseitig durchsetzen)
-    vollgut  = max(0, vollgut)
-    leergut  = max(0, leergut)
-    if einnahme < 0:
-        einnahme = Decimal('0')
-    if ausgabe < 0:
-        ausgabe = Decimal('0')
+    full  = max(0, full)
+    empty = max(0, empty)
+    if revenue < 0: revenue = Decimal('0')
+    if expense < 0: expense = Decimal('0')
 
-    # Mindestbedingung: mind. eines der Felder > 0
     any_filled = any([
-        (einnahme is not None and einnahme != 0),
-        (ausgabe  is not None and ausgabe  != 0),
-        vollgut > 0,
-        leergut > 0
+        (revenue is not None and revenue != 0),
+        (expense  is not None and expense  != 0),
+        full > 0,
+        empty > 0
     ])
     if not any_filled:
-        flash(_('Bitte mindestens einen Wert bei Einnahme, Ausgabe, Vollgut oder Leergut angeben.'), 'danger')
-        # ⬇️ KEIN redirect – render mit identischem temp_token, sonst gehen Tempfiles verloren
-        ctx = _build_index_context(default_date=(datum_s or today_ddmmyyyy()),
-                                   temp_token=temp_token)
+        flash(_('Please enter at least one value for revenue, expenditure, full or empty.'), 'danger')
+        ctx = _build_index_context(default_date=(date_s or today_ddmmyyyy()))
+        ctx['temp_token'] = temp_token
         return render_template('index.html', **ctx, now=int(time())), 400
 
-    # Datensatz speichern
+    # Create data record
     with engine.begin() as conn:
         res = conn.execute(text("""
-            INSERT INTO entries (datum, vollgut, leergut, einnahme, ausgabe, bemerkung, created_by)
-            VALUES (:datum,:vollgut,:leergut,:einnahme,:ausgabe,:bemerkung,:cb)
+            INSERT INTO entries (date, "full", "empty", revenue, expense, note, created_by)
+            VALUES (:date,:full,:empty,:revenue,:expense,:note,:cb)
             RETURNING id
         """), {
-            'datum': datum,
-            'vollgut': vollgut,
-            'leergut': leergut,
-            'einnahme': str(einnahme),
-            'ausgabe': str(ausgabe),
-            'bemerkung': bemerkung,
+            'date': date,
+            'full': full,
+            'empty': empty,
+            'revenue': str(revenue),
+            'expense': str(expense),
+            'note': note,
             'cb': user['id']
         })
         new_id = res.scalar_one()
 
-    # Emit event für Live-Updates
-    emit('entry_changed', {'message': 'Neuer Eintrag hinzugefügt'}, namespace='/', broadcast=True)
+    # Live-Update
+    emit('entry_changed', {'message': 'New entry added'}, namespace='/', broadcast=True)
 
-    # Temporäre Anhänge übernehmen (nur wenn Session-Token passt)
+    # Claim temp attachments (without incorrect session comparison)
     moved = 0
-    if temp_token and session.get('add_temp_token') == temp_token:
-        target_dir = _entry_dir(new_id)
+    if temp_token:
         tdir = _temp_dir(temp_token)
+        edir = _entry_dir(new_id)
+        os.makedirs(edir, exist_ok=True)
+
+        # Select candidates: only the specified IDs (if available),
+        # otherwise all for tokens+users
         with engine.begin() as conn:
-            rows = conn.execute(text("""
-                SELECT id, stored_name, original_name, content_type, size_bytes
-                FROM attachments_temp
-                WHERE temp_token=:t AND uploaded_by=:u
-                ORDER BY created_at ASC, id ASC
-            """), {'t': temp_token, 'u': session.get('user_id')}).mappings().all()
+            if temp_ids:
+                rows = conn.execute(text("""
+                    SELECT id, stored_name, original_name, content_type, size_bytes
+                    FROM attachments_temp
+                    WHERE id = ANY(:ids)
+                    AND temp_token = :t
+                    AND (uploaded_by = :u OR uploaded_by IS NULL)
+                    ORDER BY id
+                """), {'ids': temp_ids, 't': temp_token, 'u': session.get('user_id')}).mappings().all()
+            else:
+                rows = conn.execute(text("""
+                    SELECT id, stored_name, original_name, content_type, size_bytes
+                    FROM attachments_temp
+                    WHERE temp_token = :t
+                    AND (uploaded_by = :u OR uploaded_by IS NULL)
+                    ORDER BY id
+                """), {'t': temp_token, 'u': session.get('user_id')}).mappings().all()
+
+        if not rows:
+            current_app.logger.info(
+                "No temp attachments found for token=%s user_id=%s (ids=%s)",
+                temp_token, session.get('user_id'), temp_ids
+            )
 
         for r in rows:
             src = os.path.join(tdir, r['stored_name'])
-            dst = os.path.join(target_dir, r['stored_name'])
+            dst = os.path.join(edir, r['stored_name'])
             try:
-                os.replace(src, dst)  # atomar
-                moved += 1
+                if os.path.exists(src):
+                    os.replace(src, dst)  # atomar verschieben
+                else:
+                    # Datei fehlt? überspringen
+                    continue
             except Exception:
-                # Falls move fehlschlägt → diesen Datensatz überspringen
                 continue
 
             with engine.begin() as conn:
@@ -184,8 +215,9 @@ def add():
                     'ub': session.get('user_id')
                 })
                 conn.execute(text("DELETE FROM attachments_temp WHERE id=:id"), {'id': r['id']})
+            moved += 1
 
-        # Temp-Ordner evtl. aufräumen
+        # Temp-Verzeichnis ggf. leeren
         try:
             if os.path.isdir(tdir) and not os.listdir(tdir):
                 os.rmdir(tdir)
@@ -194,12 +226,9 @@ def add():
 
     log_action(user['id'], 'entries:add', new_id, f'attachments_moved={moved}')
     if moved:
-        flash(_('Datensatz gespeichert, {count} Datei(en) übernommen.').format(count=moved), 'success')
+        flash(_('Record saved, %(count)d file(s) transferred.', count=moved), 'success')
     else:
-        flash(_('Datensatz wurde gespeichert.'), 'success')
-
-    # Token für diese Seite invalidieren (One-shot)
-    session.pop('add_temp_token', None)
+        flash(_('Record saved.'), 'success')
 
     return redirect(url_for('bbalance_routes.index'))
 
@@ -207,14 +236,14 @@ def add():
 @login_required
 def edit(entry_id: int):
     with engine.begin() as conn:
-        # Lade den Eintrag
+        # Load the entry
         row = conn.execute(text("""
-            SELECT id, datum, vollgut, leergut, einnahme, ausgabe, bemerkung, created_by
+            SELECT id, date, "full", "empty", revenue, expense, note, created_by
             FROM entries
             WHERE id = :id
         """), {'id': entry_id}).mappings().first()
 
-        # Lade die Anhänge
+        # Download the attachments
         attachments = conn.execute(text("""
             SELECT id, original_name, content_type, size_bytes, created_at
             FROM attachments
@@ -222,7 +251,7 @@ def edit(entry_id: int):
             ORDER BY created_at DESC
         """), {'id': entry_id}).mappings().all()
 
-        # Lade die Audit-Daten
+        # Download the audit data
         audit = conn.execute(text("""
             SELECT a.id, a.user_id, u.username, a.action, a.created_at, a.detail
             FROM audit_log a
@@ -232,21 +261,21 @@ def edit(entry_id: int):
         """), {'id': entry_id}).mappings().all()
 
     if not row:
-        flash(_('Eintrag nicht gefunden.'))
+        flash(_('Entry not found.'), 'danger')
         return redirect(url_for('bbalance_routes.index'))
 
-    # Eintragsdaten für das Formular
+    # Entry data for the form
     data = {
         'id': row['id'],
-        'datum': row['datum'],
-        'vollgut': row['vollgut'],
-        'leergut': row['leergut'],
-        'einnahme': row['einnahme'],
-        'ausgabe': row['ausgabe'],
-        'bemerkung': row['bemerkung']
+        'date': row['date'],
+        'full': row['full'],
+        'empty': row['empty'],
+        'revenue': row['revenue'],
+        'expense': row['expense'],
+        'note': row['note']
     }
 
-    # Anhänge für die Anzeige
+    # Attachments for display
     att_data = [{
         'id': r['id'],
         'name': r['original_name'],
@@ -256,56 +285,55 @@ def edit(entry_id: int):
         'view_url': url_for('attachments_view', att_id=r['id'])
     } for r in attachments]
 
-    bemerkungsoptionen = get_bemerkungsoptionen()
+    notes = get_notes()
     
-    return render_template('edit.html', data=data, attachments=att_data, audit=audit, bemerkungsoptionen=bemerkungsoptionen)
-
+    return render_template('edit.html', data=data, attachments=att_data, audit=audit, notes=notes)
 
 @bbalance_routes.post('/edit/<int:entry_id>')
 @login_required
 @require_perms('entries:edit:any')
 @require_csrf
 def edit_post(entry_id: int):
-    # 1) Altwerte laden
+    # 1) Load old values
     with engine.begin() as conn:
         row = conn.execute(text("""
-            SELECT id, datum, vollgut, leergut, einnahme, ausgabe, bemerkung, created_by
+            SELECT id, date, "full", "empty", revenue, expense, note, created_by
             FROM entries
             WHERE id=:id
         """), {'id': entry_id}).mappings().first()
     if not row:
         abort(404)
 
-    # 2) RBAC wie gehabt
+    # 2) RBAC as usual
     allowed = ROLES.get(session.get('role'), set())
     if 'entries:edit:any' not in allowed:
         user = current_user()
         if not user or row['created_by'] != user['id'] or 'entries:edit:own' not in allowed:
             abort(403)
 
-    # 3) Neue Werte parsen
+    # 3) Parse new values
     try:
-        # Datum nur übernehmen, wenn gültig – sonst Altwert behalten
-        parsed_date = parse_date_de_or_none(request.form.get('datum'))
+        # Only accept the date if it's valid – otherwise keep the old value
+        parsed_date = parse_date_de_or_none(request.form.get('date'))
         if parsed_date:
-            datum = parsed_date
+            date = parsed_date
         else:
-            # row['datum'] kann date oder datetime sein
-            od = row['datum']
-            datum = od.date() if isinstance(od, datetime) else od
+            # row['date'] could be date or datetime
+            od = row['date']
+            date = od.date() if isinstance(od, datetime) else od
 
-        vollgut = int((request.form.get('vollgut') or '0').strip() or '0')
-        leergut = int((request.form.get('leergut') or '0').strip() or '0')
-        einnahme = parse_money(request.form.get('einnahme') or '0')
-        ausgabe  = parse_money(request.form.get('ausgabe')  or '0')
-        bemerkung = (request.form.get('bemerkung') or '').strip()
+        full = int((request.form.get('full') or '0').strip() or '0')
+        empty = int((request.form.get('empty') or '0').strip() or '0')
+        revenue = parse_money(request.form.get('revenue') or '0')
+        expense  = parse_money(request.form.get('expense')  or '0')
+        note = (request.form.get('note') or '').strip()
     except Exception as e:
-        flash(f"{_('Eingabefehler:')} {e}", 'danger')
+        flash(f"{_('Input error:')} {e}", 'danger')
         return redirect(url_for('bbalance_routes.edit', entry_id=entry_id))
 
-    # 4) Änderungen (Diff) ermitteln – identisch zur Philosophie in payment.py
+    # 4) Determine changes (diff) – identical to the philosophy in payment.py
     def _q2(v: Decimal | None) -> Decimal | None:
-        """Geldwerte auf 2 Nachkommastellen normalisieren (oder None)."""
+        """Normalize monetary values to 2 decimal places (or None)."""
         if v is None:
             return None
         return Decimal(str(v)).quantize(Decimal('0.01'))
@@ -323,79 +351,67 @@ def edit_post(entry_id: int):
 
     changes: list[tuple[str, str, str, str]] = []  # (feld_key, label, old_str, new_str)
 
-    # Datum
-    old_datum = row['datum'].date() if isinstance(row['datum'], datetime) else row['datum']
-    if old_datum != datum:
-        changes.append(("datum", "Datum", _fmt_date(old_datum), _fmt_date(datum)))
+    # Date
+    old_date = row['date'].date() if isinstance(row['date'], datetime) else row['date']
+    if old_date != date:
+        changes.append(("date", "Date", _fmt_date(old_date), _fmt_date(date)))
 
-    # Vollgut
-    old_vollgut = int(row['vollgut'] or 0)
-    if old_vollgut != vollgut:
-        changes.append(("vollgut", "Vollgut", str(old_vollgut), str(vollgut)))
+    # Full bottles
+    old_full = int(row['full'] or 0)
+    if old_full != full:
+        changes.append(("full", "Full", str(old_full), str(full)))
 
-    # Leergut
-    old_leergut = int(row['leergut'] or 0)
-    if old_leergut != leergut:
-        changes.append(("leergut", "Leergut", str(old_leergut), str(leergut)))
+    # Empty bottles
+    old_empty = int(row['empty'] or 0)
+    if old_empty != empty:
+        changes.append(("empty", "Empty", str(old_empty), str(empty)))
 
-    # Einnahme
-    old_einnahme = _q2(row['einnahme'])
-    new_einnahme = _q2(einnahme)
-    if old_einnahme != new_einnahme:
-        changes.append(("einnahme", "Einnahme", _fmt_money(old_einnahme), _fmt_money(new_einnahme)))
+    # Revenue
+    old_revenue = _q2(row['revenue'])
+    new_revenue = _q2(revenue)
+    if old_revenue != new_revenue:
+        changes.append(("revenue", "Revenue", _fmt_money(old_revenue), _fmt_money(new_revenue)))
 
-    # Ausgabe
-    old_ausgabe = _q2(row['ausgabe'])
-    new_ausgabe = _q2(ausgabe)
-    if old_ausgabe != new_ausgabe:
-        changes.append(("ausgabe", "Ausgabe", _fmt_money(old_ausgabe), _fmt_money(new_ausgabe)))
+    # Expense
+    old_expense = _q2(row['expense'])
+    new_expense = _q2(expense)
+    if old_expense != new_expense:
+        changes.append(("expense", "Expense", _fmt_money(old_expense), _fmt_money(new_expense)))
 
-    # Bemerkung (trim vergleichen)
-    old_bemerkung = (row['bemerkung'] or '').strip()
-    if old_bemerkung != bemerkung:
-        changes.append(("bemerkung", "Bemerkung", old_bemerkung, bemerkung))
+    # Note (compare trim)
+    old_note = (row['note'] or '').strip()
+    if old_note != note:
+        changes.append(("note", "Note", old_note, note))
 
-    # 5) Speichern + Audit (analog zu payment.py: pro Feldänderung eigener Audit-Eintrag)
+    # 5) Save + Audit (similar to payment.py: separate audit entry for each field change)
     with engine.begin() as conn:
         conn.execute(text("""
             UPDATE entries
-            SET datum=:datum,
-                vollgut=:vollgut,
-                leergut=:leergut,
-                einnahme=:einnahme,
-                ausgabe=:ausgabe,
-                bemerkung=:bemerkung,
+            SET date=:date,
+                "full"=:full,
+                "empty"=:empty,
+                revenue=:revenue,
+                expense=:expense,
+                note=:note,
                 updated_at=NOW()
             WHERE id=:id
         """), {
             'id': entry_id,
-            'datum': datum,
-            'vollgut': vollgut,
-            'leergut': leergut,
-            'einnahme': str(einnahme) if einnahme is not None else None,
-            'ausgabe':  str(ausgabe)  if ausgabe  is not None else None,
-            'bemerkung': bemerkung
+            'date': date,
+            'full': full,
+            'empty': empty,
+            'revenue': str(revenue) if revenue is not None else None,
+            'expense':  str(expense)  if expense  is not None else None,
+            'note': note
         })
 
-        # a) Einzelne Feldänderungen wie in payment.py
-        #for _key, label, old, new in changes:
-        #    conn.execute(text("""
-        #        INSERT INTO audit_log (user_id, action, entry_id, detail)
-        #        VALUES (:uid, :action, :eid, :detail)
-        #    """), {
-        #        'uid': session.get('user_id'),
-        #        'action': 'feld_geaendert',
-        #        'eid': entry_id,
-        #        'detail': f"Feld: {label}\nAlt: {old}\nNeu: {new}"
-        #    })
-
-        # b) Zusammenfassender Edit-Eintrag
+        # b) Summary edit entry
         now_str = datetime.now().strftime("%d.%m.%Y %H:%M:%S")
         if changes:
             summary = "\n".join([f"- {lbl}: {old} → {new}" for _, lbl, old, new in changes])
-            detail_text = f"Bearbeitet am {now_str}\n{summary}"
+            detail_text = f"Edited on {now_str}\n{summary}"
         else:
-            detail_text = f"Bearbeitet am {now_str} (keine Feldänderungen)"
+            detail_text = f"Edited on {now_str} (no field changes)"
 
         conn.execute(text("""
             INSERT INTO audit_log (user_id, action, entry_id, detail)
@@ -406,11 +422,11 @@ def edit_post(entry_id: int):
             'detail': detail_text
         })
 
-    # Emit event für Live-Updates
-    emit('entry_changed', {'message': 'Eintrag bearbeitet'}, namespace='/', broadcast=True)
+    # Emit event for live updates
+    emit('entry_changed', {'message': 'Entry edited'}, namespace='/', broadcast=True)
 
     # log_action(session.get('user_id'), 'entries:edit', entry_id, None)
-    flash(_('Eintrag wurde gespeichert.'), 'success')
+    flash(_('Entry saved.'), 'success')
 
     return redirect(url_for('bbalance_routes.index'))
 
@@ -431,8 +447,8 @@ def delete(entry_id: int):
         conn.execute(text('DELETE FROM entries WHERE id=:id'), {'id': entry_id})
     log_action(session.get('user_id'), 'entries:delete', entry_id, None)
 
-    # Emit event für Live-Updates
-    emit('entry_changed', {'message': 'Eintrag gelöscht'}, namespace='/', broadcast=True)
+    # Emit event for live updates
+    emit('entry_changed', {'message': 'Entry deleted'}, namespace='/', broadcast=True)
 
     return redirect(url_for('bbalance_routes.index'))
 
@@ -455,17 +471,17 @@ def export_csv():
 
     output = io.StringIO()
     writer = csv.writer(output, delimiter=';', lineterminator='\n')
-    writer.writerow(['Datum','Vollgut','Leergut','Inventar','Einnahme','Ausgabe','Kassenbestand','Bemerkung'])
+    writer.writerow(['Date','Full','Empty','Inventory','Revenue','Expense','Cash balance','Note'])
     for e in entries:
         writer.writerow([
-            format_date_de(e['datum']), e['vollgut'], e['leergut'], e['inventar'],
-            str(e['einnahme']).replace('.', ','), str(e['ausgabe']).replace('.', ','),
-            str(e['kassenbestand']).replace('.', ','), e['bemerkung']
+            format_date_de(e['date']), e['full'], e['empty'], e['inventory'],
+            str(e['revenue']).replace('.', ','), str(e['expense']).replace('.', ','),
+            str(e['cashBalance']).replace('.', ','), e['note']
         ])
     mem = io.BytesIO()
     mem.write(output.getvalue().encode('utf-8-sig'))
     mem.seek(0)
-    filename = f"bottlebalance_export_{date.today().strftime('%Y%m%d')}.csv"
+    filename = f"{get_setting('app_title', 'BottleBalance')}_{_('export')}_{date.today().strftime('%Y%m%d')}.csv"
     return send_file(mem, as_attachment=True, download_name=filename, mimetype='text/csv')
 
 @bbalance_routes.post('/import')
@@ -476,68 +492,67 @@ def import_csv():
     file = request.files.get('file')
     replace_all = request.form.get('replace_all') == 'on'
     if not file or file.filename == '':
-        flash(_('Bitte eine CSV-Datei auswählen.'))
+        flash(_('Please select a CSV file.'), 'info')
         return redirect(url_for('bbalance_routes.index'))
     try:
         content = file.read().decode('utf-8-sig')
         reader = csv.reader(io.StringIO(content), delimiter=';')
         headers = next(reader, None)
-        # Robustheit: Header-Zeile prüfen und ggf. splitten
+        # Robustness: Check header row and split if necessary
         if headers and len(headers) == 1 and ';' in headers[0]:
             headers = headers[0].split(';')
-        # Validierung
+        # Validation
         validation_errors = []
 
         if len(set(headers)) != len(headers):
-            validation_errors.append("Doppelte Spaltennamen in CSV.")
+            validation_errors.append("Duplicate column names in CSV.")
 
         if any(h.strip() == "" for h in headers):
-            validation_errors.append("Leere Spaltennamen in CSV.")
+            validation_errors.append("Empty column names in CSV.")
 
-        required_fields = {"Datum", "Vollgut", "Leergut"}
+        required_fields = {"Date", "Full", "Empty"}
         if not required_fields.issubset(set(headers)):
-            validation_errors.append("Pflichtfelder fehlen: Datum, Vollgut, Leergut.")
+            validation_errors.append("Required fields missing: Date, Full, Empty.")
 
         if validation_errors:
             for err in validation_errors:
                 flash(err)
             return redirect(url_for('bbalance_routes.index'))
-        expected = ['Datum','Vollgut','Leergut','Inventar','Einnahme','Ausgabe','Kassenbestand','Bemerkung']
-        alt_expected = ['Datum','Vollgut','Leergut','Einnahme','Ausgabe','Bemerkung']
+        expected = ['Date','Full','Empty','Inventory','Revenue','Expense','Cash balance','Note']
+        alt_expected = ['Date','Full','Empty','Revenue','Expense','Note']
         if headers is None or [h.strip() for h in headers] not in (expected, alt_expected):
-            raise ValueError('CSV-Header entspricht nicht dem erwarteten Format.')
+            raise ValueError('CSV header does not match the expected format.')
         rows_to_insert = []
         for row in reader:
             if len(row) == 8:
-                datum_s, voll_s, leer_s, _inv, ein_s, aus_s, _kas, bem = row
+                date_s, voll_s, leer_s, _inv, ein_s, aus_s, _kas, bem = row
             else:
-                datum_s, voll_s, leer_s, ein_s, aus_s, bem = row
-            datum = parse_date_de_or_today(datum_s)
-            vollgut = int((voll_s or '0').strip() or 0)
-            leergut = int((leer_s or '0').strip() or 0)
-            einnahme = parse_money(ein_s or '0')
-            ausgabe = parse_money(aus_s or '0')
-            bemerkung = (bem or '').strip()
-            rows_to_insert.append({'datum': datum, 'vollgut': vollgut, 'leergut': leergut,
-                                   'einnahme': str(einnahme), 'ausgabe': str(ausgabe), 'bemerkung': bemerkung})
+                date_s, voll_s, leer_s, ein_s, aus_s, bem = row
+            date = parse_date_de_or_today(date_s)
+            full = int((voll_s or '0').strip() or 0)
+            empty = int((leer_s or '0').strip() or 0)
+            revenue = parse_money(ein_s or '0')
+            expense = parse_money(aus_s or '0')
+            note = (bem or '').strip()
+            rows_to_insert.append({'date': date, 'full': full, 'empty': empty,
+                                   'revenue': str(revenue), 'expense': str(expense), 'note': note})
         with engine.begin() as conn:
             if replace_all:
                 conn.execute(text('DELETE FROM entries'))
             for r in rows_to_insert:
                 conn.execute(text("""
-                    INSERT INTO entries (datum, vollgut, leergut, einnahme, ausgabe, bemerkung)
-                    VALUES (:datum,:vollgut,:leergut,:einnahme,:ausgabe,:bemerkung)
+                    INSERT INTO entries (date, "full", "empty", revenue, expense, note)
+                    VALUES (:date,:full,:empty,:revenue,:expense,:note)
                 """), r)
 
         # Success message with pluralization
         flash(ngettext(
-            'Import erfolgreich: %(count)d Zeile übernommen.',
-            'Import erfolgreich: %(count)d Zeilen übernommen.',
+            'Import successful: %(count)d lines transferred.',
             len(rows_to_insert),
             count=len(rows_to_insert)
         ), "success")
 
     except Exception as e:
-        flash(_('Import fehlgeschlagen: %(error)s', error=escape(str(e))), "danger")
+        flash(_('Import failed: %(error)s', error=escape(str(e))), "danger")
 
     return redirect(url_for('bbalance_routes.index'))

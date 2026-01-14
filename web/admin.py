@@ -24,7 +24,7 @@ admin_routes = Blueprint('admin_routes', __name__)
 
 @admin_routes.get('/admin/export-db')
 @login_required
-@require_perms('export:db')  # oder eigene Permission wie 'db:export'
+@require_perms('export:db')
 def admin_export_page():
     return render_template('admin_export.html')
 
@@ -39,7 +39,7 @@ def admin_export_dump():
     db_host = DB_HOST
     db_pass = DB_PASS
 
-    # Passwort für pg_dump setzen
+    # Set password for pg_dump
     env = os.environ.copy()
     env["PGPASSWORD"] = db_pass
 
@@ -52,13 +52,27 @@ def admin_export_dump():
                 db_name
             ], stdout=f, env=env, check=True)
 
-        # Audit-Log-Eintrag
+        # audit log entry
         log_action(session.get('user_id'), 'db:export', None, f'Dump von {db_name} erzeugt')
 
-        flash(_('Datenbank-Dump erfolgreich erzeugt.'))
+        flash(_('Database dump successfully created.'), 'success')
         return send_file(dump_file, as_attachment=True, download_name="bottlebalance_dump.sql")
 
     except subprocess.CalledProcessError as e:
-        flash(_('Fehler beim Datenbank-Dump: %(error)s', error=str(e)))
+        flash(_('Error during database dump: %(error)s', error=str(e)), 'danger')
         log_action(session.get('user_id'), 'db:export:error', None, f'Dump fehlgeschlagen: {e}')
         return redirect(url_for('admin_export_page'))
+
+@admin_routes.post('/settings/app_title')
+@login_required
+@require_perms('admin:tools')
+@require_csrf
+def set_app_title():
+    new_title = (request.form.get('app_title') or '').strip()
+    if not new_title:
+        flash(_("App title cannot be empty."), "danger")
+        return redirect(request.referrer)
+
+    set_setting('app_title', new_title)
+    flash(_("Application title updated."), "success")
+    return redirect(request.referrer)

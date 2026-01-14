@@ -5,10 +5,10 @@
     <div class="card shadow-sm">
       <div class="card-body">
         <div class="d-flex justify-content-between align-items-center mb-3">
-          <h1 class="h5 mb-0">{{ _('Datensatz bearbeiten') }}</h1>
+          <h1 class="h5 mb-0">{{ _('Edit record') }}</h1>
           <div class="d-flex gap-2">
             <a href="{{ url_for('bbalance_routes.index') }}" class="btn btn-outline-secondary">
-              {{ _('Zurück') }}
+              {{ _('Back') }}
             </a>
           </div>
         </div>
@@ -16,92 +16,86 @@
           id="transaction-form" novalidate>
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-          <!-- Datum -->
+          <!-- Date -->
           <div class="input-group mb-3">
             <span class="input-group-text"><i class="bi bi-calendar"></i></span>
             <div class="form-floating flex-grow-1">
-              <input type="text" name="datum"  inputmode="decimal" class="form-control"
-                placeholder="Datum" id="datum" value="{{ data.datum.strftime('%d.%m.%Y') if data.datum else '' }}" required autofocus>
-                <label for="datum">{{ _('Datum') }}</label>
+              <input type="text" name="date"  inputmode="decimal" class="form-control"
+                placeholder="Date" id="date" value="{{ data.date.strftime('%d.%m.%Y') if data.date else '' }}" required autofocus>
+                <label for="date">{{ _('Date') }}</label>
             </div>
           </div>
 
-          <!-- Vollgut -->
+          <!-- Full bottles -->
           <div class="input-group mb-3">
             <span class="input-group-text"><i class="bi bi-cup-straw"></i></span>
             <div class="form-floating flex-grow-1">
-              <input name="vollgut" type="number" inputmode="numeric" min="0" step="1" class="form-control"
-                placeholder="0" id="vollgut" autocomplete="off" value="{{ data.vollgut if data.vollgut is not none else '' }}">
-              <label for="vollgut">{{ _('Vollgut') }}</label>
+              <input name="full" type="number" inputmode="numeric" min="0" step="1" class="form-control"
+                placeholder="0" id="full" autocomplete="off" value="{{ data.full if data.full is not none else '' }}">
+              <label for="full">{{ _('Full bottles') }}</label>
             </div>
           </div>
 
-          <!-- Leergut -->
+          <!-- Empty bottles -->
           <div class="input-group mb-3">
             <span class="input-group-text"><i class="bi bi-cup-straw"></i></span>
             <div class="form-floating flex-grow-1">
-              <input name="leergut" type="number" inputmode="numeric" min="0" step="1" class="form-control"
-                placeholder="0" id="leergut" autocomplete="off" value="{{ data.leergut if data.leergut is not none else '' }}">
-              <label for="leergut">{{ _('Leergut') }}</label>
+              <input name="empty" type="number" inputmode="numeric" min="0" step="1" class="form-control"
+                placeholder="0" id="empty" autocomplete="off" value="{{ data.empty if data.empty is not none else '' }}">
+              <label for="empty">{{ _('Empty Bottles') }}</label>
             </div>
           </div>
 
-          <!-- Einnahme -->
+          <!-- Revenue -->
           <div class="input-group mb-3">
             <span class="input-group-text"><i class="bi bi-plus-circle"></i></span>
             <div class="form-floating flex-grow-1">
-              <input name="einnahme" id="einnahme" type="number" step="0.01" inputmode="decimal" class="form-control"
+              <input name="revenue" id="revenue" type="number" step="0.01" inputmode="decimal" class="form-control"
                 placeholder="0.00" autocomplete="off"
-                value="{{ (data.einnahme|replace(',', '.') if data.einnahme is string else ('%.2f'|format(data.einnahme))) if data.einnahme is not none else '' }}">
-              <label for="einnahme">{{ _('Einnahme') }}</label>
+                value="{{ (data.revenue|replace(',', '.') if data.revenue is string else ('%.2f'|format(data.revenue))) if data.revenue is not none else '' }}">
+              <label for="revenue">{{ _('Revenue') }}</label>
             </div>
           </div>
 
-          <!-- Ausgabe -->
+          <!-- Expense -->
           <div class="input-group mb-3">
             <span class="input-group-text"><i class="bi bi-dash-circle"></i></span>
             <div class="form-floating flex-grow-1">
-              <input name="ausgabe" id="ausgabe" type="number" step="0.01" inputmode="decimal" class="form-control"
+              <input name="expense" id="expense" type="number" step="0.01" inputmode="decimal" class="form-control"
                 placeholder="0.00" autocomplete="off"
-                value="{{ (data.ausgabe|replace(',', '.') if data.ausgabe is string else ('%.2f'|format(data.ausgabe))) if data.ausgabe is not none else '' }}">
-              <label for="ausgabe">{{ _('Ausgabe') }}</label>
+                value="{{ (data.expense|replace(',', '.') if data.expense is string else ('%.2f'|format(data.expense))) if data.expense is not none else '' }}">
+              <label for="expense">{{ _('Expense') }}</label>
             </div>
           </div>
 
-          <!-- Bemerkung -->
-          <!--div class="form-floating mb-3">
-            <input id="bemerkung" name="bemerkung" class="form-control" maxlength="500" placeholder="{{ _('Notiz') }}"
-              value="{{ data.bemerkung or '' }}">
-            <label for="bemerkung">{{ _('Bemerkung') }}</label>
-          </div-->
-          <!-- Bemerkung als Dropdown -->
+          <!-- Note as a dropdown -->
            <div class="input-group mb-3">
             <span class="input-group-text"><i class="bi bi-chat-text"></i></span>
             <div class="form-floating flex-grow-1">
-              <select id="bemerkung" name="bemerkung" class="form-select">
+              <select id="note" name="note" class="form-select">
                 {% set found = false %}
-                {% for option in bemerkungsoptionen %}
-                  {% if data.bemerkung == option %}
+                {% for option in notes %}
+                  {% if data.note == option %}
                     {% set found = true %}
                   {% endif %}
-                  <option value="{{ option }}" {% if data.bemerkung == option %}selected{% endif %}>{{ option }}</option>
+                  <option value="{{ option }}" {% if data.note == option %}selected{% endif %}>{{ option }}</option>
                 {% endfor %}
-                {% if data.bemerkung and not found %}
-                  <option value="{{ data.bemerkung }}" selected>{{ data.bemerkung }}</option>
+                {% if data.note and not found %}
+                  <option value="{{ data.note }}" selected>{{ data.note }}</option>
                 {% endif %}
               </select>
-              <label for="bemerkung">{{ _('Bemerkung') }}</label>
+              <label for="note">{{ _('Note') }}</label>
             </div>
           </div>
 
           <div class="col-12 d-flex gap-2">
-            <a class="btn btn-outline-secondary" href="{{ url_for('bbalance_routes.index') }}">{{ _('Abbrechen') }}</a>
-            <button class="btn btn-primary">{{ _('Speichern') }}</button>
+            <a class="btn btn-outline-secondary" href="{{ url_for('bbalance_routes.index') }}">{{ _('Cancel') }}</a>
+            <button class="btn btn-primary">{{ _('Save') }}</button>
           </div>
         </form>
 
         <hr class="my-4">
-        <h3 class="h6 mb-3">{{ _('Anhänge') }}</h3>
+        <h3 class="h6 mb-3">{{ _('Attachments') }}</h3>
 
         <form action="{{ url_for('attachments_routes.attachments_upload', entry_id=data.id) }}" method="post"
           enctype="multipart/form-data" class="mb-3">
@@ -110,11 +104,11 @@
             <input class="form-control" type="file" name="files" multiple
               accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.heic,.heif,.svg,.txt,.csv,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.xml,.json">
             <button class="btn btn-outline-primary" type="submit">
-              <i class="bi-upload me-1"></i> {{ _('Hochladen') }}
+              <i class="bi-upload me-1"></i> {{ _('Upload') }}
             </button>
           </div>
           <div class="form-text">
-            {{ _('Zulässige Formate:') }} PDF, Bilder, Office, Text. {{ _('Mehrere Dateien möglich.') }}
+            {{ _('Acceptable formats:') }} PDF, images, Office, text. {{ _('Multiple files possible.') }}
           </div>
         </form>
 
@@ -126,35 +120,35 @@
               <i class="bi bi-paperclip me-1"></i>
               <a href="{{ att.url }}" target="_blank">{{ att.name }}</a>
               <small class="text-muted">({{ att.size }} Bytes)</small>
-              <a href="{{ att.view_url }}" target="_blank" class="btn btn-sm btn-outline-primary">{{ _('Ansehen') }}</a>
+              <a href="{{ att.view_url }}" target="_blank" class="btn btn-sm btn-outline-primary">{{ _('View') }}</a>
             </div>
             <form method="post" action="{{ url_for('attachments_routes.attachments_delete', att_id=att.id) }}"
-              onsubmit="return confirm('{{ _('Anhang wirklich löschen?') }}');">
+              onsubmit="return confirm('{{ _('Delete attachment for real?') }}');">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <button class="btn btn-sm btn-outline-danger">{{ _('Löschen') }}</button>
+              <button class="btn btn-sm btn-outline-danger">{{ _('Delete') }}</button>
             </form>
           </div>
           {% endfor %}
           {% else %}
-          <div class="list-group-item text-muted">{{ _('Keine Anhänge vorhanden.') }}</div>
+          <div class="list-group-item text-muted">{{ _('No attachments available.') }}</div>
           {% endif %}
         </div>
-        <h5 class="mt-5">Audit-Historie</h5>
+        <h5 class="mt-5">Audit history</h5>
         <table class="table table-sm table-striped align-middle">
           <thead class="table-light">
             <tr>
-              <th>{{ _('Zeitpunkt') }}</th>
-              <th>{{ _('Aktion') }}</th>
-              <th>{{ _('Benutzer') }}</th>
+              <th>{{ _('Time') }}</th>
+              <th>{{ _('Action') }}</th>
+              <th>{{ _('User') }}</th>
               <th>{{ _('Details') }}</th>
             </tr>
           </thead>
           <tbody>
             {% for a in audit %}
             <tr>
-              <td data-label="{{ _('Zeitpunkt') }}">{{ a.created_at|localize_dt_str }}</td>
-              <td data-label="{{ _('Aktion') }}">{{ a.action }}</td>
-              <td data-label="{{ _('Benutzer') }}">{{ a.username or 'Unbekannt' }}</td>
+              <td data-label="{{ _('Time') }}">{{ a.created_at|localize_dt_str }}</td>
+              <td data-label="{{ _('Action') }}">{{ a.action }}</td>
+              <td data-label="{{ _('User') }}">{{ a.username or 'Unknown' }}</td>
               <td data-label="{{ _('Details') }}">{{ (a.detail or '')|replace('\n', '<br>')|safe }}</td>
             </tr>
             {% endfor %}
@@ -178,7 +172,7 @@
     }
     if (window.flatpickr) {
       if (flatpickr.l10ns?.de) flatpickr.localize(flatpickr.l10ns.de);
-      const fp = flatpickr('#datum', {
+      const fp = flatpickr('#date', {
         allowInput: true,
         dateFormat: 'd.m.Y',
         clickOpens: true,
@@ -218,7 +212,7 @@
       listGroup.innerHTML = '';
 
       if (!attachments || attachments.length === 0) {
-        listGroup.innerHTML = `<div class="list-group-item text-muted">{{ _('Keine Anhänge vorhanden.') }}</div>`;
+        listGroup.innerHTML = `<div class="list-group-item text-muted">{{ _('No attachments available.') }}</div>`;
         return;
       }
 
@@ -233,19 +227,19 @@
             <i class="bi bi-paperclip me-1"></i>
             <a href="${att.url}" target="_blank">${att.name}</a>
             <small class="text-muted">(${att.size} Bytes)</small>
-            <a href="${att.view_url}" target="_blank" class="btn btn-sm btn-outline-primary">{{ _('Ansehen') }}</a>
+            <a href="${att.view_url}" target="_blank" class="btn btn-sm btn-outline-primary">{{ _('View') }}</a>
           </div>
-          <form method="post" action="${deleteUrl}" onsubmit="return confirm('{{ _('Anhang wirklich löschen?') }}');">
+          <form method="post" action="${deleteUrl}" onsubmit="return confirm('{{ _('Delete attachment for permanently?') }}');">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <button class="btn btn-sm btn-outline-danger">{{ _('Löschen') }}</button>
+            <button class="btn btn-sm btn-outline-danger">{{ _('Delete') }}</button>
           </form>
         `;
 
         listGroup.appendChild(item);
       });
     } catch (e) {
-      console.error('{{ _("Fehler beim Laden der Anhänge:") }}', e);
-      listGroup.innerHTML = `<div class="list-group-item text-danger">{{ _('Fehler beim Laden der Anhänge.') }}</div>`;
+      console.error('{{ _("Error loading attachments:") }}', e);
+      listGroup.innerHTML = `<div class="list-group-item text-danger">{{ _('Error loading attachments.') }}</div>`;
     }
   });
 </script>

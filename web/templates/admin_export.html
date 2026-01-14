@@ -3,13 +3,13 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Datenbankexport</title>
+    <title>Database export</title>
 </head>
 <body>
-    <h1>PostgreSQL-Datenbankexport</h1>
+    <h1>PostgreSQL database export</h1>
     <form action="{{ url_for('admin_export_dump') }}" method="post">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <button type="submit">Datenbank-Dump erzeugen und herunterladen</button>
+        <button type="submit">{{ _('Create and download database dump') }}</button>
     </form>
 </body>
 </html>

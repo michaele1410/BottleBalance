@@ -31,33 +31,33 @@ ENV TZ=Europe/Berlin \
     LANG=de_DE.UTF-8 \
     LC_ALL=de_DE.UTF-8
 
-# Stabiles Code-Verzeichnis
+# Stable code dir
 WORKDIR /opt/app
 
-# ---- Security-first: non-root User so früh wie möglich anlegen
+# ---- Security-first: create non-root User as early as possible
 RUN addgroup --system app && adduser --system --ingroup app app
 
 # Python-Dependencies
 COPY --chown=app:app requirements.txt /opt/app/requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Quellen
+# Sources
 COPY --chown=app:app . /opt/app
 
 # Version file creation
 RUN echo "${APP_VERSION}" > /opt/app/VERSION
 
-# Uploads-Verzeichnis (separates Volume) + Besitzrechte
+# Uploads directory (separate volume) + ownership rights
 RUN mkdir -p /opt/app/uploads && chown -R app:app /opt/app/uploads
 
-# BOM/CRLF entfernen & ausführbar machen
+# Remove BOM/CRLF & make it executable
 RUN if [ -f /opt/app/scripts/update_translations.sh ]; then \
       sed -i 's/\r$//' /opt/app/scripts/update_translations.sh && \
       sed -i '1s/^\xEF\xBB\xBF//' /opt/app/scripts/update_translations.sh && \
       chmod +x /opt/app/scripts/update_translations.sh; \
     fi
 
-# Buildzeit: Babel kompilieren, wenn .po vorhanden; mit robusten Checks
+# build time: compile Babel if a po exists with robust checks
 RUN set -eux; \
     if [ -d /opt/app/translations ] && find /opt/app/translations -type f -name '*.po' | grep -q .; then \
       python -m babel.messages.frontend compile -d /opt/app/translations || { echo 'pybabel module compile failed'; exit 1; }; \
@@ -76,6 +76,6 @@ EXPOSE 5000
 
 USER app
 
-# JSON-CMD (vermeidet Signal-/Shell-Probleme)
-# - wenn update_translations.sh existiert, wird sie einmalig ausgeführt, sonst "skip translations"
+# JSON-CMD (avoids signal/shell problems)
+# - if update_translations.sh exists, it is executed once; otherwise, "skip translations"
 CMD ["/bin/sh","-lc","[ -f /opt/app/scripts/update_translations.sh ] && sh /opt/app/scripts/update_translations.sh || echo 'skip translations'; exec gunicorn -w ${GUNICORN_WORKERS} --threads ${GUNICORN_THREADS} --timeout ${GUNICORN_TIMEOUT} --access-logfile - -b 0.0.0.0:5000 ${WSGI_MODULE}"]

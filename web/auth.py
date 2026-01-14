@@ -24,7 +24,6 @@ from modules.auth_utils import (
     login_required,
     require_csrf,
     _finalize_login,
-    check_password_hash,
     generate_and_store_backup_codes
 )
 
@@ -38,19 +37,21 @@ auth_routes = Blueprint('auth_routes', __name__)
 @require_csrf
 def login():
 
-    # GET-Logik
+    # Get Logic
     if request.method == 'GET':
-        # Prüfe, ob sich noch niemand eingeloggt hat
+        # Check whether anyone has logged in yet.
         with engine.begin() as conn:
             first_login_admin = conn.execute(text("SELECT COUNT(*) FROM users WHERE last_login_at IS NOT NULL")).scalar_one() == 0
 
         if first_login_admin:
-            flash(_('Standard-Login: Benutzername <strong>admin</strong> und Passwort <strong>admin</strong> – bitte sofort ändern!'), 'warning')
+            flash(_('Default login: Username <strong>admin</strong> and password <strong>admin</strong> – please change immediately!'), 'warning')
 
         return render_template('login.html')
     
-    # POST-Logik
-    
+    # POST logic
+    if request.method == 'POST':
+        require_csrf(lambda: None)()  # nur für POST prüfen
+
     username = (request.form.get('username') or '').strip()
     password = (request.form.get('password') or '').strip()
     with engine.begin() as conn:
@@ -60,40 +61,40 @@ def login():
         """), {'u': username}).mappings().first()
 
     if not user or not check_password_hash(user['password_hash'], password) or not user['active']:
-        flash(_('Login fehlgeschlagen.'))
+        flash(_('Login failed.'), 'danger')
         return redirect(url_for('auth_routes.login'))
 
-    # Falls Passwort geändert werden muss: Info + Flag für spätere Weiterleitung setzen
+    # If password needs to be changed: Set info + flag for later forwarding
     force_profile = False
-    # Rollenbezeichnung konsistent zur DB ('Admin', nicht 'admin')
+    # Role name consistent with the database ('Admin', not 'admin')
     if user['must_change_password'] and user['role'] != 'Admin':
         message = _(
-            'Bitte das Passwort <a href="%(link)s" class="alert-link">im Profil</a> ändern.',
+            'Please change the password <a href="%(link)s" class="alert-link">on profile</a>.',
         ) % {'link': url_for('profile')}  # Babel-style substitution
         flash(Markup(message), 'warning')  # Mark message as safe HTML
 
         force_profile = True
-        session['force_profile_after_login'] = True  # <<--- nur Flag, keine Session-Authentifizierung!
+        session['force_profile_after_login'] = True  # <<--- flag only, no session authentication!
 
 
     if user['totp_enabled']:
-        # 2FA-Flow starten; force_profile wird nach erfolgreicher 2FA ausgewertet
+        # Start 2FA flow; force_profile is evaluated after successful 2FA
         session['pending_2fa_user_id'] = user['id']
         return redirect(url_for('auth_routes.login_2fa_get'))
 
-    # Kein 2FA: direkt finalisieren
+    # No 2FA: finalize directly
     _finalize_login(user['id'], user['role'])
 
-   # Nach erfolgreichem Login ggf. erzwungen zum Profil umleiten
+   # After successful login, redirect to profile if necessary
     if force_profile:
         session.pop('force_profile_after_login', None)
         return redirect(url_for('profile'))
 
-    # Rollenbasierte Weiterleitung
+    # Role-based forwarding
     if user['role'] == 'Payment Viewer':
-        return redirect(url_for('payment_routes.zahlungsfreigabe'))
+        return redirect(url_for('payment_routes.payment_requests'))
 
-    # Standard-Weiterleitung
+    # Standard forwarding
     return redirect(url_for('bbalance_routes.index'))
 
 @auth_routes.get('/2fa')
@@ -102,6 +103,7 @@ def login_2fa_get():
         return redirect(url_for('auth_routes.login'))
     return render_template('2fa.html')
 
+
 @auth_routes.post('/2fa')
 @require_csrf
 def login_2fa_post():
@@ -109,64 +111,90 @@ def login_2fa_post():
     if not uid:
         return redirect(url_for('auth_routes.login'))
 
+    # Code normalisieren (Leerzeichen/Bindestriche entfernen)
     raw = request.form.get('code') or ''
-    code = re.sub(r'[\s\-]', '', raw).lower()
+    code = re.sub(r'[\s\-]', '', raw).strip()
 
+    backup_used = False
+
+    # --- Alle DB-Zugriffe in EINEM frischen Kontext ---
     with engine.begin() as conn:
         user = conn.execute(text("""
-            SELECT id, role, totp_secret, backup_codes
-            FROM users WHERE id=:id
+            SELECT id, role, totp_secret, backup_codes, totp_enabled, active
+              FROM users
+             WHERE id = :id
         """), {'id': uid}).mappings().first()
 
-    if not user or not user['totp_secret']:
-        flash(_('2FA nicht aktiv.'))
-        return redirect(url_for('auth_routes.login'))
+        if not user or not user['active']:
+            flash(_('2FA disabled.'), 'danger')
+            return redirect(url_for('auth_routes.login'))
 
-    totp = pyotp.TOTP(user['totp_secret'])
+        # 1) TOTP prüfen (nur wenn aktiviert & Secret vorhanden)
+        totp_ok = False
+        if user.get('totp_enabled') and user.get('totp_secret'):
+            try:
+                totp_ok = pyotp.TOTP(user['totp_secret']).verify(code, valid_window=1)
+            except Exception:
+                totp_ok = False
 
-    # Prüfe TOTP
-    if totp.verify(code, valid_window=1):
-        _finalize_login(user['id'], user['role'])
-        # Flag auswerten
-        if session.pop('force_profile_after_login', None):
-            return redirect(url_for('profile'))
-        return redirect(url_for('bbalance_routes.index'))
+        if totp_ok:
+            # Loginzeit aktualisieren
+            conn.execute(text("""
+                UPDATE users
+                   SET last_login_at = NOW(),
+                       updated_at     = NOW()
+                 WHERE id = :id
+            """), {'id': user['id']})
+        else:
+            # 2) Backup-Codes prüfen
+            bc_raw = user.get('backup_codes') or '[]'
+            try:
+                hashes = json.loads(bc_raw)
+                if not isinstance(hashes, list):
+                    hashes = []
+            except Exception:
+                hashes = []
 
-    # Prüfe Backup-Codes
-    bc_raw = user.get('backup_codes') or '[]'
-    try:
-        hashes = json.loads(bc_raw)
-        if not isinstance(hashes, list):
-            hashes = []
-    except Exception:
-        hashes = []
+            match = None
+            for h in hashes:
+                # Vergleich Klartext-Code gegen gespeicherten Hash
+                if h and check_password_hash(h, code):
+                    match = h
+                    break
 
-    matched_idx = None
-    for i, h in enumerate(hashes):
-        if h and check_password_hash(h, code):
-            matched_idx = i
-            break
+            if match:
+                backup_used = True
+                # Verbrauchten Code entfernen + Loginzeit aktualisieren
+                hashes.remove(match)
+                conn.execute(text("""
+                    UPDATE users
+                       SET backup_codes = :bc,
+                           last_login_at = NOW(),
+                           updated_at     = NOW()
+                     WHERE id = :id
+                """), {'bc': json.dumps(hashes), 'id': user['id']})
+            else:
+                flash(_('Invalid 2FA code or backup code.'), 'danger')
+                return redirect(url_for('auth_routes.login_2fa_get'))
 
-    if matched_idx is not None:
-        # Neuen Satz Backup-Codes generieren
-        new_codes = generate_and_store_backup_codes(uid)
+        # Bis hier Commit am Blockende sicher – danach keine conn-Nutzung mehr
+        role = user['role']
 
-        # Einmalige Anzeige im Profil
+    # --- NACH der Transaktion: Session finalisieren ---
+    _finalize_login(uid, role)
+
+    # Optional: nach Backup-Code gesamte Codes neu generieren (deine bisherige UX)
+    if backup_used:
+        new_codes = generate_and_store_backup_codes(uid)  # schreibt selbst in DB
         session['new_backup_codes'] = new_codes
+        flash(_('Backup code used. New codes were generated automatically. Please keep them safe.'), 'info')
+        log_action(uid, '2fa:backup_used_regenerated', None, None)
 
-        _finalize_login(user['id'], user['role'])
-        flash(_('Backup-Code verwendet. Es wurden automatisch neue Codes generiert. Bitte sicher aufbewahren.'), 'info')
-        log_action(user['id'], '2fa:backup_used_regenerated', None, None)
+    # Flag evaluieren (aus Login-Flow)
+    if session.pop('force_profile_after_login', None):
+        return redirect(url_for('profile'))
 
-        # Nach Backup-Code ggf. ebenfalls Flag auswerten
-        if session.pop('force_profile_after_login', None):
-            return redirect(url_for('profile'))
-        return redirect(url_for('profile'))  # Hier willst du ohnehin ins Profil
-                                             # (zeigt die neuen Codes einmalig an)
-
-    flash(_('Ungültiger 2FA-Code oder Backup-Code.'))
-    return redirect(url_for('auth_routes.login_2fa_get'))
-
+    return redirect(url_for('bbalance_routes.index'))
 
 @auth_routes.post('/profile/2fa/regen')
 @login_required
@@ -174,9 +202,9 @@ def login_2fa_post():
 def regen_backup_codes():
     uid = session['user_id']
     codes = generate_and_store_backup_codes(uid)
-    # Einmalige Anzeige im Profil
+    # One-time display in profile
     session['new_backup_codes'] = codes
-    flash(_('Neue Backup-Codes wurden generiert. Bitte sicher aufbewahren.'))
+    flash(_('New backup codes have been generated. Please keep them safe.'), 'success')
     return redirect(url_for('profile'))
 
 @auth_routes.post('/logout')
@@ -193,35 +221,9 @@ def logout():
 def reset_form():
     return render_template('reset.html')
 
-#@auth_routes.post('/reset')
-#@require_csrf
-#def reset_post():
-#    token = (request.form.get('token') or '').strip()
-#    pwd   = (request.form.get('password')  or '').strip()
-#    pwd2  = (request.form.get('password2') or '').strip()
-#    if not token:
-#        flash(_('Reset‑Token fehlt.'))
-#        return redirect(url_for('reset_form'))
-#    if len(pwd) < 8 or pwd != pwd2:
-#        flash(_('Passwortanforderungen nicht erfüllt oder stimmen nicht überein.'))
-#        return redirect(url_for('reset_form'))
-#    with engine.begin() as conn:
-#        trow = conn.execute(
-#            text("SELECT id, user_id, expires_at, used FROM password_reset_tokens WHERE token=:t"),
-#            {'t': token}
-#        ).mappings().first()
-#        if not trow or trow['used'] or trow['expires_at'] < datetime.utcnow():
-#            flash(_('Link ungültig oder abgelaufen.'))
-#            return redirect(url_for('auth_routes.login'))
-#        conn.execute(text("UPDATE users SET password_hash=:ph, must_change_password=FALSE, updated_at=NOW() WHERE id=:id"),
-#                     {'ph': generate_password_hash(pwd), 'id': trow['user_id']})
-#        conn.execute(text("UPDATE password_reset_tokens SET used=TRUE WHERE user_id=:uid AND used=FALSE"), {"uid": trow['user_id']})
-#    flash(_('Passwort aktualisiert. Bitte einloggen.'))
-#    return redirect(url_for('auth_routes.login'))
-
 @auth_routes.get('/reset/<token>')
 def reset_get(token: str):
-    # Token prüfen
+    # Check token
     with engine.begin() as conn:
         row = conn.execute(text("""
             SELECT id, user_id, expires_at, used
@@ -230,7 +232,7 @@ def reset_get(token: str):
         """), {'t': token}).mappings().first()
 
     if not row or row['used'] or (row['expires_at'] and row['expires_at'] < datetime.utcnow()):
-        flash(_('Reset-Link ist ungültig oder abgelaufen.'), 'danger')
+        flash(_('Reset link is invalid or expired.'), 'danger')
         return redirect(url_for('auth_routes.login'))
 
     return render_template('reset.html', token=token)
@@ -242,10 +244,10 @@ def reset_post(token: str):
     pwd2 = (request.form.get('password2') or '').strip()
 
     if len(pwd) < 8:
-        flash(_('Passwort muss mindestens 8 Zeichen haben.') + '.', 'danger')
+        flash(_('Password must be at least 8 characters long.'), 'danger')
         return redirect(url_for('auth_routes.reset_get', token=token))
     if pwd != pwd2:
-        flash(_('Passwörter stimmen nicht überein.') + '.', 'danger')
+        flash(_('Passwords do not match.'), 'danger')
         return redirect(url_for('auth_routes.reset_get', token=token))
     with engine.begin() as conn:
         row = conn.execute(text("""
@@ -256,50 +258,50 @@ def reset_post(token: str):
         """), {'t': token}).mappings().first()
 
         if not row or row['used'] or (row['expires_at'] and row['expires_at'] < datetime.utcnow()):
-            flash(_('Reset-Link ist ungültig oder abgelaufen.'), 'danger')
+            flash(_('Reset link is invalid or has expired.'), 'danger')
             return redirect(url_for('auth_routes.login'))
 
-        # Passwort setzen
+        # Set password
         conn.execute(text("""
             UPDATE users
             SET password_hash=:ph, must_change_password=FALSE, updated_at=NOW()
             WHERE id=:uid
         """), {'ph': generate_password_hash(pwd), 'uid': row['user_id']})
 
-        # Token als verwendet markieren
+        # Mark token as used
         conn.execute(text("""
             UPDATE password_reset_tokens
             SET used=TRUE
             WHERE id=:id
         """), {'id': row['id']})
 
-    flash(_('Passwort wurde zurückgesetzt.') + '.', 'success')
+    flash(_('Password has been reset.'), 'success')
     return redirect(url_for('auth_routes.login'))
 
 @auth_routes.post('/forgot')
 @require_csrf
 def request_reset():
     username = (request.form.get('username') or '').strip()
-    # generische Antwort – verhindert Nutzer-Enumeration
-    generic_msg = _('Wenn die Angaben korrekt sind, wurde ein Reset-Link gesendet.')
+    # Generic response – prevents user enumeration
+    generic_msg = _('If the information is correct, a reset link has been sent.')
 
     if not username:
-        flash(_('Bitte Benutzername angeben') + '.', 'danger')
+        flash(_('Please enter your username.'), 'danger')
         return redirect(url_for('auth_routes.login'))
 
-    # Nutzer laden
+    # Load user
     with engine.begin() as conn:
         user = conn.execute(text("""
             SELECT id, email FROM users
             WHERE username=:u AND active=TRUE
         """), {'u': username}).mappings().first()
 
-    # Wenn nicht vorhanden oder keine E-Mail -> generische Meldung
+    # If not available or no email -> generic message
     if not user or not (user.get('email') or '').strip():
         flash(generic_msg, 'info')
         return redirect(url_for('auth_routes.login'))
 
-    # Token erzeugen + speichern
+    # Generate + save tokens
     token = secrets.token_urlsafe(32)
     expires_at = datetime.utcnow() + timedelta(hours=1)
     with engine.begin() as conn:
@@ -308,22 +310,22 @@ def request_reset():
             VALUES (:uid, :tok, :exp, FALSE)
         """), {'uid': user['id'], 'tok': token, 'exp': expires_at})
 
-    # Reset-URL konstruieren
-    # Nutze APP_BASE_URL (falls gesetzt) für absolute URL
+    # Construct reset URL
+    # Use APP_BASE_URL (if set) for absolute URL
     reset_path = url_for('auth_routes.reset_get', token=token)
     reset_url = (APP_BASE_URL.rstrip('/') + reset_path) if (APP_BASE_URL or '').strip() else url_for('reset_get', token=token, _external=True)
 
-    # E-Mail senden
+    # Send email
     try:
         msg = Message(
-            subject=_('Passwort zurücksetzen'),
+            subject=_('Reset password'),
             recipients=[user['email']],
-            body=_('Bitte klicke auf den folgenden Link, um dein Passwort zurückzusetzen:\n\n%(url)s\n\nDer Link ist 1 Stunde gültig.', url=reset_url)
+            body=_('Please click on the following link to reset your password:\n\n%(url)s\n\nThe link is valid for 1 hour.', url=reset_url)
         )
-        # bestehende Mail-Extension aus app.py nutzen:
+        # Use existing mail extension from app.py:
         current_app.extensions['mail'].send(msg)
     except Exception as e:
-        # Keine Details leaken – trotzdem generische Antwort
+        # No details leaked – generic response nonetheless
         flash(generic_msg, 'info')
         return redirect(url_for('auth_routes.login'))
 

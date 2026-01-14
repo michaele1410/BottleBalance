@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 {% block content %}
-<!-- Filter: eigener vollbreiter Container über der Tabelle -->
+<!-- Filter: separate full-width container above the table -->
 <div class="row g-3 mb-3">
   <div class="col-12">
     <div class="card shadow-sm mb-2">
       <div class="card-header d-flex justify-content-between align-items-center">
         <span>{{ _('Filter') }}</span>
-        <!-- Toggle-Button nur auf Mobil -->
+        <!-- Toggle button only on mobile -->
         <button class="btn btn-sm btn-outline-secondary d-md-none"
                 type="button"
                 data-bs-toggle="collapse"
@@ -16,26 +16,26 @@
           <i class="bi-chevron-down"></i>
         </button>
       </div>
-      <!-- default offen; für Mobil kannst du per JS initial schließen -->
+      <!-- default open; for mobile, you can initially close via JS -->
       <div id="collapseFilters" class="collapse show">
         <div class="card-body">
           <form method="get" class="row row-cols-1 row-cols-md-auto g-2 align-items-end form-compact" id="filtersForm">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <div class="col">
-                <label class="form-label">{{ _('Suche') }}</label>
+                <label class="form-label">{{ _('Search') }}</label>
                 <div class="input-group">
                   <span class="input-group-text"><i class="bi-search"></i></span>
                   <input type="text"
                         id="filter_q"
                         name="q"
                         class="form-control"
-                        placeholder="{{ _('Datum/Bemerkung') }}"
+                        placeholder="{{ _('Date/Note') }}"
                         value="{{ request.args.get('q','') }}"
                         autocomplete="off">
                 </div>
               </div>
               <div class="col">
-                <label for="filter_daterange" class="form-label mb-1">{{ _('Zeitraum') }}</label>
+                <label for="filter_daterange" class="form-label mb-1">{{ _('Time period') }}</label>
                 <div class="input-group">
                   <span class="input-group-text"><i class="bi-calendar"></i></span>
                   <input type="text" id="filter_daterange" class="form-control"
@@ -46,10 +46,10 @@
               </div>
               <div class="col d-flex gap-2">
                 <button class="btn btn-primary" type="submit">
-                  <i class="bi-funnel me-1"></i> {{ _('Filtern') }}
+                  <i class="bi-funnel me-1"></i> {{ _('Filter') }}
                 </button>
                 <a class="btn btn-outline-secondary" href="{{ url_for('bbalance_routes.index') }}">
-                <i class="bi-x-circle me-1"></i>{{ _('Filter zurücksetzen') }}
+                <i class="bi bi-eraser me-1"></i>{{ _('Reset filter') }}
               </a>
               </div>
             </form>
@@ -58,22 +58,22 @@
     </div>
   </div>
 </div>
-<!-- Ende Filter -->
+<!-- End Filter -->
 
 <div class="row g-3 mb-3">
   <div class="col-12">
     <div class="card shadow-sm mb-2">
       <div class="card-header d-flex justify-content-between align-items-center">
-        <span>{{ _('Audit-Log') }}</span>
+        <span>{{ _('Audit history') }}</span>
       </div>
       <div class="card-body">
         <div class="table-responsive">
           <table class="table table-sm table-striped align-middle">
             <thead class="table-light">
               <tr>
-                <th>{{ _('Zeitpunkt') }}</th>
+                <th>{{ _('Time period') }}</th>
                 <th>{{ _('User') }}</th>
-                <th>{{ _('Aktion') }}</th>
+                <th>{{ _('Action') }}</th>
                 <th>{{ _('Entry-ID') }}</th>
                 <th>{{ _('Details') }}</th>
               </tr>
@@ -81,15 +81,15 @@
             <tbody>
             {% for a in logs %}
               <tr>
-                <td data-label="{{ _('Zeitpunkt') }}" class="text-nowrap">{{ a.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+                <td data-label="{{ _('Time') }}" class="text-nowrap">{{ a.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
                 <td data-label="{{ _('User') }}">{{ a.username or ('#'+(a.user_id|string)) }}</td>
-                <td data-label="{{ _('Aktion') }}">{{ a.action }}</td>
+                <td data-label="{{ _('Action') }}">{{ a.action }}</td>
                 <td data-label="{{ _('Entry-ID') }}">{{ a.entry_id or '—' }}</td>
                 <td data-label="{{ _('Details') }}">{{ a.detail or '—' }}</td>
               </tr>
             {% else %}
               <tr>
-                <td data-label="{{ _('Keine Einträge.') }}" colspan="5" class="text-center text-muted">{{ _('Keine Einträge.') }}</td>
+                <td data-label="{{ _('No entries.') }}" colspan="5" class="text-center text-muted">{{ _('No entries.') }}</td>
               </tr>
             {% endfor %}
             </tbody>

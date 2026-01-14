@@ -3,61 +3,45 @@
 {% block content %}
 <div class="card shadow-sm">
   <div class="card-body">
-    <h1 class="h5 mb-3">{{ _('Benutzerverwaltung') }}</h1>
+    <h1 class="h5 mb-3">{{ _('User management') }}</h1>
 
-    <!-- Button für Modal -->
+    <!-- Button for modal -->
     <div class="mb-3 text-start">
       <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addUserModal">
-        <i class="bi bi-plus-lg me-1"></i> {{ _('User hinzufügen') }}
+        <i class="bi bi-plus-lg me-1"></i> {{ _('Add user') }}
       </button>
     </div>
 
     
-    <!-- Modal für neuen Benutzer -->
+    <!-- Modal for new users -->
     <div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <form method="post" action="{{ url_for('user_routes.users_add') }}" id="addUserForm" novalidate>
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="modal-header">
-              <h5 class="modal-title" id="addUserModalLabel">{{ _('Neuen Benutzer anlegen') }}</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Schließen') }}"></button>
+              <h5 class="modal-title" id="addUserModalLabel">{{ _('Add new user') }}</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Close') }}"></button>
             </div>
             <div class="modal-body">
               <div class="row g-3">
-                <!-- Benutzername -->
-                <!--div class="col-12">
-                  <label class="form-label">{{ _('Benutzername') }}</label>
-                  <input name="username" class="form-control" required minlength="3">
-                </div-->
+                <!-- Username -->
                 <div class="input-group mb-3">
                   <span class="input-group-text"><i class="bi bi-person"></i></span>
                   <div class="form-floating flex-grow-1">
                     <input name="username" type="text" class="form-control" required minlength="3">
-                    <label for="vollgut">{{ _('Benutzername') }}</label>
+                    <label for="full">{{ _('Username') }}</label>
                   </div>
                 </div>
-                <!-- E-Mail -->
-                <!--div class="col-12">
-                  <label class="form-label">{{ _('E-Mail') }}</label>
-                  <input name="email" type="email" class="form-control">
-                </div-->
+                <!-- Email -->
                 <div class="input-group mb-3">
                   <span class="input-group-text"><i class="bi bi-envelope"></i></span>
                   <div class="form-floating flex-grow-1">
                     <input name="email" type="text" class="form-control" required>
-                    <label for="vollgut">{{ _('E-Mail') }}</label>
+                    <label for="full">{{ _('Email') }}</label>
                   </div>
                 </div>
-                <!-- Rolle -->
-                <!--div class="col-12">
-                  <label class="form-label">{{ _('Rolle') }}</label>
-                  <select class="form-select" name="role" required>
-                    {% for r in ROLES.keys() %}
-                      <option value="{{ r }}">{{ r }}</option>
-                    {% endfor %}
-                  </select>
-                </div-->
+                <!-- Role -->
                 <div class="input-group mb-3">
                   <span class="input-group-text"><i class="bi bi-shield-check"></i></span>
                   <div class="form-floating flex-grow-1">
@@ -66,27 +50,23 @@
                         <option value="{{ r }}">{{ r }}</option>
                       {% endfor %}
                     </select>
-                    <label for="role">{{ _('Rolle') }}</label>
+                    <label for="role">{{ _('Role') }}</label>
                   </div>
                 </div>
-                <!-- Passwort -->
-                <!--div class="col-12">
-                  <label class="form-label">{{ _('Passwort') }}</label>
-                  <input type="password" name="password" minlength="8" class="form-control" required>
-                </div-->
+                <!-- Password -->
                 <div class="input-group mb-3">
                   <span class="input-group-text"><i class="bi bi-key"></i></span>
                   <div class="form-floating flex-grow-1">
                     <input name="password" type="password" class="form-control" required>
-                    <label for="vollgut">{{ _('Passwort') }}</label>
+                    <label for="full">{{ _('Password') }}</label>
                   </div>
                 </div>
               </div>
             </div>
             <div class="modal-footer d-flex justify-content-between">
-              <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ _('Abbrechen') }}</button>
+              <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ _('Cancel') }}</button>
               <button class="btn btn-primary" type="submit">
-                <i class="bi bi-check-lg me-1"></i> {{ _('Hinzufügen') }}
+                <i class="bi bi-check-lg me-1"></i> {{ _('Add') }}
               </button>
             </div>
           </form>
@@ -94,118 +74,104 @@
       </div>
     </div>
 
-    <!-- Liste der Benutzer -->
+    <!-- List of users -->
     <div class="table-responsive">
       <table class="table table-sm align-middle table-striped">
         <thead class="table-light">
           <tr>
-            <th>{{ _('Benutzername') }}</th>
-            <th>{{ _('E-Mail') }}</th>
-            <th>{{ _('Rolle') }}</th>
-            <th>{{ _('Aktiv') }}</th>
-            <th>{{ _('Geschäftsführend') }}</th>
-            <th>{{ _('Erstellt') }}</th>
-            <th>{{ _('Aktualisiert') }}</th>
-            <th class="text-end">{{ _('Aktionen') }}</th>
+            <th>{{ _('Username') }}</th>
+            <th>{{ _('Email') }}</th>
+            <th>{{ _('Role') }}</th>
+            <th>{{ _('Active') }}</th>
+            <th>{{ _('Chairman') }}</th>
+            <th>{{ _('Created') }}</th>
+            <th>{{ _('Updated') }}</th>
+            <th class="text-end">{{ _('Actions') }}</th>
           </tr>
         </thead>
         <tbody>
           {% for u in users %}
           <tr>
-            <!-- Benutzername + ID -->
-            <td data-label="{{ _('Benutzername') }}" class="text-nowrap">
+            <!-- Username + ID -->
+            <td data-label="{{ _('Username') }}" class="text-nowrap">
               {{ u.username }}<br>
-              <!--small class="text-muted">ID: {{ u.id }}</small-->
             </td>
 
-            <!-- E-Mail -->
-            <td data-label="{{ _('E-Mail') }}">
+            <!-- Email -->
+            <td data-label="{{ _('Email') }}">
               {% if u.email %}
-                <i class="bi bi-envelope-fill text-success" title="E-Mail hinterlegt"></i>
+                <i class="bi bi-envelope-fill text-success" title="Email hinterlegt"></i>
               {% else %}
-                <i class="bi bi-envelope-slash text-muted" title="Keine E-Mail hinterlegt"></i>
+                <i class="bi bi-envelope-slash text-muted" title="No email address provided"></i>
               {% endif %}
             </td>
 
             <!-- Rollenwechsel -->
-            <!--td>
-              <form method="post" action="{{ url_for('user_routes.users_change_role', uid=u.id) }}" class="d-flex gap-2">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <select class="form-select form-select-sm" name="role">
-                  {% for r in ROLES.keys() %}
-                  <option value="{{ r }}" {% if r==u.role %}selected{% endif %}>{{ r }}</option>
-                  {% endfor %}
-                </select>
-                <button class="btn btn-sm btn-outline-primary" title="{{ _('Speichern') }}">
-                  <i class="bi bi-save"></i>
-                </button>
-              </form>
-            </td-->
-            <td data-label="{{ _('Rolle') }}">
+            <td data-label="{{ _('Role') }}">
               <span class="badge bg-secondary">{{ u.role }}</span>
             </td>
 
-            <!-- Aktiv-Toggle (mit Icon, i18n-Text) -->
-            <td data-label="{{ _('Aktiv') }}">
+            <!-- Active toggle (with icon, i18n text) -->
+            <td data-label="{{ _('Active') }}">
               <form method="post" action="{{ url_for('user_routes.users_toggle', uid=u.id) }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 {% if u.active and user.id != u.id%}
-                <button class="btn btn-sm btn-outline-secondary" title="{{ _('Deaktivieren') }}">
-                  <i class="bi bi-toggle-on me-1"></i>{{ _('Deaktivieren') }}
+                <button class="btn btn-sm btn-outline-secondary" title="{{ _('Deactivate') }}">
+                  <i class="bi bi-toggle-on me-1"></i>{{ _('Deactivate') }}
                 </button>
                 {% else %}
-                <button class="btn btn-sm btn-outline-success" title="{{ _('Aktivieren') }}">
-                  <i class="bi bi-toggle-off me-1"></i>{{ _('Aktivieren') }}
+                <button class="btn btn-sm btn-outline-success" title="{{ _('Activate') }}">
+                  <i class="bi bi-toggle-off me-1"></i>{{ _('Activate') }}
                 </button>
                 {% endif %}
               </form>
             </td>
 
-            <!-- Geschäftsführend (can_approve) -->
-            <td data-label="{{ _('Geschäftsführend') }}">
+            <!-- Chairman (can_approve) -->
+            <td data-label="{{ _('Chairman') }}">
               <form method="post" action="{{ url_for('users_toggle_approve', uid=u.id) }}" class="d-inline">
 
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 {% if u.can_approve %}
-                <button class="btn btn-sm btn-success" title="{{ _('Berechtigung entfernen') }}">
-                  <i class="bi bi-check2-circle me-1"></i>{{ _('Ja') }}
+                <button class="btn btn-sm btn-success" title="{{ _('Remove permission') }}">
+                  <i class="bi bi-check2-circle me-1"></i>{{ _('Yes') }}
                 </button>
                 {% else %}
-                <button class="btn btn-sm btn-outline-secondary" title="{{ _('Berechtigung vergeben') }}">
-                  <i class="bi bi-dash-circle me-1"></i>{{ _('Nein') }}
+                <button class="btn btn-sm btn-outline-secondary" title="{{ _('Assign permission') }}">
+                  <i class="bi bi-dash-circle me-1"></i>{{ _('No') }}
                 </button>
                 {% endif %}
               </form>
             </td>
 
-            <!-- Erstellt -->
-            <td data-label="{{ _('Erstellt') }}" class="text-nowrap">{{ u.created_at and u.created_at.strftime('%d.%m.%Y %H:%M') or '—' }}</td>
+            <!-- Created -->
+            <td data-label="{{ _('Created') }}" class="text-nowrap">{{ u.created_at and u.created_at.strftime('%d.%m.%Y %H:%M') or '—' }}</td>
 
-            <!-- Aktualisiert-->
-            <td data-label="{{ _('Aktualisiert') }}" class="text-nowrap">{{ u.updated_at and u.updated_at.strftime('%d.%m.%Y %H:%M') or '—' }}</td>
+            <!-- Updated-->
+            <td data-label="{{ _('Updated') }}" class="text-nowrap">{{ u.updated_at and u.updated_at.strftime('%d.%m.%Y %H:%M') or '—' }}</td>
 
-            <!-- Buttons Aktionen-->
-            <td data-label="{{ _('Aktionen') }}" class="text-end">
+            <!-- Button actions-->
+            <td data-label="{{ _('Actions') }}" class="text-end">
               <div class="d-flex gap-2 justify-content-end">
-                <!-- Bearbeiten -->
+                <!-- Edit -->
                 <a href="{{ url_for('user_routes.edit_user', uid=u.id) }}" class="btn btn-sm btn-outline-primary"
-                  title="{{ _('Benutzer bearbeiten') }}">
+                  title="{{ _('Edit user') }}">
                   <i class="bi bi-pencil-square"></i>
                 </a>
                 
                 <!-- Reset-Link -->
                 <form method="post" action="{{ url_for('user_routes.users_reset_link', uid=u.id) }}">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                  <button class="btn btn-sm btn-outline-info" aria-label="{{ _('Reset-Link generieren') }}">
+                  <button class="btn btn-sm btn-outline-info" aria-label="{{ _('Generate reset link') }}">
                     <i class="bi bi-envelope me-1"></i>
                   </button>
                 </form>
 
-                <!-- Löschen -->
+                <!-- Delete -->
                 <form method="post" action="{{ url_for('user_routes.users_delete', uid=u.id) }}"
-                  onsubmit="return confirm('{{ _('Benutzer wirklich löschen?') }}');">
+                  onsubmit="return confirm('{{ _('Delete user permanently?') }}');">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button class="btn btn-sm btn-outline-danger" title="{{ _('Benutzer löschen') }}">
+                    <button class="btn btn-sm btn-outline-danger" title="{{ _('Delete user') }}">
                   <i class="bi-trash"></i>
                 </button>
                 </form>
@@ -215,7 +181,7 @@
           </tr>
           {% else %}
           <tr>
-            <td data-label="{{ _('Keine Benutzer vorhanden') }}" colspan="8" class="text-center text-muted">{{ _('Keine Benutzer vorhanden') }}.</td>
+            <td data-label="{{ _('No users available') }}" colspan="8" class="text-center text-muted">{{ _('No users available') }}.</td>
           </tr>
           {% endfor %}
         </tbody>

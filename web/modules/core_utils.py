@@ -1,26 +1,59 @@
+# modules/core_utils.py
 # -----------------------
 # CORE Configuration
 # -----------------------
-
 import os
 import pytz
+import secrets
 from flask import session,flash, abort, request
 from flask_babel import _
 from sqlalchemy import text
 from sqlalchemy.engine import Engine, create_engine
 from datetime import datetime
-import secrets
+from functools import lru_cache
 
 APP_BASE_URL = os.getenv("APP_BASE_URL") or "http://localhost:5000"
 
 SECRET_KEY = os.getenv("SECRET_KEY") or secrets.token_hex(24)
+
+if not os.getenv("SECRET_KEY"):
+    # Nur Logging – damit du erkennst, wenn du versehentlich ohne festen Key startest
+    import logging
+    logging.getLogger(__name__).warning(
+        "SECRET_KEY fehlt – es wird ein zufälliger Key verwendet. "
+        "Sessions/CSRF-Tokens sind nach Neustart ungültig. Bitte SECRET_KEY in der ENV setzen."
+    )
 DB_HOST = os.getenv("DB_HOST", "bottlebalance-db")
 DB_NAME = os.getenv("DB_NAME", "bottlebalance")
 DB_USER = os.getenv("DB_USER", "admin")
 DB_PASS = os.getenv("DB_PASS", "admin")
 DATABASE_URL = f"postgresql+psycopg2://{DB_USER}:{DB_PASS}@{DB_HOST}:5432/{DB_NAME}"
 
-engine: Engine = create_engine(DATABASE_URL, future=True, pool_pre_ping=True)
+engine: Engine = create_engine(
+    DATABASE_URL,
+    future=True,
+    pool_pre_ping=True,
+    pool_recycle=1800,    # Recycle after 30 minutes
+    pool_timeout=30       # Optional: Waiting time when borrowing a connection
+)
+
+def _require_temp_token(token: str) -> None:
+    """
+    Validiert, dass der übergebene Token syntaktisch korrekt ist und
+    exakt der Session-Token ist, der beim Rendern gesetzt wurde.
+    """
+    if not token:
+        abort(403)
+
+    # 1) Syntax: 32-64 Zeichen Hex (anpassen an deine Erzeugung)
+    allowed_len = {32, 64}
+    if len(token) not in allowed_len or any(c not in '0123456789abcdef' for c in token.lower()):
+        abort(403)
+
+    # 2) Session-Match
+    sess_tok = session.get('temp_token')
+    if not sess_tok or token != sess_tok:
+        abort(403)
 
 def localize_dt(dt, tz_name=None):
     if not dt:
@@ -34,8 +67,8 @@ def localize_dt(dt, tz_name=None):
 
 def localize_dt_str(dt, tz_name=None, fmt='%Y-%m-%d %H:%M:%S'):
     """
-    Gibt einen lokalisierten Zeitstempel als formatierten String zurück.
-    Standardformat: '2025-09-10 19:44:47'
+    Returns a localized timestamp as a formatted string.
+    Default format: '2025-09-10 19:44:47'
     """
     if not dt:
         return ''
@@ -99,11 +132,11 @@ def allowed_file(filename: str) -> bool:
 
 def validate_file(file):
     if file.content_length > MAX_FILE_SIZE:
-        flash(_("Datei zu groß. Maximal erlaubt: 10 MB."), "danger")
+        flash(_("File too large. Maximum allowed: 10 MB."), "danger")
         return False
     return True
 
-# --- Verzeichnisse ---
+# --- Directories ---
 def _entry_dir(entry_id: int) -> str:
     p = os.path.join(UPLOAD_FOLDER, str(entry_id))
     os.makedirs(p, exist_ok=True)
@@ -114,22 +147,57 @@ def _temp_dir(token: str) -> str:
     os.makedirs(p, exist_ok=True)
     return p
 
-def _require_temp_token(token: str):
-    if not token or session.get('add_temp_token') != token:
-        abort(403)
-
 # --- Audit-Log ---
 def log_action(user_id: int | None, action: str, entry_id: int | None, detail: str | None = None):
-    with engine.begin() as conn:
-        conn.execute(text("""
-            INSERT INTO audit_log (user_id, action, entry_id, detail)
-            VALUES (:u, :a, :e, :d)
-        """), {'u': user_id, 'a': action, 'e': entry_id, 'd': detail})
+    try:
+        with engine.begin() as conn:
+            conn.execute(text("""
+                INSERT INTO audit_log (user_id, action, entry_id, detail)
+                VALUES (:u, :a, :e, :d)
+            """), {'u': user_id, 'a': action, 'e': entry_id, 'd': detail})
+    except Exception:
+        # Just log – never jeopardize the main action.
+        import logging
+        logging.getLogger(__name__).exception("Audit-Log fehlgeschlagen: %s", action)
+
 
 def build_base_url():
-    # bevorzuge APP_BASE_URL, fallback auf request.url_root
+    # prefer APP_BASE_URL, fallback to request.url_root
     try:
         base = os.getenv("APP_BASE_URL") or request.url_root
     except RuntimeError:
         base = os.getenv("APP_BASE_URL") or "http://localhost:5000/"
     return base.rstrip("/") + "/"
+
+@lru_cache(maxsize=256)
+def get_setting(key: str, default: str | None = None) -> str | None:
+    """
+    Liest einen App-Setting-Wert aus der Tabelle 'settings'.
+    Gibt 'default' zurück, wenn nicht vorhanden oder DB noch nicht erreichbar.
+    """
+    try:
+        with engine.begin() as conn:
+            val = conn.execute(
+                text("SELECT value FROM settings WHERE key = :k"),
+                {'k': key}
+            ).scalar_one_or_none()
+        return val if val is not None else default
+    except Exception:
+        # robust gegen Import-/Init-Reihenfolge (z.B. Tabelle noch nicht angelegt)
+        return default
+
+def set_setting(key: str, value: str) -> None:
+    """
+    Schreibt/aktualisiert einen Setting-Wert und invalidiert den Cache.
+    """
+    with engine.begin() as conn:
+        conn.execute(text("""
+            INSERT INTO settings (key, value)
+            VALUES (:k, :v)
+            ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value
+        """), {'k': key, 'v': value})
+    # Cache leeren, damit get_setting sofort den neuen Wert liefert
+    try:
+        get_setting.cache_clear()
+    except Exception:
+        pass

@@ -5,23 +5,23 @@
   <div class="col-12 col-md-6 col-lg-5">
     <div class="card shadow-sm">
       <div class="card-body text-center">
-        <h1 class="h5 mb-3">{{ _('2FA einrichten') }}</h1>
-        <p>{{ _('Scanne den QR-Code mit deiner Authenticator-App (z.B. Microsoft Authenticator, Google Authenticator) und gib anschließend den 6-stelligen Code ein.') }}</p>
+        <h1 class="h5 mb-3">{{ _('Set up 2FA') }}</h1>
+        <p>{{ _('Scan the QR code with your authenticator app (e.g., Microsoft Authenticator, Google Authenticator) and then enter the 6-digit code.') }}</p>
         <img src="{{ qr_data_url }}" alt="2FA QR" class="img-fluid mb-3" style="max-width: 240px;"/>
-        <div class="alert alert-light">{{ _('2FA geheimer Schlüssel:') }} <code>{{ secret }}</code></div>
+        <div class="alert alert-light">{{ _('2FA secret key:') }} <code>{{ secret }}</code></div>
         <form method="post" action="{{ url_for('confirm_2fa') }}" class="row g-2 justify-content-center">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <div class="col-8">
             <div class="input-group mb-3">
               <span class="input-group-text"><i class="bi bi-code"></i></span>
               <div class="form-floating flex-grow-1">
-                <input name="code" type="number" class="form-control" inputmode="numeric" pattern="[0-9]*" placeholder="{{ _('6-stelliger Code') }}" required>
-                <label for="code">{{ _('6-stelliger Code') }}</label>
+                <input name="code" type="number" class="form-control" inputmode="numeric" pattern="[0-9]*" placeholder="{{ _('6-digit code') }}" required>
+                <label for="code">{{ _('6-digit code') }}</label>
               </div>
             </div>
           </div>
           <div class="col-4 d-grid">
-            <button class="btn btn-primary">{{ _('Bestätigen') }}</button>
+            <button class="btn btn-primary">{{ _('Confirm') }}</button>
           </div>
         </form>
       </div>

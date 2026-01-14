@@ -1,10 +1,15 @@
-
+# German translations for BottleBalance.
+# Copyright (C) 2026 BottleBalance
+# This file is distributed under the same license as the BottleBalance
+# project.
+# FIRST AUTHOR webmaster@michaeleitdorf.de, 2026.
+#
 msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-01-08 17:30+0100\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"POT-Creation-Date: 2026-01-13 23:40+0100\n"
+"PO-Revision-Date: 2026-01-13 08:55+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: de\n"
 "Language-Team: de <LL@li.org>\n"
@@ -15,920 +20,1039 @@ msgstr ""
 "Generated-By: Babel 2.16.0\n"
 
 #: admin.py:58
-msgid "Datenbank-Dump erfolgreich erzeugt."
-msgstr ""
+msgid "Database dump successfully created."
+msgstr "Datenbank-Dump erfolgreich erstellt."
 
-#: admin.py:62
-#, python-format
-msgid "Fehler beim Datenbank-Dump: %(error)s"
-msgstr ""
-
-#: app.py:254
-#, python-format
-msgid "Neuer Zahlungsfreigabeantrag von %(requester)s"
-msgstr ""
-
-#: app.py:255
-#, python-format
-msgid ""
-"Es wurde ein neuer Zahlungsfreigabeantrag erstellt.\n"
-"\n"
-"Antragsteller: %(requester)s\n"
-"Betrag: %(amount).2f EUR\n"
-"Datum: %(date)s\n"
-"Antrag-ID: %(id)d\n"
-"\n"
-"Bitte prüfen Sie den Antrag im System."
-msgstr ""
-
-#: app.py:653
-msgid "Datei zu groß. Bitte kleinere Datei hochladen."
-msgstr ""
-
-#: app.py:748 auth.py:245 user.py:73
-msgid "Passwort muss mindestens 8 Zeichen haben."
-msgstr ""
-
-#: app.py:751 auth.py:248
-msgid "Passwörter stimmen nicht überein."
-msgstr ""
-
-#: app.py:764
-msgid ""
-"Bitte aktiviere die Zwei-Faktor-Authentifizierung (2FA), um dein Konto "
-"zusätzlich zu schützen."
-msgstr ""
-
-#: app.py:772
-msgid "Profil aktualisiert."
-msgstr ""
-
-#: app.py:788 app.py:813
-msgid "Benutzer nicht gefunden."
-msgstr ""
-
-#: app.py:831
-msgid "Kein 2FA-Setup aktiv."
-msgstr ""
-
-#: app.py:836
-msgid "Ungültiger 2FA-Code."
-msgstr ""
-
-#: app.py:845
-msgid "2FA aktiviert."
-msgstr ""
-
-#: app.py:864
-msgid "Passwortprüfung fehlgeschlagen."
-msgstr ""
-
-#: app.py:878
-msgid "2FA deaktiviert."
-msgstr ""
-
-#: app.py:888 app.py:911
-msgid "Ungültige Theme-Auswahl."
-msgstr ""
-
-#: app.py:894
-msgid "Theme-Einstellung gespeichert."
-msgstr ""
-
-#: app.py:907
-msgid "Ungültige Sprache."
-msgstr ""
-
-#: app.py:929
-msgid "Einstellungen gespeichert."
-msgstr ""
-
-#: app.py:1072
-msgid "Freigabeberechtigung geändert."
-msgstr ""
-
-#: app.py:1094
-msgid "CSV-Header entspricht nicht dem erwarteten Format."
-msgstr ""
-
-#: app.py:1267
-msgid "CSV-Preview ist deaktiviert."
-msgstr ""
-
-#: app.py:1278 app.py:1397
-msgid "Vorschau abgelaufen oder nicht gefunden."
-msgstr ""
-
-#: app.py:1283 app.py:1411
-msgid "CSV-Datei nicht gefunden."
-msgstr ""
-
-#: app.py:1292
-msgid "CSV konnte nicht gelesen werden."
-msgstr ""
-
-#: app.py:1339 bbalance.py:474
-msgid "Bitte eine CSV-Datei auswählen."
-msgstr ""
-
-#: app.py:1403
-msgid "Vorschau abgelaufen oder bereits verwendet."
-msgstr ""
-
-#: app.py:1455
-#, python-format
-msgid "Import erfolgreich: %(rows)d Zeilen übernommen."
-msgstr ""
-
-#: app.py:1461 bbalance.py:536
-#, python-format
-msgid "Import fehlgeschlagen: %(error)s"
-msgstr ""
-
-#: app.py:1631 templates/edit.html:25 templates/import_preview.html:71
-#: templates/import_preview.html:91 templates/index.html:76
-#: templates/index.html:318 templates/index.html:353
-#: templates/payment_authorization.html:29
-#: templates/payment_authorization.html:59
-#: templates/payment_authorization.html:238
-#: templates/payment_authorization.html:248
-#: templates/payment_authorization_detail.html:36
-#: templates/payment_authorization_detail.html:45
-#: templates/payment_authorization_detail.html:133
-#: templates/payment_authorization_detail.html:142
-#: templates/table_partial.html:8 templates/table_partial.html:31
-msgid "Datum"
-msgstr ""
-
-#: app.py:1631 templates/edit.html:35 templates/import_preview.html:72
-#: templates/import_preview.html:92 templates/index.html:86
-#: templates/index.html:365 templates/index.html:367
-#: templates/table_partial.html:10 templates/table_partial.html:34
-msgid "Vollgut"
-msgstr ""
-
-#: app.py:1631 templates/edit.html:45 templates/import_preview.html:73
-#: templates/import_preview.html:93 templates/index.html:96
-#: templates/index.html:371 templates/index.html:373
-#: templates/table_partial.html:11 templates/table_partial.html:35
-msgid "Leergut"
-msgstr ""
-
-#: app.py:1631 templates/index.html:331 templates/index.html:382
-#: templates/table_partial.html:12 templates/table_partial.html:38
-msgid "Inventar"
-msgstr ""
-
-#: app.py:1632 templates/edit.html:56 templates/import_preview.html:74
-#: templates/import_preview.html:94 templates/index.html:106
-#: templates/index.html:393 templates/index.html:395
-#: templates/table_partial.html:13 templates/table_partial.html:41
-msgid "Einnahme"
-msgstr ""
-
-#: app.py:1632 templates/edit.html:67 templates/import_preview.html:75
-#: templates/import_preview.html:95 templates/index.html:116
-#: templates/index.html:399 templates/index.html:401
-#: templates/table_partial.html:14 templates/table_partial.html:42
-msgid "Ausgabe"
-msgstr ""
-
-#: app.py:1632 templates/index.html:333 templates/index.html:410
-#: templates/table_partial.html:15 templates/table_partial.html:45
-msgid "Kassenbestand"
-msgstr ""
-
-#: app.py:1632 templates/edit.html:75 templates/edit.html:93
-#: templates/import_preview.html:76 templates/import_preview.html:96
-#: templates/index.html:129 templates/index.html:334 templates/index.html:417
-#: templates/table_partial.html:16 templates/table_partial.html:48
-msgid "Bemerkung"
-msgstr ""
-
-#: app.py:1727
-msgid "Sprache geändert."
-msgstr ""
-
-#: app.py:1785 app.py:1935
-msgid "SMTP configuration incomplete."
-msgstr ""
-
-#: app.py:1813
-msgid "SMTP test successful – test email sent."
-msgstr ""
-
-#: app.py:1815
-msgid "SMTP test failed: "
-msgstr ""
-
-#: app.py:1834
-msgid "Database dump successfully generated."
-msgstr ""
-
-#: app.py:1838
+#: admin.py:62 app.py:1697
 #, python-format
 msgid "Error during database dump: %(error)s"
-msgstr ""
+msgstr "Fehler beim Datenbank-Dump: %(error)s"
 
-#: app.py:1853
-msgid "Bemerkungsoptionen aktualisiert."
-msgstr ""
+#: admin.py:73 app.py:1789
+msgid "App title cannot be empty."
+msgstr "App title cannot be empty."
 
-#: app.py:1855
+#: admin.py:77 app.py:1792
+msgid "Application title updated."
+msgstr "Anwendungstitel aktualisiert."
+
+#: app.py:249
 #, python-format
-msgid "Fehler beim Speichern der Bemerkungsoptionen: %(error)s"
-msgstr ""
+msgid "New payment request from %(requester)s"
+msgstr "Neuer Zahlungsfreigabeantrag von %(requester)s"
 
-#: app.py:1861
-msgid "Bitte eine Bilddatei auswählen."
-msgstr ""
-
-#: app.py:1875
-msgid "Ungültiges Dateiformat. Erlaubt sind: SVG, PNG, JPG, WEBP."
-msgstr ""
-
-#: app.py:1894
-msgid "Logo erfolgreich hochgeladen."
-msgstr ""
-
-#: app.py:1896
+#: app.py:250
 #, python-format
-msgid "Upload fehlgeschlagen: %(error)s"
-msgstr ""
-
-#: app.py:1915
-msgid "Eigenes Logo entfernt. Fallback auf Standard-Logo aktiv."
-msgstr ""
-
-#: app.py:1919
-#, python-format
-msgid "Konnte Datei nicht löschen: %(msg)s"
-msgstr ""
-
-#: app.py:1922
-msgid "Kein eigenes Logo gefunden."
-msgstr ""
-
-#: app.py:1928
-msgid "Unbekannte Aktion."
-msgstr ""
-
-#: app.py:1937
-#, python-brace-format
-msgid "SMTP configuration detected for host {}:{}."
-msgstr ""
-
-#: attachments.py:47 payment.py:518
-msgid "Bitte Datei(en) auswählen."
-msgstr ""
-
-#: attachments.py:58 payment.py:529
-#, python-format
-msgid "Ungültiger Dateityp: %(filename)s"
-msgstr ""
-
-#: attachments.py:79
-#, python-format
-msgid "%(num)d Datei(en) hochgeladen."
-msgstr ""
-
-#: attachments.py:81 payment.py:563
-msgid "Keine Dateien hochgeladen."
-msgstr ""
-
-#: attachments.py:153 payment.py:674
-msgid "Anhang gelöscht."
-msgstr ""
-
-#: auth.py:48
 msgid ""
-"Standard-Login: Benutzername <strong>admin</strong> und Passwort "
+"A new payment request has been created.\n"
+"\n"
+"Requestor: %(requester)s\n"
+"Amount: %(amount).2f EUR\n"
+"Date: %(date)s\n"
+"Request-ID: %(id)d\n"
+"\n"
+"Please check the request in the system."
+msgstr ""
+"Ein neuer Zahlungsfreigabeantrag wurde erstellt.\n"
+"\n"
+"Anforderer: %(requester)s\n"
+"Betrag: %(amount).2f EUR\n"
+"Datum: %(date)s\n"
+"Anforderungs-ID: %(id)d\n"
+"\n"
+"Bitte überprüfen Sie die Anfrage im System."
+
+#: app.py:552
+msgid "Withdrew money"
+msgstr "Entnahme"
+
+#: app.py:553 app.py:1505 templates/index.html:289 templates/index.html:340
+#: templates/table_partial.html:12 templates/table_partial.html:38
+msgid "Inventory"
+msgstr "Inventar"
+
+#: app.py:554
+msgid "Count cash register"
+msgstr "Kassenzählung"
+
+#: app.py:555
+msgid "Emptying cash register GR"
+msgstr "Leerung Kasse GR"
+
+#: app.py:556
+msgid "Delivery of Bottles"
+msgstr "Lieferung Getränke"
+
+#: app.py:557
+msgid "Individual bottle purchase"
+msgstr "Einzelkauf Getränke"
+
+#: app.py:558
+msgid "Deposit PayPal"
+msgstr "Einzahlung Paypal"
+
+#: app.py:559
+msgid "Donation"
+msgstr "Spende"
+
+#: app.py:616
+#, python-format
+msgid ""
+"APP_BASE_URL is not set to production-ready (currently '%(url)s'). Set a "
+"publicly accessible base URL so that hints/links in emails are correct."
+msgstr ""
+"APP_BASE_URL ist nicht für die Produktion bereit eingestellt (derzeit "
+"„%(url)s“). Legen Sie eine öffentlich zugängliche Basis-URL fest, damit "
+"Hinweise/Links in E-Mails korrekt sind."
+
+#: app.py:672
+msgid "File too large. Please upload a smaller file."
+msgstr "Datei zu groß. Bitte laden Sie eine kleinere Datei hoch."
+
+#: app.py:736 auth.py:234 user.py:73
+msgid "Password must be at least 8 characters long."
+msgstr "Das Passwort muss mindestens 8 Zeichen lang sein."
+
+#: app.py:739 auth.py:237 templates/profile.html:196
+msgid "Passwords do not match."
+msgstr "Passwörter stimmen nicht überein."
+
+#: app.py:752
+msgid ""
+"Please enable two-factor authentication (2FA) to provide additional "
+"protection for your account."
+msgstr ""
+"Bitte aktivieren Sie die Zwei-Faktor-Authentifizierung (2FA), um "
+"zusätzlichen Schutz für Ihr Konto zu gewährleisten."
+
+#: app.py:760
+msgid "Profile updated."
+msgstr "Profil aktualisiert."
+
+#: app.py:776 app.py:801
+msgid "User not found."
+msgstr "Benutzer nicht gefunden."
+
+#: app.py:819
+msgid "No 2FA setup active."
+msgstr "Keine 2FA-Einrichtung aktiv."
+
+#: app.py:824
+msgid "Invalid 2FA code."
+msgstr "Ungültiger 2FA-Code."
+
+#: app.py:833
+msgid "2FA enabled."
+msgstr "2FA aktiviert."
+
+#: app.py:852
+msgid "Password verification failed."
+msgstr "Passwortüberprüfung fehlgeschlagen."
+
+#: app.py:866 auth.py:132
+msgid "2FA disabled."
+msgstr "2FA deaktiviert."
+
+#: app.py:876 app.py:903
+msgid "Invalid theme selection."
+msgstr "Ungültige Themenauswahl."
+
+#: app.py:882
+msgid "Theme settings saved."
+msgstr "Themaeinstellungen gespeichert."
+
+#: app.py:899
+msgid "Invalid language."
+msgstr "Ungültige Sprache."
+
+#: app.py:923
+msgid "Settings saved."
+msgstr "Einstellungen gespeichert."
+
+#: app.py:1051
+msgid "Approval authorization changed."
+msgstr "Freigabesberechtigung geändert."
+
+#: app.py:1068
+msgid "CSV header does not match the expected format."
+msgstr "Die CSV-Kopfzeile entspricht nicht dem erwarteten Format."
+
+#: app.py:1143
+msgid "CSV preview is disabled."
+msgstr "Die CSV-Vorschau ist deaktiviert."
+
+#: app.py:1154 app.py:1272
+msgid "Preview expired or not found."
+msgstr "Vorschau abgelaufen oder nicht gefunden."
+
+#: app.py:1159 app.py:1286
+msgid "CSV file not found."
+msgstr "CSV-Datei nicht gefunden."
+
+#: app.py:1168
+msgid "CSV could not be read."
+msgstr "Die CSV-Datei konnte nicht gelesen werden."
+
+#: app.py:1215 bbalance.py:495
+msgid "Please select a CSV file."
+msgstr "Bitte wählen Sie eine CSV-Datei aus."
+
+#: app.py:1278
+msgid "Preview expired or already used."
+msgstr "Preview expired or already used."
+
+#: app.py:1330
+#, python-format
+msgid "Import successful: %(rows)d lines transferred."
+msgstr "Import erfolgreich: %(rows)d Zeilen übertragen."
+
+#: app.py:1336 bbalance.py:556
+#, python-format
+msgid "Import failed: %(error)s"
+msgstr "Import fehlgeschlagen: %(error)s"
+
+#: app.py:1505 templates/edit.html:25 templates/import_preview.html:46
+#: templates/import_preview.html:95 templates/index.html:76
+#: templates/index.html:287 templates/index.html:311
+#: templates/payment_authorization.html:28
+#: templates/payment_authorization.html:57
+#: templates/payment_authorization.html:219
+#: templates/payment_authorization_detail.html:39
+#: templates/payment_authorization_detail.html:104
+#: templates/table_partial.html:8 templates/table_partial.html:31
+msgid "Date"
+msgstr "Datum"
+
+#: app.py:1505 templates/import_preview.html:47
+#: templates/import_preview.html:96 templates/table_partial.html:10
+#: templates/table_partial.html:34
+msgid "Full"
+msgstr "Vollgut"
+
+#: app.py:1505 templates/import_preview.html:48
+#: templates/import_preview.html:97 templates/index.html:92
+#: templates/index.html:329 templates/index.html:331
+#: templates/table_partial.html:11 templates/table_partial.html:35
+msgid "Empty"
+msgstr "Leergut"
+
+#: app.py:1506 templates/edit.html:56 templates/import_preview.html:49
+#: templates/import_preview.html:98 templates/index.html:100
+#: templates/index.html:351 templates/index.html:353
+#: templates/table_partial.html:13 templates/table_partial.html:40
+msgid "Revenue"
+msgstr "Einnahme"
+
+#: app.py:1506 templates/edit.html:67 templates/import_preview.html:50
+#: templates/import_preview.html:99 templates/index.html:108
+#: templates/index.html:357 templates/index.html:359
+#: templates/table_partial.html:14 templates/table_partial.html:41
+msgid "Expense"
+msgstr "Ausgabe"
+
+#: app.py:1506 templates/index.html:291 templates/index.html:368
+#: templates/table_partial.html:15 templates/table_partial.html:44
+msgid "Cash balance"
+msgstr "Kassenbestand"
+
+#: app.py:1506 templates/edit.html:87 templates/import_preview.html:51
+#: templates/import_preview.html:100 templates/index.html:120
+#: templates/index.html:292 templates/index.html:375
+#: templates/table_partial.html:16 templates/table_partial.html:47
+msgid "Note"
+msgstr "Bemerkung"
+
+#: app.py:1600
+msgid "Language changed."
+msgstr "Sprache geändert."
+
+#: app.py:1643 app.py:1804 mail.py:35 mail.py:99
+msgid "SMTP configuration incomplete."
+msgstr "SMTP-Konfiguration unvollständig."
+
+#: app.py:1660 mail.py:51
+msgid "This is a test message to check the SMTP configuration."
+msgstr "Dies ist eine Testnachricht zur Überprüfung der SMTP-Konfiguration."
+
+#: app.py:1664 mail.py:50 modules/mail_utils.py:153
+#, python-format
+msgid "SMTP test by %(app)s"
+msgstr "SMTP-Test von %(app)s"
+
+#: app.py:1671 mail.py:88
+msgid "SMTP test successful – test email sent."
+msgstr "SMTP-Test erfolgreich – Test-E-Mail gesendet."
+
+#: app.py:1673
+msgid "SMTP test failed: "
+msgstr "SMTP-Test fehlgeschlagen: "
+
+#: app.py:1692
+msgid "Database dump successfully generated."
+msgstr "Datenbank-Dump erfolgreich erstellt."
+
+#: app.py:1712
+msgid "Updated notes."
+msgstr "Aktualisierte Notizen."
+
+#: app.py:1714
+#, python-format
+msgid "Error saving notes: %(error)s"
+msgstr "Fehler beim Speichern von Notizen: %(error)s"
+
+#: app.py:1720
+msgid "Please select an image file."
+msgstr "Bitte wählen Sie eine Bilddatei aus."
+
+#: app.py:1734
+msgid "Invalid file format. Permitted formats: SVG, PNG, JPG, WEBP."
+msgstr "Ungültiges Dateiformat. Zulässige Formate: SVG, PNG, JPG, WEBP."
+
+#: app.py:1753
+msgid "Logo successfully uploaded."
+msgstr "Logo erfolgreich hochgeladen."
+
+#: app.py:1755
+#, python-format
+msgid "Upload failed: %(error)s"
+msgstr "Upload fehlgeschlagen: %(error)s"
+
+#: app.py:1774
+msgid "Custom logo removed. Fallback to default logo active."
+msgstr "Benutzerdefiniertes Logo entfernt. Standardlogo aktiv."
+
+#: app.py:1778
+#, python-format
+msgid "Could not delete file: %(msg)s"
+msgstr "Datei konnte nicht gelöscht werden: %(msg)s"
+
+#: app.py:1781
+msgid "No logo found."
+msgstr "Kein Logo gefunden."
+
+#: app.py:1797
+msgid "Unknown action."
+msgstr "Unbekannte Aktion."
+
+#: app.py:1806 mail.py:101
+#, python-format
+msgid "SMTP configuration detected for host %(host)s:%(port)s."
+msgstr "SMTP-Konfiguration für Host %(host)s:%(port)s erkannt."
+
+#: attachments.py:46
+msgid "Please select files."
+msgstr "Bitte wählen Sie Dateien aus."
+
+#: attachments.py:57 payment.py:527
+#, python-format
+msgid "Invalid file type: %(filename)s"
+msgstr "Ungültiger Dateityp: %(filename)s"
+
+#: attachments.py:78
+#, python-format
+msgid "%(num)d Files uploaded."
+msgstr "%(num)d Dateien hochgeladen."
+
+#: attachments.py:80 payment.py:561
+msgid "No files uploaded."
+msgstr "Es wurden keine Dateien hochgeladen."
+
+#: attachments.py:151 payment.py:672
+msgid "Attachment deleted."
+msgstr "Anhang gelöscht."
+
+#: auth.py:47
+msgid ""
+"Default login: Username <strong>admin</strong> and password "
+"<strong>admin</strong> – please change immediately!"
+msgstr ""
+"Standard-Anmeldung: Benutzername <strong>admin</strong> und Passwort "
 "<strong>admin</strong> – bitte sofort ändern!"
-msgstr ""
 
-#: auth.py:63
-msgid "Login fehlgeschlagen."
-msgstr ""
+#: auth.py:64
+msgid "Login failed."
+msgstr "Anmeldung fehlgeschlagen."
 
-#: auth.py:70
+#: auth.py:80
 #, python-format
 msgid ""
-"Bitte das Passwort <a href=\"%(link)s\" class=\"alert-link\">im "
-"Profil</a> ändern."
+"Please change the password <a href=\"%(link)s\" class=\"alert-link\">on "
+"profile</a>."
 msgstr ""
+"Bitte ändern Sie das Passwort <a href=\"%(link)s\" class=\"alert-"
+"link\">in Ihrem Profil</a>."
 
-#: auth.py:122
-msgid "2FA nicht aktiv."
-msgstr ""
-
-#: auth.py:158
+#: auth.py:175
 msgid ""
-"Backup-Code verwendet. Es wurden automatisch neue Codes generiert. Bitte "
-"sicher aufbewahren."
+"Backup code used. New codes were generated automatically. Please keep "
+"them safe."
 msgstr ""
+"Backup-Code verwendet. Neue Codes wurden automatisch generiert. Bitte "
+"bewahren Sie diese sicher auf."
 
-#: auth.py:167
-msgid "Ungültiger 2FA-Code oder Backup-Code."
-msgstr ""
+#: auth.py:183
+msgid "Invalid 2FA code or backup code."
+msgstr "Ungültiger 2FA-Code oder Backup-Code."
 
-#: auth.py:179
-msgid "Neue Backup-Codes wurden generiert. Bitte sicher aufbewahren."
+#: auth.py:194
+msgid "New backup codes have been generated. Please keep them safe."
 msgstr ""
+"Es wurden neue Backup-Codes generiert. Bitte bewahren Sie diese sicher "
+"auf."
 
-#: auth.py:233 auth.py:259
-msgid "Reset-Link ist ungültig oder abgelaufen."
-msgstr ""
+#: auth.py:222
+msgid "Reset link is invalid or expired."
+msgstr "Der Link zum Zurücksetzen ist ungültig oder abgelaufen."
+
+#: auth.py:248
+msgid "Reset link is invalid or has expired."
+msgstr "Der Link zum Zurücksetzen ist ungültig oder abgelaufen."
+
+#: auth.py:265
+msgid "Password has been reset."
+msgstr "Das Passwort wurde zurückgesetzt."
+
+#: auth.py:273
+msgid "If the information is correct, a reset link has been sent."
+msgstr "Wenn die Angaben korrekt sind, wurde ein Link zum Zurücksetzen gesendet."
 
 #: auth.py:276
-msgid "Passwort wurde zurückgesetzt."
-msgstr ""
+msgid "Please enter your username."
+msgstr "Bitte geben Sie Ihren Benutzernamen ein."
 
-#: auth.py:284
-msgid "Wenn die Angaben korrekt sind, wurde ein Reset-Link gesendet."
-msgstr ""
+#: auth.py:308 templates/reset.html:7 user.py:221
+msgid "Reset password"
+msgstr "Passwort zurücksetzen"
 
-#: auth.py:287 templates/login.html:68
-msgid "Bitte Benutzername angeben"
-msgstr ""
-
-#: auth.py:319 templates/reset.html:7 user.py:222
-msgid "Passwort zurücksetzen"
-msgstr ""
-
-#: auth.py:321
+#: auth.py:310
 #, python-format
 msgid ""
-"Bitte klicke auf den folgenden Link, um dein Passwort zurückzusetzen:\n"
+"Please click on the following link to reset your password:\n"
 "\n"
 "%(url)s\n"
 "\n"
-"Der Link ist 1 Stunde gültig."
+"The link is valid for 1 hour."
 msgstr ""
+"Bitte klicken Sie auf den folgenden Link, um Ihr Passwort zurückzusetzen:"
+"\n"
+"\n"
+"%(url)s\n"
+"\n"
+"Der Link ist 1 Stunde lang gültig."
 
-#: bbalance.py:98
+#: bbalance.py:117
 #, python-format
-msgid "Eingabefehler: %(error)s"
-msgstr ""
+msgid "Input error: %(error)s"
+msgstr "Eingabefehler: %(error)s"
 
-#: bbalance.py:120 templates/index.html:819 templates/index.html:851
-#: templates/index.html:876
+#: bbalance.py:134 templates/index.html:820 templates/index.html:845
+msgid "Please enter at least one value for revenue, expenditure, full or empty."
+msgstr ""
+"Bitte geben Sie mindestens einen Wert für Einnahmen, Ausgaben, Voll- oder"
+" Leergut ein."
+
+#: bbalance.py:229
+#, python-format
+msgid "Record saved, %(count)d file(s) transferred."
+msgstr "Datensatz gespeichert, %(count)d Datei(en) übertragen."
+
+#: bbalance.py:231
+msgid "Record saved."
+msgstr "Eintrag gespeichert."
+
+#: bbalance.py:264
+msgid "Entry not found."
+msgstr "Eintrag nicht gefunden."
+
+#: bbalance.py:429
+msgid "Entry saved."
+msgstr "Eintrag gespeichert."
+
+#: mail.py:58
+msgid "SMTP Recipient"
+msgstr "SMTP-Empfänger"
+
+#: mail.py:92
+#, python-format
+msgid "SMTP test failed: %(error)s"
+msgstr "SMTP-Test fehlgeschlagen: %(error)s"
+
+#: payment.py:163
+msgid "Only pending requests can be approved."
+msgstr "Nur ausstehende Anträge können freigegeben werden."
+
+#: payment.py:168
+msgid "You have already approved this request."
+msgstr "Sie haben diesen Antrag bereits freigegeben."
+
+#: payment.py:217
 msgid ""
-"Bitte mindestens einen Wert bei Einnahme, Ausgabe, Vollgut oder Leergut "
-"angeben."
+"All necessary approvals have been received – the payment request has now "
+"been approved."
 msgstr ""
-
-#: bbalance.py:192
-#, python-brace-format
-msgid "Datensatz gespeichert, {count} Datei(en) übernommen."
-msgstr ""
-
-#: bbalance.py:194
-msgid "Datensatz wurde gespeichert."
-msgstr ""
-
-#: bbalance.py:230
-msgid "Eintrag nicht gefunden."
-msgstr ""
-
-#: bbalance.py:408
-msgid "Eintrag wurde gespeichert."
-msgstr ""
-
-#: bbalance.py:532
-#, python-format
-msgid "Import erfolgreich: %(count)d Zeile übernommen."
-msgid_plural "Import erfolgreich: %(count)d Zeilen übernommen."
-msgstr[0] ""
-msgstr[1] ""
-
-#: mail.py:39
-msgid "SMTP-Konfiguration unvollständig."
-msgstr ""
-
-#: mail.py:64
-msgid "SMTP-Test erfolgreich – Test-E-Mail gesendet."
-msgstr ""
-
-#: mail.py:66
-#, python-format
-msgid "SMTP-Test fehlgeschlagen: %(error)s"
-msgstr ""
-
-#: payment.py:165
-msgid "Nur offene Anträge können freigegeben werden."
-msgstr ""
-
-#: payment.py:170
-msgid "Du hast diesen Antrag bereits freigegeben."
-msgstr ""
+"Alle erforderlichen Freigaben liegen vor – der Zahlungsfreigabeantrag "
+"wurde nun freigegeben."
 
 #: payment.py:219
-msgid "Alle erforderlichen Freigaben liegen vor – Antrag ist jetzt freigegeben."
-msgstr ""
-
-#: payment.py:221
 #, python-format
-msgid "Teilfreigabe erfasst: %(done)d/%(total)d."
-msgstr ""
+msgid "Partial approval recorded: %(done)d/%(total)d."
+msgstr "Teilfreigaben erfasst: %(done)d/%(total)d."
 
-#: payment.py:233
-msgid "Nur offene Anträge können auf On Hold gesetzt werden."
-msgstr ""
+#: payment.py:231
+msgid "Only pending payment requests can be placed on hold."
+msgstr "Nur ausstehende Zahlungsfreigabeanträge können zurückgestellt werden."
 
-#: payment.py:240
-msgid "Antrag wurde auf On Hold gesetzt."
-msgstr ""
+#: payment.py:238
+msgid "The payment request was placed on hold."
+msgstr "Der Zahlungsfreigabeantrag wurde zurückgestellt."
 
-#: payment.py:252
-msgid "Antrag kann nur nach Freigabe abgeschlossen werden."
-msgstr ""
+#: payment.py:250
+msgid "The payment request can only be completed after approval."
+msgstr "Der Zahlungsfreigabeantrag kann erst nach Freigabe abgeschlossen werden."
 
-#: payment.py:259
-msgid "Antrag wurde abgeschlossen."
-msgstr ""
+#: payment.py:257
+msgid "Payment request has been completed."
+msgstr "Der Zahlungsfreigabeantrag ist abgeschlossen."
 
-#: payment.py:281
-msgid ""
-"Abgelehnte, freigegebene oder abgeschlossene Anträge können nicht "
-"gelöscht werden."
+#: payment.py:279
+msgid "Rejected, approved, or completed payment requests cannot be deleted."
 msgstr ""
+"Abgelehnte, freigegebene oder abgeschlossene Zahlungsfreigabeanträge "
+"können nicht gelöscht werden."
 
-#: payment.py:294
-msgid "Antrag wurde gelöscht."
-msgstr ""
+#: payment.py:292
+msgid "Payment request was deleted."
+msgstr "Der Zahlungsfreigabeantrag wurde gelöscht."
 
-#: payment.py:308
-msgid "Nur offene oder pausierte Anträge können abgelehnt werden."
+#: payment.py:306
+msgid "Only pending or paused payment requests can be rejected."
 msgstr ""
+"Nur ausstehende oder pausierte Zahlungsfreigabeanträge können "
+"abgelehntwerden."
 
-#: payment.py:311
-msgid "Bitte einen Ablehnungsgrund angeben."
-msgstr ""
+#: payment.py:309
+msgid "Please specify a reason for rejection."
+msgstr "Bitte geben Sie einen Grund für die Ablehnung an."
 
-#: payment.py:322
-msgid "Antrag wurde abgelehnt."
-msgstr ""
+#: payment.py:320
+msgid "Payment request was rejected."
+msgstr "Der Zahlungsfreigabeantrag wurde abgelehnt."
 
-#: payment.py:343
-msgid "Du kannst nur eigene, offene oder pausierte Anträge zurückziehen."
+#: payment.py:341
+msgid "You can only withdraw your own, pending, or paused payment requests."
 msgstr ""
+"ie können nur Ihre eigenen, ausstehenden oder pausierten "
+"Zahlungsfreigabeanträge zurückziehen."
 
-#: payment.py:363
-msgid "Antrag wurde zurückgezogen."
-msgstr ""
+#: payment.py:361
+msgid "Payment request was withdrawn."
+msgstr "Der Zahlungsfreigabeantrag wurde zurückgezogen."
 
-#: payment.py:380
-msgid "Nur pausierte Anträge können fortgesetzt werden."
-msgstr ""
+#: payment.py:378
+msgid "Only paused payment requests can be resumed."
+msgstr "Nur pausierte Zahlungsfreigabeanträge können wieder fortgesetzt werden."
 
-#: payment.py:400
-msgid "Antrag wurde fortgesetzt und ist wieder offen."
-msgstr ""
+#: payment.py:398
+msgid "The payment request was continued and is pending again."
+msgstr "Der Zahlungsfreigabeantrag wurde fortgesetzt und ist erneut ausstehend."
+
+#: payment.py:461 payment.py:864
+msgid "Requestor:"
+msgstr "Antragsteller:"
+
+#: payment.py:462 payment.py:865
+msgid "Date:"
+msgstr "Datum"
 
 #: payment.py:463 payment.py:866
-msgid "Antragsteller/in:"
-msgstr ""
+msgid "Paragraph:"
+msgstr "Paragraph:"
 
 #: payment.py:464 payment.py:867
-msgid "Datum:"
-msgstr ""
+msgid "Purpose:"
+msgstr "Verwendungszweck:"
 
 #: payment.py:465 payment.py:868
-msgid "Paragraph:"
-msgstr ""
+msgid "Amount:"
+msgstr "Betrag:"
 
 #: payment.py:466 payment.py:869
-msgid "Verwendungszweck:"
-msgstr ""
+msgid "Supplier:"
+msgstr "Lieferant:"
 
 #: payment.py:467 payment.py:870
-msgid "Betrag:"
-msgstr ""
+msgid "Justification:"
+msgstr "Begründung:"
 
 #: payment.py:468 payment.py:871
-msgid "Lieferant:"
-msgstr ""
+msgid "State:"
+msgstr "Status:"
 
-#: payment.py:469 payment.py:872
-msgid "Begründung:"
-msgstr ""
+#: payment.py:475 payment.py:879 templates/audit.html:67
+#: templates/payment_authorization_detail.html:242
+msgid "Audit history"
+msgstr "Änderungsprotokoll"
 
-#: payment.py:470 payment.py:873
-msgid "Status:"
-msgstr ""
-
-#: payment.py:477 payment.py:881
-#: templates/payment_authorization_detail.html:310
-msgid "Audit-Historie"
-msgstr ""
-
-#: payment.py:509
+#: payment.py:507
 msgid ""
-"Anhänge können nicht mehr hochgeladen werden, da der Antrag abgeschlossen"
-" oder abgelehnt ist."
+"Attachments can no longer be uploaded because the request has been "
+"completed or rejected."
 msgstr ""
+"Anhänge können nicht mehr hochgeladen werden, da die Anfrage oder "
+"abgelehnt wurde."
 
-#: payment.py:556
+#: payment.py:516
+msgid "Please select file(s)."
+msgstr "Bitte Datei(en) auswählen."
+
+#: payment.py:554
 #, python-format
-msgid "%(count)d Datei hochgeladen."
-msgid_plural "%(count)d Dateien hochgeladen."
-msgstr[0] ""
-msgstr[1] ""
+msgid "%(count)d Files uploaded."
+msgid_plural "%(count)d Files uploaded."
+msgstr[0] "%(count)d Datei hochgeladen."
+msgstr[1] "%(count)d Dateien hochgeladen."
 
-#: payment.py:696
-msgid "Bearbeitung nicht mehr möglich."
-msgstr ""
+#: payment.py:694
+msgid "Editing is no longer possible."
+msgstr "Bearbeitung nicht mehr möglich."
 
-#: payment.py:727
-msgid "Ungültiger Betrag"
-msgstr ""
+#: payment.py:725
+msgid "Invalid amount."
+msgstr "ngültiger Betrag."
 
-#: payment.py:730
+#: payment.py:728
 #, python-format
-msgid "Ungültige Eingabe: %(error)s"
-msgstr ""
+msgid "Invalid input: %(error)s"
+msgstr "Ungültige Eingabe: %(error)s"
 
-#: payment.py:800
-msgid "Antrag gespeichert."
-msgstr ""
+#: payment.py:798
+msgid "Payment request saved."
+msgstr "Zahlungsfreigabeantrag wurde gespeichert."
 
-#: payment.py:921
-msgid "Bitte ein gültiges Datum angeben."
-msgstr ""
+#: payment.py:892
+msgid "all_payment_requests.pdf"
+msgstr "alle_zahlungsfreigabeantraege.pdf"
 
-#: payment.py:925
-msgid "Bitte einen gültigen Betrag angeben."
-msgstr ""
+#: payment.py:920
+msgid "Please enter a valid date."
+msgstr "Bitte geben Sie ein gültiges Datum ein."
 
-#: payment.py:931
-msgid "Ungültiges Datumsformat. Bitte im Format YYYY-MM-DD eingeben."
-msgstr ""
+#: payment.py:924
+msgid "Please enter a valid amount."
+msgstr "Bitte geben Sie einen gültigen Betrag ein."
 
-#: payment.py:937
-msgid "Ungültiger Betrag. Bitte eine Zahl eingeben."
+#: payment.py:930
+msgid "Invalid date format. Please enter in YYYY-MM-DD format."
 msgstr ""
+"Ungültiges Datumsformat. Bitte geben Sie das Datum im Format JJJJ-MM-TT "
+"ein."
 
-#: payment.py:984
-msgid "Zahlungsantrag erfolgreich erstellt."
-msgstr ""
+#: payment.py:936
+msgid "Invalid amount. Please enter a number."
+msgstr "Ungültiger Betrag. Bitte geben Sie eine Zahl ein."
 
-#: payment.py:1003
-msgid "Abgeschlossene Anträge können nicht mehr geändert werden."
-msgstr ""
+#: payment.py:983
+msgid "Payment request created successfully."
+msgstr "Zahlungsfreigabeantrag erfolgreich erstellt."
 
-#: payment.py:1013
-msgid "Keine Freigabe zum Zurückziehen gefunden."
-msgstr ""
+#: payment.py:1002
+msgid "Completed payment requests can not longer be changed."
+msgstr "Abgeschlossene Zahlungsfreigabeanträge können nicht mehr geändert werden."
 
-#: payment.py:1035
-msgid "Deine Freigabe wurde zurückgezogen."
-msgstr ""
+#: payment.py:1012
+msgid "No approval found for withdrawal."
+msgstr "Keine Freigabe zum zurückziehen gefunden."
+
+#: payment.py:1034
+msgid "Your approval has been withdrawn."
+msgstr "Ihre Freigabe wurde widerrufen."
 
 #: user.py:67
-msgid "Benutzername darf nicht leer sein."
-msgstr ""
+msgid "Username cannot be empty."
+msgstr "Der Benutzername darf nicht leer sein."
 
-#: user.py:70 user.py:102 user.py:256
-msgid "Ungültige Rolle."
-msgstr ""
+#: user.py:70 user.py:102 user.py:254
+msgid "Invalid role."
+msgstr "Ungültige Rolle."
 
 #: user.py:81
-msgid "Benutzer angelegt."
-msgstr ""
+msgid "User created."
+msgstr "Bneutzer wurde erstellt."
 
 #: user.py:83
 #, python-format
-msgid "Fehler: %(error)s"
-msgstr ""
+msgid "Error: %(error)s"
+msgstr "Fehler: %(error)s"
 
 #: user.py:150
-msgid "Benutzer aktualisiert."
-msgstr ""
+msgid "User updated."
+msgstr "Benutzer aktualisiert."
 
 #: user.py:172
-msgid "Du kannst dich nicht selbst löschen."
-msgstr ""
+msgid "You cannot delete yourself."
+msgstr "Sie können sich nicht selbst löschen."
 
 #: user.py:178
-msgid "Benutzer gelöscht."
-msgstr ""
+msgid "User deleted."
+msgstr "Benutzer gelöscht."
 
 #: user.py:188
-msgid "Neues Passwort muss mindestens 8 Zeichen haben."
-msgstr ""
+msgid "New password must be at least 8 characters long."
+msgstr "Das neue Passwort muss mindestens 8 Zeichen lang sein."
 
 #: user.py:193
-msgid "Passwort gesetzt."
-msgstr ""
+msgid "New password set."
+msgstr "Neues Passwort festgelegt."
 
-#: user.py:212
+#: user.py:211
 #, python-format
 msgid ""
-"Dein Passwort-Reset-Token lautet:\n"
+"Your password reset token is:\n"
 "\n"
 "%(token)s\n"
 "\n"
-"Dieser Token ist 30 Minuten gültig.\n"
-"Bitte nutze den folgenden Link: %(url)s"
+"This token is valid for 30 minutes.\n"
+"Please use the following link: %(url)s"
 msgstr ""
+"Ihr Passwort-Zurücksetzen-Token lautet:\n"
+"\n"
+"%(token)s\n"
+"\n"
+"Dieses Token ist 30 Minuten lang gültig.\n"
+"Bitte verwenden Sie den folgenden Link: %(url)s"
 
-#: user.py:224
-msgid "Reset-Link per E-Mail versendet."
-msgstr ""
+#: user.py:223
+msgid "Reset link sent by email."
+msgstr "Link zum Zurücksetzen per E-Mail gesendet."
 
-#: user.py:226 user.py:229
+#: user.py:225 user.py:228
 #, python-format
 msgid "Reset-Link: %(url)s"
-msgstr ""
+msgstr "Zurücksetzen-Link: %(url)s"
 
-#: user.py:241
-msgid "Du kannst dich nicht selbst deaktivieren."
-msgstr ""
+#: user.py:240
+msgid "You cannot deactivate yourself."
+msgstr "Sie können sich nicht selbst deaktivieren."
 
-#: modules/core_utils.py:102
-msgid "Datei zu groß. Maximal erlaubt: 10 MB."
-msgstr ""
+#: modules/core_utils.py:121
+msgid "File too large. Maximum allowed: 10 MB."
+msgstr "Datei zu groß. Maximal zulässig: 10 MB."
 
-#: modules/csv_utils.py:62
-msgid "Datum fehlt"
-msgstr ""
+#: modules/csv_utils.py:61
+msgid "Date missing."
+msgstr "Datum fehlt."
 
-#: modules/csv_utils.py:66
-msgid "Ungültiges Datum (erwartet TT.MM.JJJJ): "
-msgstr ""
+#: modules/csv_utils.py:65
+#, python-format
+msgid "Invalid date (expected DD.MM.YYYY): %(value)s"
+msgstr "Ungültiges Datum (erwartet TT.MM.JJJJ): %(value)s"
 
-#: modules/csv_utils.py:93 modules/utils.py:13 templates/index.html:665
-msgid "waehrung"
+#: modules/csv_utils.py:88
+#, python-format
+msgid "Invalid integer for %(field)s: %(value)s"
+msgstr "Ungültige Ganzzahl für %(field)s: %(value)s"
+
+#: modules/csv_utils.py:92 modules/utils.py:13 templates/index.html:634
+msgid "currency"
 msgstr "€"
 
-#: modules/csv_utils.py:183
-msgid "Leere CSV oder fehlender Header."
-msgstr ""
+#: modules/csv_utils.py:182
+msgid "Empty CSV or missing header."
+msgstr "Leere CSV-Datei oder fehlende Kopfzeile."
 
-#: modules/csv_utils.py:237
-msgid "Ungültiges Geldformat für Einnahme: "
-msgstr ""
-
-#: modules/csv_utils.py:239
-msgid "Ungültiges Geldformat für Ausgabe: "
-msgstr ""
-
-#: modules/mail_utils.py:72
+#: modules/csv_utils.py:236
 #, python-format
-msgid "Zahlungsantrag #%(id)d – Status: %(status)s"
-msgstr ""
+msgid "Invalid money format for revenue: %(value)s"
+msgstr "Ungültiges Währungsformat für Einnahmen: %(value)s"
 
-#: modules/mail_utils.py:73
+#: modules/csv_utils.py:238
+#, python-format
+msgid "Invalid money format for expense: %(value)s"
+msgstr "Ungültiges Währungsformat für Ausgaben: %(value)s"
+
+#: modules/mail_utils.py:76
+#, python-format
+msgid "Payment request #%(id)d – State: %(state)s"
+msgstr "Zahlungsfreigabeantrag #%(id)d – Status: %(state)s"
+
+#: modules/mail_utils.py:77
 #, python-format
 msgid ""
-"Ihr Zahlungsantrag #%(id)d wurde auf '%(status)s' gesetzt.\n"
+"Your payment request #%(id)d was sent to '%(state)s'.\n"
 "\n"
 "Link: %(link)s"
 msgstr ""
+"Ihr Zahlungsfreigabeantrag #%(id)d wurde an '%(state)s' gesendet.\n"
+"\n"
+"Link: %(link)s"
 
-#: modules/payment_utils.py:109
-#, python-format
-msgid "Neuer Zahlungsfreigabe-Antrag #%(id)d"
+#: modules/mail_utils.py:154
+msgid ""
+"This is an automated test message to verify the SMTP configuration. "
+"Includes special characters like Ü, Ä, Ö, and ß."
 msgstr ""
+"Dies ist eine automatisierte Testnachricht zur Überprüfung der SMTP-"
+"Konfiguration.Enthält Sonderzeichen wie Ü, Ä, Ö und ß."
 
 #: modules/payment_utils.py:110
 #, python-format
+msgid "New payment request #%(id)d"
+msgstr "Neue Zahlungsfreigabeantrag #%(id)d"
+
+#: modules/payment_utils.py:111
+#, python-format
 msgid ""
-"Hallo,\n"
+"Hello,\n"
 "\n"
-"es wurde soeben ein neuer Zahlungsfreigabe-Antrag (#%(id)d) erstellt.\n"
-"Zur Prüfung/Freigabe:\n"
+"A new payment request (#%(id)d) has just been created.\n"
+"For review/approval:\n"
 "%(link)s\n"
 "\n"
-"Viele Grüße\n"
-"BottleBalance"
+"Best regards, %(app)s"
 msgstr ""
+"Hallo,\n"
+"\n"
+"Ein neuer Zahlungsfreigabeantrag (#%(id)d) wurde gerade erstellt.\n"
+"Zur Überprüfung/Freigabe:\n"
+"%(link)s\n"
+"\n"
+"Mit freundlichen Grüßen, %(app)s"
+
+#: modules/payment_utils.py:118 templates/base.html:6 templates/base.html:149
+#: templates/base.html:160 templates/version.html:6 templates/version.html:20
+msgid "AppTitle"
+msgstr "BottleBalance"
 
 #: templates/2fa.html:8
-msgid "2-Faktor-Authentifizierung"
-msgstr ""
+msgid "Two-factor authentication"
+msgstr "Zwei-Faktor-Authentifizierung"
 
 #: templates/2fa.html:15 templates/2fa_enroll.html:18
 #: templates/2fa_enroll.html:19
-msgid "6-stelliger Code"
-msgstr ""
+msgid "6-digit code"
+msgstr "6-stelliger Code"
 
 #: templates/2fa.html:16
-msgid "2FA-Code oder Backup-Code"
-msgstr ""
+msgid "2FA code or backup code"
+msgstr "2FA-Code oder Backup-Code"
 
 #: templates/2fa.html:19 templates/2fa_enroll.html:24
-msgid "Bestätigen"
-msgstr ""
+msgid "Confirm"
+msgstr "Bestätigen"
 
 #: templates/2fa_enroll.html:8 templates/profile.html:91
-msgid "2FA einrichten"
-msgstr ""
+msgid "Set up 2FA"
+msgstr "2FA einrichten"
 
 #: templates/2fa_enroll.html:9
 msgid ""
-"Scanne den QR-Code mit deiner Authenticator-App (z.B. Microsoft "
-"Authenticator, Google Authenticator) und gib anschließend den 6-stelligen"
-" Code ein."
+"Scan the QR code with your authenticator app (e.g., Microsoft "
+"Authenticator, Google Authenticator) and then enter the 6-digit code."
 msgstr ""
+"Scannen Sie den QR-Code mit Ihrer Authentifizierungs-App (z. B. Microsoft"
+" Authenticator, Google Authenticator) und geben Sie anschließend den "
+"6-stelligen Code ein."
 
 #: templates/2fa_enroll.html:11
-msgid "2FA geheimer Schlüssel:"
-msgstr ""
+msgid "2FA secret key:"
+msgstr "2FA-Geheimschlüssel:"
 
-#: templates/admin_tools.html:6 templates/base.html:88
-msgid "Einstellungen"
-msgstr ""
+#: templates/admin_export.html:12
+msgid "Create and download database dump"
+msgstr "Datenbank-Dump erstellen und herunterladen"
 
-#: templates/admin_tools.html:18 templates/base.html:154
-#: templates/index.html:489 templates/index.html:524 templates/index.html:530
-#: templates/index.html:542 templates/index.html:561 templates/login.html:58
-#: templates/users.html:24
-msgid "Schließen"
-msgstr ""
+#: templates/admin_smtp.html:12 templates/admin_tools.html:72
+msgid "Send test email"
+msgstr "Test-E-Mail senden"
+
+#: templates/admin_tools.html:5 templates/base.html:88
+msgid "Settings"
+msgstr "Einstellungen"
+
+#: templates/admin_tools.html:11
+msgid "Manage notes"
+msgstr "Notizen verwalten"
+
+#: templates/admin_tools.html:12
+msgid "One option per line"
+msgstr "Ein Eintrag pro Zeile"
+
+#: templates/admin_tools.html:17
+msgid "Current notes"
+msgstr "Aktuelle Notizen"
+
+#: templates/admin_tools.html:22
+msgid "No notes available"
+msgstr "Keine Notizen verfügbar"
 
 #: templates/admin_tools.html:30
-msgid "Bemerkungsoptionen verwalten"
-msgstr ""
+msgid "Replace notes"
+msgstr "Notizen ersetzen"
 
-#: templates/admin_tools.html:31
-msgid "Eine Option pro Zeile"
-msgstr ""
+#: templates/admin_tools.html:32
+msgid "One option per line ..."
+msgstr "Eine Option pro Zeile ..."
 
-#: templates/admin_tools.html:36
-msgid "Aktuelle Optionen"
-msgstr ""
+#: templates/admin_tools.html:35 templates/admin_tools.html:117
+#: templates/edit.html:93 templates/edit_user.html:51
+#: templates/payment_authorization_detail.html:14 templates/profile.html:48
+#: templates/profile.html:163 templates/reset.html:33
+msgid "Save"
+msgstr "Speichern"
 
-#: templates/admin_tools.html:41
-msgid "Keine Optionen vorhanden"
-msgstr ""
+#: templates/admin_tools.html:39
+msgid "Clear List"
+msgstr "Liste löschen"
 
-#: templates/admin_tools.html:49
-msgid "Optionen ersetzen"
-msgstr ""
+#: templates/admin_tools.html:53
+msgid "Check SMTP configuration"
+msgstr "Überprüfen Sie die SMTP-Konfiguration."
 
-#: templates/admin_tools.html:51
-msgid "Eine Option pro Zeile ..."
-msgstr ""
+#: templates/admin_tools.html:65
+msgid "Unknown SMTP status"
+msgstr "Unbekannter SMTP-Status"
 
-#: templates/admin_tools.html:54 templates/edit.html:99
-#: templates/edit_user.html:77 templates/payment_authorization_detail.html:15
-#: templates/profile.html:48 templates/profile.html:152 templates/reset.html:48
-#: templates/users.html:139
-msgid "Speichern"
-msgstr ""
+#: templates/admin_tools.html:76
+msgid "The test email is sent to the configured SMTP user address."
+msgstr "Die Test-E-Mail wird an die konfigurierte SMTP-Benutzeradresse gesendet."
 
-#: templates/admin_tools.html:58
-msgid "Leeren"
-msgstr ""
+#: templates/admin_tools.html:85
+msgid "PostgreSQL database export"
+msgstr "PostgreSQL-Datenbankexport"
 
-#: templates/admin_tools.html:72
-msgid "SMTP-Konfiguration prüfen"
+#: templates/admin_tools.html:89
+msgid ""
+"Generates an SQL dump of the current database and makes it available for "
+"download."
 msgstr ""
+"Erzeugt einen SQL-Dump der aktuellen Datenbank und stellt ihn zum "
+"Download bereit."
 
-#: templates/admin_tools.html:84
-msgid "Unbekannter SMTP-Status"
-msgstr ""
-
-#: templates/admin_tools.html:91
-msgid "Test-Mail senden"
-msgstr ""
+#: templates/admin_tools.html:94
+msgid "Create dump now?"
+msgstr "Jetzt Dump erstellen?"
 
 #: templates/admin_tools.html:95
-msgid "Die Test-Mail wird an die konfigurierte SMTP-Benutzeradresse gesendet."
-msgstr ""
+msgid "Create & download dump"
+msgstr "Erstellen und Herunterladen von Dumps"
 
-#: templates/admin_tools.html:104
-msgid "PostgreSQL-Datenbankexport"
-msgstr ""
+#: templates/admin_tools.html:105 templates/admin_tools.html:112
+msgid "Application title"
+msgstr "BottleBalance"
 
-#: templates/admin_tools.html:108
-msgid ""
-"Erzeugt einen SQL-Dump der aktuellen Datenbank und bietet ihn zum "
-"Download an."
-msgstr ""
+#: templates/admin_tools.html:106
+msgid "Shown in titles, exports, emails, and 2FA issuer."
+msgstr "Angezeigt in Titeln, Exporten, E-Mails und 2FA-Aussteller."
 
-#: templates/admin_tools.html:114
-msgid "Dump jetzt erzeugen?"
-msgstr ""
+#: templates/admin_tools.html:129
+msgid "Branding: Your own logo"
+msgstr "Branding: Ihr eigenes Logo"
 
-#: templates/admin_tools.html:115
-msgid "Dump erzeugen & herunterladen"
-msgstr ""
+#: templates/admin_tools.html:130
+msgid "SVG, PNG, JPG, WEBP – recommended: SVG or PNG"
+msgstr "SVG, PNG, JPG, WEBP – empfohlen: SVG oder PNG"
 
-#: templates/admin_tools.html:126
-msgid "Branding: Eigenes Logo"
-msgstr ""
+#: templates/admin_tools.html:135
+msgid "Current logo (preview)"
+msgstr "Aktuelles Logo (Vorschau)"
 
-#: templates/admin_tools.html:127
-msgid "SVG, PNG, JPG, WEBP – empfohlen: SVG oder PNG"
+#: templates/admin_tools.html:140
+msgid "If no custom logo is stored, the default logo will be used."
 msgstr ""
+"Wenn kein benutzerdefiniertes Logo gespeichert ist, wird das Standardlogo"
+" verwendet."
 
-#: templates/admin_tools.html:132
-msgid "Aktuelles Logo (Vorschau)"
-msgstr ""
+#: templates/admin_tools.html:151
+msgid "Select logo file"
+msgstr "Logo-Datei auswählen"
 
-#: templates/admin_tools.html:137
-msgid "Wenn kein eigenes Logo hinterlegt ist, wird das Standard-Logo verwendet."
-msgstr ""
-
-#: templates/admin_tools.html:150
-msgid "Logo-Datei auswählen"
-msgstr ""
-
-#: templates/admin_tools.html:156 templates/edit.html:113
-#: templates/index.html:550 templates/payment_authorization_detail.html:269
-msgid "Hochladen"
-msgstr ""
-
-#: templates/admin_tools.html:161
-msgid "Hinweis: Das Logo wird serverseitig unter uploads/branding/ gespeichert. "
-msgstr ""
+#: templates/admin_tools.html:157 templates/edit.html:107
+#: templates/index.html:130 templates/index.html:517
+#: templates/payment_authorization_detail.html:201
+msgid "Upload"
+msgstr "Hochladen"
 
 #: templates/admin_tools.html:162
-msgid "Cache wird automatisch aktualisiert."
+msgid "Note: The logo is stored on the server side under uploads/branding/. "
 msgstr ""
+"inweis: Das Logo wird auf der Serverseite unter uploads/branding/ "
+"gespeichert. "
 
-#: templates/admin_tools.html:174
-msgid "Eigenes Logo entfernen?"
-msgstr ""
+#: templates/admin_tools.html:163
+msgid "Cache is updated automatically."
+msgstr "Der Cache wird automatisch aktualisiert."
 
-#: templates/admin_tools.html:175
-msgid "Entfernen"
-msgstr ""
+#: templates/admin_tools.html:172
+msgid "Remove your own logo?"
+msgstr "Ihr eigenes Logo entfernen?"
 
-#: templates/audit.html:8 templates/index.html:169
+#: templates/admin_tools.html:173
+msgid "Remove"
+msgstr "Entfernen"
+
+#: templates/audit.html:8 templates/audit.html:49 templates/index.html:148
 msgid "Filter"
-msgstr ""
+msgstr "Filter"
 
-#: templates/audit.html:25 templates/index.html:192
-msgid "Suche"
-msgstr ""
+#: templates/audit.html:25 templates/index.html:164
+msgid "Search"
+msgstr "Suche"
 
-#: templates/audit.html:32 templates/index.html:199
-msgid "Datum/Bemerkung"
-msgstr "Bemerkung"
+#: templates/audit.html:32 templates/index.html:171
+msgid "Date/Note"
+msgstr "Datum/Notiz"
 
-#: templates/audit.html:38 templates/index.html:207
-msgid "Zeitraum"
-msgstr ""
+#: templates/audit.html:38 templates/audit.html:74
+msgid "Time period"
+msgstr "Zeitraum"
 
-#: templates/audit.html:42 templates/index.html:214
+#: templates/audit.html:42 templates/index.html:186
 msgid "TT.MM.JJJJ – TT.MM.JJJJ"
-msgstr "TT.MM.JJJJ"
+msgstr "TT.MM.JJJJ – TT.MM.JJJJ"
 
-#: templates/audit.html:49
-msgid "Filtern"
-msgstr ""
+#: templates/audit.html:52 templates/index.html:224
+msgid "Reset filter"
+msgstr "Filter zurücksetzen"
 
-#: templates/audit.html:52 templates/index.html:252
-msgid "Filter zurücksetzen"
-msgstr ""
-
-#: templates/audit.html:67
-msgid "Audit-Log"
-msgstr ""
-
-#: templates/audit.html:74 templates/audit.html:84 templates/edit.html:146
-#: templates/edit.html:155 templates/payment_authorization_audit.html:20
-#: templates/payment_authorization_audit.html:31
-#: templates/payment_authorization_detail.html:314
-#: templates/payment_authorization_detail.html:323
-msgid "Zeitpunkt"
-msgstr ""
-
-#: templates/audit.html:75 templates/audit.html:85
+#: templates/audit.html:75 templates/audit.html:85 templates/base.html:72
+#: templates/edit.html:142 templates/edit.html:151
+#: templates/payment_authorization_audit.html:17
+#: templates/payment_authorization_audit.html:28
+#: templates/payment_authorization_detail.html:248
+#: templates/payment_authorization_detail.html:257
 msgid "User"
 msgstr "Benutzer"
 
-#: templates/audit.html:76 templates/audit.html:86 templates/edit.html:147
-#: templates/edit.html:156 templates/payment_authorization_audit.html:19
-#: templates/payment_authorization_audit.html:30
-#: templates/payment_authorization_detail.html:315
-#: templates/payment_authorization_detail.html:324
-msgid "Aktion"
-msgstr ""
+#: templates/audit.html:76 templates/audit.html:86 templates/edit.html:141
+#: templates/edit.html:150 templates/payment_authorization_audit.html:18
+#: templates/payment_authorization_audit.html:29
+#: templates/payment_authorization_detail.html:247
+#: templates/payment_authorization_detail.html:256
+msgid "Action"
+msgstr "Aktion"
 
 #: templates/audit.html:77 templates/audit.html:87
 msgid "Entry-ID"
-msgstr ""
+msgstr "Eintrag-ID"
 
-#: templates/audit.html:78 templates/audit.html:88 templates/edit.html:149
-#: templates/edit.html:158 templates/payment_authorization.html:69
-#: templates/payment_authorization_audit.html:21
-#: templates/payment_authorization_audit.html:32
-#: templates/payment_authorization_detail.html:317
-#: templates/payment_authorization_detail.html:326
+#: templates/audit.html:78 templates/audit.html:88 templates/edit.html:143
+#: templates/edit.html:152 templates/payment_authorization.html:67
+#: templates/payment_authorization_audit.html:20
+#: templates/payment_authorization_audit.html:31
+#: templates/payment_authorization_detail.html:249
+#: templates/payment_authorization_detail.html:258
 msgid "Details"
-msgstr ""
+msgstr "Details"
+
+#: templates/audit.html:84 templates/edit.html:140 templates/edit.html:149
+#: templates/payment_authorization_detail.html:246
+#: templates/payment_authorization_detail.html:255
+msgid "Time"
+msgstr "Zeitpunkt"
 
 #: templates/audit.html:92
-msgid "Keine Einträge."
-msgstr ""
-
-#: templates/base.html:6 templates/base.html:135 templates/base.html:146
-msgid "BottleBalanceTitle"
-msgstr "BottleBalance"
+msgid "No entries."
+msgstr "Keine Einträge."
 
 #: templates/base.html:44
 msgid "Greeting"
@@ -936,1064 +1060,886 @@ msgstr "Willkommen"
 
 #: templates/base.html:60
 msgid "Dashboard"
-msgstr ""
+msgstr "Dashboard"
 
 #: templates/base.html:66
-msgid "Anträge"
-msgstr ""
-
-#: templates/base.html:72 templates/edit.html:148 templates/edit.html:157
-#: templates/payment_authorization_audit.html:18
-#: templates/payment_authorization_audit.html:29
-#: templates/payment_authorization_detail.html:316
-#: templates/payment_authorization_detail.html:325
-msgid "Benutzer"
-msgstr ""
+msgid "Requests"
+msgstr "Anträge"
 
 #: templates/base.html:78
 msgid "Audit"
-msgstr ""
+msgstr "Audit"
 
 #: templates/base.html:83 templates/profile.html:11
-msgid "Profil"
-msgstr ""
+msgid "Profile"
+msgstr "Profil"
 
-#: templates/base.html:94 templates/base.html:131
-msgid "Über"
-msgstr ""
+#: templates/base.html:94 templates/base.html:145
+msgid "About"
+msgstr "Über"
 
 #: templates/base.html:100
 msgid "Logout"
-msgstr ""
-
-#: templates/base.html:135
-msgid "Name:"
-msgstr ""
-
-#: templates/base.html:136
-msgid "Version:"
-msgstr ""
-
-#: templates/base.html:137
-msgid "Entwickler:"
-msgstr ""
-
-#: templates/base.html:138
-msgid "Kontakt:"
-msgstr ""
-
-#: templates/base.html:139
-msgid "Entwickler kontaktieren"
-msgstr ""
-
-#: templates/base.html:141
-msgid "Webseite:"
-msgstr ""
-
-#: templates/base.html:146
-msgid ""
-" ist eine Webanwendung zur Verwaltung von Getränkekassen und "
-"Zahlungsanträgen."
-msgstr ""
+msgstr "Logout"
 
 #: templates/base.html:149
-msgid "Buy me a coffee"
-msgstr ""
+msgid "Name:"
+msgstr "Name:"
 
-#: templates/base.html:259 templates/base.html:260
-msgid "Nach oben"
+#: templates/base.html:150
+msgid "Version:"
+msgstr "Version:"
+
+#: templates/base.html:151
+msgid "Developer:"
+msgstr "Entwickler:"
+
+#: templates/base.html:152
+msgid "Contact:"
+msgstr "Kontakt:"
+
+#: templates/base.html:153
+msgid "Contact developer"
+msgstr "Entwickler kontaktieren"
+
+#: templates/base.html:155
+msgid "Webseite:"
+msgstr "Website:"
+
+#: templates/base.html:160
+msgid ""
+" is a web application for managing beverage cash registers and payment "
+"requests."
 msgstr ""
+" ist eine Webanwendung zur Verwaltung von Getränkekassen und "
+"Zahlungsfreigabeanträgen. "
+
+#: templates/base.html:163
+msgid "Buy me a coffee"
+msgstr "Buy me a coffee"
+
+#: templates/base.html:168 templates/index.html:445 templates/index.html:490
+#: templates/index.html:496 templates/index.html:509 templates/index.html:528
+#: templates/login.html:50 templates/users.html:24
+msgid "Close"
+msgstr "Schließen"
+
+#: templates/base.html:277 templates/base.html:278
+msgid "Up"
+msgstr "Hoch"
 
 #: templates/edit.html:8
-msgid "Datensatz bearbeiten"
-msgstr ""
+msgid "Edit record"
+msgstr "Eintrag bearbeiten"
 
-#: templates/edit.html:11 templates/payment_authorization_audit.html:8
-#: templates/payment_authorization_detail.html:21
-msgid "Zurück"
-msgstr ""
+#: templates/edit.html:11 templates/import_preview.html:11
+#: templates/payment_authorization_audit.html:8
+#: templates/payment_authorization_detail.html:20
+msgid "Back"
+msgstr "Zurück"
 
-#: templates/edit.html:73
-msgid "Notiz"
-msgstr ""
+#: templates/edit.html:35 templates/index.html:84 templates/index.html:323
+#: templates/index.html:325
+msgid "Full bottles"
+msgstr "Vollgut"
 
-#: templates/edit.html:98 templates/edit_user.html:76
-#: templates/import_preview.html:152 templates/login.html:74
-#: templates/payment_authorization.html:178
-#: templates/payment_authorization.html:302 templates/profile.html:47
-#: templates/profile.html:151 templates/reset.html:47 templates/users.html:87
-msgid "Abbrechen"
-msgstr ""
+#: templates/edit.html:45
+msgid "Empty Bottles"
+msgstr "Leergut"
 
-#: templates/edit.html:104 templates/index.html:238 templates/index.html:523
-#: templates/payment_authorization_detail.html:258
-msgid "Anhänge"
-msgstr ""
+#: templates/edit.html:92 templates/edit_user.html:50
+#: templates/import_preview.html:171 templates/login.html:66
+#: templates/payment_authorization.html:163
+#: templates/payment_authorization.html:253 templates/profile.html:47
+#: templates/profile.html:162 templates/reset.html:32 templates/users.html:67
+msgid "Cancel"
+msgstr "Abbrechen"
 
-#: templates/edit.html:117 templates/index.html:554
-#: templates/payment_authorization_detail.html:273
-msgid "Zulässige Formate:"
-msgstr ""
+#: templates/edit.html:98 templates/index.html:210 templates/index.html:489
+#: templates/payment_authorization_detail.html:190
+msgid "Attachments"
+msgstr "Anhänge"
 
-#: templates/edit.html:117 templates/index.html:554
-#: templates/payment_authorization_detail.html:273
-msgid "Mehrere Dateien möglich."
-msgstr ""
+#: templates/edit.html:111 templates/index.html:521
+#: templates/payment_authorization_detail.html:205
+msgid "Acceptable formats:"
+msgstr "Akzeptierte Formate:"
 
-#: templates/edit.html:129 templates/edit.html:236
-#: templates/payment_authorization_detail.html:292
-msgid "Ansehen"
-msgstr ""
+#: templates/edit.html:111 templates/index.html:521
+#: templates/payment_authorization_detail.html:205
+msgid "Multiple files possible."
+msgstr "Mehrere Dateien möglich."
 
-#: templates/edit.html:132 templates/edit.html:238 templates/index.html:1031
-#: templates/payment_authorization_detail.html:296
-msgid "Anhang wirklich löschen?"
-msgstr ""
+#: templates/edit.html:123 templates/edit.html:230
+#: templates/payment_authorization_detail.html:224
+msgid "View"
+msgstr "Ansehen"
 
-#: templates/edit.html:134 templates/edit.html:240 templates/index.html:457
-#: templates/index.html:1028 templates/payment_authorization.html:149
-#: templates/payment_authorization_detail.html:299
-#: templates/table_partial.html:77
-msgid "Löschen"
-msgstr ""
+#: templates/edit.html:126 templates/index.html:1028
+msgid "Delete attachment for real?"
+msgstr "Anhang wirklich löschen?"
 
-#: templates/edit.html:139 templates/edit.html:221 templates/index.html:930
-#: templates/index.html:1013
-msgid "Keine Anhänge vorhanden."
-msgstr ""
+#: templates/edit.html:128 templates/edit.html:234 templates/index.html:415
+#: templates/index.html:1025 templates/payment_authorization.html:134
+#: templates/payment_authorization_detail.html:231
+#: templates/table_partial.html:76
+msgid "Delete"
+msgstr "Löschen"
 
-#: templates/edit.html:247
-msgid "Fehler beim Laden der Anhänge:"
-msgstr ""
+#: templates/edit.html:133 templates/edit.html:215 templates/index.html:898
+#: templates/index.html:1002
+msgid "No attachments available."
+msgstr "Keine Anhänge verfügbar."
 
-#: templates/edit.html:248
-msgid "Fehler beim Laden der Anhänge."
-msgstr ""
+#: templates/edit.html:232
+msgid "Delete attachment for permanently?"
+msgstr "Anhang dauerhaft löschen?"
 
-#: templates/edit_user.html:6 templates/users.html:192
-msgid "Benutzer bearbeiten"
-msgstr ""
+#: templates/edit.html:241
+msgid "Error loading attachments:"
+msgstr "Fehler beim Laden der Anhänge:"
 
-#: templates/edit_user.html:11 templates/edit_user.html:18
-#: templates/edit_user.html:19 templates/profile.html:20
-#: templates/users.html:42 templates/users.html:49 templates/users.html:103
-#: templates/users.html:122
-msgid "E-Mail"
-msgstr ""
+#: templates/edit.html:242 templates/index.html:944
+msgid "Error loading attachments."
+msgstr "Fehler beim Laden der Anhänge."
 
-#: templates/edit_user.html:24
-msgid "Neues Passwort (optional)"
-msgstr ""
+#: templates/edit_user.html:5 templates/users.html:158
+msgid "Edit user"
+msgstr "Benutzer bearbeiten"
 
-#: templates/edit_user.html:25 templates/edit_user.html:32
-#: templates/profile.html:30 templates/profile.html:73 templates/reset.html:28
-#: templates/reset.html:41
-msgid "Neues Passwort eingeben"
-msgstr ""
+#: templates/edit_user.html:13 templates/edit_user.html:14
+#: templates/profile.html:20 templates/users.html:41 templates/users.html:83
+#: templates/users.html:101
+msgid "Email"
+msgstr "E-Mail"
 
-#: templates/edit_user.html:26
-msgid "Leer lassen, wenn das Passwort nicht geändert werden soll"
-msgstr ""
+#: templates/edit_user.html:22 templates/profile.html:30
+#: templates/profile.html:73 templates/reset.html:15 templates/reset.html:26
+msgid "Enter new password"
+msgstr "Neues Passwort eingeben"
 
-#: templates/edit_user.html:33 templates/profile.html:31
-msgid "Neues Passwort eingeben (optional)"
-msgstr ""
+#: templates/edit_user.html:23 templates/profile.html:31
+msgid "Enter new password (optional)"
+msgstr "Neues Passwort eingeben (optional)"
 
-#: templates/edit_user.html:38 templates/edit_user.html:53
-#: templates/users.html:54 templates/users.html:69 templates/users.html:104
-#: templates/users.html:144
-msgid "Rolle"
-msgstr ""
+#: templates/edit_user.html:35 templates/users.html:53 templates/users.html:84
+#: templates/users.html:110
+msgid "Role"
+msgstr "Rolle"
 
-#: templates/edit_user.html:67 templates/users.html:105
-#: templates/users.html:149
-msgid "Aktiv"
-msgstr ""
+#: templates/edit_user.html:41 templates/index.html:149 templates/users.html:85
+#: templates/users.html:115
+msgid "Active"
+msgstr "Aktiv"
 
-#: templates/edit_user.html:73
-msgid "Darf Zahlungsfreigaben erteilen"
-msgstr ""
+#: templates/edit_user.html:47
+msgid "May approve payment requests"
+msgstr "Kann Zahlungsfreigabeanträge freigeben"
 
-#: templates/import_preview.html:4
-msgid "CSV-Import – Vorschau"
-msgstr ""
-
-#: templates/import_preview.html:7
-msgid "Gesamt:"
-msgstr ""
-
-#: templates/import_preview.html:8
-msgid "potentielle Duplikate:"
-msgstr ""
-
-#: templates/import_preview.html:10
-msgid "Modus: Alle bestehenden Einträge werden ersetzt"
-msgstr ""
-
-#: templates/import_preview.html:12
-msgid "Modus: Anhängen (bestehende Einträge bleiben erhalten)"
-msgstr ""
+#: templates/import_preview.html:9
+msgid "CSV import – Preview"
+msgstr "CSV-Import – Vorschau"
 
 #: templates/import_preview.html:17
-msgid "Duplikat"
-msgstr ""
+msgid "Total:"
+msgstr "Gesamt:"
 
 #: templates/import_preview.html:18
-msgid "Fehler in Zeile"
-msgstr ""
+msgid "potential duplicates:"
+msgstr "mögliche Duplikate:"
 
-#: templates/import_preview.html:25
-msgid "Feldzuordnung (Mapping)"
-msgstr ""
+#: templates/import_preview.html:20
+msgid "Mode: All existing entries will be replaced"
+msgstr "Modus: Alle vorhandenen Einträge werden ersetzt"
 
-#: templates/import_preview.html:40
-msgid "keine"
-msgstr ""
+#: templates/import_preview.html:22
+msgid "Mode: Append (existing entries are retained)"
+msgstr "Modus: Anhängen (vorhandene Einträge bleiben erhalten)"
 
-#: templates/import_preview.html:53
-msgid "Mapping anwenden & Vorschau aktualisieren"
-msgstr ""
+#: templates/import_preview.html:28
+msgid "Duplicate"
+msgstr "Duplikat"
 
-#: templates/import_preview.html:63
-msgid "Vorschau"
-msgstr ""
+#: templates/import_preview.html:29
+msgid "Error in line"
+msgstr "Fehler in Zeile"
 
-#: templates/import_preview.html:77 templates/import_preview.html:97
-#: templates/payment_authorization.html:31
-#: templates/payment_authorization.html:61
-#: templates/payment_authorization_detail.html:11
-#: templates/payment_authorization_detail.html:219
-msgid "Status"
-msgstr ""
+#: templates/import_preview.html:36
+msgid "Field mapping"
+msgstr "Feldzuordnung"
 
-#: templates/import_preview.html:99
-msgid "Fehler:"
-msgstr ""
+#: templates/import_preview.html:60
+msgid "none"
+msgstr "none"
 
-#: templates/import_preview.html:105
-msgid "wird importiert"
-msgstr ""
+#: templates/import_preview.html:76
+msgid "Apply mapping & refresh preview"
+msgstr "Zuordnung anwenden und Vorschau aktualisieren"
 
-#: templates/import_preview.html:108
-msgid "Duplikat – wird übersprungen (Standard)"
-msgstr ""
+#: templates/import_preview.html:87
+msgid "Preview"
+msgstr "Vorschau"
 
-#: templates/import_preview.html:110
-msgid "neu – wird importiert"
-msgstr ""
+#: templates/import_preview.html:101 templates/payment_authorization.html:30
+#: templates/payment_authorization.html:59
+#: templates/payment_authorization_detail.html:10
+msgid "State"
+msgstr "Status"
 
-#: templates/import_preview.html:132
-msgid "Duplikate überspringen (empfohlen)"
-msgstr ""
+#: templates/import_preview.html:117
+msgid "Error:"
+msgstr "Fehler:"
 
-#: templates/import_preview.html:136
-msgid "Alle einfügen (auch Duplikate)"
-msgstr ""
+#: templates/import_preview.html:123
+msgid "is being imported"
+msgstr "wird importiert"
 
-#: templates/import_preview.html:145
-msgid "Auch Zeilen mit Fehlern importieren (nicht empfohlen)"
-msgstr ""
+#: templates/import_preview.html:126
+msgid "Duplicate – skipped (default)"
+msgstr "Duplikat – übersprungen (Standard)"
 
-#: templates/import_preview.html:149
-msgid "Import jetzt durchführen"
-msgstr ""
+#: templates/import_preview.html:128
+msgid "new – being imported"
+msgstr "neu – wird importiert"
 
-#: templates/index.html:13
-msgid "Inventar:"
-msgstr ""
+#: templates/import_preview.html:150
+msgid "Skip duplicates (recommended)"
+msgstr "Duplikate überspringen (empfohlen)"
 
-#: templates/index.html:14 templates/index.html:366 templates/index.html:372
-#: templates/index.html:384 templates/index.html:667
+#: templates/import_preview.html:154
+msgid "Insert all (including duplicates)"
+msgstr "Alle einfügen (einschließlich Duplikate)"
+
+#: templates/import_preview.html:163
+msgid "Import lines with errors (not recommended)"
+msgstr "Zeilen mit Fehlern importieren (nicht empfohlen)"
+
+#: templates/import_preview.html:168
+msgid "Import now"
+msgstr "Jetzt importieren"
+
+#: templates/index.html:11
+msgid "Inventory:"
+msgstr "Inventar:"
+
+#: templates/index.html:13 templates/index.html:324 templates/index.html:330
+#: templates/index.html:342 templates/index.html:636
 #: templates/table_partial.html:34 templates/table_partial.html:35
 #: templates/table_partial.html:38
-msgid "Fl."
-msgstr ""
+msgid "Btl."
+msgstr "Fl."
 
-#: templates/index.html:32
-msgid "Kasse:"
-msgstr ""
+#: templates/index.html:31
+msgid "Cash register:"
+msgstr "Kasse:"
 
-#: templates/index.html:53
-msgid "Neuen Datensatz hinzufügen"
-msgstr ""
+#: templates/index.html:52
+msgid "Add new record"
+msgstr "Neuen Eintrag hinzufügen"
 
-#: templates/index.html:139 templates/payment_authorization.html:304
-#: templates/users.html:89
-msgid "Hinzufügen"
-msgstr ""
+#: templates/index.html:126 templates/payment_authorization.html:255
+#: templates/users.html:69
+msgid "Add"
+msgstr "Hinzufügen"
 
-#: templates/index.html:144 templates/index.html:145
-msgid "Temporäre Anhänge hochladen"
-msgstr ""
+#: templates/index.html:160
+msgid "Filter for entries"
+msgstr "Filter für Einträge"
 
-#: templates/index.html:146
-msgid "Upload"
-msgstr ""
+#: templates/index.html:179 templates/payment_authorization_audit.html:19
+#: templates/payment_authorization_audit.html:30
+msgid "Timestamp"
+msgstr "Zeitstempel"
 
-#: templates/index.html:171
-msgid "aktiv"
-msgstr ""
+#: templates/index.html:196
+msgid "Year"
+msgstr "Jahr"
 
-#: templates/index.html:188
-msgid "Filter für Einträge"
-msgstr ""
+#: templates/index.html:200 templates/index.html:214
+msgid "All"
+msgstr "Alle"
 
-#: templates/index.html:224
-msgid "Jahr"
-msgstr ""
+#: templates/index.html:215
+msgid "With attachment"
+msgstr "Mit Anhang"
 
-#: templates/index.html:228 templates/index.html:242
-msgid "Alle"
-msgstr ""
+#: templates/index.html:216
+msgid "Without attachment"
+msgstr "Ohne Anhang"
 
-#: templates/index.html:243
-msgid "Nur mit Anhang"
-msgstr ""
+#: templates/index.html:231 templates/index.html:232
+#: templates/payment_authorization_detail.html:18
+msgid "PDF export"
+msgstr "PDF export"
 
-#: templates/index.html:244
-msgid "Ohne Anhang"
-msgstr ""
+#: templates/index.html:239 templates/index.html:240
+msgid "Additional export options"
+msgstr "Zusätzliche Exportoptionen"
+
+#: templates/index.html:247
+msgid "CSV export"
+msgstr "CSV export"
 
 #: templates/index.html:259
-msgid "PDF exportieren"
-msgstr ""
-
-#: templates/index.html:260 templates/payment_authorization_detail.html:19
-msgid "PDF export"
-msgstr ""
-
-#: templates/index.html:267 templates/index.html:268
-msgid "Weitere Exportoptionen"
-msgstr ""
-
-#: templates/index.html:275
-msgid "CSV export"
-msgstr ""
-
-#: templates/index.html:287
 msgid "CSV import"
+msgstr "CSV import"
+
+#: templates/index.html:280
+msgid "Entries"
+msgstr "Einträge"
+
+#: templates/index.html:288 templates/index.html:320
+msgid "Inventory change"
+msgstr "Bestandsänderung"
+
+#: templates/index.html:290 templates/index.html:348
+msgid "Payment"
+msgstr "Zahlung"
+
+#: templates/index.html:293 templates/index.html:387
+#: templates/payment_authorization.html:31
+#: templates/payment_authorization.html:62 templates/table_partial.html:17
+#: templates/table_partial.html:48 templates/users.html:89
+#: templates/users.html:154
+msgid "Actions"
+msgstr "Aktionen"
+
+#: templates/index.html:392 templates/table_partial.html:53
+msgid "Edit"
+msgstr "Bearbeiten"
+
+#: templates/index.html:400 templates/table_partial.html:61
+msgid "Open documents"
+msgstr "Dokumente öffnen"
+
+#: templates/index.html:413 templates/table_partial.html:74
+msgid "Delete entry permanently?"
+msgstr "Eintrag endgültig löschen?"
+
+#: templates/index.html:424 templates/table_partial.html:85
+msgid "No entries available."
+msgstr "Keine Einträge verfügbar."
+
+#: templates/index.html:444
+msgid "CSV file import"
+msgstr "CSV-Datei importieren"
+
+#: templates/index.html:456
+msgid "Select CSV file"
+msgstr "CSV-Datei auswählen"
+
+#: templates/index.html:459
+msgid "Expected headers:"
+msgstr "Erwartete Header:"
+
+#: templates/index.html:461
+msgid "or short form without Inventory/Cash balance."
+msgstr "oder Kurzform ohne Inventar/Kassenbestand."
+
+#: templates/index.html:467
+msgid "Completely replace existing entries"
+msgstr "Vorhandene Einträge vollständig ersetzen"
+
+#: templates/index.html:473
+msgid "Download sample CSV file"
+msgstr "Beispiel-CSV-Datei herunterladen"
+
+#: templates/index.html:476
+msgid "Show preview"
+msgstr "Vorschau anzeigen"
+
+#: templates/index.html:508
+msgid "Upload attachments"
+msgstr "Anhänge hochladen"
+
+#: templates/index.html:788
+msgid ""
+"Please enter at least one value for revenue, expenditure, full or empty "
+"bottles."
 msgstr ""
+"Bitte geben Sie mindestens einen Wert für Einnahmen, Ausgaben, Vollgut "
+"oder Leergut ein."
 
-#: templates/index.html:309
-msgid "Einträge"
-msgstr ""
+#: templates/index.html:935 templates/index.html:1021
+msgid "Open"
+msgstr "Öffnen"
 
-#: templates/index.html:325 templates/index.html:362
-msgid "Bestandsänderung"
-msgstr ""
+#: templates/index.html:1035 templates/index.html:1072
+#: templates/index.html:1075 templates/index.html:1087
+msgid "Upload failed"
+msgstr "Hochladen fehlgeschlagen"
 
-#: templates/index.html:332 templates/index.html:390
-#, fuzzy
-msgid "Zahlung"
-msgstr "Payment request"
-
-#: templates/index.html:335 templates/index.html:429
-#: templates/payment_authorization.html:32
-#: templates/payment_authorization.html:64 templates/table_partial.html:17
-#: templates/table_partial.html:49 templates/users.html:109
-#: templates/users.html:188
-msgid "Aktionen"
-msgstr ""
-
-#: templates/index.html:434 templates/table_partial.html:54
-msgid "Bearbeiten"
-msgstr ""
-
-#: templates/index.html:442 templates/table_partial.html:62
-msgid "Dokumente öffnen"
-msgstr ""
-
-#: templates/index.html:455 templates/table_partial.html:75
-msgid "Eintrag wirklich löschen?"
-msgstr ""
-
-#: templates/index.html:466 templates/index.html:467
-#: templates/table_partial.html:86
-msgid "Keine Einträge vorhanden."
-msgstr ""
-
-#: templates/index.html:488
-msgid "CSV-Datei importieren"
-msgstr ""
-
-#: templates/index.html:493
-msgid "CSV-Datei auswählen"
-msgstr ""
-
-#: templates/index.html:497
-msgid "Erwartete Header:"
-msgstr ""
-
-#: templates/index.html:499
-msgid "oder Kurzform ohne Inventar/Kassenbestand."
-msgstr ""
-
-#: templates/index.html:505
-msgid "Bestehende Einträge komplett ersetzen"
-msgstr ""
-
-#: templates/index.html:510
-msgid "Beispiel-CSV herunterladen"
-msgstr ""
-
-#: templates/index.html:511
-msgid "Vorschau anzeigen"
-msgstr ""
-
-#: templates/index.html:541
-msgid "Anhänge hochladen"
-msgstr ""
-
-#: templates/index.html:967 templates/index.html:1027
-msgid "Öffnen"
-msgstr ""
-
-#: templates/login.html:8 templates/login.html:37
+#: templates/login.html:8 templates/login.html:29
 msgid "Login"
-msgstr ""
+msgstr "Login"
 
-#: templates/login.html:14 templates/login.html:21 templates/login.html:65
-#: templates/users.html:30 templates/users.html:37 templates/users.html:102
-#: templates/users.html:116
-msgid "Benutzername"
-msgstr ""
+#: templates/login.html:17 templates/login.html:57 templates/users.html:33
+#: templates/users.html:82 templates/users.html:96
+msgid "Username"
+msgstr "Benutzername"
 
-#: templates/login.html:26 templates/login.html:33 templates/users.html:74
-#: templates/users.html:81
-msgid "Passwort"
-msgstr ""
+#: templates/login.html:25 templates/users.html:61
+msgid "Password"
+msgstr "Passwort"
 
-#: templates/login.html:46
-msgid "Passwort vergessen?"
-msgstr ""
+#: templates/login.html:38
+msgid "Forgot your password?"
+msgstr "Passwort vergessen?"
 
-#: templates/login.html:57
-msgid "Passwort zurücksetzen anfordern"
-msgstr ""
+#: templates/login.html:49
+msgid "Request password reset"
+msgstr "Passwort zurücksetzen"
 
-#: templates/login.html:70
-msgid "Wenn die Angaben korrekt sind, wird ein Reset-Link per E-Mail gesendet."
-msgstr ""
+#: templates/login.html:60
+msgid "Please enter your username"
+msgstr "Bitte geben Sie Ihren Benutzernamen ein."
 
-#: templates/login.html:75
-msgid "Reset-Link senden"
+#: templates/login.html:62
+msgid "If the information is correct, a reset link will be sent by email."
 msgstr ""
+"enn die Angaben korrekt sind, wird Ihnen per E-Mail ein Link zum "
+"Zurücksetzen zugesandt."
 
-#: templates/payment_authorization.html:6
-msgid "Zahlungsfreigabe"
-msgstr ""
+#: templates/login.html:67
+msgid "Send reset link"
+msgstr "Link zum Zurücksetzen senden"
 
-#: templates/payment_authorization.html:11
-msgid "Neuer Antrag"
-msgstr ""
+#: templates/payment_authorization.html:5
+#: templates/payment_authorization_detail.html:10
+msgid "Payment request"
+msgstr "Zahlungsfreigabeantrag"
 
-#: templates/payment_authorization.html:14
-msgid "Alle Anträge als PDF"
-msgstr ""
+#: templates/payment_authorization.html:10
+msgid "New payment request"
+msgstr "Neuer Antrag"
 
-#: templates/payment_authorization.html:18
+#: templates/payment_authorization.html:13
+msgid "All payment request as PDF"
+msgstr "Alle Anträge als PDF"
+
+#: templates/payment_authorization.html:17
 #: templates/payment_authorization_audit.html:6
-msgid "Audit-Übersicht"
-msgstr ""
+msgid "Audit overview"
+msgstr "Änderungsprotokoll"
 
-#: templates/payment_authorization.html:28
-#: templates/payment_authorization.html:39
-#: templates/payment_authorization.html:58
+#: templates/payment_authorization.html:27
+#: templates/payment_authorization.html:38
+#: templates/payment_authorization.html:56
+#: templates/payment_authorization_detail.html:29
 #: templates/payment_authorization_detail.html:30
-#: templates/payment_authorization_detail.html:31
-#: templates/payment_authorization_detail.html:127
-#: templates/payment_authorization_detail.html:128
-msgid "Antragsteller/in"
-msgstr ""
+#: templates/payment_authorization_detail.html:94
+#: templates/payment_authorization_detail.html:95
+msgid "Requestor"
+msgstr "Antragsteller"
 
-#: templates/payment_authorization.html:30
-#: templates/payment_authorization.html:60
-#: templates/payment_authorization.html:253
-#: templates/payment_authorization.html:268
-#: templates/payment_authorization.html:269
-#: templates/payment_authorization_detail.html:77
-#: templates/payment_authorization_detail.html:85
-#: templates/payment_authorization_detail.html:174
-#: templates/payment_authorization_detail.html:181
-#: templates/payment_authorization_detail.html:182
-msgid "Betrag"
-msgstr ""
+#: templates/payment_authorization.html:29
+#: templates/payment_authorization.html:58
+#: templates/payment_authorization.html:229
+#: templates/payment_authorization.html:230
+#: templates/payment_authorization_detail.html:67
+#: templates/payment_authorization_detail.html:132
+#: templates/payment_authorization_detail.html:133
+msgid "Amount"
+msgstr "Betrag"
+
+#: templates/payment_authorization.html:40
+#: templates/payment_authorization_detail.html:160
+msgid "Approval progress"
+msgstr "Freigabefortschritt"
 
 #: templates/payment_authorization.html:41
-#: templates/payment_authorization_detail.html:228
-msgid "Freigabe-Fortschritt"
-msgstr ""
+msgid "from"
+msgstr "von"
 
-#: templates/payment_authorization.html:42
-msgid "von"
-msgstr ""
+#: templates/payment_authorization.html:41
+#: templates/payment_authorization_detail.html:178
+msgid "approved"
+msgstr "freigegeben"
 
-#: templates/payment_authorization.html:42
-#: templates/payment_authorization_detail.html:246
-msgid "freigegeben"
-msgstr ""
+#: templates/payment_authorization.html:43
+msgid "from you"
+msgstr "von dir"
 
-#: templates/payment_authorization.html:44
-msgid "von dir"
-msgstr ""
+#: templates/payment_authorization.html:74
+msgid "Approve"
+msgstr "Freigeben"
 
-#: templates/payment_authorization.html:76
-msgid "Freigeben"
-msgstr ""
+#: templates/payment_authorization.html:82
+msgid "Withdraw approval"
+msgstr "Freigabe zurückziehen"
 
-#: templates/payment_authorization.html:84
-msgid "Freigabe zurückziehen"
-msgstr ""
+#: templates/payment_authorization.html:90
+msgid "On hold"
+msgstr "Pausiert"
 
-#: templates/payment_authorization.html:105
-msgid "On Hold"
-msgstr ""
+#: templates/payment_authorization.html:98
+msgid "Continue"
+msgstr "Weiter"
 
-#: templates/payment_authorization.html:113
-msgid "Fortsetzen"
-msgstr ""
+#: templates/payment_authorization.html:107
+msgid "Complete"
+msgstr "Abgeschlossen"
 
-#: templates/payment_authorization.html:122
-msgid "Abschließen"
-msgstr ""
+#: templates/payment_authorization.html:114
+#: templates/payment_authorization.html:118
+#: templates/payment_authorization.html:164
+msgid "Reject"
+msgstr "Ablehnen"
 
-#: templates/payment_authorization.html:129
-#: templates/payment_authorization.html:133
-#: templates/payment_authorization.html:179
-msgid "Ablehnen"
-msgstr ""
+#: templates/payment_authorization.html:124
+msgid "Withdraw payment request"
+msgstr "Zahlungsfreigabeantrag zurückziehen"
 
-#: templates/payment_authorization.html:139
-msgid "Antrag zurückziehen"
-msgstr ""
+#: templates/payment_authorization.html:126
+msgid "Withdraw"
+msgstr "Zurückziehen"
 
-#: templates/payment_authorization.html:141
-msgid "Zurückziehen"
-msgstr ""
+#: templates/payment_authorization.html:132
+msgid "Delete payment request permanently"
+msgstr "Zahlungsfreigabeantrag dauerhaft löschen"
 
-#: templates/payment_authorization.html:147
-msgid "Antrag endgültig löschen"
-msgstr ""
+#: templates/payment_authorization.html:151
+msgid "Reject payment request"
+msgstr "Zahlungsfreigabeantrag ablehnen"
 
-#: templates/payment_authorization.html:166
-msgid "Antrag ablehnen"
-msgstr ""
+#: templates/payment_authorization.html:157
+msgid "Justification (mandatory)"
+msgstr "Begründung"
 
-#: templates/payment_authorization.html:172
-msgid "Begründung (Pflicht)"
-msgstr ""
+#: templates/payment_authorization.html:159
+msgid "Please specify reason for rejection"
+msgstr "Bitte geben Sie den Grund für die Ablehnung an"
 
-#: templates/payment_authorization.html:174
-msgid "Bitte Ablehnungsgrund angeben"
-msgstr ""
+#: templates/payment_authorization.html:188
+msgid "Create new payment request"
+msgstr "Neuen Zahlungsfreigabeantrag erstellen"
 
-#: templates/payment_authorization.html:203
-msgid "Neuen Zahlungsantrag erstellen"
-msgstr ""
+#: templates/payment_authorization.html:200
+msgid "e.g. 3a"
+msgstr "z.Bsp. 3a"
+
+#: templates/payment_authorization.html:201
+msgid "Paragraph (optional)"
+msgstr "Paragraph (optional)"
+
+#: templates/payment_authorization.html:210
+msgid "What is the payment request for?"
+msgstr "Wofür ist der Zahlungsfreigabeantrag?"
 
 #: templates/payment_authorization.html:211
-#: templates/payment_authorization.html:218
-msgid "Paragraph (optional)"
-msgstr ""
+#: templates/payment_authorization_detail.html:57
+#: templates/payment_authorization_detail.html:58
+#: templates/payment_authorization_detail.html:123
+#: templates/payment_authorization_detail.html:124
+msgid "Purpose"
+msgstr "Verwendungszweck"
 
-#: templates/payment_authorization.html:212
-#: templates/payment_authorization.html:217
-msgid "z. Bsp. 3a"
-msgstr ""
+#: templates/payment_authorization.html:228
+msgid "eg. 49,90"
+msgstr "z.Bsp. 49,90"
 
-#: templates/payment_authorization.html:224
-#: templates/payment_authorization.html:232
-#: templates/payment_authorization_detail.html:64
-#: templates/payment_authorization_detail.html:71
-#: templates/payment_authorization_detail.html:72
-#: templates/payment_authorization_detail.html:161
-#: templates/payment_authorization_detail.html:168
-#: templates/payment_authorization_detail.html:169
-msgid "Verwendungszweck"
-msgstr ""
+#: templates/payment_authorization.html:238
+msgid "Company / Supplier"
+msgstr "Hersteller / Lieferant"
 
-#: templates/payment_authorization.html:225
-#: templates/payment_authorization.html:231
-msgid "Wofür ist die Zahlungsanfrage"
-msgstr ""
+#: templates/payment_authorization.html:239
+msgid "Supplier (optional)"
+msgstr "Lieferant (optional)"
 
-#: templates/payment_authorization.html:241
-msgid "Bitte ein Datum angeben"
-msgstr ""
+#: templates/payment_authorization.html:247
+msgid "Why is the payment request necessary?"
+msgstr "Warum ist der Zahlungsfreigabeantrag notwendig?"
 
-#: templates/payment_authorization.html:255
-#: templates/payment_authorization.html:267
-msgid "z. Bsp. 49,90"
-msgstr ""
+#: templates/payment_authorization.html:248
+#: templates/payment_authorization_detail.html:84
+#: templates/payment_authorization_detail.html:85
+#: templates/payment_authorization_detail.html:150
+#: templates/payment_authorization_detail.html:151
+msgid "Justification"
+msgstr "Begründung"
 
-#: templates/payment_authorization.html:258
-msgid "Bitte einen Betrag angeben"
-msgstr ""
-
-#: templates/payment_authorization.html:260
-msgid "Komma oder Punkt als Dezimaltrenner ist möglich"
-msgstr ""
-
-#: templates/payment_authorization.html:275
-#: templates/payment_authorization.html:283
-msgid "Lieferant (optional)"
-msgstr ""
-
-#: templates/payment_authorization.html:276
-#: templates/payment_authorization.html:282
-msgid "Firma / Händler"
-msgstr ""
-
-#: templates/payment_authorization.html:288
-msgid "Begründung (optional)"
-msgstr ""
-
-#: templates/payment_authorization.html:290
-#: templates/payment_authorization.html:296
-msgid "Weshalb ist die Zahlungsanfrage notwendig"
-msgstr ""
-
-#: templates/payment_authorization.html:297
-#: templates/payment_authorization_detail.html:103
-#: templates/payment_authorization_detail.html:110
-#: templates/payment_authorization_detail.html:111
-#: templates/payment_authorization_detail.html:200
-#: templates/payment_authorization_detail.html:207
-#: templates/payment_authorization_detail.html:208
-msgid "Begründung"
-msgstr ""
+#: templates/payment_authorization_audit.html:15
+#: templates/payment_authorization_audit.html:26
+msgid "ID"
+msgstr "ID"
 
 #: templates/payment_authorization_audit.html:16
 #: templates/payment_authorization_audit.html:27
-msgid "ID"
-msgstr ""
+msgid "Request"
+msgstr "Antrag"
 
-#: templates/payment_authorization_audit.html:17
-#: templates/payment_authorization_audit.html:28
-msgid "Antrag"
-msgstr ""
-
-#: templates/payment_authorization_detail.html:11
-msgid "Zahlungsantrag"
-msgstr "Payment request"
-
-#: templates/payment_authorization_detail.html:51
-#: templates/payment_authorization_detail.html:58
-#: templates/payment_authorization_detail.html:59
-#: templates/payment_authorization_detail.html:148
-#: templates/payment_authorization_detail.html:155
-#: templates/payment_authorization_detail.html:156
+#: templates/payment_authorization_detail.html:48
+#: templates/payment_authorization_detail.html:49
+#: templates/payment_authorization_detail.html:114
+#: templates/payment_authorization_detail.html:115
 msgid "Paragraph"
-msgstr ""
+msgstr "Paragraph"
 
-#: templates/payment_authorization_detail.html:90
-#: templates/payment_authorization_detail.html:97
-#: templates/payment_authorization_detail.html:98
-#: templates/payment_authorization_detail.html:187
-#: templates/payment_authorization_detail.html:194
-#: templates/payment_authorization_detail.html:195
-msgid "Lieferant"
-msgstr ""
+#: templates/payment_authorization_detail.html:75
+#: templates/payment_authorization_detail.html:76
+#: templates/payment_authorization_detail.html:141
+#: templates/payment_authorization_detail.html:142
+msgid "Supplier"
+msgstr "Lieferant"
 
-#: templates/payment_authorization_detail.html:234
-msgid "Freigaben"
-msgstr ""
+#: templates/payment_authorization_detail.html:166
+msgid "Approvals"
+msgstr "Freigaben"
+
+#: templates/payment_authorization_detail.html:170
+msgid "Chairmans"
+msgstr "Geschäftsführende"
+
+#: templates/payment_authorization_detail.html:182
+msgid "pending"
+msgstr "ausstehend"
+
+#: templates/payment_authorization_detail.html:228
+msgid "Are you sure to delete the attachment?"
+msgstr "Möchten Sie den Anhang wirklich löschen?"
 
 #: templates/payment_authorization_detail.html:238
-msgid "Geschäftsführende"
-msgstr ""
-
-#: templates/payment_authorization_detail.html:250
-msgid "ausstehend"
-msgstr ""
-
-#: templates/payment_authorization_detail.html:306
-msgid "Keine Anhänge vorhanden"
-msgstr ""
+msgid "No attachments available"
+msgstr "Keine Anhänge verfügbar"
 
 #: templates/profile.html:21
-msgid "E-Mail (für Passwort-Reset)"
-msgstr ""
+msgid "Email (for password reset)"
+msgstr "E-Mail (zum Zurücksetzen des Passworts)"
 
-#: templates/profile.html:40 templates/profile.html:41 templates/reset.html:42
-msgid "Passwort wiederholen"
-msgstr ""
+#: templates/profile.html:40 templates/profile.html:41 templates/reset.html:27
+msgid "Repeat password"
+msgstr "Passwort wiederholen"
 
 #: templates/profile.html:59
-msgid "Sicherheit"
-msgstr ""
+msgid "Safety"
+msgstr "Sicherheit"
 
 #: templates/profile.html:62
-msgid "2FA ist"
-msgstr ""
+msgid "2FA is"
+msgstr "2FA ist"
 
 #: templates/profile.html:62
-msgid "aktiviert"
-msgstr ""
+msgid "activated"
+msgstr "aktiviert"
 
 #: templates/profile.html:74
-msgid "Bestätige mit Passwort"
-msgstr ""
+msgid "Confirm with password"
+msgstr "Mit Passwort bestätigen"
 
 #: templates/profile.html:81
-msgid "2FA deaktivieren"
-msgstr ""
+msgid "Disable 2FA"
+msgstr "2FA deaktivieren"
 
 #: templates/profile.html:87
-msgid "2FA ist aktuell"
-msgstr ""
+msgid "2FA is currently"
+msgstr "2FA ist derzeit"
 
 #: templates/profile.html:87
-msgid "deaktiviert"
-msgstr ""
+msgid "deactivated"
+msgstr "deaktiviert"
 
 #: templates/profile.html:97
-msgid "Ihre neuen Backup-Codes (einmalig sichtbar):"
-msgstr ""
+msgid "Your new backup codes (visible once):"
+msgstr "Ihre neuen Backup-Codes (einmalig sichtbar):"
 
-#: templates/profile.html:109 templates/profile.html:139
+#: templates/profile.html:109 templates/profile.html:150
 msgid "System"
-msgstr ""
+msgstr "System"
 
 #: templates/profile.html:119
-msgid "Einträge absteigend sortieren (neueste zuerst)"
-msgstr ""
+msgid "Sort entries in descending order (newest first)"
+msgstr "Einträge in absteigender Reihenfolge sortieren (neueste zuerst)"
 
-#: templates/profile.html:126
-msgid "Sprache"
-msgstr ""
+#: templates/profile.html:130
+msgid "Show entries from the current year only"
+msgstr "Nur Einträge aus dem aktuellen Jahr anzeigen"
 
-#: templates/profile.html:128
-msgid "Deutsch"
-msgstr ""
+#: templates/profile.html:137
+msgid "Language"
+msgstr "Sprache"
 
-#: templates/profile.html:129
-msgid "Englisch"
-msgstr ""
+#: templates/profile.html:139
+msgid "German"
+msgstr "Deutsch"
 
-#: templates/profile.html:135
-msgid "Darstellung"
-msgstr ""
+#: templates/profile.html:140
+msgid "English"
+msgstr "Englisch"
 
-#: templates/profile.html:142
-msgid "Hell"
-msgstr ""
+#: templates/profile.html:146
+msgid "Representation"
+msgstr "Darstellung"
 
-#: templates/profile.html:145
-msgid "Dunkel"
-msgstr ""
+#: templates/profile.html:153
+msgid "Light"
+msgstr "Hell"
 
-#: templates/reset.html:17
-msgid "Reset-Token"
-msgstr ""
+#: templates/profile.html:156
+msgid "Dark"
+msgstr "Dunkel"
 
-#: templates/reset.html:22 templates/reset.html:29
-msgid "Neues Passwort"
-msgstr ""
-
-#: templates/reset.html:35
-msgid "Neues Passwort (Wiederholen)"
-msgstr ""
+#: templates/reset.html:16
+msgid "New password"
+msgstr "Neues Passwort"
 
 #: templates/users.html:6
-msgid "Benutzerverwaltung"
-msgstr ""
+msgid "User management"
+msgstr "Benutzerverwaltung"
 
 #: templates/users.html:11
-msgid "User hinzufügen"
-msgstr ""
+msgid "Add user"
+msgstr "Benutzer hinzufügen"
 
 #: templates/users.html:23
-msgid "Neuen Benutzer anlegen"
-msgstr ""
+msgid "Add new user"
+msgstr "Neuen Benutzer hinzufügen"
 
-#: templates/users.html:106 templates/users.html:165
-msgid "Geschäftsführend"
-msgstr ""
+#: templates/users.html:86 templates/users.html:131
+msgid "Chairman"
+msgstr "Geschäftsführend"
 
-#: templates/users.html:107 templates/users.html:182
-msgid "Erstellt"
-msgstr ""
+#: templates/users.html:87 templates/users.html:148
+msgid "Created"
+msgstr "Erstellt"
 
-#: templates/users.html:108 templates/users.html:185
-msgid "Aktualisiert"
-msgstr ""
+#: templates/users.html:88 templates/users.html:151
+msgid "Updated"
+msgstr "Aktualisiert"
 
-#: templates/users.html:153 templates/users.html:154
-msgid "Deaktivieren"
-msgstr ""
+#: templates/users.html:119 templates/users.html:120
+msgid "Deactivate"
+msgstr "Deaktivieren"
 
-#: templates/users.html:157 templates/users.html:158
-msgid "Aktivieren"
-msgstr ""
+#: templates/users.html:123 templates/users.html:124
+msgid "Activate"
+msgstr "Aktivieren"
 
-#: templates/users.html:170
-msgid "Berechtigung entfernen"
-msgstr ""
+#: templates/users.html:136
+msgid "Remove permission"
+msgstr "Berechtigung entfernen"
 
-#: templates/users.html:171
-msgid "Ja"
-msgstr ""
+#: templates/users.html:137
+msgid "Yes"
+msgstr "Ja"
+
+#: templates/users.html:140
+msgid "Assign permission"
+msgstr "Berechtigung zuweisen"
+
+#: templates/users.html:141
+msgid "No"
+msgstr "Nein"
+
+#: templates/users.html:165
+msgid "Generate reset link"
+msgstr "Link zum Zurücksetzen generieren"
+
+#: templates/users.html:172
+msgid "Delete user permanently?"
+msgstr "Benutzer dauerhaft löschen?"
 
 #: templates/users.html:174
-msgid "Berechtigung vergeben"
-msgstr ""
+msgid "Delete user"
+msgstr "Benutzer löschen"
 
-#: templates/users.html:175
-msgid "Nein"
-msgstr ""
+#: templates/users.html:184
+msgid "No users available"
+msgstr "Keine Benutzer verfügbar"
 
-#: templates/users.html:199
-msgid "Reset-Link generieren"
-msgstr ""
+#: templates/version.html:6
+msgid "Software version"
+msgstr "Softwareversion"
 
-#: templates/users.html:206
-msgid "Benutzer wirklich löschen?"
-msgstr ""
+#: templates/version.html:13
+msgid "Software Information"
+msgstr "Software-Informationen"
 
-#: templates/users.html:208
-msgid "Benutzer löschen"
-msgstr ""
+#: templates/version.html:16
+msgid "Version"
+msgstr "Version"
 
-#: templates/users.html:218
-msgid "Keine Benutzer vorhanden"
-msgstr ""
+#: templates/version.html:17
+msgid "Build Date"
+msgstr "Erstellungsdatum"
+
+#: templates/version.html:18
+msgid "Repository"
+msgstr "Repository"
 
 #: templates/errors/401.html:2 templates/errors/401.html:9
-msgid "Nicht autorisiert"
-msgstr ""
+msgid "Not authorized"
+msgstr "Nicht autorisiert"
 
 #: templates/errors/401.html:12
-msgid "Du bist nicht authorisiert diesen Bereich zu sehen"
-msgstr ""
+msgid "You are not authorized to view this area."
+msgstr "Sie sind nicht berechtigt, diesen Bereich anzuzeigen."
 
 #: templates/errors/401.html:16 templates/errors/403.html:17
 #: templates/errors/404.html:17 templates/errors/500.html:17
-msgid "Zur Startseite"
-msgstr ""
+msgid "To the home page"
+msgstr "Zur Startseite"
 
 #: templates/errors/401.html:20 templates/errors/403.html:21
 #: templates/errors/404.html:21 templates/errors/500.html:21
-msgid "Zum Support-Portal"
-msgstr ""
+msgid "To the support portal"
+msgstr "Zum Support-Portal"
 
 #: templates/errors/401.html:25 templates/errors/403.html:26
 #: templates/errors/404.html:26 templates/errors/500.html:26
-msgid "Support kontaktieren"
-msgstr ""
+msgid "Contact support"
+msgstr "Support kontaktieren"
 
 #: templates/errors/401.html:31 templates/errors/403.html:32
 #: templates/errors/404.html:32 templates/errors/500.html:32
-msgid "Zum Login"
-msgstr ""
+msgid "To log in"
+msgstr "Zum Login"
 
 #: templates/errors/401.html:38 templates/errors/403.html:39
 #: templates/errors/404.html:39 templates/errors/500.html:39
-msgid "Referenz"
-msgstr ""
+msgid "Reference"
+msgstr "Referenz"
 
 #: templates/errors/403.html:2 templates/errors/403.html:9
-msgid "Zugriff verweigert"
-msgstr ""
+msgid "Access denied"
+msgstr "Zugriff verweigert"
 
 #: templates/errors/403.html:13
-msgid "Der Zugriff auf diesen Bereich wurde verweigert"
-msgstr ""
+msgid "Access to this area has been denied."
+msgstr "Der Zugriff auf diesen Bereich wurde verweigert."
 
 #: templates/errors/404.html:2 templates/errors/404.html:9
-msgid "Seite nicht gefunden"
-msgstr ""
+msgid "Page not found"
+msgstr "Seite nicht gefunden"
 
 #: templates/errors/404.html:13
-msgid "Die angeforderte Seite wurde nicht gefunden"
-msgstr ""
+msgid "The requested page was not found"
+msgstr "Die angeforderte Seite wurde nicht gefunden."
 
 #: templates/errors/500.html:2 templates/errors/500.html:9
-msgid "Unerwarteter Fehler"
-msgstr ""
+msgid "Unexpected error"
+msgstr "Unerwarteter Fehler"
 
 #: templates/errors/500.html:13
-msgid "Ein unerwarteter Fehler ist aufgetreten"
-msgstr ""
+msgid "An unexpected error has occurred"
+msgstr "Ein unerwarteter Fehler ist aufgetreten."
 
-#~ msgid "Inventar (aktuell:)"
-#~ msgstr ""
+#~ msgid "Datenbank-Dump erfolgreich erzeugt."
+#~ msgstr "Database dump successfully created."
 
-#~ msgid "2FA geheinmer Schlüssel:"
-#~ msgstr ""
+#~ msgid "Fehler beim Datenbank-Dump: %(error)s"
+#~ msgstr "Error during database dump: %(error)s"
 
-#~ msgid "Im Filter:"
-#~ msgstr ""
-
-#~ msgid "waehrung"
-#~ msgstr "€"
-
-#~ msgid "z.B. 12,34"
-#~ msgstr ""
-
-#~ msgid "z.B. -5,00"
-#~ msgstr ""
-
-#~ msgid "PDF"
-#~ msgstr ""
-
-#~ msgid "CSV"
-#~ msgstr ""
-
-#~ msgid "SMTP-Konfiguration unvollständig."
-#~ msgstr ""
-
-#~ msgid "SMTP-Test erfolgreich – Test-E-Mail wurde versendet."
-#~ msgstr ""
-
-#~ msgid "SMTP-Test fehlgeschlagen: "
-#~ msgstr ""
-
-#~ msgid "SMTP-Konfiguration erkannt für Host {}:{}."
-#~ msgstr ""
-
-#~ msgid "Test-E-Mail senden"
-#~ msgstr ""
-
-#~ msgid "z.B."
-#~ msgstr ""
-
-#~ msgid "Bitte Passwort ändern (erforderlich)."
-#~ msgstr ""
-
-#~ msgid "Backup-Code verwendet. Bitte neue Codes generieren."
-#~ msgstr ""
-
-#~ msgid "optional"
-#~ msgstr ""
-
-#~ msgid "– keine –"
-#~ msgstr ""
-
-#~ msgid "Inventar (aktuell):"
-#~ msgstr ""
-
-#~ msgid "Kassenbestand (aktuell):"
-#~ msgstr ""
-
-#~ msgid "Backup-Codes"
-#~ msgstr ""
-
-#~ msgid "Diese Codes können einmalig beim Login verwendet werden:"
-#~ msgstr ""
-
-#~ msgid "Neue Backup-Codes generieren"
-#~ msgstr ""
-
-#~ msgid "Upload zu groß. Bitte kleinere CSV-Datei hochladen."
-#~ msgstr ""
-
-#~ msgid "Datenbank-Dump erzeugen und herunterladen"
-#~ msgstr ""
-
-#~ msgid "Von"
-#~ msgstr ""
-
-#~ msgid "Bis"
-#~ msgstr ""
-
-#~ msgid "CSV Import"
-#~ msgstr ""
-
-#~ msgid "Passwort setzen"
-#~ msgstr ""
-
-#~ msgid "Reset-Link"
-#~ msgstr ""
-
-#~ msgid "Fehler beim Datenbank-Dump: "
-#~ msgstr ""
-
-#~ msgid "Error during database dump: "
-#~ msgstr ""
-
-#~ msgid "Fehler beim Speichern der Bemerkungsoptionen: "
+#~ msgid "BottleBalance"
 #~ msgstr ""
 
 #~ msgid ""
-#~ "Bitte das Passwort <a href=\"{0}\" class"
-#~ "=\"alert-link\">im Profil</a> ändern."
+#~ "Subject: %(subject)s\r\n"
+#~ "Content-Type: text/plain; charset=utf-8\r\n"
+#~ "\r\n"
+#~ "%(body)s"
 #~ msgstr ""
-
-#~ msgid "Anmeldung"
-#~ msgstr ""
-
-#~ msgid "Du musst angemeldet sein, um diese Seite zu sehen."
-#~ msgstr ""
-
-#~ msgid "Einträge"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Nur mit\n"
-#~ "                Anhang"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Ohne\n"
-#~ "                Anhang"
-#~ msgstr ""
-
-#~ msgid "Zurücksetzen"
-#~ msgstr ""
-
-#~ msgid "Flaschen"
-#~ msgstr ""
-
-#~ msgid "Anlegen"
-#~ msgstr ""
-
-#~ msgid "Als PDF exportieren"
-#~ msgstr ""
-
-#~ msgid "leer lassen, um nicht zu ändern"
-#~ msgstr ""
-
-#~ msgid "Sprache:"
-#~ msgstr ""
-
-#~ msgid "Reset‑Token fehlt."
-#~ msgstr ""
-
-#~ msgid "Passwortanforderungen nicht erfüllt oder stimmen nicht überein."
-#~ msgstr ""
-
-#~ msgid "Link ungültig oder abgelaufen."
-#~ msgstr ""
-
-#~ msgid "Passwort aktualisiert. Bitte einloggen."
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Dein Passwort-Reset-Token lautet:\n"
-#~ "\n"
-#~ "%(token)s\n"
-#~ "\n"
-#~ "Dieser Token ist 30 Minuten gültig.\n"
-#~ "Bitte gib ihn auf der Reset-Seite ein: %(url)s"
-#~ msgstr ""
-
-#~ msgid "Aktion/Entry-ID"
-#~ msgstr ""
-
-#~ msgid "Admin-Passwort noch nicht geändert."
-#~ msgstr ""
-
-#~ msgid "Bitte im Profil aktualisieren."
-#~ msgstr ""
-
-#~ msgid ""
-#~ " ist eine Webanwendung zur Verwaltung"
-#~ " von Getränkekassen und Zahlungsanträgen. "
-#~ "Für Support oder Feedback wenden Sie "
-#~ "sich bitte an den Entwickler."
-#~ msgstr ""
-
-#~ msgid "Admin-Werkzeuge"
-#~ msgstr ""
+#~ "Betreff: %(subject)s\r\n"
+#~ "Content-Type: text/plain; charset=utf-8\r\n"
+#~ "\r\n"
+#~ "%(body)s"
 

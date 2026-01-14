@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-01-14 23:11+0100\n"
+"POT-Creation-Date: 2026-01-15 00:07+0100\n"
 "PO-Revision-Date: 2026-01-13 08:55+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: de\n"
@@ -23,16 +23,16 @@ msgstr ""
 msgid "Database dump successfully created."
 msgstr "Datenbank-Dump erfolgreich erstellt."
 
-#: admin.py:62 app.py:1698
+#: admin.py:62 app.py:1721
 #, python-format
 msgid "Error during database dump: %(error)s"
 msgstr "Fehler beim Datenbank-Dump: %(error)s"
 
-#: admin.py:73 app.py:1790
+#: admin.py:73 app.py:1813
 msgid "App title cannot be empty."
 msgstr "App title cannot be empty."
 
-#: admin.py:77 app.py:1793
+#: admin.py:77 app.py:1816
 msgid "Application title updated."
 msgstr "Anwendungstitel aktualisiert."
 
@@ -62,40 +62,40 @@ msgstr ""
 "\n"
 "Bitte überprüfen Sie die Anfrage im System."
 
-#: app.py:552
+#: app.py:575
 msgid "Withdrew money"
 msgstr "Entnahme"
 
-#: app.py:553 app.py:1506 templates/index.html:289 templates/index.html:340
+#: app.py:576 app.py:1529 templates/index.html:289 templates/index.html:340
 #: templates/table_partial.html:12 templates/table_partial.html:38
 msgid "Inventory"
 msgstr "Inventar"
 
-#: app.py:554
+#: app.py:577
 msgid "Count cash register"
 msgstr "Kassenzählung"
 
-#: app.py:555
+#: app.py:578
 msgid "Emptying cash register GR"
 msgstr "Leerung Kasse GR"
 
-#: app.py:556
+#: app.py:579
 msgid "Delivery of Bottles"
 msgstr "Lieferung Getränke"
 
-#: app.py:557
+#: app.py:580
 msgid "Individual bottle purchase"
 msgstr "Einzelkauf Getränke"
 
-#: app.py:558
+#: app.py:581
 msgid "Deposit PayPal"
 msgstr "Einzahlung Paypal"
 
-#: app.py:559
+#: app.py:582
 msgid "Donation"
 msgstr "Spende"
 
-#: app.py:617
+#: app.py:640
 #, python-format
 msgid ""
 "APP_BASE_URL is not set to production-ready (currently '%(url)s'). Set a "
@@ -105,19 +105,19 @@ msgstr ""
 "„%(url)s“). Legen Sie eine öffentlich zugängliche Basis-URL fest, damit "
 "Hinweise/Links in E-Mails korrekt sind."
 
-#: app.py:673
+#: app.py:696
 msgid "File too large. Please upload a smaller file."
 msgstr "Datei zu groß. Bitte laden Sie eine kleinere Datei hoch."
 
-#: app.py:737 auth.py:247 user.py:73
+#: app.py:760 auth.py:261 user.py:73
 msgid "Password must be at least 8 characters long."
 msgstr "Das Passwort muss mindestens 8 Zeichen lang sein."
 
-#: app.py:740 auth.py:250 templates/profile.html:196
+#: app.py:763 auth.py:264 templates/profile.html:196
 msgid "Passwords do not match."
 msgstr "Passwörter stimmen nicht überein."
 
-#: app.py:753
+#: app.py:776
 msgid ""
 "Please enable two-factor authentication (2FA) to provide additional "
 "protection for your account."
@@ -125,93 +125,93 @@ msgstr ""
 "Bitte aktivieren Sie die Zwei-Faktor-Authentifizierung (2FA), um "
 "zusätzlichen Schutz für Ihr Konto zu gewährleisten."
 
-#: app.py:761
+#: app.py:784
 msgid "Profile updated."
 msgstr "Profil aktualisiert."
 
-#: app.py:777 app.py:802
+#: app.py:800 app.py:825
 msgid "User not found."
 msgstr "Benutzer nicht gefunden."
 
-#: app.py:820
+#: app.py:843
 msgid "No 2FA setup active."
 msgstr "Keine 2FA-Einrichtung aktiv."
 
-#: app.py:825
+#: app.py:848
 msgid "Invalid 2FA code."
 msgstr "Ungültiger 2FA-Code."
 
-#: app.py:834
+#: app.py:857
 msgid "2FA enabled."
 msgstr "2FA aktiviert."
 
-#: app.py:853
+#: app.py:876
 msgid "Password verification failed."
 msgstr "Passwortüberprüfung fehlgeschlagen."
 
-#: app.py:867 auth.py:129
+#: app.py:890 auth.py:143
 msgid "2FA disabled."
 msgstr "2FA deaktiviert."
 
-#: app.py:877 app.py:904
+#: app.py:900 app.py:927
 msgid "Invalid theme selection."
 msgstr "Ungültige Themenauswahl."
 
-#: app.py:883
+#: app.py:906
 msgid "Theme settings saved."
 msgstr "Themaeinstellungen gespeichert."
 
-#: app.py:900
+#: app.py:923
 msgid "Invalid language."
 msgstr "Ungültige Sprache."
 
-#: app.py:924
+#: app.py:947
 msgid "Settings saved."
 msgstr "Einstellungen gespeichert."
 
-#: app.py:1052
+#: app.py:1075
 msgid "Approval authorization changed."
 msgstr "Freigabesberechtigung geändert."
 
-#: app.py:1069
+#: app.py:1092
 msgid "CSV header does not match the expected format."
 msgstr "Die CSV-Kopfzeile entspricht nicht dem erwarteten Format."
 
-#: app.py:1144
+#: app.py:1167
 msgid "CSV preview is disabled."
 msgstr "Die CSV-Vorschau ist deaktiviert."
 
-#: app.py:1155 app.py:1273
+#: app.py:1178 app.py:1296
 msgid "Preview expired or not found."
 msgstr "Vorschau abgelaufen oder nicht gefunden."
 
-#: app.py:1160 app.py:1287
+#: app.py:1183 app.py:1310
 msgid "CSV file not found."
 msgstr "CSV-Datei nicht gefunden."
 
-#: app.py:1169
+#: app.py:1192
 msgid "CSV could not be read."
 msgstr "Die CSV-Datei konnte nicht gelesen werden."
 
-#: app.py:1216 bbalance.py:495
+#: app.py:1239 bbalance.py:495
 msgid "Please select a CSV file."
 msgstr "Bitte wählen Sie eine CSV-Datei aus."
 
-#: app.py:1279
+#: app.py:1302
 msgid "Preview expired or already used."
 msgstr "Preview expired or already used."
 
-#: app.py:1331
+#: app.py:1354
 #, python-format
 msgid "Import successful: %(rows)d lines transferred."
 msgstr "Import erfolgreich: %(rows)d Zeilen übertragen."
 
-#: app.py:1337 bbalance.py:556
+#: app.py:1360 bbalance.py:556
 #, python-format
 msgid "Import failed: %(error)s"
 msgstr "Import fehlgeschlagen: %(error)s"
 
-#: app.py:1506 templates/edit.html:25 templates/import_preview.html:46
+#: app.py:1529 templates/edit.html:25 templates/import_preview.html:46
 #: templates/import_preview.html:95 templates/index.html:76
 #: templates/index.html:287 templates/index.html:311
 #: templates/payment_authorization.html:28
@@ -223,118 +223,118 @@ msgstr "Import fehlgeschlagen: %(error)s"
 msgid "Date"
 msgstr "Datum"
 
-#: app.py:1506 templates/import_preview.html:47
+#: app.py:1529 templates/import_preview.html:47
 #: templates/import_preview.html:96 templates/table_partial.html:10
 #: templates/table_partial.html:34
 msgid "Full"
 msgstr "Vollgut"
 
-#: app.py:1506 templates/import_preview.html:48
+#: app.py:1529 templates/import_preview.html:48
 #: templates/import_preview.html:97 templates/index.html:92
 #: templates/index.html:329 templates/index.html:331
 #: templates/table_partial.html:11 templates/table_partial.html:35
 msgid "Empty"
 msgstr "Leergut"
 
-#: app.py:1507 templates/edit.html:56 templates/import_preview.html:49
+#: app.py:1530 templates/edit.html:56 templates/import_preview.html:49
 #: templates/import_preview.html:98 templates/index.html:100
 #: templates/index.html:351 templates/index.html:353
 #: templates/table_partial.html:13 templates/table_partial.html:40
 msgid "Revenue"
 msgstr "Einnahme"
 
-#: app.py:1507 templates/edit.html:67 templates/import_preview.html:50
+#: app.py:1530 templates/edit.html:67 templates/import_preview.html:50
 #: templates/import_preview.html:99 templates/index.html:108
 #: templates/index.html:357 templates/index.html:359
 #: templates/table_partial.html:14 templates/table_partial.html:41
 msgid "Expense"
 msgstr "Ausgabe"
 
-#: app.py:1507 templates/index.html:291 templates/index.html:368
+#: app.py:1530 templates/index.html:291 templates/index.html:368
 #: templates/table_partial.html:15 templates/table_partial.html:44
 msgid "Cash balance"
 msgstr "Kassenbestand"
 
-#: app.py:1507 templates/edit.html:87 templates/import_preview.html:51
+#: app.py:1530 templates/edit.html:87 templates/import_preview.html:51
 #: templates/import_preview.html:100 templates/index.html:120
 #: templates/index.html:292 templates/index.html:375
 #: templates/table_partial.html:16 templates/table_partial.html:47
 msgid "Note"
 msgstr "Bemerkung"
 
-#: app.py:1601
+#: app.py:1624
 msgid "Language changed."
 msgstr "Sprache geändert."
 
-#: app.py:1644 app.py:1805 mail.py:35 mail.py:99
+#: app.py:1667 app.py:1828 mail.py:35 mail.py:99
 msgid "SMTP configuration incomplete."
 msgstr "SMTP-Konfiguration unvollständig."
 
-#: app.py:1661 mail.py:51
+#: app.py:1684 mail.py:51
 msgid "This is a test message to check the SMTP configuration."
 msgstr "Dies ist eine Testnachricht zur Überprüfung der SMTP-Konfiguration."
 
-#: app.py:1665 mail.py:50 modules/mail_utils.py:153
+#: app.py:1688 mail.py:50 modules/mail_utils.py:153
 #, python-format
 msgid "SMTP test by %(app)s"
 msgstr "SMTP-Test von %(app)s"
 
-#: app.py:1672 mail.py:88
+#: app.py:1695 mail.py:88
 msgid "SMTP test successful – test email sent."
 msgstr "SMTP-Test erfolgreich – Test-E-Mail gesendet."
 
-#: app.py:1674
+#: app.py:1697
 msgid "SMTP test failed: "
 msgstr "SMTP-Test fehlgeschlagen: "
 
-#: app.py:1693
+#: app.py:1716
 msgid "Database dump successfully generated."
 msgstr "Datenbank-Dump erfolgreich erstellt."
 
-#: app.py:1713
+#: app.py:1736
 msgid "Updated notes."
 msgstr "Aktualisierte Notizen."
 
-#: app.py:1715
+#: app.py:1738
 #, python-format
 msgid "Error saving notes: %(error)s"
 msgstr "Fehler beim Speichern von Notizen: %(error)s"
 
-#: app.py:1721
+#: app.py:1744
 msgid "Please select an image file."
 msgstr "Bitte wählen Sie eine Bilddatei aus."
 
-#: app.py:1735
+#: app.py:1758
 msgid "Invalid file format. Permitted formats: SVG, PNG, JPG, WEBP."
 msgstr "Ungültiges Dateiformat. Zulässige Formate: SVG, PNG, JPG, WEBP."
 
-#: app.py:1754
+#: app.py:1777
 msgid "Logo successfully uploaded."
 msgstr "Logo erfolgreich hochgeladen."
 
-#: app.py:1756
+#: app.py:1779
 #, python-format
 msgid "Upload failed: %(error)s"
 msgstr "Upload fehlgeschlagen: %(error)s"
 
-#: app.py:1775
+#: app.py:1798
 msgid "Custom logo removed. Fallback to default logo active."
 msgstr "Benutzerdefiniertes Logo entfernt. Standardlogo aktiv."
 
-#: app.py:1779
+#: app.py:1802
 #, python-format
 msgid "Could not delete file: %(msg)s"
 msgstr "Datei konnte nicht gelöscht werden: %(msg)s"
 
-#: app.py:1782
+#: app.py:1805
 msgid "No logo found."
 msgstr "Kein Logo gefunden."
 
-#: app.py:1798
+#: app.py:1821
 msgid "Unknown action."
 msgstr "Unbekannte Aktion."
 
-#: app.py:1807 mail.py:101
+#: app.py:1830 mail.py:101
 #, python-format
 msgid "SMTP configuration detected for host %(host)s:%(port)s."
 msgstr "SMTP-Konfiguration für Host %(host)s:%(port)s erkannt."
@@ -369,11 +369,11 @@ msgstr ""
 "Standard-Anmeldung: Benutzername <strong>admin</strong> und Passwort "
 "<strong>admin</strong> – bitte sofort ändern!"
 
-#: auth.py:64
+#: auth.py:72 auth.py:78
 msgid "Login failed."
 msgstr "Anmeldung fehlgeschlagen."
 
-#: auth.py:71
+#: auth.py:85
 #, python-format
 msgid ""
 "Please change the password <a href=\"%(link)s\" class=\"alert-link\">on "
@@ -382,11 +382,11 @@ msgstr ""
 "Bitte ändern Sie das Passwort <a href=\"%(link)s\" class=\"alert-"
 "link\">in Ihrem Profil</a>."
 
-#: auth.py:177
+#: auth.py:191
 msgid "Invalid 2FA code or backup code."
 msgstr "Ungültiger 2FA-Code oder Backup-Code."
 
-#: auth.py:190
+#: auth.py:204
 msgid ""
 "Backup code used. New codes were generated automatically. Please keep "
 "them safe."
@@ -394,37 +394,37 @@ msgstr ""
 "Backup-Code verwendet. Neue Codes wurden automatisch generiert. Bitte "
 "bewahren Sie diese sicher auf."
 
-#: auth.py:207
+#: auth.py:221
 msgid "New backup codes have been generated. Please keep them safe."
 msgstr ""
 "Es wurden neue Backup-Codes generiert. Bitte bewahren Sie diese sicher "
 "auf."
 
-#: auth.py:235
+#: auth.py:249
 msgid "Reset link is invalid or expired."
 msgstr "Der Link zum Zurücksetzen ist ungültig oder abgelaufen."
 
-#: auth.py:261
+#: auth.py:275
 msgid "Reset link is invalid or has expired."
 msgstr "Der Link zum Zurücksetzen ist ungültig oder abgelaufen."
 
-#: auth.py:278
+#: auth.py:292
 msgid "Password has been reset."
 msgstr "Das Passwort wurde zurückgesetzt."
 
-#: auth.py:286
+#: auth.py:300
 msgid "If the information is correct, a reset link has been sent."
 msgstr "Wenn die Angaben korrekt sind, wurde ein Link zum Zurücksetzen gesendet."
 
-#: auth.py:289
-msgid "Please enter your username."
-msgstr "Bitte geben Sie Ihren Benutzernamen ein."
+#: auth.py:303
+msgid "Please enter your username or email."
+msgstr "Bitte geben Sie Ihren Benutzernamen oder Ihre E-Mail-Adresse ein."
 
-#: auth.py:321 templates/reset.html:7 user.py:221
+#: auth.py:343 templates/reset.html:7 user.py:247
 msgid "Reset password"
 msgstr "Passwort zurücksetzen"
 
-#: auth.py:323
+#: auth.py:345
 #, python-format
 msgid ""
 "Please click on the following link to reset your password:\n"
@@ -675,40 +675,48 @@ msgstr "Ihre Freigabe wurde widerrufen."
 msgid "Username cannot be empty."
 msgstr "Der Benutzername darf nicht leer sein."
 
-#: user.py:70 user.py:102 user.py:254
+#: user.py:70 user.py:126 user.py:280
 msgid "Invalid role."
 msgstr "Ungültige Rolle."
 
-#: user.py:81
+#: user.py:84 user.py:137
+msgid "Username already exists."
+msgstr "Der Benutzername existiert bereits."
+
+#: user.py:94 user.py:148
+msgid "Email already in use."
+msgstr "E-Mail-Adresse wird bereits verwendet."
+
+#: user.py:103
 msgid "User created."
 msgstr "Bneutzer wurde erstellt."
 
-#: user.py:83
+#: user.py:105
 #, python-format
 msgid "Error: %(error)s"
 msgstr "Fehler: %(error)s"
 
-#: user.py:150
+#: user.py:176
 msgid "User updated."
 msgstr "Benutzer aktualisiert."
 
-#: user.py:172
+#: user.py:198
 msgid "You cannot delete yourself."
 msgstr "Sie können sich nicht selbst löschen."
 
-#: user.py:178
+#: user.py:204
 msgid "User deleted."
 msgstr "Benutzer gelöscht."
 
-#: user.py:188
+#: user.py:214
 msgid "New password must be at least 8 characters long."
 msgstr "Das neue Passwort muss mindestens 8 Zeichen lang sein."
 
-#: user.py:193
+#: user.py:219
 msgid "New password set."
 msgstr "Neues Passwort festgelegt."
 
-#: user.py:211
+#: user.py:237
 #, python-format
 msgid ""
 "Your password reset token is:\n"
@@ -725,16 +733,16 @@ msgstr ""
 "Dieses Token ist 30 Minuten lang gültig.\n"
 "Bitte verwenden Sie den folgenden Link: %(url)s"
 
-#: user.py:223
+#: user.py:249
 msgid "Reset link sent by email."
 msgstr "Link zum Zurücksetzen per E-Mail gesendet."
 
-#: user.py:225 user.py:228
+#: user.py:251 user.py:254
 #, python-format
 msgid "Reset-Link: %(url)s"
 msgstr "Zurücksetzen-Link: %(url)s"
 
-#: user.py:240
+#: user.py:266
 msgid "You cannot deactivate yourself."
 msgstr "Sie können sich nicht selbst deaktivieren."
 
@@ -898,7 +906,7 @@ msgid "One option per line ..."
 msgstr "Eine Option pro Zeile ..."
 
 #: templates/admin_tools.html:35 templates/admin_tools.html:117
-#: templates/edit.html:93 templates/edit_user.html:51
+#: templates/edit.html:93 templates/edit_user.html:64
 #: templates/payment_authorization_detail.html:14 templates/profile.html:48
 #: templates/profile.html:163 templates/reset.html:33
 msgid "Save"
@@ -1151,7 +1159,7 @@ msgstr "Vollgut"
 msgid "Empty Bottles"
 msgstr "Leergut"
 
-#: templates/edit.html:92 templates/edit_user.html:50
+#: templates/edit.html:92 templates/edit_user.html:63
 #: templates/import_preview.html:171 templates/login.html:66
 #: templates/payment_authorization.html:163
 #: templates/payment_authorization.html:253 templates/profile.html:47
@@ -1211,32 +1219,37 @@ msgstr "Fehler beim Laden der Anhänge."
 msgid "Edit user"
 msgstr "Benutzer bearbeiten"
 
-#: templates/edit_user.html:13 templates/edit_user.html:14
+#: templates/edit_user.html:16 templates/edit_user.html:18
+#: templates/users.html:33 templates/users.html:82 templates/users.html:96
+msgid "Username"
+msgstr "Benutzername"
+
+#: templates/edit_user.html:26 templates/edit_user.html:27
 #: templates/profile.html:20 templates/users.html:41 templates/users.html:83
 #: templates/users.html:101
 msgid "Email"
 msgstr "E-Mail"
 
-#: templates/edit_user.html:22 templates/profile.html:30
+#: templates/edit_user.html:35 templates/profile.html:30
 #: templates/profile.html:73 templates/reset.html:15 templates/reset.html:26
 msgid "Enter new password"
 msgstr "Neues Passwort eingeben"
 
-#: templates/edit_user.html:23 templates/profile.html:31
+#: templates/edit_user.html:36 templates/profile.html:31
 msgid "Enter new password (optional)"
 msgstr "Neues Passwort eingeben (optional)"
 
-#: templates/edit_user.html:35 templates/users.html:53 templates/users.html:84
+#: templates/edit_user.html:48 templates/users.html:53 templates/users.html:84
 #: templates/users.html:110
 msgid "Role"
 msgstr "Rolle"
 
-#: templates/edit_user.html:41 templates/index.html:149 templates/users.html:85
+#: templates/edit_user.html:54 templates/index.html:149 templates/users.html:85
 #: templates/users.html:115
 msgid "Active"
 msgstr "Aktiv"
 
-#: templates/edit_user.html:47
+#: templates/edit_user.html:60
 msgid "May approve payment requests"
 msgstr "Kann Zahlungsfreigabeanträge freigeben"
 
@@ -1477,10 +1490,9 @@ msgstr "Hochladen fehlgeschlagen"
 msgid "Login"
 msgstr "Login"
 
-#: templates/login.html:17 templates/login.html:57 templates/users.html:33
-#: templates/users.html:82 templates/users.html:96
-msgid "Username"
-msgstr "Benutzername"
+#: templates/login.html:17 templates/login.html:57
+msgid "Username or Email"
+msgstr "Benutzername oder E-Mail-Adresse"
 
 #: templates/login.html:25 templates/users.html:61
 msgid "Password"
@@ -1495,8 +1507,9 @@ msgid "Request password reset"
 msgstr "Passwort zurücksetzen"
 
 #: templates/login.html:60
-msgid "Please enter your username"
-msgstr "Bitte geben Sie Ihren Benutzernamen ein."
+#, fuzzy
+msgid "Please enter your username or Email"
+msgstr "Bitte geben Sie Ihren Benutzernamen oder Ihre E-Mail-Adresse ein."
 
 #: templates/login.html:62
 msgid "If the information is correct, a reset link will be sent by email."

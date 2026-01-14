@@ -52,16 +52,30 @@ def login():
     if request.method == 'POST':
         require_csrf(lambda: None)()  # nur für POST prüfen
 
-    username = (request.form.get('username') or '').strip()
+    username_or_email = (request.form.get('username') or '').strip()
     password = (request.form.get('password') or '').strip()
+
     with engine.begin() as conn:
         user = conn.execute(text("""
             SELECT id, username, password_hash, role, active, must_change_password, totp_enabled, last_login_at
-            FROM users WHERE username=:u
-        """), {'u': username}).mappings().first()
+            FROM users
+            WHERE active = TRUE
+            AND (
+                    LOWER(username) = LOWER(:ue)
+                OR (email IS NOT NULL AND email <> '' AND LOWER(email) = LOWER(:ue))
+            )
+            LIMIT 2
+        """), {'ue': username_or_email}).mappings().all()
 
-    if not user or not check_password_hash(user['password_hash'], password) or not user['active']:
+    # Eindeutigkeit sicherstellen: exakt 1 Treffer
+    if len(user) != 1:
         flash(_('Login failed.'), 'danger')
+        return redirect(url_for('auth_routes.login'))
+
+    user = user[0]
+
+    if not check_password_hash(user['password_hash'], password):
+        flash(_('Login failed.'), 'danger'); 
         return redirect(url_for('auth_routes.login'))
 
     # If password needs to be changed: Set info + flag for later forwarding
@@ -281,25 +295,33 @@ def reset_post(token: str):
 @auth_routes.post('/forgot')
 @require_csrf
 def request_reset():
-    username = (request.form.get('username') or '').strip()
-    # Generic response – prevents user enumeration
+    username_or_email = (request.form.get('username') or '').strip()
+    # Generic response bleibt identisch (gegen User-Enumeration)
     generic_msg = _('If the information is correct, a reset link has been sent.')
 
-    if not username:
-        flash(_('Please enter your username.'), 'danger')
+    if not username_or_email:
+        flash(_('Please enter your username or email.'), 'danger')
         return redirect(url_for('auth_routes.login'))
 
-    # Load user
     with engine.begin() as conn:
-        user = conn.execute(text("""
-            SELECT id, email FROM users
-            WHERE username=:u AND active=TRUE
-        """), {'u': username}).mappings().first()
+        rows = conn.execute(text("""
+            SELECT id, email
+            FROM users
+            WHERE active = TRUE
+            AND (
+                    LOWER(username) = LOWER(:ue)
+                OR (email IS NOT NULL AND email <> '' AND LOWER(email) = LOWER(:ue))
+            )
+            LIMIT 2
+        """), {'ue': username_or_email}).mappings().all()
 
-    # If not available or no email -> generic message
-    if not user or not (user.get('email') or '').strip():
+    # Wenn kein eindeutiger Treffer -> generische Antwort
+    if len(rows) != 1 or not (rows[0].get('email') or '').strip():
         flash(generic_msg, 'info')
         return redirect(url_for('auth_routes.login'))
+
+    user = rows[0]
+
 
     # Generate + save tokens
     token = secrets.token_urlsafe(32)

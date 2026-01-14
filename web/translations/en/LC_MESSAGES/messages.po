@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-01-14 23:11+0100\n"
+"POT-Creation-Date: 2026-01-15 00:07+0100\n"
 "PO-Revision-Date: 2026-01-13 08:55+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -23,16 +23,16 @@ msgstr ""
 msgid "Database dump successfully created."
 msgstr ""
 
-#: admin.py:62 app.py:1698
+#: admin.py:62 app.py:1721
 #, python-format
 msgid "Error during database dump: %(error)s"
 msgstr ""
 
-#: admin.py:73 app.py:1790
+#: admin.py:73 app.py:1813
 msgid "App title cannot be empty."
 msgstr ""
 
-#: admin.py:77 app.py:1793
+#: admin.py:77 app.py:1816
 msgid "Application title updated."
 msgstr ""
 
@@ -54,151 +54,151 @@ msgid ""
 "Please check the request in the system."
 msgstr ""
 
-#: app.py:552
+#: app.py:575
 msgid "Withdrew money"
 msgstr ""
 
-#: app.py:553 app.py:1506 templates/index.html:289 templates/index.html:340
+#: app.py:576 app.py:1529 templates/index.html:289 templates/index.html:340
 #: templates/table_partial.html:12 templates/table_partial.html:38
 msgid "Inventory"
 msgstr ""
 
-#: app.py:554
+#: app.py:577
 msgid "Count cash register"
 msgstr ""
 
-#: app.py:555
+#: app.py:578
 msgid "Emptying cash register GR"
 msgstr ""
 
-#: app.py:556
+#: app.py:579
 msgid "Delivery of Bottles"
 msgstr ""
 
-#: app.py:557
+#: app.py:580
 msgid "Individual bottle purchase"
 msgstr ""
 
-#: app.py:558
+#: app.py:581
 msgid "Deposit PayPal"
 msgstr ""
 
-#: app.py:559
+#: app.py:582
 msgid "Donation"
 msgstr ""
 
-#: app.py:617
+#: app.py:640
 #, python-format
 msgid ""
 "APP_BASE_URL is not set to production-ready (currently '%(url)s'). Set a "
 "publicly accessible base URL so that hints/links in emails are correct."
 msgstr ""
 
-#: app.py:673
+#: app.py:696
 msgid "File too large. Please upload a smaller file."
 msgstr ""
 
-#: app.py:737 auth.py:247 user.py:73
+#: app.py:760 auth.py:261 user.py:73
 msgid "Password must be at least 8 characters long."
 msgstr ""
 
-#: app.py:740 auth.py:250 templates/profile.html:196
+#: app.py:763 auth.py:264 templates/profile.html:196
 msgid "Passwords do not match."
 msgstr ""
 
-#: app.py:753
+#: app.py:776
 msgid ""
 "Please enable two-factor authentication (2FA) to provide additional "
 "protection for your account."
 msgstr ""
 
-#: app.py:761
+#: app.py:784
 msgid "Profile updated."
 msgstr ""
 
-#: app.py:777 app.py:802
+#: app.py:800 app.py:825
 msgid "User not found."
 msgstr ""
 
-#: app.py:820
+#: app.py:843
 msgid "No 2FA setup active."
 msgstr ""
 
-#: app.py:825
+#: app.py:848
 msgid "Invalid 2FA code."
 msgstr ""
 
-#: app.py:834
+#: app.py:857
 msgid "2FA enabled."
 msgstr ""
 
-#: app.py:853
+#: app.py:876
 msgid "Password verification failed."
 msgstr ""
 
-#: app.py:867 auth.py:129
+#: app.py:890 auth.py:143
 msgid "2FA disabled."
 msgstr ""
 
-#: app.py:877 app.py:904
+#: app.py:900 app.py:927
 msgid "Invalid theme selection."
 msgstr ""
 
-#: app.py:883
+#: app.py:906
 msgid "Theme settings saved."
 msgstr ""
 
-#: app.py:900
+#: app.py:923
 msgid "Invalid language."
 msgstr ""
 
-#: app.py:924
+#: app.py:947
 msgid "Settings saved."
 msgstr ""
 
-#: app.py:1052
+#: app.py:1075
 msgid "Approval authorization changed."
 msgstr ""
 
-#: app.py:1069
+#: app.py:1092
 msgid "CSV header does not match the expected format."
 msgstr ""
 
-#: app.py:1144
+#: app.py:1167
 msgid "CSV preview is disabled."
 msgstr ""
 
-#: app.py:1155 app.py:1273
+#: app.py:1178 app.py:1296
 msgid "Preview expired or not found."
 msgstr ""
 
-#: app.py:1160 app.py:1287
+#: app.py:1183 app.py:1310
 msgid "CSV file not found."
 msgstr ""
 
-#: app.py:1169
+#: app.py:1192
 msgid "CSV could not be read."
 msgstr ""
 
-#: app.py:1216 bbalance.py:495
+#: app.py:1239 bbalance.py:495
 msgid "Please select a CSV file."
 msgstr ""
 
-#: app.py:1279
+#: app.py:1302
 msgid "Preview expired or already used."
 msgstr ""
 
-#: app.py:1331
+#: app.py:1354
 #, python-format
 msgid "Import successful: %(rows)d lines transferred."
 msgstr ""
 
-#: app.py:1337 bbalance.py:556
+#: app.py:1360 bbalance.py:556
 #, python-format
 msgid "Import failed: %(error)s"
 msgstr ""
 
-#: app.py:1506 templates/edit.html:25 templates/import_preview.html:46
+#: app.py:1529 templates/edit.html:25 templates/import_preview.html:46
 #: templates/import_preview.html:95 templates/index.html:76
 #: templates/index.html:287 templates/index.html:311
 #: templates/payment_authorization.html:28
@@ -210,118 +210,118 @@ msgstr ""
 msgid "Date"
 msgstr ""
 
-#: app.py:1506 templates/import_preview.html:47
+#: app.py:1529 templates/import_preview.html:47
 #: templates/import_preview.html:96 templates/table_partial.html:10
 #: templates/table_partial.html:34
 msgid "Full"
 msgstr ""
 
-#: app.py:1506 templates/import_preview.html:48
+#: app.py:1529 templates/import_preview.html:48
 #: templates/import_preview.html:97 templates/index.html:92
 #: templates/index.html:329 templates/index.html:331
 #: templates/table_partial.html:11 templates/table_partial.html:35
 msgid "Empty"
 msgstr ""
 
-#: app.py:1507 templates/edit.html:56 templates/import_preview.html:49
+#: app.py:1530 templates/edit.html:56 templates/import_preview.html:49
 #: templates/import_preview.html:98 templates/index.html:100
 #: templates/index.html:351 templates/index.html:353
 #: templates/table_partial.html:13 templates/table_partial.html:40
 msgid "Revenue"
 msgstr ""
 
-#: app.py:1507 templates/edit.html:67 templates/import_preview.html:50
+#: app.py:1530 templates/edit.html:67 templates/import_preview.html:50
 #: templates/import_preview.html:99 templates/index.html:108
 #: templates/index.html:357 templates/index.html:359
 #: templates/table_partial.html:14 templates/table_partial.html:41
 msgid "Expense"
 msgstr ""
 
-#: app.py:1507 templates/index.html:291 templates/index.html:368
+#: app.py:1530 templates/index.html:291 templates/index.html:368
 #: templates/table_partial.html:15 templates/table_partial.html:44
 msgid "Cash balance"
 msgstr ""
 
-#: app.py:1507 templates/edit.html:87 templates/import_preview.html:51
+#: app.py:1530 templates/edit.html:87 templates/import_preview.html:51
 #: templates/import_preview.html:100 templates/index.html:120
 #: templates/index.html:292 templates/index.html:375
 #: templates/table_partial.html:16 templates/table_partial.html:47
 msgid "Note"
 msgstr ""
 
-#: app.py:1601
+#: app.py:1624
 msgid "Language changed."
 msgstr ""
 
-#: app.py:1644 app.py:1805 mail.py:35 mail.py:99
+#: app.py:1667 app.py:1828 mail.py:35 mail.py:99
 msgid "SMTP configuration incomplete."
 msgstr ""
 
-#: app.py:1661 mail.py:51
+#: app.py:1684 mail.py:51
 msgid "This is a test message to check the SMTP configuration."
 msgstr ""
 
-#: app.py:1665 mail.py:50 modules/mail_utils.py:153
+#: app.py:1688 mail.py:50 modules/mail_utils.py:153
 #, python-format
 msgid "SMTP test by %(app)s"
 msgstr ""
 
-#: app.py:1672 mail.py:88
+#: app.py:1695 mail.py:88
 msgid "SMTP test successful – test email sent."
 msgstr ""
 
-#: app.py:1674
+#: app.py:1697
 msgid "SMTP test failed: "
 msgstr ""
 
-#: app.py:1693
+#: app.py:1716
 msgid "Database dump successfully generated."
 msgstr ""
 
-#: app.py:1713
+#: app.py:1736
 msgid "Updated notes."
 msgstr ""
 
-#: app.py:1715
+#: app.py:1738
 #, python-format
 msgid "Error saving notes: %(error)s"
 msgstr ""
 
-#: app.py:1721
+#: app.py:1744
 msgid "Please select an image file."
 msgstr ""
 
-#: app.py:1735
+#: app.py:1758
 msgid "Invalid file format. Permitted formats: SVG, PNG, JPG, WEBP."
 msgstr ""
 
-#: app.py:1754
+#: app.py:1777
 msgid "Logo successfully uploaded."
-msgstr ""
-
-#: app.py:1756
-#, python-format
-msgid "Upload failed: %(error)s"
-msgstr ""
-
-#: app.py:1775
-msgid "Custom logo removed. Fallback to default logo active."
 msgstr ""
 
 #: app.py:1779
 #, python-format
-msgid "Could not delete file: %(msg)s"
-msgstr ""
-
-#: app.py:1782
-msgid "No logo found."
+msgid "Upload failed: %(error)s"
 msgstr ""
 
 #: app.py:1798
+msgid "Custom logo removed. Fallback to default logo active."
+msgstr ""
+
+#: app.py:1802
+#, python-format
+msgid "Could not delete file: %(msg)s"
+msgstr ""
+
+#: app.py:1805
+msgid "No logo found."
+msgstr ""
+
+#: app.py:1821
 msgid "Unknown action."
 msgstr ""
 
-#: app.py:1807 mail.py:101
+#: app.py:1830 mail.py:101
 #, python-format
 msgid "SMTP configuration detected for host %(host)s:%(port)s."
 msgstr ""
@@ -354,56 +354,56 @@ msgid ""
 "<strong>admin</strong> – please change immediately!"
 msgstr ""
 
-#: auth.py:64
+#: auth.py:72 auth.py:78
 msgid "Login failed."
 msgstr ""
 
-#: auth.py:71
+#: auth.py:85
 #, python-format
 msgid ""
 "Please change the password <a href=\"%(link)s\" class=\"alert-link\">on "
 "profile</a>."
 msgstr ""
 
-#: auth.py:177
+#: auth.py:191
 msgid "Invalid 2FA code or backup code."
 msgstr ""
 
-#: auth.py:190
+#: auth.py:204
 msgid ""
 "Backup code used. New codes were generated automatically. Please keep "
 "them safe."
 msgstr ""
 
-#: auth.py:207
+#: auth.py:221
 msgid "New backup codes have been generated. Please keep them safe."
 msgstr ""
 
-#: auth.py:235
+#: auth.py:249
 msgid "Reset link is invalid or expired."
 msgstr ""
 
-#: auth.py:261
+#: auth.py:275
 msgid "Reset link is invalid or has expired."
 msgstr ""
 
-#: auth.py:278
+#: auth.py:292
 msgid "Password has been reset."
 msgstr ""
 
-#: auth.py:286
+#: auth.py:300
 msgid "If the information is correct, a reset link has been sent."
 msgstr ""
 
-#: auth.py:289
-msgid "Please enter your username."
+#: auth.py:303
+msgid "Please enter your username or email."
 msgstr ""
 
-#: auth.py:321 templates/reset.html:7 user.py:221
+#: auth.py:343 templates/reset.html:7 user.py:247
 msgid "Reset password"
 msgstr ""
 
-#: auth.py:323
+#: auth.py:345
 #, python-format
 msgid ""
 "Please click on the following link to reset your password:\n"
@@ -634,40 +634,48 @@ msgstr ""
 msgid "Username cannot be empty."
 msgstr ""
 
-#: user.py:70 user.py:102 user.py:254
+#: user.py:70 user.py:126 user.py:280
 msgid "Invalid role."
 msgstr ""
 
-#: user.py:81
+#: user.py:84 user.py:137
+msgid "Username already exists."
+msgstr ""
+
+#: user.py:94 user.py:148
+msgid "Email already in use."
+msgstr ""
+
+#: user.py:103
 msgid "User created."
 msgstr ""
 
-#: user.py:83
+#: user.py:105
 #, python-format
 msgid "Error: %(error)s"
 msgstr ""
 
-#: user.py:150
+#: user.py:176
 msgid "User updated."
 msgstr ""
 
-#: user.py:172
+#: user.py:198
 msgid "You cannot delete yourself."
 msgstr ""
 
-#: user.py:178
+#: user.py:204
 msgid "User deleted."
 msgstr ""
 
-#: user.py:188
+#: user.py:214
 msgid "New password must be at least 8 characters long."
 msgstr ""
 
-#: user.py:193
+#: user.py:219
 msgid "New password set."
 msgstr ""
 
-#: user.py:211
+#: user.py:237
 #, python-format
 msgid ""
 "Your password reset token is:\n"
@@ -678,16 +686,16 @@ msgid ""
 "Please use the following link: %(url)s"
 msgstr ""
 
-#: user.py:223
+#: user.py:249
 msgid "Reset link sent by email."
 msgstr ""
 
-#: user.py:225 user.py:228
+#: user.py:251 user.py:254
 #, python-format
 msgid "Reset-Link: %(url)s"
 msgstr ""
 
-#: user.py:240
+#: user.py:266
 msgid "You cannot deactivate yourself."
 msgstr ""
 
@@ -836,7 +844,7 @@ msgid "One option per line ..."
 msgstr ""
 
 #: templates/admin_tools.html:35 templates/admin_tools.html:117
-#: templates/edit.html:93 templates/edit_user.html:51
+#: templates/edit.html:93 templates/edit_user.html:64
 #: templates/payment_authorization_detail.html:14 templates/profile.html:48
 #: templates/profile.html:163 templates/reset.html:33
 msgid "Save"
@@ -1081,7 +1089,7 @@ msgstr ""
 msgid "Empty Bottles"
 msgstr ""
 
-#: templates/edit.html:92 templates/edit_user.html:50
+#: templates/edit.html:92 templates/edit_user.html:63
 #: templates/import_preview.html:171 templates/login.html:66
 #: templates/payment_authorization.html:163
 #: templates/payment_authorization.html:253 templates/profile.html:47
@@ -1141,32 +1149,37 @@ msgstr ""
 msgid "Edit user"
 msgstr ""
 
-#: templates/edit_user.html:13 templates/edit_user.html:14
+#: templates/edit_user.html:16 templates/edit_user.html:18
+#: templates/users.html:33 templates/users.html:82 templates/users.html:96
+msgid "Username"
+msgstr ""
+
+#: templates/edit_user.html:26 templates/edit_user.html:27
 #: templates/profile.html:20 templates/users.html:41 templates/users.html:83
 #: templates/users.html:101
 msgid "Email"
 msgstr ""
 
-#: templates/edit_user.html:22 templates/profile.html:30
+#: templates/edit_user.html:35 templates/profile.html:30
 #: templates/profile.html:73 templates/reset.html:15 templates/reset.html:26
 msgid "Enter new password"
 msgstr ""
 
-#: templates/edit_user.html:23 templates/profile.html:31
+#: templates/edit_user.html:36 templates/profile.html:31
 msgid "Enter new password (optional)"
 msgstr ""
 
-#: templates/edit_user.html:35 templates/users.html:53 templates/users.html:84
+#: templates/edit_user.html:48 templates/users.html:53 templates/users.html:84
 #: templates/users.html:110
 msgid "Role"
 msgstr ""
 
-#: templates/edit_user.html:41 templates/index.html:149 templates/users.html:85
+#: templates/edit_user.html:54 templates/index.html:149 templates/users.html:85
 #: templates/users.html:115
 msgid "Active"
 msgstr ""
 
-#: templates/edit_user.html:47
+#: templates/edit_user.html:60
 msgid "May approve payment requests"
 msgstr ""
 
@@ -1405,9 +1418,8 @@ msgstr ""
 msgid "Login"
 msgstr ""
 
-#: templates/login.html:17 templates/login.html:57 templates/users.html:33
-#: templates/users.html:82 templates/users.html:96
-msgid "Username"
+#: templates/login.html:17 templates/login.html:57
+msgid "Username or Email"
 msgstr ""
 
 #: templates/login.html:25 templates/users.html:61
@@ -1423,7 +1435,7 @@ msgid "Request password reset"
 msgstr ""
 
 #: templates/login.html:60
-msgid "Please enter your username"
+msgid "Please enter your username or Email"
 msgstr ""
 
 #: templates/login.html:62
@@ -1873,5 +1885,11 @@ msgstr ""
 #~ "Content-Type: text/plain; charset=utf-8\r\n"
 #~ "\r\n"
 #~ "%(body)s"
+#~ msgstr ""
+
+#~ msgid "Please enter your username."
+#~ msgstr ""
+
+#~ msgid "Please enter your username"
 #~ msgstr ""
 

@@ -14,7 +14,7 @@
             <span class="input-group-text"><i class="bi bi-person"></i></span>
             <div class="form-floating flex-grow-1">
               <input id="login_username" name="username" type="text" class="form-control" required>
-              <label for="full">{{ _('Username') }}</label>
+              <label for="full">{{ _('Username or Email') }}</label>
             </div>
           </div>
 
@@ -54,10 +54,10 @@
                     <span class="input-group-text"><i class="bi bi-person"></i></span>
                     <div class="form-floating flex-grow-1">
                       <input type="text" class="form-control" id="forgot_username" name="username" required>
-                      <label for="forgot_username">{{ _('Username') }}</label>
+                      <label for="forgot_username">{{ _('Username or Email') }}</label>
                     </div>
                   </div>
-                  <div class="invalid-feedback">{{ _('Please enter your username') }}.</div>
+                  <div class="invalid-feedback">{{ _('Please enter your username or Email') }}.</div>
                   <small class="text-muted">
                     {{ _('If the information is correct, a reset link will be sent by email.') }}
                   </small>

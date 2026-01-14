@@ -58,7 +58,7 @@ def users_list():
 @login_required
 @require_perms('users:manage')
 @require_csrf
-def users_add():
+def users_add():    
     username = (request.form.get('username') or '').strip()
     email = (request.form.get('email') or '').strip() or None
     role = (request.form.get('role') or 'Viewer').strip()
@@ -72,15 +72,38 @@ def users_add():
     if len(pwd) < 8:
         flash(_('Password must be at least 8 characters long.'), 'danger')
         return redirect(url_for('user_routes.users_list'))
+    
+    
     try:
         with engine.begin() as conn:
+            # Username-Kollision (case-insensitive)?
+            exists_username = conn.execute(text("""
+                SELECT 1 FROM users WHERE LOWER(username) = LOWER(:u)
+            """), {'u': username}).scalar_one_or_none()
+            if exists_username:
+                flash(_('Username already exists.'), 'danger')
+                return redirect(url_for('user_routes.users_list'))
+
+            # Only check for email collision if email is available
+            if email:
+                exists_email = conn.execute(text("""
+                    SELECT 1 FROM users
+                    WHERE email IS NOT NULL AND email <> '' AND LOWER(email) = LOWER(:e)
+                """), {'e': email}).scalar_one_or_none()
+                if exists_email:
+                    flash(_('Email already in use.'), 'danger')
+                    return redirect(url_for('user_routes.users_list'))
+
+            # Now create users
             conn.execute(text("""
                 INSERT INTO users (username, email, password_hash, role, active, must_change_password, theme_preference)
                 VALUES (:u, :e, :ph, :r, TRUE, TRUE, 'system')
             """), {'u': username, 'e': email, 'ph': generate_password_hash(pwd), 'r': role})
+
         flash(_('User created.'), 'success')
     except Exception as e:
         flash(_('Error: %(error)s', error=escape(str(e))), 'danger')
+
     return redirect(url_for('user_routes.users_list'))
 
 @user_routes.route('/admin/users/<int:uid>/edit', methods=['GET', 'POST'])
@@ -89,6 +112,7 @@ def users_add():
 def edit_user(uid):
     if request.method == 'POST':
         role = request.form.get('role')
+        username = (request.form.get('username') or '').strip()
         email = (request.form.get('email') or '').strip() or None
 
         # Checkboxes -> bool (checkbox only sends when checked)
@@ -103,49 +127,51 @@ def edit_user(uid):
             return redirect(url_for('edit_user', uid=uid))
 
         with engine.begin() as conn:
-            if password:
-                hashed = generate_password_hash(password)
-                stmt = text("""
+                # Username collision (excluding own data record)
+                if username:
+                    exists_username = conn.execute(text("""
+                        SELECT 1 FROM users
+                        WHERE id <> :id AND LOWER(username) = LOWER(:u)
+                    """), {'id': uid, 'u': username}).scalar_one_or_none()
+                    if exists_username:
+                        flash(_('Username already exists.'), 'danger')
+                        return redirect(url_for('edit_user', uid=uid))
+
+                if email:
+                    exists_email = conn.execute(text("""
+                        SELECT 1 FROM users
+                        WHERE id <> :id
+                        AND email IS NOT NULL AND email <> ''
+                        AND LOWER(email) = LOWER(:e)
+                    """), {'id': uid, 'e': email}).scalar_one_or_none()
+                    if exists_email:
+                        flash(_('Email already in use.'), 'danger')
+                        return redirect(url_for('edit_user', uid=uid))
+
+                # Update including username
+                base_stmt = """
                     UPDATE users
-                    SET email=:email,
+                    SET username=:username,
+                        email=:email,
                         role=:role,
                         active=:active,
                         can_approve=:can_approve,
-                        password_hash=:pwd,
+                        {pwd_clause}
                         updated_at=NOW()
                     WHERE id=:id
-                """).bindparams(
-                    bindparam('active', type_=Boolean()),
-                    bindparam('can_approve', type_=Boolean()),
-                )
-                conn.execute(stmt, {
-                    'email': email,
-                    'role': role,
-                    'active': active,
-                    'can_approve': can_approve,
-                    'pwd': hashed,
-                    'id': uid
-                })
-            else:
-                stmt = text("""
-                    UPDATE users
-                    SET email=:email,
-                        role=:role,
-                        active=:active,
-                        can_approve=:can_approve,
-                        updated_at=NOW()
-                    WHERE id=:id
-                """).bindparams(
-                    bindparam('active', type_=Boolean()),
-                    bindparam('can_approve', type_=Boolean()),
-                )
-                conn.execute(stmt, {
-                    'email': email,
-                    'role': role,
-                    'active': active,
-                    'can_approve': can_approve,
-                    'id': uid
-                })
+                """
+                if password:
+                    hashed = generate_password_hash(password)
+                    stmt = text(base_stmt.format(pwd_clause="password_hash=:pwd,"))
+                    params = {'username': username, 'email': email, 'role': role,
+                            'active': active, 'can_approve': can_approve,
+                            'pwd': hashed, 'id': uid}
+                else:
+                    stmt = text(base_stmt.format(pwd_clause=""))
+                    params = {'username': username, 'email': email, 'role': role,
+                            'active': active, 'can_approve': can_approve, 'id': uid}
+                # You can keep bindparam(Boolean) if you need it.
+                conn.execute(stmt, params)
 
         flash(_('User updated.'), 'success')
         return redirect(url_for('user_routes.users_list'))

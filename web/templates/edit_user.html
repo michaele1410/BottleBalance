@@ -7,6 +7,19 @@
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
       <div class="input-group mb-3">
+        <span class="input-group-text"><i class="bi bi-person"></i></span>
+        <div class="form-floating flex-grow-1">
+          <input type="text"
+                name="username"
+                class="form-control"
+                required
+                placeholder="{{ _('Username') }}"
+                value="{{ user.username }}">
+          <label for="username">{{ _('Username') }}</label>
+        </div>
+      </div>
+
+      <div class="input-group mb-3">
         <span class="input-group-text"><i class="bi bi-envelope"></i></span>
         <div class="form-floating flex-grow-1">
           <input type="email" name="email"  inputmode="text" class="form-control"

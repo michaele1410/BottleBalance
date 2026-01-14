@@ -596,6 +596,7 @@ def init_db_with_retry(retries: int = 10, delay_seconds: float = 1.0):
         try:
             init_db()
             current_app.config['DB_INITIALIZED'] = True
+            app.config['DB_INITIALIZED'] = True
             return
         except OperationalError as err:
             last_err = err

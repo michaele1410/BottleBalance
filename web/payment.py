@@ -764,7 +764,7 @@ def edit_payment_request(request_id):
     with engine.begin() as conn:
         conn.execute(text("""
             UPDATE payment_requests
-            SET purpose=:zweck,
+            SET purpose=:purpose,
                 amount=:amount,
                 supplier=:supplier,
                 justification=:justification,
@@ -774,7 +774,7 @@ def edit_payment_request(request_id):
                 updated_at=NOW()
             WHERE id=:id
         """), {
-            'zweck': purpose,
+            'purpose': purpose,
             'amount': str(amount_decimal),
             'supplier': supplier,
             'justification': justification,
@@ -845,7 +845,8 @@ def export_all_payment_requests_pdf():
         story.append(Image(logo_path, width=40*mm))
         story.append(Spacer(1, 6))
 
-    story.append(Paragraph(f"{_('Payment request - Overall document')}", styles['Title']))
+    
+    story.append(Paragraph(_("Payment request - Overall document"), styles['Title']))
     story.append(Spacer(1, 6))
     story.append(Paragraph(f"{_('Created at')} {datetime.now().strftime('%d.%m.%Y %H:%M')} – {_('Number of requests')}: {len(payment_requests)}", styles['Normal']))
     story.append(Spacer(1, 12))
@@ -909,7 +910,7 @@ def payment_requests_request():
         abort(403)
 
     paragraph = (request.form.get('paragraph') or '').strip()
-    purpose = (request.form.get('zweck') or '').strip()
+    purpose = (request.form.get('purpose') or '').strip()
     date_str = (request.form.get('date') or '').strip()
     amount_str = (request.form.get('amount') or '').strip()
     supplier = (request.form.get('supplier') or '').strip()
@@ -944,14 +945,14 @@ def payment_requests_request():
                 requestor_id, date, paragraph, purpose, amount,
                 supplier, justification, state, read_only, created_at, updated_at
             ) VALUES (
-                :uid, :date, :para, :zweck, :amount,
+                :uid, :date, :para, :purpose, :amount,
                 :supplier, :justification, 'pending', TRUE, NOW(), NOW()
             ) RETURNING id
         """), {
             'uid': user['id'],
             'date': date,
             'para': paragraph,
-            'zweck': purpose,
+            'purpose': purpose,
             'amount': str(amount),
             'supplier': supplier,
             'justification': justification

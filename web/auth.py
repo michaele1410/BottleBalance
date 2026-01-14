@@ -64,15 +64,6 @@ def login():
         flash(_('Login failed.'), 'danger')
         return redirect(url_for('auth_routes.login'))
 
-    # Update last login timestamp   
-    with engine.begin() as conn:
-            conn.execute(text("""
-                UPDATE users
-                SET last_login_at = NOW(),
-                    updated_at     = NOW()
-                WHERE id = :id
-            """), {'id': user['id']})
-
     # If password needs to be changed: Set info + flag for later forwarding
     force_profile = False
     # Role name consistent with the database ('Admin', not 'admin')
@@ -112,6 +103,7 @@ def login_2fa_get():
         return redirect(url_for('auth_routes.login'))
     return render_template('2fa.html')
 
+
 @auth_routes.post('/2fa')
 @require_csrf
 def login_2fa_post():
@@ -119,69 +111,90 @@ def login_2fa_post():
     if not uid:
         return redirect(url_for('auth_routes.login'))
 
+    # Code normalisieren (Leerzeichen/Bindestriche entfernen)
     raw = request.form.get('code') or ''
-    code = re.sub(r'[\s\-]', '', raw).lower()
+    code = re.sub(r'[\s\-]', '', raw).strip()
 
+    backup_used = False
+
+    # --- Alle DB-Zugriffe in EINEM frischen Kontext ---
     with engine.begin() as conn:
         user = conn.execute(text("""
-            SELECT id, role, totp_secret, backup_codes
-            FROM users WHERE id=:id
+            SELECT id, role, totp_secret, backup_codes, totp_enabled, active
+              FROM users
+             WHERE id = :id
         """), {'id': uid}).mappings().first()
 
-    if not user or not user['totp_secret']:
-        flash(_('2FA disabled.'), 'danger')
-        return redirect(url_for('auth_routes.login'))
+        if not user or not user['active']:
+            flash(_('2FA disabled.'), 'danger')
+            return redirect(url_for('auth_routes.login'))
 
-    totp = pyotp.TOTP(user['totp_secret'])
+        # 1) TOTP prüfen (nur wenn aktiviert & Secret vorhanden)
+        totp_ok = False
+        if user.get('totp_enabled') and user.get('totp_secret'):
+            try:
+                totp_ok = pyotp.TOTP(user['totp_secret']).verify(code, valid_window=1)
+            except Exception:
+                totp_ok = False
 
-    # Check TOTP
-    if totp.verify(code, valid_window=1):        
-        conn.execute(text("""
+        if totp_ok:
+            # Loginzeit aktualisieren
+            conn.execute(text("""
                 UPDATE users
-                SET last_login_at = NOW(),
-                    updated_at     = NOW()
-                WHERE id = :id
+                   SET last_login_at = NOW(),
+                       updated_at     = NOW()
+                 WHERE id = :id
             """), {'id': user['id']})
+        else:
+            # 2) Backup-Codes prüfen
+            bc_raw = user.get('backup_codes') or '[]'
+            try:
+                hashes = json.loads(bc_raw)
+                if not isinstance(hashes, list):
+                    hashes = []
+            except Exception:
+                hashes = []
 
-        _finalize_login(user['id'], user['role'])
-        # Evaluate flag
-        if session.pop('force_profile_after_login', None):
-            return redirect(url_for('profile'))
-        return redirect(url_for('bbalance_routes.index'))
+            match = None
+            for h in hashes:
+                # Vergleich Klartext-Code gegen gespeicherten Hash
+                if h and check_password_hash(h, code):
+                    match = h
+                    break
 
-    # Check backup codes
-    bc_raw = user.get('backup_codes') or '[]'
-    try:
-        hashes = json.loads(bc_raw)
-        if not isinstance(hashes, list):
-            hashes = []
-    except Exception:
-        hashes = []
+            if match:
+                backup_used = True
+                # Verbrauchten Code entfernen + Loginzeit aktualisieren
+                hashes.remove(match)
+                conn.execute(text("""
+                    UPDATE users
+                       SET backup_codes = :bc,
+                           last_login_at = NOW(),
+                           updated_at     = NOW()
+                     WHERE id = :id
+                """), {'bc': json.dumps(hashes), 'id': user['id']})
+            else:
+                flash(_('Invalid 2FA code or backup code.'), 'danger')
+                return redirect(url_for('auth_routes.login_2fa_get'))
 
-    matched_idx = None
-    for i, h in enumerate(hashes):
-        if h and check_password_hash(h, code):
-            matched_idx = i
-            break
+        # Bis hier Commit am Blockende sicher – danach keine conn-Nutzung mehr
+        role = user['role']
 
-    if matched_idx is not None:
-        # Generate new set of backup codes
-        new_codes = generate_and_store_backup_codes(uid)
+    # --- NACH der Transaktion: Session finalisieren ---
+    _finalize_login(uid, role)
 
-        # One-time display in profile
+    # Optional: nach Backup-Code gesamte Codes neu generieren (deine bisherige UX)
+    if backup_used:
+        new_codes = generate_and_store_backup_codes(uid)  # schreibt selbst in DB
         session['new_backup_codes'] = new_codes
-
-        _finalize_login(user['id'], user['role'])
         flash(_('Backup code used. New codes were generated automatically. Please keep them safe.'), 'info')
-        log_action(user['id'], '2fa:backup_used_regenerated', None, None)
+        log_action(uid, '2fa:backup_used_regenerated', None, None)
 
-        # If necessary, also evaluate flag after backup code
-        if session.pop('force_profile_after_login', None):
-            return redirect(url_for('profile'))
+    # Flag evaluieren (aus Login-Flow)
+    if session.pop('force_profile_after_login', None):
         return redirect(url_for('profile'))
 
-    flash(_('Invalid 2FA code or backup code.'), 'danger')
-    return redirect(url_for('auth_routes.login_2fa_get'))
+    return redirect(url_for('bbalance_routes.index'))
 
 @auth_routes.post('/profile/2fa/regen')
 @login_required

@@ -15,13 +15,27 @@ from functools import lru_cache
 APP_BASE_URL = os.getenv("APP_BASE_URL") or "http://localhost:5000"
 
 SECRET_KEY = os.getenv("SECRET_KEY") or secrets.token_hex(24)
+
+if not os.getenv("SECRET_KEY"):
+    # Nur Logging – damit du erkennst, wenn du versehentlich ohne festen Key startest
+    import logging
+    logging.getLogger(__name__).warning(
+        "SECRET_KEY fehlt – es wird ein zufälliger Key verwendet. "
+        "Sessions/CSRF-Tokens sind nach Neustart ungültig. Bitte SECRET_KEY in der ENV setzen."
+    )
 DB_HOST = os.getenv("DB_HOST", "bottlebalance-db")
 DB_NAME = os.getenv("DB_NAME", "bottlebalance")
 DB_USER = os.getenv("DB_USER", "admin")
 DB_PASS = os.getenv("DB_PASS", "admin")
 DATABASE_URL = f"postgresql+psycopg2://{DB_USER}:{DB_PASS}@{DB_HOST}:5432/{DB_NAME}"
 
-engine: Engine = create_engine(DATABASE_URL, future=True, pool_pre_ping=True)
+engine: Engine = create_engine(
+    DATABASE_URL,
+    future=True,
+    pool_pre_ping=True,
+    pool_recycle=1800,    # Recycle after 30 minutes
+    pool_timeout=30       # Optional: Waiting time when borrowing a connection
+)
 
 def _require_temp_token(token: str) -> None:
     """
@@ -135,11 +149,17 @@ def _temp_dir(token: str) -> str:
 
 # --- Audit-Log ---
 def log_action(user_id: int | None, action: str, entry_id: int | None, detail: str | None = None):
-    with engine.begin() as conn:
-        conn.execute(text("""
-            INSERT INTO audit_log (user_id, action, entry_id, detail)
-            VALUES (:u, :a, :e, :d)
-        """), {'u': user_id, 'a': action, 'e': entry_id, 'd': detail})
+    try:
+        with engine.begin() as conn:
+            conn.execute(text("""
+                INSERT INTO audit_log (user_id, action, entry_id, detail)
+                VALUES (:u, :a, :e, :d)
+            """), {'u': user_id, 'a': action, 'e': entry_id, 'd': detail})
+    except Exception:
+        # Just log – never jeopardize the main action.
+        import logging
+        logging.getLogger(__name__).exception("Audit-Log fehlgeschlagen: %s", action)
+
 
 def build_base_url():
     # prefer APP_BASE_URL, fallback to request.url_root

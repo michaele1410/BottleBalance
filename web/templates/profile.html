@@ -11,6 +11,21 @@
         <h5 class="mb-3">{{ _('Profile') }}</h5>
         <form id="profileForm" action="{{ url_for('profile_post') }}" method="post" class="needs-validation" novalidate>
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          
+          <!-- Username -->
+          <div class="input-group mb-3">
+            <span class="input-group-text"><i class="bi bi-person"></i></span>
+            <div class="form-floating flex-grow-1">
+              <input type="text"
+                    name="username"
+                    id="username"
+                    class="form-control"
+                    required
+                    placeholder="{{ _('Username') }}"
+                    value="{{ user.username }}">
+              <label for="username">{{ _('Username') }}</label>
+            </div>
+          </div>
 
           <!-- Email -->
           <div class="input-group mb-3">

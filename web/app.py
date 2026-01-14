@@ -746,15 +746,19 @@ def profile():
         new_backup_codes=new_codes,  # <-- hand over here
     )
 
+
 @app.post('/profile')
 @login_required
 @require_csrf
 def profile_post():
-    pwd = (request.form.get('password') or '').strip()
-    pwd2 = (request.form.get('password2') or '').strip()
-    email = (request.form.get('email') or '').strip()
     uid = session['user_id']
 
+    username = (request.form.get('username') or '').strip()
+    email    = (request.form.get('email') or '').strip()
+    pwd      = (request.form.get('password') or '').strip()
+    pwd2     = (request.form.get('password2') or '').strip()
+
+    # Passwortprüfung
     if pwd or pwd2:
         if len(pwd) < 8:
             flash(_('Password must be at least 8 characters long.'), 'info')
@@ -764,22 +768,58 @@ def profile_post():
             return redirect(url_for('profile'))
 
     with engine.begin() as conn:
+
+        # Username Duplicate-Check (case-insensitive, außer eigener User)
+        exists_username = conn.execute(text("""
+            SELECT 1 FROM users
+            WHERE id <> :id AND LOWER(username) = LOWER(:u)
+        """), {'id': uid, 'u': username}).scalar_one_or_none()
+
+        if exists_username:
+            flash(_('Username already exists (case-insensitive).'), 'danger')
+            return redirect(url_for('profile'))
+
+        # E-Mail Duplicate-Check (falls gesetzt)
+        if email:
+            exists_email = conn.execute(text("""
+                SELECT 1 FROM users
+                WHERE id <> :id
+                  AND email IS NOT NULL AND email <> ''
+                  AND LOWER(email) = LOWER(:e)
+            """), {'id': uid, 'e': email}).scalar_one_or_none()
+
+            if exists_email:
+                flash(_('Email already in use.'), 'danger')
+                return redirect(url_for('profile'))
+
+        # Query abhängig davon, ob das Passwort geändert wird
         if pwd:
             conn.execute(text("""
-                UPDATE users SET password_hash=:ph, must_change_password=FALSE, email=:em, updated_at=NOW()
+                UPDATE users
+                SET username=:username,
+                    email=:email,
+                    password_hash=:ph,
+                    must_change_password=FALSE,
+                    updated_at=NOW()
                 WHERE id=:id
-            """), {'ph': generate_password_hash(pwd), 'em': email or None, 'id': uid})
-
-            # After changing your password: Activate 2FA if not already active
-            user = conn.execute(text("SELECT totp_enabled FROM users WHERE id=:id"), {'id': uid}).mappings().first()
-            if user and not user['totp_enabled']:
-                flash(_('Please enable two-factor authentication (2FA) to provide additional protection for your account.'), 'info')
-                return redirect(url_for('enable_2fa'))  # <-- Immediate return
+            """), {
+                'username': username,
+                'email': email or None,
+                'ph': generate_password_hash(pwd),
+                'id': uid
+            })
         else:
             conn.execute(text("""
-                UPDATE users SET email=:em, updated_at=NOW()
+                UPDATE users
+                SET username=:username,
+                    email=:email,
+                    updated_at=NOW()
                 WHERE id=:id
-            """), {'em': email or None, 'id': uid})
+            """), {
+                'username': username,
+                'email': email or None,
+                'id': uid
+            })
 
     flash(_('Profile updated.'), 'success')
     return redirect(url_for('bbalance_routes.index'))

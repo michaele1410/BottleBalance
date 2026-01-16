@@ -96,6 +96,7 @@ from reportlab.lib.pagesizes import A4, landscape, portrait
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import mm
+from reportlab.lib import colors  # für die Trennlinie
 
 # Document Upload
 from werkzeug.utils import secure_filename
@@ -1478,6 +1479,42 @@ def _pdf_logo_path():
             return fpath  # ReportLab kann SVG nicht direkt rendern
     return os.path.join(app.root_path, 'static', 'images', 'logo.png')
 
+def _draw_letterhead(canvas, doc):
+    """Logo oben rechts als Briefkopf auf jeder Seite zeichnen."""
+    fpath = _pdf_logo_path()
+    if not (fpath and os.path.exists(fpath)):
+        return
+    # Sicher, dezent
+    max_w, max_h = 30*mm, 12*mm
+    page_w, page_h = doc.pagesize
+    x = page_w - doc.rightMargin - max_w
+    y = page_h - doc.topMargin + 4*mm
+    canvas.saveState()
+    try:
+        canvas.drawImage(
+            fpath, x, y,
+            width=max_w, height=max_h,
+            preserveAspectRatio=True,
+            mask='auto',
+            anchor='nw'
+        )
+    finally:
+        canvas.restoreState()
+
+def _header_footer(canvas, doc):
+    """Briefkopf (Logo) + dezente Trennlinie; Footer optional separat."""
+    _draw_letterhead(canvas, doc)
+    # Linie exakt an der Oberkante des Inhaltsrahmens
+    canvas.saveState()
+    try:
+        canvas.setStrokeColor(colors.HexColor("#dee2e6"))
+        canvas.setLineWidth(0.5)
+        page_w, page_h = doc.pagesize
+        y = page_h - doc.topMargin
+        canvas.line(doc.leftMargin, y, page_w - doc.rightMargin, y)
+    finally:
+        canvas.restoreState()
+
 @app.get('/export/pdf')
 @login_required
 @require_perms('export:pdf')
@@ -1514,12 +1551,6 @@ def export_pdf():
     )
     styles = getSampleStyleSheet()
     story = []
-
-    logo_path = _pdf_logo_path()
-    if os.path.exists(logo_path):
-        story.append(RLImage(logo_path, width=25*mm, height=25*mm))
-        story.append(Spacer(1, 6))
-
     # --- Title (real markup, no HTML entities) ---
     #story.append(Paragraph(f"<b>get_setting('app_title'){_(' - Export')}</b>", styles['Title']))
     #story.append(Spacer(1, 6))
@@ -1619,7 +1650,7 @@ def export_pdf():
 
     story.append(table)
 
-    doc.build(story)
+    doc.build(story, onFirstPage=_header_footer, onLaterPages=_header_footer)
     buffer.seek(0)
 
     filename = f"{get_setting('app_title', 'BottleBalance')}_{_('export')}_{date.today().strftime('%Y%m%d')}.pdf"

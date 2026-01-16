@@ -10,7 +10,7 @@ from flask import render_template, request, redirect, url_for, session, send_fil
 from flask_babel import gettext as _
 from flask_babel import ngettext
 from markupsafe import escape
-from sqlalchemy import text, func, asc
+from sqlalchemy import text
 from datetime import datetime, date
 from decimal import Decimal, InvalidOperation
 from time import time

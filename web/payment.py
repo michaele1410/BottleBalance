@@ -14,10 +14,10 @@ from sqlalchemy import text
 
 # PDF (ReportLab)
 from reportlab.lib.pagesizes import A4
-from reportlab.platypus import Image, SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak, KeepTogether
+from reportlab.platypus import SimpleDocTemplate, Table, Paragraph, Spacer, PageBreak
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import mm
-from reportlab.lib import colors  # Import colors locally only
+from reportlab.lib import colors as rl_colors
 
 # Document Upload
 from werkzeug.utils import secure_filename
@@ -25,7 +25,8 @@ from uuid import uuid4
 import mimetypes
 
 from modules.core_utils import (
-    engine
+    engine,
+    find_custom_logo
 )
 from modules.auth_utils import (
     current_user,
@@ -54,9 +55,9 @@ from modules.mail_utils import (
 )
 from modules.pdf_utils import (
     build_audit_table, 
-    standard_table_style, 
-    footer,
-    embed_pdf_attachments
+    standard_table_style,
+    embed_pdf_attachments,
+    footer as _footer
 )
 
 payment_routes = Blueprint('payment_routes', __name__)
@@ -447,11 +448,6 @@ def export_single_request_pdf(request_id: int):
     def P(text, style='Normal'):
         return Paragraph((text or '').replace('\n', '<br/>'), styles[style])
 
-    logo_path = os.path.join("static", "logo.png")
-    if os.path.exists(logo_path):
-        story.append(Image(logo_path, width=40*mm))
-        story.append(Spacer(1, 6))
-
     story.append(Paragraph(f"{_('Payment request')} #{request_id}", styles['Title']))
     story.append(Spacer(1, 6))
     story.append(Paragraph(f"{_('Created on')} {datetime.now().strftime('%d.%m.%Y %H:%M')}", styles['Normal']))
@@ -480,7 +476,7 @@ def export_single_request_pdf(request_id: int):
     # Attachments including PDF pages
     story = embed_pdf_attachments(request_id, attachments, story, styles)
 
-    doc.build(story, onFirstPage=footer, onLaterPages=footer)
+    doc.build(story, onFirstPage=_header_footer, onLaterPages=_header_footer)
     buffer.seek(0)
     return send_file(buffer, as_attachment=True,
                      download_name=f'payment_request_{request_id}.pdf',
@@ -839,12 +835,6 @@ def export_all_payment_requests_pdf():
 
     def P(text, style='Normal'):
         return Paragraph((text or '').replace('\n', '<br/>'), styles[style])
-
-    logo_path = os.path.join("static", "logo.png")
-    if os.path.exists(logo_path):
-        story.append(Image(logo_path, width=40*mm))
-        story.append(Spacer(1, 6))
-
     
     story.append(Paragraph(_("Payment request - Overall document"), styles['Title']))
     story.append(Spacer(1, 6))
@@ -853,11 +843,6 @@ def export_all_payment_requests_pdf():
 
     for idx, r in enumerate(payment_requests):
         blocks = []
-
-        if os.path.exists(logo_path):
-            blocks.append(Image(logo_path, width=40*mm))
-            blocks.append(Spacer(1, 6))
-
         blocks.append(Paragraph(f"<b>{_('Payment request')} #{r['id']}</b>", styles['Heading2']))
         blocks.append(Spacer(1, 6))
 
@@ -883,12 +868,12 @@ def export_all_payment_requests_pdf():
 
         # Attachments including PDF pages
         blocks = embed_pdf_attachments(r['id'], attachments_by_payment_request.get(r['id'], []), blocks, styles)
-
-        story.append(KeepTogether(blocks))
+        
+        story.extend(blocks)
         if idx < len(payment_requests) - 1:
             story.append(PageBreak())
 
-    doc.build(story, onFirstPage=footer, onLaterPages=footer)
+    doc.build(story, onFirstPage=_header_footer, onLaterPages=_header_footer)
     buffer.seek(0)
     filename = _('all_payment_requests.pdf')
     return send_file(buffer, as_attachment=True,
@@ -1150,3 +1135,61 @@ def payment_request_detail(request_id):
         can_on_hold=can_on_hold,
         attachments=attachments
     )
+
+def _draw_logo(canvas, doc):
+    """Draws the branding logo top-right on each page."""
+    fname, fpath = find_custom_logo()
+    if not fpath or not os.path.exists(fpath):
+        # Fallback auf statisches Logo
+        fpath = os.path.join(current_app.static_folder, "images", "logo.png")
+    else:
+        # Raster-Bild sicherstellen (ReportLab kann kein SVG direkt)
+        _, ext = os.path.splitext(fpath.lower())
+        if ext not in ('.png', '.jpg', '.jpeg', '.webp'):
+            fallback = os.path.join(current_app.static_folder, "images", "logo.png")
+            fpath = fallback if os.path.exists(fallback) else None
+
+    # Wenn weiterhin kein verwertbarer Pfad vorhanden ist → nichts zeichnen
+    if not fpath or not os.path.exists(fpath):
+        return
+
+    # Sichere Maximalgröße (verhindert DPI/„???“-Probleme)
+    max_w, max_h = 30*mm, 12*mm
+    page_w, page_h = doc.pagesize
+
+    # Position: oben rechts innerhalb der Margins
+    x = page_w - doc.rightMargin - max_w
+    y = page_h - doc.topMargin + 4*mm  # leicht über dem Fließtext
+
+    canvas.saveState()
+    try:
+        canvas.drawImage(
+            fpath, x, y,
+            width=max_w, height=max_h,
+            preserveAspectRatio=True,
+            mask='auto',
+            anchor='nw',
+        )
+    finally:
+        canvas.restoreState()
+
+def _header_footer(canvas, doc):
+    """Kombiniert Kopf (Logo) und bestehenden Footer."""
+    # 1) Letterhead/logo at top right
+    _draw_logo(canvas, doc)
+
+    # 2) Subtle dividing line exactly on the top edge of the continuous text frame
+    canvas.saveState()
+    try:
+        # Light gray, very thin
+        canvas.setStrokeColor(rl_colors.HexColor("#A72920"))
+        canvas.setLineWidth(0.5)
+        page_w, page_h = doc.pagesize
+        y = page_h - doc.topMargin
+        canvas.line(doc.leftMargin, y, page_w - doc.rightMargin, y)
+    finally:
+        canvas.restoreState()
+
+    # 3) Draw existing footer
+    _footer(canvas, doc)
+

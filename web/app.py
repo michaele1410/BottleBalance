@@ -3,18 +3,14 @@
 # -----------------
 
 import os
-import secrets
 import ssl
 import logging
-import re
 import base64
-from logging.handlers import RotatingFileHandler
-from smtplib import SMTP, SMTP_SSL as SMTP_SSL_CLASS  # ← alias gegen Konflikt
-from email.message import EmailMessage
+from smtplib import SMTP, SMTP_SSL as SMTP_SSL_CLASS
 from datetime import datetime, date, timedelta
 from decimal import Decimal
 from flask_babel import Babel, gettext as _, gettext as translate
-from flask import Flask, render_template, request, redirect, url_for, session, send_file, send_from_directory, flash, abort, current_app, render_template_string
+from flask import Flask, render_template, request, redirect, url_for, session, send_file, send_from_directory, flash, abort, current_app
 from flask_mail import Message, Mail
 mail = Mail()
 from sqlalchemy import text
@@ -23,10 +19,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_socketio import SocketIO
 from email.mime.text import MIMEText
 from email.header import Header
-from functools import wraps
-from typing import List, Tuple
 from urllib.parse import urlencode
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image as RLImage, PageBreak, KeepTogether
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image as RLImage
 from types import SimpleNamespace
 from auth import auth_routes
 from bbalance import bbalance_routes
@@ -52,9 +46,6 @@ from modules.core_utils import (
     _temp_dir,
     localize_dt,
     localize_dt_str
-)
-from modules.system_utils import (
-    get_version_old
 )
 
 from modules.bbalance_utils import (
@@ -84,15 +75,6 @@ from modules.auth_utils import (
     generate_and_store_backup_codes
 )
 
-from modules.payment_utils import (
-    _user_can_view_payment_request,
-    _user_can_edit_payment_request,
-    get_payment_request_email,
-    _require_approver,
-    _approvals_done,
-    _approvals_total
-)
-
 from modules.csv_utils import (
     parse_money,
     _parse_csv_with_mapping,
@@ -108,7 +90,6 @@ import time
 import pyotp
 import qrcode
 import subprocess
-import json
 
 # PDF (ReportLab)
 from reportlab.lib.pagesizes import A4, landscape, portrait
@@ -119,7 +100,6 @@ from reportlab.lib.units import mm
 # Document Upload
 from werkzeug.utils import secure_filename
 from uuid import uuid4
-from pathlib import Path
 import mimetypes
 
 # -----------------------
@@ -136,11 +116,8 @@ def configure_logging():
         return
     root.setLevel(LOG_LEVEL)
     fmt = logging.Formatter("%(asctime)s %(levelname)s [%(name)s] %(message)s")
-    #fh = RotatingFileHandler(LOG_FILE, maxBytes=LOG_MAX_BYTES, backupCount=LOG_BACKUP_COUNT)
-    #fh.setFormatter(fmt)
     sh = logging.StreamHandler()
     sh.setFormatter(fmt)
-    #root.addHandler(fh)
     root.addHandler(sh)
 
 configure_logging()
@@ -776,7 +753,7 @@ def profile_post():
         """), {'id': uid, 'u': username}).scalar_one_or_none()
 
         if exists_username:
-            flash(_('Username already exists (case-insensitive).'), 'danger')
+            flash(_('Username already exists.'), 'danger')
             return redirect(url_for('profile'))
 
         # E-Mail Duplicate-Check (falls gesetzt)
@@ -1540,7 +1517,7 @@ def export_pdf():
 
     logo_path = _pdf_logo_path()
     if os.path.exists(logo_path):
-        story.append(RLImage(logo_path, width=40*mm, height=12*mm))
+        story.append(RLImage(logo_path, width=25*mm, height=25*mm))
         story.append(Spacer(1, 6))
 
     # --- Title (real markup, no HTML entities) ---

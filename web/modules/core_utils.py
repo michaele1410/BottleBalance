@@ -9,7 +9,6 @@ from flask import session,flash, abort, request
 from flask_babel import _
 from sqlalchemy import text
 from sqlalchemy.engine import Engine, create_engine
-from datetime import datetime
 from functools import lru_cache
 
 APP_BASE_URL = os.getenv("APP_BASE_URL") or "http://localhost:5000"
@@ -201,3 +200,26 @@ def set_setting(key: str, value: str) -> None:
         get_setting.cache_clear()
     except Exception:
         pass
+
+def find_custom_logo():
+    """
+    Returns (filename, full_path) for the uploaded branding logo.
+    Searches UPLOAD_FOLDER/branding/ for files named:
+    logo.svg, logo.png, logo.jpg, logo.jpeg, logo.webp
+
+    Returns (None, None) if no custom logo exists.
+    """
+    try:
+        branding_dir = os.path.join(UPLOAD_FOLDER, "branding")
+        if not os.path.isdir(branding_dir):
+            return None, None
+
+        for ext in ("svg", "png", "jpg", "jpeg", "webp"):
+            fname = f"logo.{ext}"
+            fpath = os.path.join(branding_dir, fname)
+            if os.path.isfile(fpath):
+                return fname, fpath
+    except Exception:
+        pass  # Fail silently to avoid blocking PDF generation
+
+    return None, None

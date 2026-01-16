@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-01-15 00:07+0100\n"
+"POT-Creation-Date: 2026-01-16 10:23+0100\n"
 "PO-Revision-Date: 2026-01-13 08:55+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -23,25 +23,25 @@ msgstr ""
 msgid "Database dump successfully created."
 msgstr ""
 
-#: admin.py:62 app.py:1721
+#: admin.py:62 app.py:1738
 #, python-format
 msgid "Error during database dump: %(error)s"
 msgstr ""
 
-#: admin.py:73 app.py:1813
+#: admin.py:73 app.py:1830
 msgid "App title cannot be empty."
 msgstr ""
 
-#: admin.py:77 app.py:1816
+#: admin.py:77 app.py:1833
 msgid "Application title updated."
 msgstr ""
 
-#: app.py:249
+#: app.py:226
 #, python-format
 msgid "New payment request from %(requester)s"
 msgstr ""
 
-#: app.py:250
+#: app.py:227
 #, python-format
 msgid ""
 "A new payment request has been created.\n"
@@ -54,151 +54,153 @@ msgid ""
 "Please check the request in the system."
 msgstr ""
 
-#: app.py:575
+#: app.py:552
 msgid "Withdrew money"
 msgstr ""
 
-#: app.py:576 app.py:1529 templates/index.html:289 templates/index.html:340
+#: app.py:553 app.py:1546 templates/index.html:289 templates/index.html:340
 #: templates/table_partial.html:12 templates/table_partial.html:38
 msgid "Inventory"
 msgstr ""
 
-#: app.py:577
+#: app.py:554
 msgid "Count cash register"
 msgstr ""
 
-#: app.py:578
+#: app.py:555
 msgid "Emptying cash register GR"
 msgstr ""
 
-#: app.py:579
+#: app.py:556
 msgid "Delivery of Bottles"
 msgstr ""
 
-#: app.py:580
+#: app.py:557
 msgid "Individual bottle purchase"
 msgstr ""
 
-#: app.py:581
+#: app.py:558
 msgid "Deposit PayPal"
 msgstr ""
 
-#: app.py:582
+#: app.py:559
 msgid "Donation"
 msgstr ""
 
-#: app.py:640
+#: app.py:617
 #, python-format
 msgid ""
 "APP_BASE_URL is not set to production-ready (currently '%(url)s'). Set a "
 "publicly accessible base URL so that hints/links in emails are correct."
 msgstr ""
 
-#: app.py:696
+#: app.py:673
 msgid "File too large. Please upload a smaller file."
 msgstr ""
 
-#: app.py:760 auth.py:261 user.py:73
+#: app.py:741 auth.py:261 user.py:73
 msgid "Password must be at least 8 characters long."
 msgstr ""
 
-#: app.py:763 auth.py:264 templates/profile.html:196
+#: app.py:744 auth.py:264 templates/profile.html:224
 msgid "Passwords do not match."
 msgstr ""
 
-#: app.py:776
-msgid ""
-"Please enable two-factor authentication (2FA) to provide additional "
-"protection for your account."
+#: app.py:756
+msgid "Username already exists."
 msgstr ""
 
-#: app.py:784
+#: app.py:769 user.py:94 user.py:148
+msgid "Email already in use."
+msgstr ""
+
+#: app.py:801
 msgid "Profile updated."
 msgstr ""
 
-#: app.py:800 app.py:825
+#: app.py:817 app.py:842
 msgid "User not found."
 msgstr ""
 
-#: app.py:843
+#: app.py:860
 msgid "No 2FA setup active."
 msgstr ""
 
-#: app.py:848
+#: app.py:865
 msgid "Invalid 2FA code."
 msgstr ""
 
-#: app.py:857
+#: app.py:874
 msgid "2FA enabled."
 msgstr ""
 
-#: app.py:876
+#: app.py:893
 msgid "Password verification failed."
 msgstr ""
 
-#: app.py:890 auth.py:143
+#: app.py:907 auth.py:143
 msgid "2FA disabled."
 msgstr ""
 
-#: app.py:900 app.py:927
+#: app.py:917 app.py:944
 msgid "Invalid theme selection."
 msgstr ""
 
-#: app.py:906
+#: app.py:923
 msgid "Theme settings saved."
 msgstr ""
 
-#: app.py:923
+#: app.py:940
 msgid "Invalid language."
 msgstr ""
 
-#: app.py:947
+#: app.py:964
 msgid "Settings saved."
 msgstr ""
 
-#: app.py:1075
+#: app.py:1092
 msgid "Approval authorization changed."
 msgstr ""
 
-#: app.py:1092
+#: app.py:1109
 msgid "CSV header does not match the expected format."
 msgstr ""
 
-#: app.py:1167
+#: app.py:1184
 msgid "CSV preview is disabled."
 msgstr ""
 
-#: app.py:1178 app.py:1296
+#: app.py:1195 app.py:1313
 msgid "Preview expired or not found."
 msgstr ""
 
-#: app.py:1183 app.py:1310
+#: app.py:1200 app.py:1327
 msgid "CSV file not found."
 msgstr ""
 
-#: app.py:1192
+#: app.py:1209
 msgid "CSV could not be read."
 msgstr ""
 
-#: app.py:1239 bbalance.py:495
+#: app.py:1256 bbalance.py:495
 msgid "Please select a CSV file."
 msgstr ""
 
-#: app.py:1302
+#: app.py:1319
 msgid "Preview expired or already used."
 msgstr ""
 
-#: app.py:1354
+#: app.py:1371
 #, python-format
 msgid "Import successful: %(rows)d lines transferred."
 msgstr ""
 
-#: app.py:1360 bbalance.py:556
+#: app.py:1377 bbalance.py:556
 #, python-format
 msgid "Import failed: %(error)s"
 msgstr ""
 
-#: app.py:1529 templates/edit.html:25 templates/import_preview.html:46
+#: app.py:1546 templates/edit.html:25 templates/import_preview.html:46
 #: templates/import_preview.html:95 templates/index.html:76
 #: templates/index.html:287 templates/index.html:311
 #: templates/payment_authorization.html:28
@@ -210,141 +212,141 @@ msgstr ""
 msgid "Date"
 msgstr ""
 
-#: app.py:1529 templates/import_preview.html:47
+#: app.py:1546 templates/import_preview.html:47
 #: templates/import_preview.html:96 templates/table_partial.html:10
 #: templates/table_partial.html:34
 msgid "Full"
 msgstr ""
 
-#: app.py:1529 templates/import_preview.html:48
+#: app.py:1546 templates/import_preview.html:48
 #: templates/import_preview.html:97 templates/index.html:92
 #: templates/index.html:329 templates/index.html:331
 #: templates/table_partial.html:11 templates/table_partial.html:35
 msgid "Empty"
 msgstr ""
 
-#: app.py:1530 templates/edit.html:56 templates/import_preview.html:49
+#: app.py:1547 templates/edit.html:56 templates/import_preview.html:49
 #: templates/import_preview.html:98 templates/index.html:100
 #: templates/index.html:351 templates/index.html:353
 #: templates/table_partial.html:13 templates/table_partial.html:40
 msgid "Revenue"
 msgstr ""
 
-#: app.py:1530 templates/edit.html:67 templates/import_preview.html:50
+#: app.py:1547 templates/edit.html:67 templates/import_preview.html:50
 #: templates/import_preview.html:99 templates/index.html:108
 #: templates/index.html:357 templates/index.html:359
 #: templates/table_partial.html:14 templates/table_partial.html:41
 msgid "Expense"
 msgstr ""
 
-#: app.py:1530 templates/index.html:291 templates/index.html:368
+#: app.py:1547 templates/index.html:291 templates/index.html:368
 #: templates/table_partial.html:15 templates/table_partial.html:44
 msgid "Cash balance"
 msgstr ""
 
-#: app.py:1530 templates/edit.html:87 templates/import_preview.html:51
+#: app.py:1547 templates/edit.html:87 templates/import_preview.html:51
 #: templates/import_preview.html:100 templates/index.html:120
 #: templates/index.html:292 templates/index.html:375
 #: templates/table_partial.html:16 templates/table_partial.html:47
 msgid "Note"
 msgstr ""
 
-#: app.py:1624
+#: app.py:1641
 msgid "Language changed."
 msgstr ""
 
-#: app.py:1667 app.py:1828 mail.py:35 mail.py:99
+#: app.py:1684 app.py:1845 mail.py:35 mail.py:99
 msgid "SMTP configuration incomplete."
 msgstr ""
 
-#: app.py:1684 mail.py:51
+#: app.py:1701 mail.py:51
 msgid "This is a test message to check the SMTP configuration."
 msgstr ""
 
-#: app.py:1688 mail.py:50 modules/mail_utils.py:153
+#: app.py:1705 mail.py:50 modules/mail_utils.py:153
 #, python-format
 msgid "SMTP test by %(app)s"
 msgstr ""
 
-#: app.py:1695 mail.py:88
+#: app.py:1712 mail.py:88
 msgid "SMTP test successful – test email sent."
 msgstr ""
 
-#: app.py:1697
+#: app.py:1714
 msgid "SMTP test failed: "
 msgstr ""
 
-#: app.py:1716
+#: app.py:1733
 msgid "Database dump successfully generated."
 msgstr ""
 
-#: app.py:1736
+#: app.py:1753
 msgid "Updated notes."
 msgstr ""
 
-#: app.py:1738
+#: app.py:1755
 #, python-format
 msgid "Error saving notes: %(error)s"
 msgstr ""
 
-#: app.py:1744
+#: app.py:1761
 msgid "Please select an image file."
 msgstr ""
 
-#: app.py:1758
+#: app.py:1775
 msgid "Invalid file format. Permitted formats: SVG, PNG, JPG, WEBP."
 msgstr ""
 
-#: app.py:1777
+#: app.py:1794
 msgid "Logo successfully uploaded."
 msgstr ""
 
-#: app.py:1779
+#: app.py:1796
 #, python-format
 msgid "Upload failed: %(error)s"
 msgstr ""
 
-#: app.py:1798
+#: app.py:1815
 msgid "Custom logo removed. Fallback to default logo active."
 msgstr ""
 
-#: app.py:1802
+#: app.py:1819
 #, python-format
 msgid "Could not delete file: %(msg)s"
 msgstr ""
 
-#: app.py:1805
+#: app.py:1822
 msgid "No logo found."
 msgstr ""
 
-#: app.py:1821
+#: app.py:1838
 msgid "Unknown action."
 msgstr ""
 
-#: app.py:1830 mail.py:101
+#: app.py:1847 mail.py:101
 #, python-format
 msgid "SMTP configuration detected for host %(host)s:%(port)s."
 msgstr ""
 
-#: attachments.py:46
+#: attachments.py:44
 msgid "Please select files."
 msgstr ""
 
-#: attachments.py:57 payment.py:527
+#: attachments.py:55 payment.py:522
 #, python-format
 msgid "Invalid file type: %(filename)s"
 msgstr ""
 
-#: attachments.py:78
+#: attachments.py:76
 #, python-format
 msgid "%(num)d Files uploaded."
 msgstr ""
 
-#: attachments.py:80 payment.py:561
+#: attachments.py:78 payment.py:556
 msgid "No files uploaded."
 msgstr ""
 
-#: attachments.py:151 payment.py:672
+#: attachments.py:149 payment.py:667
 msgid "Attachment deleted."
 msgstr ""
 
@@ -519,114 +521,114 @@ msgstr ""
 msgid "The payment request was continued and is pending again."
 msgstr ""
 
-#: payment.py:461 payment.py:865
+#: payment.py:456 payment.py:849
 msgid "Requestor:"
 msgstr ""
 
-#: payment.py:462 payment.py:866
+#: payment.py:457 payment.py:850
 msgid "Date:"
 msgstr ""
 
-#: payment.py:463 payment.py:867
+#: payment.py:458 payment.py:851
 msgid "Paragraph:"
 msgstr ""
 
-#: payment.py:464 payment.py:868
+#: payment.py:459 payment.py:852
 msgid "Purpose:"
 msgstr ""
 
-#: payment.py:465 payment.py:869
+#: payment.py:460 payment.py:853
 msgid "Amount:"
 msgstr ""
 
-#: payment.py:466 payment.py:870
+#: payment.py:461 payment.py:854
 msgid "Supplier:"
 msgstr ""
 
-#: payment.py:467 payment.py:871
+#: payment.py:462 payment.py:855
 msgid "Justification:"
 msgstr ""
 
-#: payment.py:468 payment.py:872
+#: payment.py:463 payment.py:856
 msgid "State:"
 msgstr ""
 
-#: payment.py:475 payment.py:880 templates/audit.html:67
+#: payment.py:470 payment.py:864 templates/audit.html:67
 #: templates/payment_authorization_detail.html:242
 msgid "Audit history"
 msgstr ""
 
-#: payment.py:507
+#: payment.py:502
 msgid ""
 "Attachments can no longer be uploaded because the request has been "
 "completed or rejected."
 msgstr ""
 
-#: payment.py:516
+#: payment.py:511
 msgid "Please select file(s)."
 msgstr ""
 
-#: payment.py:554
+#: payment.py:549
 #, python-format
 msgid "%(count)d Files uploaded."
 msgid_plural "%(count)d Files uploaded."
 msgstr[0] ""
 msgstr[1] ""
 
-#: payment.py:694
+#: payment.py:689
 msgid "Editing is no longer possible."
 msgstr ""
 
-#: payment.py:725
+#: payment.py:720
 msgid "Invalid amount."
 msgstr ""
 
-#: payment.py:728
+#: payment.py:723
 #, python-format
 msgid "Invalid input: %(error)s"
 msgstr ""
 
-#: payment.py:798
+#: payment.py:793
 msgid "Payment request saved."
 msgstr ""
 
-#: payment.py:849
+#: payment.py:838
 msgid "Payment request - Overall document"
 msgstr ""
 
-#: payment.py:893
+#: payment.py:877
 msgid "all_payment_requests.pdf"
 msgstr ""
 
-#: payment.py:921
+#: payment.py:905
 msgid "Please enter a valid date."
 msgstr ""
 
-#: payment.py:925
+#: payment.py:909
 msgid "Please enter a valid amount."
 msgstr ""
 
-#: payment.py:931
+#: payment.py:915
 msgid "Invalid date format. Please enter in YYYY-MM-DD format."
 msgstr ""
 
-#: payment.py:937
+#: payment.py:921
 msgid "Invalid amount. Please enter a number."
 msgstr ""
 
-#: payment.py:984
+#: payment.py:968
 msgid "Payment request created successfully."
 msgstr ""
 
-#: payment.py:1003
+#: payment.py:987
 msgid "Completed payment requests can not longer be changed."
 msgstr ""
 
-#: payment.py:1013
+#: payment.py:997
 msgid "No approval found for withdrawal."
 msgstr ""
 
-#: payment.py:1035
+#: payment.py:1019
 msgid "Your approval has been withdrawn."
 msgstr ""
 
@@ -640,10 +642,6 @@ msgstr ""
 
 #: user.py:84 user.py:137
 msgid "Username already exists."
-msgstr ""
-
-#: user.py:94 user.py:148
-msgid "Email already in use."
 msgstr ""
 
 #: user.py:103
@@ -699,7 +697,7 @@ msgstr ""
 msgid "You cannot deactivate yourself."
 msgstr ""
 
-#: modules/core_utils.py:135
+#: modules/core_utils.py:134
 msgid "File too large. Maximum allowed: 10 MB."
 msgstr ""
 
@@ -754,12 +752,12 @@ msgid ""
 "Includes special characters like Ü, Ä, Ö, and ß."
 msgstr ""
 
-#: modules/payment_utils.py:110
+#: modules/payment_utils.py:106
 #, python-format
 msgid "New payment request #%(id)d"
 msgstr ""
 
-#: modules/payment_utils.py:111
+#: modules/payment_utils.py:107
 #, python-format
 msgid ""
 "Hello,\n"
@@ -771,10 +769,34 @@ msgid ""
 "Best regards, %(app)s"
 msgstr ""
 
-#: modules/payment_utils.py:118 templates/base.html:6 templates/base.html:149
+#: modules/payment_utils.py:114 templates/base.html:6 templates/base.html:149
 #: templates/base.html:160 templates/version.html:6 templates/version.html:20
 msgid "AppTitle"
 msgstr "BottleBalance"
+
+#: modules/pdf_utils.py:56
+msgid "Page"
+msgstr ""
+
+#: modules/pdf_utils.py:81
+#, python-format
+msgid "Error while inserting of %(name)s: %(err)s"
+msgstr ""
+
+#: modules/pdf_utils.py:111
+#, python-format
+msgid "Error deleting temporary file: %(path)s – %(err)s"
+msgstr ""
+
+#: modules/pdf_utils.py:116
+#, python-format
+msgid "Error while inserting PDF %(name)s: %(err)s"
+msgstr ""
+
+#: modules/pdf_utils.py:123
+#, python-format
+msgid "%(name)s – not embedded (file type: %(ctype)s)"
+msgstr ""
 
 #: templates/2fa.html:8
 msgid "Two-factor authentication"
@@ -793,7 +815,7 @@ msgstr ""
 msgid "Confirm"
 msgstr ""
 
-#: templates/2fa_enroll.html:8 templates/profile.html:91
+#: templates/2fa_enroll.html:8 templates/profile.html:112
 msgid "Set up 2FA"
 msgstr ""
 
@@ -844,9 +866,9 @@ msgid "One option per line ..."
 msgstr ""
 
 #: templates/admin_tools.html:35 templates/admin_tools.html:117
-#: templates/edit.html:93 templates/edit_user.html:64
-#: templates/payment_authorization_detail.html:14 templates/profile.html:48
-#: templates/profile.html:163 templates/reset.html:33
+#: templates/edit.html:93 templates/edit_user.html:67
+#: templates/payment_authorization_detail.html:14 templates/profile.html:69
+#: templates/profile.html:191 templates/reset.html:39
 msgid "Save"
 msgstr ""
 
@@ -1089,11 +1111,11 @@ msgstr ""
 msgid "Empty Bottles"
 msgstr ""
 
-#: templates/edit.html:92 templates/edit_user.html:63
+#: templates/edit.html:92 templates/edit_user.html:66
 #: templates/import_preview.html:171 templates/login.html:66
 #: templates/payment_authorization.html:163
-#: templates/payment_authorization.html:253 templates/profile.html:47
-#: templates/profile.html:162 templates/reset.html:32 templates/users.html:67
+#: templates/payment_authorization.html:253 templates/profile.html:68
+#: templates/profile.html:190 templates/reset.html:38 templates/users.html:70
 msgid "Cancel"
 msgstr ""
 
@@ -1145,41 +1167,45 @@ msgstr ""
 msgid "Error loading attachments."
 msgstr ""
 
-#: templates/edit_user.html:5 templates/users.html:158
+#: templates/edit_user.html:5 templates/users.html:161
 msgid "Edit user"
 msgstr ""
 
 #: templates/edit_user.html:16 templates/edit_user.html:18
-#: templates/users.html:33 templates/users.html:82 templates/users.html:96
+#: templates/profile.html:24 templates/profile.html:26 templates/users.html:33
+#: templates/users.html:85 templates/users.html:99
 msgid "Username"
 msgstr ""
 
 #: templates/edit_user.html:26 templates/edit_user.html:27
-#: templates/profile.html:20 templates/users.html:41 templates/users.html:83
-#: templates/users.html:101
+#: templates/profile.html:35 templates/users.html:41 templates/users.html:86
+#: templates/users.html:104
 msgid "Email"
 msgstr ""
 
-#: templates/edit_user.html:35 templates/profile.html:30
-#: templates/profile.html:73 templates/reset.html:15 templates/reset.html:26
+#: templates/edit_user.html:35 templates/edit_user.html:37
+#: templates/profile.html:45 templates/profile.html:47
+#: templates/profile.html:60 templates/profile.html:94 templates/reset.html:15
+#: templates/reset.html:17 templates/reset.html:29 templates/reset.html:31
+#: templates/users.html:62
 msgid "Enter new password"
 msgstr ""
 
-#: templates/edit_user.html:36 templates/profile.html:31
+#: templates/edit_user.html:39 templates/profile.html:49
 msgid "Enter new password (optional)"
 msgstr ""
 
-#: templates/edit_user.html:48 templates/users.html:53 templates/users.html:84
-#: templates/users.html:110
+#: templates/edit_user.html:51 templates/users.html:53 templates/users.html:87
+#: templates/users.html:113
 msgid "Role"
 msgstr ""
 
-#: templates/edit_user.html:54 templates/index.html:149 templates/users.html:85
-#: templates/users.html:115
+#: templates/edit_user.html:57 templates/index.html:149 templates/users.html:88
+#: templates/users.html:118
 msgid "Active"
 msgstr ""
 
-#: templates/edit_user.html:60
+#: templates/edit_user.html:63
 msgid "May approve payment requests"
 msgstr ""
 
@@ -1285,7 +1311,7 @@ msgid "Add new record"
 msgstr ""
 
 #: templates/index.html:126 templates/payment_authorization.html:255
-#: templates/users.html:69
+#: templates/users.html:72
 msgid "Add"
 msgstr ""
 
@@ -1346,8 +1372,8 @@ msgstr ""
 #: templates/index.html:293 templates/index.html:387
 #: templates/payment_authorization.html:31
 #: templates/payment_authorization.html:62 templates/table_partial.html:17
-#: templates/table_partial.html:48 templates/users.html:89
-#: templates/users.html:154
+#: templates/table_partial.html:48 templates/users.html:92
+#: templates/users.html:157
 msgid "Actions"
 msgstr ""
 
@@ -1422,7 +1448,7 @@ msgstr ""
 msgid "Username or Email"
 msgstr ""
 
-#: templates/login.html:25 templates/users.html:61
+#: templates/login.html:25 templates/users.html:64
 msgid "Password"
 msgstr ""
 
@@ -1644,83 +1670,95 @@ msgstr ""
 msgid "No attachments available"
 msgstr ""
 
-#: templates/profile.html:21
+#: templates/profile.html:36
 msgid "Email (for password reset)"
 msgstr ""
 
-#: templates/profile.html:40 templates/profile.html:41 templates/reset.html:27
+#: templates/profile.html:58 templates/profile.html:62 templates/reset.html:33
 msgid "Repeat password"
 msgstr ""
 
-#: templates/profile.html:59
+#: templates/profile.html:80
 msgid "Safety"
 msgstr ""
 
-#: templates/profile.html:62
+#: templates/profile.html:83
 msgid "2FA is"
 msgstr ""
 
-#: templates/profile.html:62
+#: templates/profile.html:83
 msgid "activated"
 msgstr ""
 
-#: templates/profile.html:74
+#: templates/profile.html:95
 msgid "Confirm with password"
 msgstr ""
 
-#: templates/profile.html:81
+#: templates/profile.html:102
 msgid "Disable 2FA"
 msgstr ""
 
-#: templates/profile.html:87
+#: templates/profile.html:108
 msgid "2FA is currently"
 msgstr ""
 
-#: templates/profile.html:87
+#: templates/profile.html:108
 msgid "deactivated"
 msgstr ""
 
-#: templates/profile.html:97
+#: templates/profile.html:118
 msgid "Your new backup codes (visible once):"
 msgstr ""
 
-#: templates/profile.html:109 templates/profile.html:150
+#: templates/profile.html:122
+msgid "Copy backup codes"
+msgstr ""
+
+#: templates/profile.html:125
+msgid "Copied!"
+msgstr ""
+
+#: templates/profile.html:137 templates/profile.html:178
 msgid "System"
 msgstr ""
 
-#: templates/profile.html:119
+#: templates/profile.html:147
 msgid "Sort entries in descending order (newest first)"
 msgstr ""
 
-#: templates/profile.html:130
+#: templates/profile.html:158
 msgid "Show entries from the current year only"
 msgstr ""
 
-#: templates/profile.html:137
+#: templates/profile.html:165
 msgid "Language"
 msgstr ""
 
-#: templates/profile.html:139
+#: templates/profile.html:167
 msgid "German"
 msgstr ""
 
-#: templates/profile.html:140
+#: templates/profile.html:168
 msgid "English"
 msgstr ""
 
-#: templates/profile.html:146
+#: templates/profile.html:174
 msgid "Representation"
 msgstr ""
 
-#: templates/profile.html:153
+#: templates/profile.html:181
 msgid "Light"
 msgstr ""
 
-#: templates/profile.html:156
+#: templates/profile.html:184
 msgid "Dark"
 msgstr ""
 
-#: templates/reset.html:16
+#: templates/profile.html:285
+msgid "Could not copy backup codes."
+msgstr ""
+
+#: templates/reset.html:19
 msgid "New password"
 msgstr ""
 
@@ -1736,55 +1774,55 @@ msgstr ""
 msgid "Add new user"
 msgstr ""
 
-#: templates/users.html:86 templates/users.html:131
+#: templates/users.html:89 templates/users.html:134
 msgid "Chairman"
 msgstr ""
 
-#: templates/users.html:87 templates/users.html:148
+#: templates/users.html:90 templates/users.html:151
 msgid "Created"
 msgstr ""
 
-#: templates/users.html:88 templates/users.html:151
+#: templates/users.html:91 templates/users.html:154
 msgid "Updated"
 msgstr ""
 
-#: templates/users.html:119 templates/users.html:120
+#: templates/users.html:122 templates/users.html:123
 msgid "Deactivate"
 msgstr ""
 
-#: templates/users.html:123 templates/users.html:124
+#: templates/users.html:126 templates/users.html:127
 msgid "Activate"
 msgstr ""
 
-#: templates/users.html:136
+#: templates/users.html:139
 msgid "Remove permission"
 msgstr ""
 
-#: templates/users.html:137
+#: templates/users.html:140
 msgid "Yes"
 msgstr ""
 
-#: templates/users.html:140
+#: templates/users.html:143
 msgid "Assign permission"
 msgstr ""
 
-#: templates/users.html:141
+#: templates/users.html:144
 msgid "No"
 msgstr ""
 
-#: templates/users.html:165
+#: templates/users.html:168
 msgid "Generate reset link"
 msgstr ""
 
-#: templates/users.html:172
+#: templates/users.html:175
 msgid "Delete user permanently?"
 msgstr ""
 
-#: templates/users.html:174
+#: templates/users.html:177
 msgid "Delete user"
 msgstr ""
 
-#: templates/users.html:184
+#: templates/users.html:187
 msgid "No users available"
 msgstr ""
 
@@ -1833,63 +1871,3 @@ msgstr ""
 
 #: templates/errors/401.html:31 templates/errors/403.html:32
 #: templates/errors/404.html:32 templates/errors/500.html:32
-msgid "To log in"
-msgstr ""
-
-#: templates/errors/401.html:38 templates/errors/403.html:39
-#: templates/errors/404.html:39 templates/errors/500.html:39
-msgid "Reference"
-msgstr ""
-
-#: templates/errors/403.html:2 templates/errors/403.html:9
-msgid "Access denied"
-msgstr ""
-
-#: templates/errors/403.html:13
-msgid "Access to this area has been denied."
-msgstr ""
-
-#: templates/errors/404.html:2 templates/errors/404.html:9
-msgid "Page not found"
-msgstr ""
-
-#: templates/errors/404.html:13
-msgid "The requested page was not found"
-msgstr ""
-
-#: templates/errors/500.html:2 templates/errors/500.html:9
-msgid "Unexpected error"
-msgstr ""
-
-#: templates/errors/500.html:13
-msgid "An unexpected error has occurred"
-msgstr ""
-
-#~ msgid "Datenbank-Dump erfolgreich erzeugt."
-#~ msgstr ""
-
-#~ msgid "Fehler beim Datenbank-Dump: %(error)s"
-#~ msgstr ""
-
-#~ msgid "2FA not active."
-#~ msgstr ""
-
-#~ msgid "Record saved, {count} file(s) transferred."
-#~ msgstr ""
-
-#~ msgid "BottleBalance"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Subject: %(subject)s\r\n"
-#~ "Content-Type: text/plain; charset=utf-8\r\n"
-#~ "\r\n"
-#~ "%(body)s"
-#~ msgstr ""
-
-#~ msgid "Please enter your username."
-#~ msgstr ""
-
-#~ msgid "Please enter your username"
-#~ msgstr ""
-

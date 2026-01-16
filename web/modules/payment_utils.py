@@ -7,17 +7,13 @@ from email.message import EmailMessage
 from smtplib import SMTP
 
 from modules.core_utils import (
-    log_action,
-    ROLES,
-    engine,
-    APP_BASE_URL
-    ) 
-from modules.mail_utils import (
-    send_status_email
-)
+    engine
+) 
+
 from modules.auth_utils import (
     current_user
 )
+
 from modules.core_utils import get_setting
 
 def _user_can_view_payment_request(request_id: int) -> bool:
@@ -45,7 +41,7 @@ def _user_can_edit_payment_request(request_id: int) -> bool:
         return False
     with engine.begin() as conn:
         row = conn.execute(text("""
-            SELECT requestor_id, sate
+            SELECT requestor_id, state
             FROM payment_requests
             WHERE id=:id
         """), {'id': request_id}).mappings().first()

@@ -7,7 +7,6 @@ from reportlab.lib import colors
 from flask_babel import gettext as _
 
 from modules.core_utils import (
-    localize_dt,
     localize_dt_str
 )
 
@@ -54,7 +53,9 @@ def standard_table_style():
 def footer(canvas, doc_):
     canvas.saveState()
     canvas.setFont("Helvetica", 9)
-    canvas.drawRightString(doc_.pagesize[0] - 18*mm, 12, f"Seite {doc_.page}")
+    label = _("Page")
+    page_no = canvas.getPageNumber()
+    canvas.drawRightString(doc_.pagesize[0] - 18*mm, 12, f"{label} {page_no}")
     canvas.restoreState()
 
 def embed_pdf_attachments(request_id, attachments, story, styles):
@@ -62,16 +63,26 @@ def embed_pdf_attachments(request_id, attachments, story, styles):
         path = os.path.join(UPLOAD_FOLDER, f"payment_request_{request_id}", att['stored_name'])
         if not os.path.exists(path):
             continue
+
+        # === Bild-Anlagen (PNG/JPG/WEBP/...) ===
         if att['content_type'].startswith('image/'):
             story.append(PageBreak())
-            story.append(Paragraph(f"<b>Attachment: {att['original_name']}</b>", styles['Heading3']))
+            story.append(Paragraph(
+                f"<b>{_('Attachment')}: {att['original_name']}</b>",
+                styles['Heading3']
+            ))
             story.append(Spacer(1, 6))
             try:
                 img = Image(path)
                 img._restrictSize(160*mm, 120*mm)
                 story.append(img)
             except Exception as e:
-                story.append(Paragraph(f"Error while inserting of {att['original_name']}: {e}", styles['Normal']))
+                story.append(Paragraph(
+                    _("Error while inserting of %(name)s: %(err)s", name=att['original_name'], err=str(e)),
+                    styles['Normal']
+                ))
+
+        # === PDF-Anlagen → Seiten als Bilder einbetten ===
         elif att['content_type'] == 'application/pdf':
             try:
                 pdf_doc = fitz.open(path)
@@ -82,22 +93,36 @@ def embed_pdf_attachments(request_id, attachments, story, styles):
                     pix.save(img_path)
 
                     story.append(PageBreak())
-                    story.append(Paragraph(f"<b>Attachment (PDF): {att['original_name']} – Üage {page_num + 1}</b>", styles['Heading3']))
+                    story.append(Paragraph(
+                        f"<b>{_('Attachment (PDF)')}: {att['original_name']} – {(_('Page'))} {page_num + 1}</b>",
+                        styles['Heading3']
+                    ))
                     story.append(Spacer(1, 6))
 
                     img = Image(img_path)
                     img._restrictSize(160*mm, 120*mm)
                     story.append(img)
 
-                    # Delete temporary file
+                    # Temporäre Datei löschen
                     try:
                         os.remove(img_path)
                     except Exception as e:
-                        story.append(Paragraph(f"Error deleting temporary file: {img_path} – {e}", styles['Normal']))
+                        story.append(Paragraph(
+                            _("Error deleting temporary file: %(path)s – %(err)s", path=img_path, err=str(e)),
+                            styles['Normal']
+                        ))
             except Exception as e:
-                story.append(Paragraph(f"Error while inserting PDF {att['original_name']}: {e}", styles['Normal']))
+                story.append(Paragraph(
+                    _("Error while inserting PDF %(name)s: %(err)s", name=att['original_name'], err=str(e)),
+                    styles['Normal']
+                ))
 
+        # === Nicht-embeddbare Dateitypen ===
         else:
-            story.append(Paragraph(f"{att['original_name']} – not embedded (file type: {att['content_type']})", styles['Normal']))
+            story.append(Paragraph(
+                _("%(name)s – not embedded (file type: %(ctype)s)", name=att['original_name'], ctype=att['content_type']),
+                styles['Normal']
+            ))
             story.append(Spacer(1, 4))
+
     return story

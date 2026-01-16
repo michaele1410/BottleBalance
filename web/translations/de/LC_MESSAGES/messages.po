@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-01-16 10:23+0100\n"
+"POT-Creation-Date: 2026-01-16 14:10+0100\n"
 "PO-Revision-Date: 2026-01-13 08:55+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: de\n"
@@ -23,25 +23,25 @@ msgstr ""
 msgid "Database dump successfully created."
 msgstr "Datenbank-Dump erfolgreich erstellt."
 
-#: admin.py:62 app.py:1738
+#: admin.py:62 app.py:1814
 #, python-format
 msgid "Error during database dump: %(error)s"
 msgstr "Fehler beim Datenbank-Dump: %(error)s"
 
-#: admin.py:73 app.py:1830
+#: admin.py:73 app.py:1906
 msgid "App title cannot be empty."
 msgstr "Der Titel der App darf nicht leer sein.."
 
-#: admin.py:77 app.py:1833
+#: admin.py:77 app.py:1909
 msgid "Application title updated."
 msgstr "Anwendungstitel aktualisiert."
 
-#: app.py:226
+#: app.py:225
 #, python-format
 msgid "New payment request from %(requester)s"
 msgstr "Neuer Zahlungsfreigabeantrag von %(requester)s"
 
-#: app.py:227
+#: app.py:226
 #, python-format
 msgid ""
 "A new payment request has been created.\n"
@@ -62,40 +62,40 @@ msgstr ""
 "\n"
 "Bitte überprüfen Sie die Anfrage im System."
 
-#: app.py:552
+#: app.py:551
 msgid "Withdrew money"
 msgstr "Entnahme"
 
-#: app.py:553 app.py:1546 templates/index.html:289 templates/index.html:340
+#: app.py:552 app.py:1618 templates/index.html:289 templates/index.html:340
 #: templates/table_partial.html:12 templates/table_partial.html:38
 msgid "Inventory"
 msgstr "Inventar"
 
-#: app.py:554
+#: app.py:553
 msgid "Count cash register"
 msgstr "Kassenzählung"
 
-#: app.py:555
+#: app.py:554
 msgid "Emptying cash register GR"
 msgstr "Leerung Kasse GR"
 
-#: app.py:556
+#: app.py:555
 msgid "Delivery of Bottles"
 msgstr "Lieferung Getränke"
 
-#: app.py:557
+#: app.py:556
 msgid "Individual bottle purchase"
 msgstr "Einzelkauf Getränke"
 
-#: app.py:558
+#: app.py:557
 msgid "Deposit PayPal"
 msgstr "Einzahlung Paypal"
 
-#: app.py:559
+#: app.py:558
 msgid "Donation"
 msgstr "Spende"
 
-#: app.py:617
+#: app.py:616
 #, python-format
 msgid ""
 "APP_BASE_URL is not set to production-ready (currently '%(url)s'). Set a "
@@ -105,114 +105,113 @@ msgstr ""
 "„%(url)s“). Legen Sie eine öffentlich zugängliche Basis-URL fest, damit "
 "Hinweise/Links in E-Mails korrekt sind."
 
-#: app.py:673
+#: app.py:672
 msgid "File too large. Please upload a smaller file."
 msgstr "Datei zu groß. Bitte laden Sie eine kleinere Datei hoch."
 
-#: app.py:741 auth.py:261 user.py:73
+#: app.py:740 auth.py:261 user.py:73
 msgid "Password must be at least 8 characters long."
 msgstr "Das Passwort muss mindestens 8 Zeichen lang sein."
 
-#: app.py:744 auth.py:264 templates/profile.html:224
+#: app.py:743 auth.py:264 templates/profile.html:224
 msgid "Passwords do not match."
 msgstr "Passwörter stimmen nicht überein."
 
-#: app.py:756
-#, fuzzy
+#: app.py:755 user.py:84 user.py:137
 msgid "Username already exists."
-msgstr "Der Benutzername existiert bereits."
+msgstr "Benutzername existiert bereits."
 
-#: app.py:769 user.py:94 user.py:148
+#: app.py:768 user.py:94 user.py:148
 msgid "Email already in use."
 msgstr "E-Mail-Adresse wird bereits verwendet."
 
-#: app.py:801
+#: app.py:800
 msgid "Profile updated."
 msgstr "Profil aktualisiert."
 
-#: app.py:817 app.py:842
+#: app.py:816 app.py:841
 msgid "User not found."
 msgstr "Benutzer nicht gefunden."
 
-#: app.py:860
+#: app.py:859
 msgid "No 2FA setup active."
 msgstr "Keine 2FA-Einrichtung aktiv."
 
-#: app.py:865
+#: app.py:864
 msgid "Invalid 2FA code."
 msgstr "Ungültiger 2FA-Code."
 
-#: app.py:874
+#: app.py:873
 msgid "2FA enabled."
 msgstr "2FA aktiviert."
 
-#: app.py:893
+#: app.py:892
 msgid "Password verification failed."
 msgstr "Passwortüberprüfung fehlgeschlagen."
 
-#: app.py:907 auth.py:143
+#: app.py:906 auth.py:143
 msgid "2FA disabled."
 msgstr "2FA deaktiviert."
 
-#: app.py:917 app.py:944
+#: app.py:916 app.py:943
 msgid "Invalid theme selection."
 msgstr "Ungültige Themenauswahl."
 
-#: app.py:923
+#: app.py:922
 msgid "Theme settings saved."
 msgstr "Thema-Einstellungen gespeichert."
 
-#: app.py:940
+#: app.py:939
 msgid "Invalid language."
 msgstr "Ungültige Sprache."
 
-#: app.py:964
+#: app.py:963
 msgid "Settings saved."
 msgstr "Einstellungen gespeichert."
 
-#: app.py:1092
+#: app.py:1091
 msgid "Approval authorization changed."
 msgstr "Freigabesberechtigung geändert."
 
-#: app.py:1109
+#: app.py:1108
 msgid "CSV header does not match the expected format."
 msgstr "Die CSV-Kopfzeile entspricht nicht dem erwarteten Format."
 
-#: app.py:1184
+#: app.py:1183
 msgid "CSV preview is disabled."
 msgstr "Die CSV-Vorschau ist deaktiviert."
 
-#: app.py:1195 app.py:1313
+#: app.py:1194 app.py:1312
 msgid "Preview expired or not found."
 msgstr "Vorschau abgelaufen oder nicht gefunden."
 
-#: app.py:1200 app.py:1327
+#: app.py:1199 app.py:1326
 msgid "CSV file not found."
 msgstr "CSV-Datei nicht gefunden."
 
-#: app.py:1209
+#: app.py:1208
 msgid "CSV could not be read."
 msgstr "Die CSV-Datei konnte nicht gelesen werden."
 
-#: app.py:1256 bbalance.py:495
+#: app.py:1255 bbalance.py:495
 msgid "Please select a CSV file."
 msgstr "Bitte wählen Sie eine CSV-Datei aus."
 
-#: app.py:1319
+#: app.py:1318
 msgid "Preview expired or already used."
 msgstr "Preview expired or already used."
 
-#: app.py:1371
+#: app.py:1370
 #, python-format
 msgid "Import successful: %(rows)d lines transferred."
 msgstr "Import erfolgreich: %(rows)d Zeilen übertragen."
 
-#: app.py:1377 bbalance.py:556
+#: app.py:1376 bbalance.py:556
 #, python-format
 msgid "Import failed: %(error)s"
 msgstr "Import fehlgeschlagen: %(error)s"
 
-#: app.py:1546 templates/edit.html:25 templates/import_preview.html:46
+#: app.py:1618 templates/edit.html:25 templates/import_preview.html:46
 #: templates/import_preview.html:95 templates/index.html:76
 #: templates/index.html:287 templates/index.html:311
 #: templates/payment_authorization.html:28
@@ -224,118 +223,127 @@ msgstr "Import fehlgeschlagen: %(error)s"
 msgid "Date"
 msgstr "Datum"
 
-#: app.py:1546 templates/import_preview.html:47
+#: app.py:1618 templates/import_preview.html:47
 #: templates/import_preview.html:96 templates/table_partial.html:10
 #: templates/table_partial.html:34
 msgid "Full"
 msgstr "Vollgut"
 
-#: app.py:1546 templates/import_preview.html:48
+#: app.py:1618 templates/import_preview.html:48
 #: templates/import_preview.html:97 templates/index.html:92
 #: templates/index.html:329 templates/index.html:331
 #: templates/table_partial.html:11 templates/table_partial.html:35
 msgid "Empty"
 msgstr "Leergut"
 
-#: app.py:1547 templates/edit.html:56 templates/import_preview.html:49
+#: app.py:1619 templates/edit.html:56 templates/import_preview.html:49
 #: templates/import_preview.html:98 templates/index.html:100
 #: templates/index.html:351 templates/index.html:353
 #: templates/table_partial.html:13 templates/table_partial.html:40
 msgid "Revenue"
 msgstr "Einnahme"
 
-#: app.py:1547 templates/edit.html:67 templates/import_preview.html:50
+#: app.py:1619 templates/edit.html:67 templates/import_preview.html:50
 #: templates/import_preview.html:99 templates/index.html:108
 #: templates/index.html:357 templates/index.html:359
 #: templates/table_partial.html:14 templates/table_partial.html:41
 msgid "Expense"
 msgstr "Ausgabe"
 
-#: app.py:1547 templates/index.html:291 templates/index.html:368
+#: app.py:1619 templates/index.html:291 templates/index.html:368
 #: templates/table_partial.html:15 templates/table_partial.html:44
 msgid "Cash balance"
 msgstr "Kassenbestand"
 
-#: app.py:1547 templates/edit.html:87 templates/import_preview.html:51
+#: app.py:1619 templates/edit.html:87 templates/import_preview.html:51
 #: templates/import_preview.html:100 templates/index.html:120
 #: templates/index.html:292 templates/index.html:375
 #: templates/table_partial.html:16 templates/table_partial.html:47
 msgid "Note"
 msgstr "Bemerkung"
 
-#: app.py:1641
+#: app.py:1664
+#, python-format
+msgid "Created at %(ts)s"
+msgstr "Erstellt um %(ts)s"
+
+#: app.py:1691
+msgid "Filters applied:"
+msgstr "Angewandte Filter:"
+
+#: app.py:1717
 msgid "Language changed."
 msgstr "Sprache geändert."
 
-#: app.py:1684 app.py:1845 mail.py:35 mail.py:99
+#: app.py:1760 app.py:1921 mail.py:35 mail.py:99
 msgid "SMTP configuration incomplete."
 msgstr "SMTP-Konfiguration unvollständig."
 
-#: app.py:1701 mail.py:51
+#: app.py:1777 mail.py:51
 msgid "This is a test message to check the SMTP configuration."
 msgstr "Dies ist eine Testnachricht zur Überprüfung der SMTP-Konfiguration."
 
-#: app.py:1705 mail.py:50 modules/mail_utils.py:153
+#: app.py:1781 mail.py:50 modules/mail_utils.py:153
 #, python-format
 msgid "SMTP test by %(app)s"
 msgstr "SMTP-Test von %(app)s"
 
-#: app.py:1712 mail.py:88
+#: app.py:1788 mail.py:88
 msgid "SMTP test successful – test email sent."
 msgstr "SMTP-Test erfolgreich – Test-E-Mail gesendet."
 
-#: app.py:1714
+#: app.py:1790
 msgid "SMTP test failed: "
 msgstr "SMTP-Test fehlgeschlagen: "
 
-#: app.py:1733
+#: app.py:1809
 msgid "Database dump successfully generated."
 msgstr "Datenbank-Dump erfolgreich erstellt."
 
-#: app.py:1753
+#: app.py:1829
 msgid "Updated notes."
 msgstr "Aktualisierte Notizen."
 
-#: app.py:1755
+#: app.py:1831
 #, python-format
 msgid "Error saving notes: %(error)s"
 msgstr "Fehler beim Speichern von Notizen: %(error)s"
 
-#: app.py:1761
+#: app.py:1837
 msgid "Please select an image file."
 msgstr "Bitte wählen Sie eine Bilddatei aus."
 
-#: app.py:1775
+#: app.py:1851
 msgid "Invalid file format. Permitted formats: SVG, PNG, JPG, WEBP."
 msgstr "Ungültiges Dateiformat. Zulässige Formate: SVG, PNG, JPG, WEBP."
 
-#: app.py:1794
+#: app.py:1870
 msgid "Logo successfully uploaded."
 msgstr "Logo erfolgreich hochgeladen."
 
-#: app.py:1796
+#: app.py:1872
 #, python-format
 msgid "Upload failed: %(error)s"
 msgstr "Upload fehlgeschlagen: %(error)s"
 
-#: app.py:1815
+#: app.py:1891
 msgid "Custom logo removed. Fallback to default logo active."
 msgstr "Benutzerdefiniertes Logo entfernt. Standardlogo aktiv."
 
-#: app.py:1819
+#: app.py:1895
 #, python-format
 msgid "Could not delete file: %(msg)s"
 msgstr "Datei konnte nicht gelöscht werden: %(msg)s"
 
-#: app.py:1822
+#: app.py:1898
 msgid "No logo found."
 msgstr "Kein Logo gefunden."
 
-#: app.py:1838
+#: app.py:1914
 msgid "Unknown action."
 msgstr "Unbekannte Aktion."
 
-#: app.py:1847 mail.py:101
+#: app.py:1923 mail.py:101
 #, python-format
 msgid "SMTP configuration detected for host %(host)s:%(port)s."
 msgstr "SMTP-Konfiguration für Host %(host)s:%(port)s erkannt."
@@ -344,7 +352,7 @@ msgstr "SMTP-Konfiguration für Host %(host)s:%(port)s erkannt."
 msgid "Please select files."
 msgstr "Bitte wählen Sie Dateien aus."
 
-#: attachments.py:55 payment.py:522
+#: attachments.py:55 payment.py:534
 #, python-format
 msgid "Invalid file type: %(filename)s"
 msgstr "Ungültiger Dateityp: %(filename)s"
@@ -354,11 +362,11 @@ msgstr "Ungültiger Dateityp: %(filename)s"
 msgid "%(num)d Files uploaded."
 msgstr "%(num)d Dateien hochgeladen."
 
-#: attachments.py:78 payment.py:556
+#: attachments.py:78 payment.py:568
 msgid "No files uploaded."
 msgstr "Es wurden keine Dateien hochgeladen."
 
-#: attachments.py:149 payment.py:667
+#: attachments.py:149 payment.py:679
 msgid "Attachment deleted."
 msgstr "Anhang gelöscht."
 
@@ -542,7 +550,7 @@ msgstr "Der Zahlungsfreigabeantrag wurde abgelehnt."
 #: payment.py:341
 msgid "You can only withdraw your own, pending, or paused payment requests."
 msgstr ""
-"ie können nur Ihre eigenen, ausstehenden oder pausierten "
+"Sie können nur Ihre eigenen, ausstehenden oder pausierten "
 "Zahlungsfreigabeanträge zurückziehen."
 
 #: payment.py:361
@@ -557,44 +565,44 @@ msgstr "Nur pausierte Zahlungsfreigabeanträge können wieder fortgesetzt werden
 msgid "The payment request was continued and is pending again."
 msgstr "Der Zahlungsfreigabeantrag wurde fortgesetzt und ist erneut ausstehend."
 
-#: payment.py:456 payment.py:849
+#: payment.py:464 payment.py:876
 msgid "Requestor:"
 msgstr "Antragsteller:"
 
-#: payment.py:457 payment.py:850
+#: payment.py:465 payment.py:877
 msgid "Date:"
 msgstr "Datum"
 
-#: payment.py:458 payment.py:851
+#: payment.py:466 payment.py:878
 msgid "Paragraph:"
 msgstr "Paragraph:"
 
-#: payment.py:459 payment.py:852
+#: payment.py:467 payment.py:879
 msgid "Purpose:"
 msgstr "Verwendungszweck:"
 
-#: payment.py:460 payment.py:853
+#: payment.py:468 payment.py:880
 msgid "Amount:"
 msgstr "Betrag:"
 
-#: payment.py:461 payment.py:854
+#: payment.py:469 payment.py:881
 msgid "Supplier:"
 msgstr "Lieferant:"
 
-#: payment.py:462 payment.py:855
+#: payment.py:470 payment.py:882
 msgid "Justification:"
 msgstr "Begründung:"
 
-#: payment.py:463 payment.py:856
+#: payment.py:471 payment.py:883
 msgid "State:"
 msgstr "Status:"
 
-#: payment.py:470 payment.py:864 templates/audit.html:67
+#: payment.py:478 payment.py:890 templates/audit.html:67
 #: templates/payment_authorization_detail.html:242
 msgid "Audit history"
 msgstr "Änderungsprotokoll"
 
-#: payment.py:502
+#: payment.py:514
 msgid ""
 "Attachments can no longer be uploaded because the request has been "
 "completed or rejected."
@@ -602,73 +610,78 @@ msgstr ""
 "Anhänge können nicht mehr hochgeladen werden, da die Anfrage oder "
 "abgelehnt wurde."
 
-#: payment.py:511
+#: payment.py:523
 msgid "Please select file(s)."
 msgstr "Bitte Datei(en) auswählen."
 
-#: payment.py:549
+#: payment.py:561
 #, python-format
 msgid "%(count)d Files uploaded."
 msgid_plural "%(count)d Files uploaded."
 msgstr[0] "%(count)d Datei hochgeladen."
 msgstr[1] "%(count)d Dateien hochgeladen."
 
-#: payment.py:689
+#: payment.py:701
 msgid "Editing is no longer possible."
 msgstr "Bearbeitung nicht mehr möglich."
 
-#: payment.py:720
+#: payment.py:732
 msgid "Invalid amount."
 msgstr "Ungültiger Betrag."
 
-#: payment.py:723
+#: payment.py:735
 #, python-format
 msgid "Invalid input: %(error)s"
 msgstr "Ungültige Eingabe: %(error)s"
 
-#: payment.py:793
+#: payment.py:805
 msgid "Payment request saved."
 msgstr "Zahlungsfreigabeantrag wurde gespeichert."
 
-#: payment.py:838
+#: payment.py:859
 msgid "Payment request - Overall document"
 msgstr "Zahlungsfreigabeanträge – Gesamtdokument"
 
-#: payment.py:877
+#: payment.py:864
+#, python-format
+msgid "Created at %(ts)s – Number of requests: %(count)d"
+msgstr "Erstellt um %(ts)s – Anzahl der Zahlungsfreigabeanträge: %(count)d"
+
+#: payment.py:914
 msgid "all_payment_requests.pdf"
 msgstr "alle_zahlungsfreigabeantraege.pdf"
 
-#: payment.py:905
+#: payment.py:942
 msgid "Please enter a valid date."
 msgstr "Bitte geben Sie ein gültiges Datum ein."
 
-#: payment.py:909
+#: payment.py:946
 msgid "Please enter a valid amount."
 msgstr "Bitte geben Sie einen gültigen Betrag ein."
 
-#: payment.py:915
+#: payment.py:952
 msgid "Invalid date format. Please enter in YYYY-MM-DD format."
 msgstr ""
 "Ungültiges Datumsformat. Bitte geben Sie das Datum im Format JJJJ-MM-TT "
 "ein."
 
-#: payment.py:921
+#: payment.py:958
 msgid "Invalid amount. Please enter a number."
 msgstr "Ungültiger Betrag. Bitte geben Sie eine Zahl ein."
 
-#: payment.py:968
+#: payment.py:1005
 msgid "Payment request created successfully."
 msgstr "Zahlungsfreigabeantrag erfolgreich erstellt."
 
-#: payment.py:987
+#: payment.py:1024
 msgid "Completed payment requests can not longer be changed."
 msgstr "Abgeschlossene Zahlungsfreigabeanträge können nicht mehr geändert werden."
 
-#: payment.py:997
+#: payment.py:1034
 msgid "No approval found for withdrawal."
 msgstr "Keine Freigabe zum zurückziehen gefunden."
 
-#: payment.py:1019
+#: payment.py:1056
 msgid "Your approval has been withdrawn."
 msgstr "Ihre Freigabe wurde widerrufen."
 
@@ -679,10 +692,6 @@ msgstr "Der Benutzername darf nicht leer sein."
 #: user.py:70 user.py:126 user.py:280
 msgid "Invalid role."
 msgstr "Ungültige Rolle."
-
-#: user.py:84 user.py:137
-msgid "Username already exists."
-msgstr "Der Benutzername existiert bereits."
 
 #: user.py:103
 msgid "User created."
@@ -832,26 +841,26 @@ msgstr ""
 msgid "AppTitle"
 msgstr "BottleBalance"
 
-#: modules/pdf_utils.py:56
+#: modules/pdf_utils.py:68
 msgid "Page"
 msgstr "Seite"
 
-#: modules/pdf_utils.py:81
+#: modules/pdf_utils.py:102
 #, python-format
 msgid "Error while inserting of %(name)s: %(err)s"
 msgstr "Fehler beim Einfügen von %(name)s: %(err)s"
 
-#: modules/pdf_utils.py:111
+#: modules/pdf_utils.py:134
 #, python-format
 msgid "Error deleting temporary file: %(path)s – %(err)s"
 msgstr "Fehler beim Löschen der temporären Datei: %(path)s – %(err)s"
 
-#: modules/pdf_utils.py:116
+#: modules/pdf_utils.py:139
 #, python-format
 msgid "Error while inserting PDF %(name)s: %(err)s"
 msgstr "Fehler beim Einfügen der PDF-Datei %(name)s: %(err)s"
 
-#: modules/pdf_utils.py:123
+#: modules/pdf_utils.py:144
 #, python-format
 msgid "%(name)s – not embedded (file type: %(ctype)s)"
 msgstr "%(name)s – nicht eingebettet (Dateityp: %(ctype)s)"

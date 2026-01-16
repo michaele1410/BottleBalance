@@ -18,16 +18,13 @@ from reportlab.platypus import SimpleDocTemplate, Table, Paragraph, Spacer, Page
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import mm
 from reportlab.lib import colors as rl_colors
+from reportlab.lib.styles import ParagraphStyle
 
 # Document Upload
 from werkzeug.utils import secure_filename
 from uuid import uuid4
 import mimetypes
 
-from modules.core_utils import (
-    engine,
-    find_custom_logo
-)
 from modules.auth_utils import (
     current_user,
     login_required,
@@ -38,7 +35,8 @@ from modules.core_utils import (
     engine,
     allowed_file,
     UPLOAD_FOLDER,
-    log_action
+    log_action,
+    find_custom_logo
 )
 from modules.payment_utils import (
     _approvals_total,
@@ -57,7 +55,8 @@ from modules.pdf_utils import (
     build_audit_table, 
     standard_table_style,
     embed_pdf_attachments,
-    footer as _footer
+    footer as _footer,
+    set_next_page_header,
 )
 
 payment_routes = Blueprint('payment_routes', __name__)
@@ -415,6 +414,8 @@ def payment_requests_audit():
 @payment_routes.get('/payment_requests/<int:request_id>/export/pdf')
 @login_required
 def export_single_request_pdf(request_id: int):
+    include_attachments = (request.args.get('include_attachments', '1') == '1')
+
     with engine.begin() as conn:
         r = conn.execute(text("""
             SELECT z.*, u.username AS requestor
@@ -439,14 +440,20 @@ def export_single_request_pdf(request_id: int):
         """), {'id': request_id}).mappings().all()
 
     buffer = io.BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=A4,
-                            leftMargin=18*mm, rightMargin=18*mm,
-                            topMargin=18*mm, bottomMargin=18*mm)
+    doc = SimpleDocTemplate(
+        buffer, pagesize=A4,
+        leftMargin=18*mm, rightMargin=18*mm,
+        topMargin=34*mm,  # Content sicher unter Logo + Linie
+        bottomMargin=18*mm
+    )
     styles = getSampleStyleSheet()
     story = []
 
+    # Default header for this document
+    setattr(doc, "_current_header", "")
+
     def P(text, style='Normal'):
-        return Paragraph((text or '').replace('\n', '<br/>'), styles[style])
+            return Paragraph((text or '').replace('\n', '<br/>'), styles[style])
 
     story.append(Paragraph(f"{_('Payment request')} #{request_id}", styles['Title']))
     story.append(Spacer(1, 6))
@@ -473,8 +480,12 @@ def export_single_request_pdf(request_id: int):
     story.append(build_audit_table(audits, styles))
     story.append(Spacer(1, 10))
     
-    # Attachments including PDF pages
-    story = embed_pdf_attachments(request_id, attachments, story, styles)
+    # Attachments including PDF pages – Move & scale in header
+    max_w = doc.width
+    max_h = doc.height - 14*mm
+    story = embed_pdf_attachments(request_id, attachments, story, styles,
+                                  max_w=max_w, max_h=max_h,
+                                  move_headings_to_header=True)
 
     doc.build(story, onFirstPage=_header_footer, onLaterPages=_header_footer)
     buffer.seek(0)
@@ -797,6 +808,7 @@ def edit_payment_request(request_id):
 @payment_routes.get('/payment_requests/export/pdf')
 @login_required
 def export_all_payment_requests_pdf():
+    include_attachments = (request.args.get('include_attachments', '1') == '1')
     with engine.begin() as conn:
         payment_requests = conn.execute(text("""
             SELECT z.*, u.username AS requestor
@@ -827,36 +839,49 @@ def export_all_payment_requests_pdf():
             attachments_by_payment_request[a['id']] = attachments
 
     buffer = io.BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=A4,
-                            leftMargin=18*mm, rightMargin=18*mm,
-                            topMargin=18*mm, bottomMargin=18*mm)
+    doc = SimpleDocTemplate(
+        buffer, pagesize=A4,
+        leftMargin=18*mm, rightMargin=18*mm,
+        topMargin=34*mm,  # Content sicher unter Logo + Linie
+        bottomMargin=18*mm
+    )
+
     styles = getSampleStyleSheet()
     story = []
 
     def P(text, style='Normal'):
         return Paragraph((text or '').replace('\n', '<br/>'), styles[style])
-    
+
+    # WICHTIG: Header leer lassen (kein "Zahlungsfreigabeantrag ..." im Kopf)
+    setattr(doc, "_current_header", "")
+
+    # Deckblatt
     story.append(Paragraph(_("Payment request - Overall document"), styles['Title']))
     story.append(Spacer(1, 6))
-    story.append(Paragraph(f"{_('Created at')} {datetime.now().strftime('%d.%m.%Y %H:%M')} – {_('Number of requests')}: {len(payment_requests)}", styles['Normal']))
+    story.append(Paragraph(
+        _('Created at %(ts)s – Number of requests: %(count)d',
+        ts=datetime.now().strftime('%d.%m.%Y %H:%M'),
+        count=len(payment_requests)),
+        styles['Normal']
+    ))
     story.append(Spacer(1, 12))
-
+    story.append(PageBreak())
+    
     for idx, r in enumerate(payment_requests):
         blocks = []
         blocks.append(Paragraph(f"<b>{_('Payment request')} #{r['id']}</b>", styles['Heading2']))
         blocks.append(Spacer(1, 6))
 
         details_data = [
-                [_("Requestor:"), P(r['requestor'])],
-                [_("Date:"), P(r['date'].strftime('%d.%m.%Y') if r['date'] else '')],
-                [_("Paragraph:"), P(r['paragraph'])],
-                [_("Purpose:"), P(r['purpose'])],
-                [_("Amount:"), P(f"{r['amount']} {_('currency')}")],
-                [_("Supplier:"), P(r['supplier'])],
-                [_("Justification:"), P(r['justification'])],
-                [_("State:"), P(r['state'])],
-            ]
-
+            [_("Requestor:"), P(r['requestor'])],
+            [_("Date:"), P(r['date'].strftime('%d.%m.%Y') if r['date'] else '')],
+            [_("Paragraph:"), P(r['paragraph'])],
+            [_("Purpose:"), P(r['purpose'])],
+            [_("Amount:"), P(f"{r['amount']} {_('currency')}")],
+            [_("Supplier:"), P(r['supplier'])],
+            [_("Justification:"), P(r['justification'])],
+            [_("State:"), P(r['state'])],
+        ]
         details_table = Table(details_data, colWidths=[42*mm, None])
         details_table.setStyle(standard_table_style())
         blocks.append(details_table)
@@ -866,10 +891,21 @@ def export_all_payment_requests_pdf():
         blocks.append(build_audit_table(audit_by_payment_request.get(r['id'], []), styles))
         blocks.append(Spacer(1, 10))
 
-        # Attachments including PDF pages
-        blocks = embed_pdf_attachments(r['id'], attachments_by_payment_request.get(r['id'], []), blocks, styles)
-        
+        # Attachments → nur hier Header setzen (pro Attachment-Seite)
+        if include_attachments:
+            max_w = doc.width
+            max_h = doc.height - 14*mm
+            blocks = embed_pdf_attachments(
+                r['id'],
+                attachments_by_payment_request.get(r['id'], []),
+                blocks, styles,
+                max_w=max_w, max_h=max_h,
+                move_headings_to_header=True
+            )
+
         story.extend(blocks)
+        # empty header for next page
+        story.append(set_next_page_header(""))
         if idx < len(payment_requests) - 1:
             story.append(PageBreak())
 
@@ -1137,34 +1173,32 @@ def payment_request_detail(request_id):
     )
 
 def _draw_logo(canvas, doc):
-    """Draws the branding logo top-right on each page."""
+    """
+    Zeichnet das Branding-Logo oben rechts, vollständig über der Linie
+    (Rasterformate; SVG wird auf Fallback gesetzt).
+    """
     fname, fpath = find_custom_logo()
     if not fpath or not os.path.exists(fpath):
-        # Fallback auf statisches Logo
         fpath = os.path.join(current_app.static_folder, "images", "logo.png")
     else:
-        # Raster-Bild sicherstellen (ReportLab kann kein SVG direkt)
         _, ext = os.path.splitext(fpath.lower())
         if ext not in ('.png', '.jpg', '.jpeg', '.webp'):
             fallback = os.path.join(current_app.static_folder, "images", "logo.png")
             fpath = fallback if os.path.exists(fallback) else None
-
-    # Wenn weiterhin kein verwertbarer Pfad vorhanden ist → nichts zeichnen
     if not fpath or not os.path.exists(fpath):
         return
 
-    # Sichere Maximalgröße (verhindert DPI/„???“-Probleme)
-    max_w, max_h = 30*mm, 12*mm
+    max_w, max_h = 28*mm, 10*mm
+    GAP = 2*mm
     page_w, page_h = doc.pagesize
-
-    # Position: oben rechts innerhalb der Margins
     x = page_w - doc.rightMargin - max_w
-    y = page_h - doc.topMargin + 4*mm  # leicht über dem Fließtext
+    y_line = page_h - doc.topMargin
+    y_logo_top = y_line + max_h + GAP
 
     canvas.saveState()
     try:
         canvas.drawImage(
-            fpath, x, y,
+            fpath, x, y_logo_top,
             width=max_w, height=max_h,
             preserveAspectRatio=True,
             mask='auto',
@@ -1173,23 +1207,71 @@ def _draw_logo(canvas, doc):
     finally:
         canvas.restoreState()
 
+
 def _header_footer(canvas, doc):
-    """Kombiniert Kopf (Logo) und bestehenden Footer."""
-    # 1) Letterhead/logo at top right
+    """
+    Payment header:
+      - Logo at top right (completely above the line)
+      - Header text from NextPageHeader/doc._current_header (e.g., attachment information)
+      - Vertical centering using invisible table
+      - Red line at the edge of the content
+      - Footer (page number) at the bottom
+    """
+    # 0) Copy attachment header from next page
+    try:
+        attrs = getattr(canvas, "_doctemplateAttr", {}) or {}
+        nxt = attrs.pop("next_page_header", None)
+        if nxt is not None:
+            setattr(doc, "_current_header", nxt)
+    except Exception:
+        pass
+
+    # 1) Draw a logo
     _draw_logo(canvas, doc)
 
-    # 2) Subtle dividing line exactly on the top edge of the continuous text frame
+    # 2) geometry
+    page_w, page_h = doc.pagesize
+    max_w_logo, max_h_logo = 28*mm, 10*mm
+    GAP   = 2*mm
+    PAD_X = 6*mm
+    left_x  = doc.leftMargin
+    right_x = page_w - doc.rightMargin
+    y_line     = page_h - doc.topMargin
+    y_logo_top = y_line + max_h_logo + GAP
+
+    # 3) Header text for this page (attachment information, etc.)
+    header_text = getattr(doc, "_current_header", "") or ""
+
+    # 4) Invisible table for precise vertical centering (text = logo height)
+    data = [[header_text, ""]]
+    col_widths = [(right_x - left_x) - max_w_logo - PAD_X, max_w_logo]
+    table = Table(
+        data,
+        colWidths=col_widths,
+        rowHeights=[max_h_logo],
+        style=[
+            ('FONTNAME', (0,0), (-1,-1), 'Helvetica'),
+            ('FONTSIZE', (0,0), (-1,-1), 9.5),
+            ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+            ('ALIGN', (0,0), (0,0), 'LEFT'),
+            ('TEXTCOLOR', (0,0), (-1,-1), rl_colors.HexColor('#111111')),
+            ('TOPPADDING', (0,0), (-1,-1), 0),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 0),
+            ('LEFTPADDING', (0,0), (1,0), 0),
+            ('RIGHTPADDING', (0,0), (1,0), 0),
+        ]
+    )
+    table.wrapOn(canvas, doc.width, doc.topMargin)
+    table.drawOn(canvas, left_x, y_logo_top - max_h_logo)
+
+    # 5) Red line
     canvas.saveState()
     try:
-        # Light gray, very thin
         canvas.setStrokeColor(rl_colors.HexColor("#A72920"))
         canvas.setLineWidth(0.5)
-        page_w, page_h = doc.pagesize
-        y = page_h - doc.topMargin
-        canvas.line(doc.leftMargin, y, page_w - doc.rightMargin, y)
+        canvas.line(doc.leftMargin, y_line, right_x, y_line)
     finally:
         canvas.restoreState()
 
-    # 3) Draw existing footer
+    # 6) Footer (page number)
     _footer(canvas, doc)
-

@@ -6,6 +6,7 @@ import os
 import ssl
 import logging
 import base64
+import re
 from smtplib import SMTP, SMTP_SSL as SMTP_SSL_CLASS
 from datetime import datetime, date, timedelta
 from decimal import Decimal
@@ -1571,6 +1572,10 @@ def _header_footer(canvas, doc):
     finally:
         canvas.restoreState()
 
+def _slug(s: str) -> str:
+    """lowercase, nur a-z0-9, Trenner als '_'"""
+    return re.sub(r'[^a-z0-9]+', '_', (s or '').lower()).strip('_')
+
 @app.get('/export/pdf')
 @login_required
 @require_perms('export:pdf')
@@ -1677,8 +1682,8 @@ def export_pdf():
         ('BOTTOMPADDING', (0,0), (-1,-1), 4),
     ]))
     story.append(Paragraph(
-    _('Created at %(ts)s', ts=datetime.now().strftime('%d.%m.%Y %H:%M')),
-    styles['Normal']
+        _('Created at: %(ts)s', ts=datetime.now().strftime('%d.%m.%Y - %H:%M')),
+        styles['Normal']
     ))
 
     story.append(Spacer(1, 6))
@@ -1714,7 +1719,9 @@ def export_pdf():
     doc.build(story, onFirstPage=_header_footer, onLaterPages=_header_footer)
     buffer.seek(0)
 
-    filename = f"{get_setting('app_title', 'BottleBalance')}_{_('export')}_{date.today().strftime('%Y%m%d')}.pdf"
+    datestr = datetime.now().strftime('%Y%m%d-%H%M')
+    app_slug = _slug(get_setting('app_title', 'BottleBalance')) or 'bottlebalance'
+    filename = f"{app_slug}_export_all_{datestr}.pdf"
     return send_file(buffer, as_attachment=True, download_name=filename, mimetype='application/pdf')
 
 @app.post('/profile/lang')

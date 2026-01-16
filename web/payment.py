@@ -4,6 +4,7 @@
 import io
 import os
 import json
+import re
 from datetime import date, datetime
 from decimal import Decimal
 from flask_babel import gettext as _
@@ -36,7 +37,8 @@ from modules.core_utils import (
     allowed_file,
     UPLOAD_FOLDER,
     log_action,
-    find_custom_logo
+    find_custom_logo,
+    get_setting
 )
 from modules.payment_utils import (
     _approvals_total,
@@ -58,6 +60,10 @@ from modules.pdf_utils import (
     footer as _footer,
     set_next_page_header,
 )
+
+def _slug(s: str) -> str:
+    """lowercase, nur a-z0-9, Trenner als '_', leading/trailing '_' entfernt"""
+    return re.sub(r'[^a-z0-9]+', '_', (s or '').lower()).strip('_')
 
 payment_routes = Blueprint('payment_routes', __name__)
 
@@ -457,7 +463,10 @@ def export_single_request_pdf(request_id: int):
 
     story.append(Paragraph(f"{_('Payment request')} #{request_id}", styles['Title']))
     story.append(Spacer(1, 6))
-    story.append(Paragraph(f"{_('Created on')} {datetime.now().strftime('%d.%m.%Y %H:%M')}", styles['Normal']))
+    story.append(Paragraph(
+        _('Created at: %(ts)s', ts=datetime.now().strftime('%d.%m.%Y - %H:%M')),
+        styles['Normal']
+    ))
     story.append(Spacer(1, 12))
 
     details_data = [
@@ -489,9 +498,16 @@ def export_single_request_pdf(request_id: int):
 
     doc.build(story, onFirstPage=_header_footer, onLaterPages=_header_footer)
     buffer.seek(0)
-    return send_file(buffer, as_attachment=True,
-                     download_name=f'payment_request_{request_id}.pdf',
-                     mimetype='application/pdf')
+    
+    datestr = datetime.now().strftime('%Y%m%d-%H%M')
+    app_slug = _slug(get_setting('app_title', 'BottleBalance')) or 'bottlebalance'
+    download_name = f'{app_slug}_payment_request_{request_id}_{datestr}.pdf'
+    return send_file(
+            buffer,
+            as_attachment=True,
+            download_name=download_name,
+            mimetype='application/pdf'
+        )
 
 # ============= Payment request attachments =============
 @payment_routes.post('/payment_requests/<int:request_id>/attachments/upload')
@@ -790,7 +806,7 @@ def edit_payment_request(request_id):
             'id': request_id
         })
 
-        now_str = datetime.now().strftime("%d.%m.%Y %H:%M:%S")
+        now_str = datetime.now().strftime("%d.%m.%Y - %H:%M:%S")
         if changes:
             summary = "\n".join([f"- {label}: {old} → {new}" for _, label, old, new in changes])
             detail_text = f"Edited on {now_str}\n{summary}"
@@ -859,8 +875,8 @@ def export_all_payment_requests_pdf():
     story.append(Paragraph(_("Payment request - Overall document"), styles['Title']))
     story.append(Spacer(1, 6))
     story.append(Paragraph(
-        _('Created at %(ts)s – Number of requests: %(count)d',
-        ts=datetime.now().strftime('%d.%m.%Y %H:%M'),
+        _('Created at: %(ts)s – Number of requests: %(count)d',
+        ts=datetime.now().strftime('%d.%m.%Y - %H:%M'),
         count=len(payment_requests)),
         styles['Normal']
     ))
@@ -912,9 +928,16 @@ def export_all_payment_requests_pdf():
     doc.build(story, onFirstPage=_header_footer, onLaterPages=_header_footer)
     buffer.seek(0)
     filename = _('all_payment_requests.pdf')
-    return send_file(buffer, as_attachment=True,
-                     download_name=filename,
-                     mimetype='application/pdf')
+    
+    datestr = datetime.now().strftime('%Y%m%d-%H%M')
+    app_slug = _slug(get_setting('app_title', 'BottleBalance')) or 'bottlebalance'
+    filename = f'{app_slug}_payment_requests_all_{datestr}.pdf'
+    return send_file(
+        buffer,
+        as_attachment=True,
+        download_name=filename,
+        mimetype='application/pdf'
+    )
 
 # Payment requests
 def _payment_request_dir(request_id: int) -> str:

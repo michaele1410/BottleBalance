@@ -57,7 +57,10 @@
                 <div class="input-group mb-3">
                   <span class="input-group-text"><i class="bi bi-key"></i></span>
                   <div class="form-floating flex-grow-1">
-                    <input name="password" type="password" class="form-control" required>
+                    <!--input name="password" type="password" class="form-control" required-->
+                    <input type="password" name="password" class="form-control"
+                        placeholder="{{ _('Enter new password') }}"
+                        required minlength="8" autocomplete="new-password">
                     <label for="full">{{ _('Password') }}</label>
                   </div>
                 </div>

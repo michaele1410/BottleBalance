@@ -11,8 +11,11 @@
             <div class="input-group mb-3">
               <span class="input-group-text"><i class="bi bi-key"></i></span>
               <div class="form-floating flex-grow-1">
-                <input type="password" name="password"  inputmode="text" class="form-control"
-                  placeholder="{{ _('Enter new password') }}" required>
+                <!--input type="password" name="password"  inputmode="text" class="form-control"
+                  placeholder="{{ _('Enter new password') }}" required-->                
+                <input type="password" name="password" class="form-control"
+                      placeholder="{{ _('Enter new password') }}"
+                      required minlength="8" autocomplete="new-password">
                   <label for="password">{{ _('New password') }}</label>
               </div>
             </div>
@@ -22,8 +25,11 @@
             <div class="input-group mb-3">
               <span class="input-group-text"><i class="bi bi-key"></i></span>
               <div class="form-floating flex-grow-1">
-                <input type="password" name="password2"  inputmode="text" class="form-control"
-                  placeholder="{{ _('Enter new password') }}" required>
+                <!--input type="password" name="password2"  inputmode="text" class="form-control"
+                  placeholder="{{ _('Enter new password') }}" required-->                
+                <input type="password" name="password2" class="form-control"
+                      placeholder="{{ _('Enter new password') }}"
+                      required minlength="8" autocomplete="new-password">
                   <label for="password2">{{ _('Repeat password') }}</label>
               </div>
             </div>

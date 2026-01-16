@@ -136,11 +136,11 @@ def configure_logging():
         return
     root.setLevel(LOG_LEVEL)
     fmt = logging.Formatter("%(asctime)s %(levelname)s [%(name)s] %(message)s")
-    fh = RotatingFileHandler(LOG_FILE, maxBytes=LOG_MAX_BYTES, backupCount=LOG_BACKUP_COUNT)
-    fh.setFormatter(fmt)
+    #fh = RotatingFileHandler(LOG_FILE, maxBytes=LOG_MAX_BYTES, backupCount=LOG_BACKUP_COUNT)
+    #fh.setFormatter(fmt)
     sh = logging.StreamHandler()
     sh.setFormatter(fmt)
-    root.addHandler(fh)
+    #root.addHandler(fh)
     root.addHandler(sh)
 
 configure_logging()

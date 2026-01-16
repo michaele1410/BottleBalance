@@ -41,8 +41,11 @@
           <div class="input-group mb-3">
             <span class="input-group-text"><i class="bi bi-key"></i></span>
             <div class="form-floating flex-grow-1">
-              <input type="password" id="password" name="password" class="form-control"
-                placeholder="{{ _('Enter new password') }}">
+              <!--input type="password" id="password" name="password" class="form-control"
+                placeholder="{{ _('Enter new password') }}"-->
+              <input type="password" name="password" class="form-control"
+                    placeholder="{{ _('Enter new password') }}"
+                    required minlength="8" autocomplete="new-password">
               <label for="password">{{ _('Enter new password (optional)') }}</label>
             </div>
           </div>
@@ -51,8 +54,11 @@
           <div class="input-group mb-3 d-none" id="password-confirm-group">
             <span class="input-group-text"><i class="bi bi-key"></i></span>
             <div class="form-floating flex-grow-1">
-              <input type="password" id="password2" name="password2" class="form-control"
-                placeholder="{{ _('Repeat password') }}">
+              <!--input type="password" id="password2" name="password2" class="form-control"
+                placeholder="{{ _('Repeat password') }}"-->              
+              <input type="password" name="password2" class="form-control"
+                    placeholder="{{ _('Enter new password') }}"
+                    required minlength="8" autocomplete="new-password">
               <label for="password2">{{ _('Repeat password') }}</label>
             </div>
           </div>
@@ -109,8 +115,15 @@
 
         {% if new_backup_codes %}
           <div class="alert alert-warning mt-3">
-            <h6 class="mb-2">{{ _('Your new backup codes (visible once):') }}</h6>
-            <pre class="mb-0">{{ '\n'.join(new_backup_codes) }}</pre>
+              <h6 class="mb-2">{{ _('Your new backup codes (visible once):') }}</h6>
+
+              <pre id="backupCodesBox" class="p-3 bg-light border rounded" style="white-space: pre-wrap;">{{ new_backup_codes|join('\n') }}</pre>
+              <button id="copyBackupCodesBtn" class="btn btn-sm btn-primary mt-2" type="button">
+                  <i class="bi bi-clipboard"></i> {{ _('Copy backup codes') }}
+              </button>
+              <span id="copyStatus" class="ms-2 text-success fw-bold d-none">
+                  {{ _('Copied!') }}
+              </span>
           </div>
         {% endif %}
       </div>
@@ -230,6 +243,56 @@ document.addEventListener('DOMContentLoaded', () => {
       document.documentElement.setAttribute('data-bs-theme', effective);
     });
   });
+});
+</script>
+
+
+<script>
+function copyBackupCodes() {
+    const box = document.getElementById('backupCodesBox');
+    const btn = document.getElementById('copyBackupCodesBtn');
+    const status = document.getElementById('copyStatus');
+
+    if (!box) return;
+
+    const text = box.innerText.trim();
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text)
+            .then(() => {
+                status.classList.remove('d-none');
+                setTimeout(() => status.classList.add('d-none'), 2500);
+            })
+            .catch(() => fallbackCopy(text, status));
+    } else {
+        fallbackCopy(text, status);
+    }
+}
+
+function fallbackCopy(text, statusElem) {
+    const tmp = document.createElement('textarea');
+    tmp.value = text;
+    tmp.style.position = 'fixed';
+    tmp.style.left = '-9999px';
+    document.body.appendChild(tmp);
+    tmp.select();
+
+    try {
+        document.execCommand('copy');
+        statusElem.classList.remove('d-none');
+        setTimeout(() => statusElem.classList.add('d-none'), 2500);
+    } catch (err) {
+        alert("{{ _('Could not copy backup codes.') }}");
+    } finally {
+        document.body.removeChild(tmp);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const copyBtn = document.getElementById('copyBackupCodesBtn');
+    if (copyBtn) {
+        copyBtn.addEventListener('click', copyBackupCodes);
+    }
 });
 </script>
 

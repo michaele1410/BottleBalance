@@ -30,7 +30,7 @@ msgstr "Fehler beim Datenbank-Dump: %(error)s"
 
 #: admin.py:73 app.py:1813
 msgid "App title cannot be empty."
-msgstr "App title cannot be empty."
+msgstr "Der Titel der App darf nicht leer sein.."
 
 #: admin.py:77 app.py:1816
 msgid "Application title updated."
@@ -159,7 +159,7 @@ msgstr "Ungültige Themenauswahl."
 
 #: app.py:906
 msgid "Theme settings saved."
-msgstr "Themaeinstellungen gespeichert."
+msgstr "Thema-Einstellungen gespeichert."
 
 #: app.py:923
 msgid "Invalid language."
@@ -528,7 +528,7 @@ msgstr "Der Zahlungsfreigabeantrag wurde gelöscht."
 msgid "Only pending or paused payment requests can be rejected."
 msgstr ""
 "Nur ausstehende oder pausierte Zahlungsfreigabeanträge können "
-"abgelehntwerden."
+"abgelehnt werden."
 
 #: payment.py:309
 msgid "Please specify a reason for rejection."
@@ -618,7 +618,7 @@ msgstr "Bearbeitung nicht mehr möglich."
 
 #: payment.py:725
 msgid "Invalid amount."
-msgstr "ngültiger Betrag."
+msgstr "Ungültiger Betrag."
 
 #: payment.py:728
 #, python-format
@@ -689,7 +689,7 @@ msgstr "E-Mail-Adresse wird bereits verwendet."
 
 #: user.py:103
 msgid "User created."
-msgstr "Bneutzer wurde erstellt."
+msgstr "Benutzer wurde erstellt."
 
 #: user.py:105
 #, python-format
@@ -804,7 +804,7 @@ msgid ""
 "Includes special characters like Ü, Ä, Ö, and ß."
 msgstr ""
 "Dies ist eine automatisierte Testnachricht zur Überprüfung der SMTP-"
-"Konfiguration.Enthält Sonderzeichen wie Ü, Ä, Ö und ß."
+"Konfiguration. Enthält Sonderzeichen wie Ü, Ä, Ö und ß."
 
 #: modules/payment_utils.py:110
 #, python-format
@@ -1507,14 +1507,13 @@ msgid "Request password reset"
 msgstr "Passwort zurücksetzen"
 
 #: templates/login.html:60
-#, fuzzy
 msgid "Please enter your username or Email"
 msgstr "Bitte geben Sie Ihren Benutzernamen oder Ihre E-Mail-Adresse ein."
 
 #: templates/login.html:62
 msgid "If the information is correct, a reset link will be sent by email."
 msgstr ""
-"enn die Angaben korrekt sind, wird Ihnen per E-Mail ein Link zum "
+"Wenn die Angaben korrekt sind, wird Ihnen per E-Mail ein Link zum "
 "Zurücksetzen zugesandt."
 
 #: templates/login.html:67

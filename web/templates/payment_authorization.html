@@ -5,20 +5,39 @@
     <h1 class="h5 mb-3">{{ _('Payment request') }}</h1>
 
     <!-- Actions -->
-    <div class="d-flex flex-wrap gap-2 mb-3">
-      <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#payment_requestModal">
-        <i class="bi-plus-lg me-1"></i> {{ _('New payment request') }}
-      </button>
-      <a href="{{ url_for('payment_routes.export_all_payment_requests_pdf') }}" class="btn btn-outline-danger">
-        <i class="bi-file-earmark-pdf me-1 text-danger"></i> {{ _('All payment request as PDF') }}
-      </a>
-      {% if 'payment:audit' in (ROLES.get(session.get('role'), [])) %}
-      <a href="{{ url_for('payment_routes.payment_requests_audit') }}" class="btn btn-outline-secondary">
-        <i class="bi bi-clock-history me-1"></i> {{ _('Audit overview') }}
-      </a>
-      {% endif %}
-    </div>
+    <div class="btn-group">
+      <div class="d-flex flex-wrap gap-2 mb-3">
+        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#payment_requestModal">
+          <i class="bi-plus-lg me-1"></i> {{ _('New payment request') }}
+        </button> 
 
+            <!-- STANDARD: with attachments -->
+            <a class="btn btn-outline-danger"
+              href="{{ url_for('payment_routes.export_all_payment_requests_pdf', include_attachments=1) }}"
+              title="{{ _('PDF export') }}">
+              <i class="bi-file-earmark-pdf me-1 text-danger"></i>
+              {{ _('All requests as PDF') }}
+            </a>
+
+            <!-- SPLIT-DROPDOWN (only 'without attachments') -->
+            <button type="button"
+                    class="btn btn-outline-danger dropdown-toggle dropdown-toggle-split"
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false"
+                    aria-label="{{ _('Additional export options') }}">
+              <span class="visually-hidden">{{ _('Additional export options') }}</span>
+            </button>
+
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li>
+                <a class="dropdown-item"
+                  href="{{ url_for('payment_routes.export_all_payment_requests_pdf', include_attachments=0) }}">
+                  {{ _('Without attachments') }}
+                </a>
+              </li>
+            </ul>
+      </div>
+    </div>
     <!-- Table -->
     <div class="table-responsive">
       <table class="table table-bordered align-middle">
@@ -170,11 +189,11 @@
 
 <script>
   const rejectModal = document.getElementById('rejectModal');
-  rejectnModal.addEventListener('show.bs.modal', (event) => {
-    const button = event.relatedTarget;
-    const payment_requestId = button.getAttribute('data-payment_request-id');
-    const form = document.getElementById('rejectForm');
-    form.action = "{{ url_for('payment_routes.reject_payment_request', request_id=0) }}".replace('/0', '/' + payment_requestId);
+  rejectModal.addEventListener(('show.bs.modal', (event) => {
+  const button = event.relatedTarget;
+  const payment_requestId = button.getAttribute('data-payment_request-id');
+  const form = document.getElementById('rejectForm');
+  form.action = "{{ url_for('payment_routes.reject_payment_request', request_id=0) }}".replace('/0', '/' + payment_requestId);
   });
 </script>
 

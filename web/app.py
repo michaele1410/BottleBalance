@@ -3,18 +3,15 @@
 # -----------------
 
 import os
-import secrets
 import ssl
 import logging
-import re
 import base64
-from logging.handlers import RotatingFileHandler
-from smtplib import SMTP, SMTP_SSL as SMTP_SSL_CLASS  # ← alias gegen Konflikt
-from email.message import EmailMessage
+import re
+from smtplib import SMTP, SMTP_SSL as SMTP_SSL_CLASS
 from datetime import datetime, date, timedelta
 from decimal import Decimal
 from flask_babel import Babel, gettext as _, gettext as translate
-from flask import Flask, render_template, request, redirect, url_for, session, send_file, send_from_directory, flash, abort, current_app, render_template_string
+from flask import Flask, render_template, request, redirect, url_for, session, send_file, send_from_directory, flash, abort, current_app
 from flask_mail import Message, Mail
 mail = Mail()
 from sqlalchemy import text
@@ -23,10 +20,12 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_socketio import SocketIO
 from email.mime.text import MIMEText
 from email.header import Header
-from functools import wraps
-from typing import List, Tuple
 from urllib.parse import urlencode
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image as RLImage, PageBreak, KeepTogether
+from reportlab.lib.pagesizes import A4, portrait, landscape
+from reportlab.lib import colors
+from reportlab.lib.units import mm
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from types import SimpleNamespace
 from auth import auth_routes
 from bbalance import bbalance_routes
@@ -35,6 +34,7 @@ from admin import admin_routes
 from user import user_routes
 from payment import payment_routes
 from mail import mail_routes
+
 from modules.core_utils import get_setting, set_setting
 
 # UTILS (def)
@@ -52,9 +52,6 @@ from modules.core_utils import (
     _temp_dir,
     localize_dt,
     localize_dt_str
-)
-from modules.system_utils import (
-    get_version_old
 )
 
 from modules.bbalance_utils import (
@@ -84,15 +81,6 @@ from modules.auth_utils import (
     generate_and_store_backup_codes
 )
 
-from modules.payment_utils import (
-    _user_can_view_payment_request,
-    _user_can_edit_payment_request,
-    get_payment_request_email,
-    _require_approver,
-    _approvals_done,
-    _approvals_total
-)
-
 from modules.csv_utils import (
     parse_money,
     _parse_csv_with_mapping,
@@ -108,18 +96,10 @@ import time
 import pyotp
 import qrcode
 import subprocess
-import json
-
-# PDF (ReportLab)
-from reportlab.lib.pagesizes import A4, landscape, portrait
-from reportlab.lib import colors
-from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.lib.units import mm
 
 # Document Upload
 from werkzeug.utils import secure_filename
 from uuid import uuid4
-from pathlib import Path
 import mimetypes
 
 # -----------------------
@@ -136,11 +116,8 @@ def configure_logging():
         return
     root.setLevel(LOG_LEVEL)
     fmt = logging.Formatter("%(asctime)s %(levelname)s [%(name)s] %(message)s")
-    #fh = RotatingFileHandler(LOG_FILE, maxBytes=LOG_MAX_BYTES, backupCount=LOG_BACKUP_COUNT)
-    #fh.setFormatter(fmt)
     sh = logging.StreamHandler()
     sh.setFormatter(fmt)
-    #root.addHandler(fh)
     root.addHandler(sh)
 
 configure_logging()
@@ -776,7 +753,7 @@ def profile_post():
         """), {'id': uid, 'u': username}).scalar_one_or_none()
 
         if exists_username:
-            flash(_('Username already exists (case-insensitive).'), 'danger')
+            flash(_('Username already exists.'), 'danger')
             return redirect(url_for('profile'))
 
         # E-Mail Duplicate-Check (falls gesetzt)
@@ -1490,21 +1467,125 @@ def api_import_dry_run():
         logger.exception("Dry-Run failed: %s", e)
         return {'error': str(e)}, 400
 
+
 # -----------------------
 # PDF Export with optional logo
 # -----------------------
+
 def _pdf_logo_path():
+    # Prefer custom uploaded branding (raster only), otherwise fallback to static logo
     fname, fpath, _ = _find_custom_logo()
     if fname:
-        ext = fname.rsplit('.', 1)[1].lower()
-        if ext in ('png', 'jpg', 'jpeg'):
-            return fpath  # ReportLab kann SVG nicht direkt rendern
+        ext = fname.rsplit('.', 1)[-1].lower()
+        if ext in ('png', 'jpg', 'jpeg', 'webp'):
+            return fpath
     return os.path.join(app.root_path, 'static', 'images', 'logo.png')
+
+def _draw_letterhead(canvas, doc):
+    """
+    Zeichnet das Branding-Logo oben rechts, vollständig über der roten Linie.
+    Die rote Linie verläuft auf y = page_h - doc.topMargin.
+    """
+    fpath = _pdf_logo_path()
+    if not (fpath and os.path.exists(fpath)):
+        return
+
+    max_w, max_h = 28*mm, 10*mm
+    GAP = 2*mm  # Abstand zwischen Logo-Unterkante und roter Linie
+    page_w, page_h = doc.pagesize
+    x = page_w - doc.rightMargin - max_w
+    y_line = page_h - doc.topMargin
+    y_logo_top = y_line + max_h + GAP  # Logo vollständig über der Linie
+
+    canvas.saveState()
+    try:
+        canvas.drawImage(
+            fpath, x, y_logo_top,
+            width=max_w, height=max_h,
+            preserveAspectRatio=True,
+            mask='auto',
+            anchor='nw'  # (x,y) ist die linke obere Ecke des Bildes
+        )
+    finally:
+        canvas.restoreState()
+
+def _header_footer(canvas, doc):
+    """
+    Uniform header as in the application:
+    - Logo at the top right, completely above the line
+    - Header text on the left (e.g., "BottleBalance – Export – Page N")
+    - Vertically centered to the logo
+    - Red line exactly at the edge of the content
+    """
+    
+    _draw_letterhead(canvas, doc)
+
+    # geometry
+    page_w, page_h = doc.pagesize
+    max_w_logo, max_h_logo = 28*mm, 10*mm
+    GAP   = 2*mm
+    PAD_X = 6*mm
+
+    left_x  = doc.leftMargin
+    right_x = page_w - doc.rightMargin
+
+    y_line     = page_h - doc.topMargin
+    y_logo_top = y_line + max_h_logo + GAP
+
+    # Header text for this page
+    base = getattr(doc, "_export_header_base", "") or ""
+    header_text = ""
+    if base:
+        page_no = canvas.getPageNumber()
+        header_text = f"{base} – { _('Page') } {page_no}"
+
+    # Invisible table for pixel-precise centering
+    data = [[header_text, ""]]
+    col_widths = [(right_x - left_x) - max_w_logo - PAD_X, max_w_logo]
+
+    table = Table(
+        data,
+        colWidths=col_widths,
+        rowHeights=[max_h_logo],
+        style=[
+            ('FONTNAME', (0,0), (-1,-1), 'Helvetica'),
+            ('FONTSIZE', (0,0), (-1,-1), 9.5),
+            ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+            ('ALIGN', (0,0), (0,0), 'LEFT'),
+            ('TEXTCOLOR', (0,0), (-1,-1), colors.HexColor('#111111')),
+            ('TOPPADDING', (0,0), (-1,-1), 0),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 0),
+            ('LEFTPADDING', (0,0), (1,0), 0),
+            ('RIGHTPADDING', (0,0), (1,0), 0),
+        ]
+    )
+
+    table.wrapOn(canvas, doc.width, doc.topMargin)
+    table.drawOn(canvas, left_x, y_logo_top - max_h_logo)
+
+    # Draw a red line
+    canvas.saveState()
+    try:
+        canvas.setStrokeColor(colors.HexColor("#A72920"))
+        canvas.setLineWidth(0.5)
+        canvas.line(left_x, y_line, right_x, y_line)
+    finally:
+        canvas.restoreState()
+
+def _slug(s: str) -> str:
+    """lowercase, nur a-z0-9, Trenner als '_'"""
+    return re.sub(r'[^a-z0-9]+', '_', (s or '').lower()).strip('_')
 
 @app.get('/export/pdf')
 @login_required
 @require_perms('export:pdf')
 def export_pdf():
+    """
+    BottleBalance – Export:
+      - Header-Text im Kopf (links) wie "BottleBalance – Export – Seite N"
+      - Logo oben rechts, vollständig über der roten Linie
+      - Keine zusätzliche Body-Überschrift (Tabellenkopf bleibt)
+    """
     q = (request.args.get('q') or '').strip()
     df = request.args.get('from')
     dt = request.args.get('to')
@@ -1533,104 +1614,65 @@ def export_pdf():
     doc = SimpleDocTemplate(
         buffer,
         pagesize=portrait(A4),
-        leftMargin=10, rightMargin=5, topMargin=20, bottomMargin=20
+        leftMargin=10*mm, rightMargin=5*mm,
+        topMargin=34*mm,   # Content sicher unter Logo + Linie
+        bottomMargin=20*mm
     )
     styles = getSampleStyleSheet()
     story = []
 
-    logo_path = _pdf_logo_path()
-    if os.path.exists(logo_path):
-        story.append(RLImage(logo_path, width=40*mm, height=12*mm))
-        story.append(Spacer(1, 6))
-
-    # --- Title (real markup, no HTML entities) ---
-    #story.append(Paragraph(f"<b>get_setting('app_title'){_(' - Export')}</b>", styles['Title']))
-    #story.append(Spacer(1, 6))
+    # Header-Text für den Kopf (NICHT mehr als sichtbare Body-Überschrift)
     app_name = get_setting('app_title', 'BottleBalance')
-    title = f"<b>{app_name}{_(' - Export')}</b>"
-    story.append(Paragraph(title, styles['Title']))
-    story.append(Spacer(1, 6))
+    setattr(doc, "_export_header_base", f"{app_name} – { _('Export') }")
 
-    # ---- HELP FORMATTER: Show only changed cells ----
+    # --- Tabelle ---
     def fmt_fl(n: int | None) -> str:
-        """Number of bottles; empty if 0/None, otherwise 'N bottles' (localized)."""
         n = int(n or 0)
-        return '' if n == 0 else f"{n} {_('Btl.')}"
-
+        return '' if n == 0 else f"{n} { _('Btl.') }"
     def fmt_money(d: Decimal | None) -> str:
-        """Currency; empty if 0/None, otherwise formatted."""
         d = d if d is not None else Decimal('0')
         return '' if d == 0 else format_eur_de(d)
 
     HIDE_CUMULATIVE_WHEN_UNCHANGED = True
 
-    # ---- Build table ----
     data = [[
         _('Date'), _('Full'), _('Empty'), _('Inventory'),
         _('Revenue'), _('Expense'), _('Cash balance'), _('Note')
     ]]
 
     for e in entries:
-        # "changed" criterion
         changed = any([
             int(e['full'] or 0) != 0,
             int(e['empty'] or 0) != 0,
             Decimal(e['revenue'] or 0) != 0,
             Decimal(e['expense'] or 0) != 0
         ])
-
-        # Cell values ​​(with optional hiding)
         inv_cell = '' if (HIDE_CUMULATIVE_WHEN_UNCHANGED and not changed) else fmt_fl(e['inventory'])
         kas_cell = '' if (HIDE_CUMULATIVE_WHEN_UNCHANGED and not changed) else format_eur_de(e['cashBalance'])
 
         data.append([
-            # Date always display
             format_date_de(e['date']),
-
-            # Only changed fields (0 -> empty)
             fmt_fl(e['full']),
             fmt_fl(e['empty']),
-
-            # Inventory: Optionally clear the line if it remains unchanged.
             inv_cell,
             fmt_money(e['revenue']),
             fmt_money(e['expense']),
-
-            # Cash balance: optional emptyif cell unchanged
             kas_cell,
-
-            # Note: empty if None/''; left aligned
             Paragraph(e['note'] or '', styles['Normal'])
         ])
 
-    # Dynamic column widths (fit securely into the type area)
     table_width = doc.width
-    col_widths = [table_width * w for w in [
-        0.10,  # Date
-        0.08,  # Full
-        0.08,  # Empty
-        0.09,  # Inventory
-        0.10,  # Revenue
-        0.10,  # Expense
-        0.14,  # Cash balance
-        0.21,  # Note
-    ]]
+    col_widths = [table_width * w for w in [0.10, 0.08, 0.08, 0.09, 0.10, 0.10, 0.14, 0.21]]
 
     table = Table(data, colWidths=col_widths, repeatRows=1)
     table.setStyle(TableStyle([
-        # Center header
         ('ALIGN', (0,0), (-1,0), 'CENTER'),
-
-        # Data rows: everything right-aligned, except for the note on the left
         ('ALIGN', (0,1), (6,-1), 'RIGHT'),
         ('ALIGN', (7,1), (7,-1), 'LEFT'),
-
-        # Header styling
         ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#f1f3f5')),
         ('TEXTCOLOR', (0,0), (-1,0), colors.HexColor('#212529')),
         ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
         ('FONTSIZE', (0,0), (-1,0), 10),
-
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
         ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.white, colors.HexColor('#fcfcfd')]),
         ('GRID', (0,0), (-1,-1), 0.25, colors.HexColor('#dee2e6')),
@@ -1639,13 +1681,47 @@ def export_pdf():
         ('TOPPADDING', (0,0), (-1,-1), 4),
         ('BOTTOMPADDING', (0,0), (-1,-1), 4),
     ]))
+    story.append(Paragraph(
+        _('Created at: %(ts)s', ts=datetime.now().strftime('%d.%m.%Y - %H:%M')),
+        styles['Normal']
+    ))
+
+    story.append(Spacer(1, 6))
+    
+    # Filter summary (i18n + robust)
+    filter_lines = []
+    if q:
+        filter_lines.append(f"{_('Search')}: {q}")
+
+    if date_from or date_to:
+        df_disp = date_from.strftime('%d.%m.%Y') if date_from else '—'
+        dt_disp = date_to.strftime('%d.%m.%Y') if date_to else '—'
+        filter_lines.append(f"{_('Period')}: {df_disp} – {dt_disp}")
+
+    if year_val is not None:
+        filter_lines.append(f"{_('Year')}: {year_val}")
+
+    att = (attachments_filter or '').strip().lower()
+    if att in ('with', 'only', 'yes', 'true', '1'):
+        filter_lines.append(f"{_('Attachments')}: {_('Only with attachments')}")
+    elif att in ('without', 'none', 'no', 'false', '0'):
+        filter_lines.append(f"{_('Attachments')}: {_('Without attachments')}")
+
+    if filter_lines:
+        story.append(Paragraph(
+            _('Filters applied:') + ' ' + ', '.join(filter_lines),
+            styles['Normal']
+        ))
+        story.append(Spacer(1, 6))
 
     story.append(table)
 
-    doc.build(story)
+    doc.build(story, onFirstPage=_header_footer, onLaterPages=_header_footer)
     buffer.seek(0)
 
-    filename = f"{get_setting('app_title', 'BottleBalance')}_{_('export')}_{date.today().strftime('%Y%m%d')}.pdf"
+    datestr = datetime.now().strftime('%Y%m%d-%H%M')
+    app_slug = _slug(get_setting('app_title', 'BottleBalance')) or 'bottlebalance'
+    filename = f"{app_slug}_export_all_{datestr}.pdf"
     return send_file(buffer, as_attachment=True, download_name=filename, mimetype='application/pdf')
 
 @app.post('/profile/lang')

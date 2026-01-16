@@ -4,6 +4,7 @@
 import io
 import os
 import json
+import re
 from datetime import date, datetime
 from decimal import Decimal
 from flask_babel import gettext as _
@@ -14,19 +15,17 @@ from sqlalchemy import text
 
 # PDF (ReportLab)
 from reportlab.lib.pagesizes import A4
-from reportlab.platypus import Image, SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak, KeepTogether
+from reportlab.platypus import SimpleDocTemplate, Table, Paragraph, Spacer, PageBreak
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import mm
-from reportlab.lib import colors  # Import colors locally only
+from reportlab.lib import colors as rl_colors
+from reportlab.lib.styles import ParagraphStyle
 
 # Document Upload
 from werkzeug.utils import secure_filename
 from uuid import uuid4
 import mimetypes
 
-from modules.core_utils import (
-    engine
-)
 from modules.auth_utils import (
     current_user,
     login_required,
@@ -37,7 +36,9 @@ from modules.core_utils import (
     engine,
     allowed_file,
     UPLOAD_FOLDER,
-    log_action
+    log_action,
+    find_custom_logo,
+    get_setting
 )
 from modules.payment_utils import (
     _approvals_total,
@@ -54,10 +55,15 @@ from modules.mail_utils import (
 )
 from modules.pdf_utils import (
     build_audit_table, 
-    standard_table_style, 
-    footer,
-    embed_pdf_attachments
+    standard_table_style,
+    embed_pdf_attachments,
+    footer as _footer,
+    set_next_page_header,
 )
+
+def _slug(s: str) -> str:
+    """lowercase, nur a-z0-9, Trenner als '_', leading/trailing '_' entfernt"""
+    return re.sub(r'[^a-z0-9]+', '_', (s or '').lower()).strip('_')
 
 payment_routes = Blueprint('payment_routes', __name__)
 
@@ -414,6 +420,8 @@ def payment_requests_audit():
 @payment_routes.get('/payment_requests/<int:request_id>/export/pdf')
 @login_required
 def export_single_request_pdf(request_id: int):
+    include_attachments = (request.args.get('include_attachments', '1') == '1')
+
     with engine.begin() as conn:
         r = conn.execute(text("""
             SELECT z.*, u.username AS requestor
@@ -438,23 +446,27 @@ def export_single_request_pdf(request_id: int):
         """), {'id': request_id}).mappings().all()
 
     buffer = io.BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=A4,
-                            leftMargin=18*mm, rightMargin=18*mm,
-                            topMargin=18*mm, bottomMargin=18*mm)
+    doc = SimpleDocTemplate(
+        buffer, pagesize=A4,
+        leftMargin=18*mm, rightMargin=18*mm,
+        topMargin=34*mm,  # Content sicher unter Logo + Linie
+        bottomMargin=18*mm
+    )
     styles = getSampleStyleSheet()
     story = []
 
-    def P(text, style='Normal'):
-        return Paragraph((text or '').replace('\n', '<br/>'), styles[style])
+    # Default header for this document
+    setattr(doc, "_current_header", "")
 
-    logo_path = os.path.join("static", "logo.png")
-    if os.path.exists(logo_path):
-        story.append(Image(logo_path, width=40*mm))
-        story.append(Spacer(1, 6))
+    def P(text, style='Normal'):
+            return Paragraph((text or '').replace('\n', '<br/>'), styles[style])
 
     story.append(Paragraph(f"{_('Payment request')} #{request_id}", styles['Title']))
     story.append(Spacer(1, 6))
-    story.append(Paragraph(f"{_('Created on')} {datetime.now().strftime('%d.%m.%Y %H:%M')}", styles['Normal']))
+    story.append(Paragraph(
+        _('Created at: %(ts)s', ts=datetime.now().strftime('%d.%m.%Y - %H:%M')),
+        styles['Normal']
+    ))
     story.append(Spacer(1, 12))
 
     details_data = [
@@ -477,14 +489,25 @@ def export_single_request_pdf(request_id: int):
     story.append(build_audit_table(audits, styles))
     story.append(Spacer(1, 10))
     
-    # Attachments including PDF pages
-    story = embed_pdf_attachments(request_id, attachments, story, styles)
+    # Attachments including PDF pages – Move & scale in header
+    max_w = doc.width
+    max_h = doc.height - 14*mm
+    story = embed_pdf_attachments(request_id, attachments, story, styles,
+                                  max_w=max_w, max_h=max_h,
+                                  move_headings_to_header=True)
 
-    doc.build(story, onFirstPage=footer, onLaterPages=footer)
+    doc.build(story, onFirstPage=_header_footer, onLaterPages=_header_footer)
     buffer.seek(0)
-    return send_file(buffer, as_attachment=True,
-                     download_name=f'payment_request_{request_id}.pdf',
-                     mimetype='application/pdf')
+    
+    datestr = datetime.now().strftime('%Y%m%d-%H%M')
+    app_slug = _slug(get_setting('app_title', 'BottleBalance')) or 'bottlebalance'
+    download_name = f'{app_slug}_payment_request_{request_id}_{datestr}.pdf'
+    return send_file(
+            buffer,
+            as_attachment=True,
+            download_name=download_name,
+            mimetype='application/pdf'
+        )
 
 # ============= Payment request attachments =============
 @payment_routes.post('/payment_requests/<int:request_id>/attachments/upload')
@@ -783,7 +806,7 @@ def edit_payment_request(request_id):
             'id': request_id
         })
 
-        now_str = datetime.now().strftime("%d.%m.%Y %H:%M:%S")
+        now_str = datetime.now().strftime("%d.%m.%Y - %H:%M:%S")
         if changes:
             summary = "\n".join([f"- {label}: {old} → {new}" for _, label, old, new in changes])
             detail_text = f"Edited on {now_str}\n{summary}"
@@ -801,6 +824,7 @@ def edit_payment_request(request_id):
 @payment_routes.get('/payment_requests/export/pdf')
 @login_required
 def export_all_payment_requests_pdf():
+    include_attachments = (request.args.get('include_attachments', '1') == '1')
     with engine.begin() as conn:
         payment_requests = conn.execute(text("""
             SELECT z.*, u.username AS requestor
@@ -831,47 +855,49 @@ def export_all_payment_requests_pdf():
             attachments_by_payment_request[a['id']] = attachments
 
     buffer = io.BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=A4,
-                            leftMargin=18*mm, rightMargin=18*mm,
-                            topMargin=18*mm, bottomMargin=18*mm)
+    doc = SimpleDocTemplate(
+        buffer, pagesize=A4,
+        leftMargin=18*mm, rightMargin=18*mm,
+        topMargin=34*mm,  # Content sicher unter Logo + Linie
+        bottomMargin=18*mm
+    )
+
     styles = getSampleStyleSheet()
     story = []
 
     def P(text, style='Normal'):
         return Paragraph((text or '').replace('\n', '<br/>'), styles[style])
 
-    logo_path = os.path.join("static", "logo.png")
-    if os.path.exists(logo_path):
-        story.append(Image(logo_path, width=40*mm))
-        story.append(Spacer(1, 6))
+    # WICHTIG: Header leer lassen (kein "Zahlungsfreigabeantrag ..." im Kopf)
+    setattr(doc, "_current_header", "")
 
-    
+    # Deckblatt
     story.append(Paragraph(_("Payment request - Overall document"), styles['Title']))
     story.append(Spacer(1, 6))
-    story.append(Paragraph(f"{_('Created at')} {datetime.now().strftime('%d.%m.%Y %H:%M')} – {_('Number of requests')}: {len(payment_requests)}", styles['Normal']))
+    story.append(Paragraph(
+        _('Created at: %(ts)s – Number of requests: %(count)d',
+        ts=datetime.now().strftime('%d.%m.%Y - %H:%M'),
+        count=len(payment_requests)),
+        styles['Normal']
+    ))
     story.append(Spacer(1, 12))
-
+    story.append(PageBreak())
+    
     for idx, r in enumerate(payment_requests):
         blocks = []
-
-        if os.path.exists(logo_path):
-            blocks.append(Image(logo_path, width=40*mm))
-            blocks.append(Spacer(1, 6))
-
         blocks.append(Paragraph(f"<b>{_('Payment request')} #{r['id']}</b>", styles['Heading2']))
         blocks.append(Spacer(1, 6))
 
         details_data = [
-                [_("Requestor:"), P(r['requestor'])],
-                [_("Date:"), P(r['date'].strftime('%d.%m.%Y') if r['date'] else '')],
-                [_("Paragraph:"), P(r['paragraph'])],
-                [_("Purpose:"), P(r['purpose'])],
-                [_("Amount:"), P(f"{r['amount']} {_('currency')}")],
-                [_("Supplier:"), P(r['supplier'])],
-                [_("Justification:"), P(r['justification'])],
-                [_("State:"), P(r['state'])],
-            ]
-
+            [_("Requestor:"), P(r['requestor'])],
+            [_("Date:"), P(r['date'].strftime('%d.%m.%Y') if r['date'] else '')],
+            [_("Paragraph:"), P(r['paragraph'])],
+            [_("Purpose:"), P(r['purpose'])],
+            [_("Amount:"), P(f"{r['amount']} {_('currency')}")],
+            [_("Supplier:"), P(r['supplier'])],
+            [_("Justification:"), P(r['justification'])],
+            [_("State:"), P(r['state'])],
+        ]
         details_table = Table(details_data, colWidths=[42*mm, None])
         details_table.setStyle(standard_table_style())
         blocks.append(details_table)
@@ -881,19 +907,37 @@ def export_all_payment_requests_pdf():
         blocks.append(build_audit_table(audit_by_payment_request.get(r['id'], []), styles))
         blocks.append(Spacer(1, 10))
 
-        # Attachments including PDF pages
-        blocks = embed_pdf_attachments(r['id'], attachments_by_payment_request.get(r['id'], []), blocks, styles)
+        # Attachments → nur hier Header setzen (pro Attachment-Seite)
+        if include_attachments:
+            max_w = doc.width
+            max_h = doc.height - 14*mm
+            blocks = embed_pdf_attachments(
+                r['id'],
+                attachments_by_payment_request.get(r['id'], []),
+                blocks, styles,
+                max_w=max_w, max_h=max_h,
+                move_headings_to_header=True
+            )
 
-        story.append(KeepTogether(blocks))
+        story.extend(blocks)
+        # empty header for next page
+        story.append(set_next_page_header(""))
         if idx < len(payment_requests) - 1:
             story.append(PageBreak())
 
-    doc.build(story, onFirstPage=footer, onLaterPages=footer)
+    doc.build(story, onFirstPage=_header_footer, onLaterPages=_header_footer)
     buffer.seek(0)
     filename = _('all_payment_requests.pdf')
-    return send_file(buffer, as_attachment=True,
-                     download_name=filename,
-                     mimetype='application/pdf')
+    
+    datestr = datetime.now().strftime('%Y%m%d-%H%M')
+    app_slug = _slug(get_setting('app_title', 'BottleBalance')) or 'bottlebalance'
+    filename = f'{app_slug}_payment_requests_all_{datestr}.pdf'
+    return send_file(
+        buffer,
+        as_attachment=True,
+        download_name=filename,
+        mimetype='application/pdf'
+    )
 
 # Payment requests
 def _payment_request_dir(request_id: int) -> str:
@@ -1150,3 +1194,107 @@ def payment_request_detail(request_id):
         can_on_hold=can_on_hold,
         attachments=attachments
     )
+
+def _draw_logo(canvas, doc):
+    """
+    Zeichnet das Branding-Logo oben rechts, vollständig über der Linie
+    (Rasterformate; SVG wird auf Fallback gesetzt).
+    """
+    fname, fpath = find_custom_logo()
+    if not fpath or not os.path.exists(fpath):
+        fpath = os.path.join(current_app.static_folder, "images", "logo.png")
+    else:
+        _, ext = os.path.splitext(fpath.lower())
+        if ext not in ('.png', '.jpg', '.jpeg', '.webp'):
+            fallback = os.path.join(current_app.static_folder, "images", "logo.png")
+            fpath = fallback if os.path.exists(fallback) else None
+    if not fpath or not os.path.exists(fpath):
+        return
+
+    max_w, max_h = 28*mm, 10*mm
+    GAP = 2*mm
+    page_w, page_h = doc.pagesize
+    x = page_w - doc.rightMargin - max_w
+    y_line = page_h - doc.topMargin
+    y_logo_top = y_line + max_h + GAP
+
+    canvas.saveState()
+    try:
+        canvas.drawImage(
+            fpath, x, y_logo_top,
+            width=max_w, height=max_h,
+            preserveAspectRatio=True,
+            mask='auto',
+            anchor='nw',
+        )
+    finally:
+        canvas.restoreState()
+
+
+def _header_footer(canvas, doc):
+    """
+    Payment header:
+      - Logo at top right (completely above the line)
+      - Header text from NextPageHeader/doc._current_header (e.g., attachment information)
+      - Vertical centering using invisible table
+      - Red line at the edge of the content
+      - Footer (page number) at the bottom
+    """
+    # 0) Copy attachment header from next page
+    try:
+        attrs = getattr(canvas, "_doctemplateAttr", {}) or {}
+        nxt = attrs.pop("next_page_header", None)
+        if nxt is not None:
+            setattr(doc, "_current_header", nxt)
+    except Exception:
+        pass
+
+    # 1) Draw a logo
+    _draw_logo(canvas, doc)
+
+    # 2) geometry
+    page_w, page_h = doc.pagesize
+    max_w_logo, max_h_logo = 28*mm, 10*mm
+    GAP   = 2*mm
+    PAD_X = 6*mm
+    left_x  = doc.leftMargin
+    right_x = page_w - doc.rightMargin
+    y_line     = page_h - doc.topMargin
+    y_logo_top = y_line + max_h_logo + GAP
+
+    # 3) Header text for this page (attachment information, etc.)
+    header_text = getattr(doc, "_current_header", "") or ""
+
+    # 4) Invisible table for precise vertical centering (text = logo height)
+    data = [[header_text, ""]]
+    col_widths = [(right_x - left_x) - max_w_logo - PAD_X, max_w_logo]
+    table = Table(
+        data,
+        colWidths=col_widths,
+        rowHeights=[max_h_logo],
+        style=[
+            ('FONTNAME', (0,0), (-1,-1), 'Helvetica'),
+            ('FONTSIZE', (0,0), (-1,-1), 9.5),
+            ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+            ('ALIGN', (0,0), (0,0), 'LEFT'),
+            ('TEXTCOLOR', (0,0), (-1,-1), rl_colors.HexColor('#111111')),
+            ('TOPPADDING', (0,0), (-1,-1), 0),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 0),
+            ('LEFTPADDING', (0,0), (1,0), 0),
+            ('RIGHTPADDING', (0,0), (1,0), 0),
+        ]
+    )
+    table.wrapOn(canvas, doc.width, doc.topMargin)
+    table.drawOn(canvas, left_x, y_logo_top - max_h_logo)
+
+    # 5) Red line
+    canvas.saveState()
+    try:
+        canvas.setStrokeColor(rl_colors.HexColor("#A72920"))
+        canvas.setLineWidth(0.5)
+        canvas.line(doc.leftMargin, y_line, right_x, y_line)
+    finally:
+        canvas.restoreState()
+
+    # 6) Footer (page number)
+    _footer(canvas, doc)

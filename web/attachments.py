@@ -8,7 +8,6 @@ from sqlalchemy import text
 
 from modules.core_utils import (
     engine, 
-    ROLES, 
     log_action, 
     allowed_file, 
     _entry_dir, 
@@ -27,8 +26,7 @@ import mimetypes
 
 from modules.auth_utils import (
     login_required,
-    require_csrf,
-    require_perms
+    require_csrf
 )
 
 attachments_routes = Blueprint('attachments_routes', __name__)

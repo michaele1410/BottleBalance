@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from flask import render_template, request, redirect, url_for, session, flash, abort, Blueprint
 from flask_babel import gettext as _
 from markupsafe import escape
-from sqlalchemy import text, bindparam, Boolean
+from sqlalchemy import text
 from werkzeug.security import generate_password_hash
 
 from modules.auth_utils import (
@@ -52,7 +52,7 @@ def users_list():
         """)).mappings().all()
 
     # rows = db.session.execute(stmt).mappings().all()  # delivers RowMapping objects
-    return render_template('users.html', users=rows, user=current_user)
+    return render_template('users.html', users=rows, user=current_user())
 
 @user_routes.post('/admin/users/add')
 @login_required

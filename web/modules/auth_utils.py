@@ -1,9 +1,9 @@
 import secrets
 import json
 from functools import wraps
-from flask import session, redirect, url_for, request, abort, Blueprint, render_template, flash, current_app
+from flask import session, redirect, url_for, request, abort, current_app
 from flask_babel import _
-from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.security import generate_password_hash
 from sqlalchemy import text
 from sqlalchemy.exc import ProgrammingError
 

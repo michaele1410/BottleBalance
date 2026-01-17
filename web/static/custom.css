@@ -660,14 +660,14 @@ stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3
 }
 
 .navbar-toggler-icon {
-  /* SVG verwendet currentColor → passt sich automatisch an */
+  /* SVG uses currentColor → adjusts automatically */
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' \
 viewBox='0 0 30 30'%3e%3cpath stroke='currentColor' stroke-linecap='round' \
 stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
 }
 
 [data-bs-theme="dark"] .navbar-toggler {
-  /* etwas mehr Kontrast für die Umrandung im Dark Mode */
+  /* A bit more contrast for the border in Dark Mode */
   border-color: color-mix(in srgb, var(--bs-body-color), transparent 60%);  
 }
 

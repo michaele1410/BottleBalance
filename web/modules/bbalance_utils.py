@@ -24,7 +24,7 @@ def fetch_entries(
 
     # Filter (external, alias "ar")
     if search:
-        where.append("(ar.category ILIKE :q OR to_char(ar.date, 'DD.MM.YYYY') ILIKE :q)")
+        where.append("(ar.category ILIKE :q OR to_char(ar.date, 'DD.MM.YYYY') ILIKE :q OR ar.comment ILIKE :q)")
         params['q'] = f"%{search}%"
     if date_from:
         where.append("ar.date >= :df")
@@ -66,6 +66,7 @@ def fetch_entries(
                 e.revenue,
                 e.expense,
                 e.category,
+                e.comment,
                 e.created_by,
                 SUM(e.revenue - e.expense)
                     OVER (ORDER BY e.date, e.id ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS "cashBalance",
@@ -82,6 +83,7 @@ def fetch_entries(
             ar.revenue,
             ar.expense,
             ar.category,
+            ar.comment,
             ar.created_by,
             ar."cashBalance",
             ar.inventory,

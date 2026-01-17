@@ -975,7 +975,7 @@ msgid "Search"
 msgstr ""
 
 #: templates/audit.html:32 templates/index.html:178
-msgid "Date/Category"
+msgid "Date/Category/Comment"
 msgstr ""
 
 #: templates/audit.html:38 templates/audit.html:74

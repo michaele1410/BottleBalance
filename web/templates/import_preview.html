@@ -48,7 +48,8 @@
             {'key': 'Empty',  'label': _('Empty')},
             {'key': 'Revenue', 'label': _('Revenue')},
             {'key': 'Expense', 'label': _('Expense')},
-            {'key': 'Category',    'label': _('Category')}
+            {'key': 'Comment',    'label': _('Comment')}
+            {'key': 'Category',    'label': _('Category')},
           ] %}
 
           <div class="row g-3">
@@ -97,6 +98,7 @@
                 <th class="text-end">{{ _('Empty') }}</th>
                 <th class="text-end">{{ _('Revenue') }}</th>
                 <th class="text-end">{{ _('Expense') }}</th>
+                <!--th>{{ _('Comment') }}</th-->
                 <th>{{ _('Category') }}</th>
                 <th>{{ _('State') }}</th>
               </tr>
@@ -111,6 +113,7 @@
                   <td class="text-end">{{ r.empty }}</td>
                   <td class="text-end">{{ r.revenue }}</td>
                   <td class="text-end">{{ r.expense }}</td>
+                  <!--td>{{ r.comment }}</td-->
                   <td>{{ r.category }}</td>
                   <td>
                     {% if r.errors|length > 0 %}

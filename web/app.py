@@ -1104,8 +1104,8 @@ def _parse_csv_file_storage(file_storage):
     if headers and len(headers) == 1 and ';' in headers[0]:
         headers = headers[0].split(';')
 
-    expected = ['Date','Full','Empty','Inventory','Revenue','Expense','Cash balance','Category']
-    alt_expected = ['Date','Full','Empty','Revenue','Expense','Category']
+    expected = ['Date','Full','Empty','Inventory','Revenue','Expense','Cash balance','Comment','Category']
+    alt_expected = ['Date','Full','Empty','Revenue','Expense','Comment','Category']
     if headers is None or [h.strip() for h in headers] not in (expected, alt_expected):
         raise ValueError(_('CSV header does not match the expected format.'))
 
@@ -1113,15 +1113,16 @@ def _parse_csv_file_storage(file_storage):
     for row in reader:
         if not row or all(not (c or '').strip() for c in row):
             continue  # skip blank lines
-        if len(row) == 8:
-            date_s, full_s, empty_s, _inv, revenue_s, expense_s, _kas, category = row
+        if len(row) == 9:
+            date_s, full_s, empty_s, _inv, revenue_s, expense_s, _kas, comment, category = row
         else:
-            date_s, full_s, empty_s, revenue_s, expense_s, category = row
+            date_s, full_s, empty_s, revenue_s, expense_s, comment, category = row
         date = parse_date_de_or_today(date_s)
         full = int((full_s or '0').strip() or 0)
         empty = int((empty_s or '0').strip() or 0)
         revenue = parse_money(revenue_s or '0')
         expense = parse_money(expense_s or '0')
+        comment = (comment or '').strip()
         category = (category or '').strip()
         rows.append({
             'date': date,
@@ -1129,6 +1130,7 @@ def _parse_csv_file_storage(file_storage):
             'empty': empty,
             'revenue': str(revenue),
             'expense': str(expense),
+            'comment': comment,
             'category': category
         })
     return rows
@@ -1142,7 +1144,7 @@ def import_sample():
     """
     output = io.StringIO()
     writer = csv.writer(output, delimiter=';', lineterminator='\n')
-    writer.writerow(['Date','Full','Empty','Inventory','Revenue','Expense','Cash balance','Category'])
+    writer.writerow(['Date','Full','Empty','Inventory','Revenue','Expense','Cash balance','Comment','Category'])
     today = date.today()
     samples = [
         (today - timedelta(days=4), 10, 0, 'Bottle purchasing'),
@@ -1153,7 +1155,7 @@ def import_sample():
     ]
     inv = 0
     kas = Decimal('0.00')
-    for d, full, empty, category in samples:
+    for d, full, empty, comment, category in samples:
         inv += (full - empty)
         revenue = Decimal('12.50') if full else Decimal('0')
         expense = Decimal('1.20') if empty else Decimal('0')
@@ -1161,6 +1163,7 @@ def import_sample():
         writer.writerow([
             d.strftime('%d.%m.%Y'), full, empty, inv,
             str(revenue).replace('.', ','), str(expense).replace('.', ','), str(kas).replace('.', ','),
+            comment,
             category
         ])
     mem = io.BytesIO()
@@ -1222,6 +1225,7 @@ def import_preview():
                 'Empty':   _opt_int(_get('Empty')),
                 'Revenue':  _opt_int(_get('Revenue')),
                 'Expense':   _opt_int(_get('Expense')),
+                'Comment':  _opt_int(_get('Comment')),
                 'Category': _opt_int(_get('Category')),
             }
         else:
@@ -1350,9 +1354,9 @@ def import_commit():
                     if _signature(r) in existing:
                         continue
                 conn.execute(text("""
-                    INSERT INTO entries (date, "full", "empty", revenue, expense, category)
-                    VALUES (:date,:full,:empty,:revenue,:expense,:category)
-                """), {k: r[k] for k in ('date','full','empty','revenue','expense','category')})
+                    INSERT INTO entries (date, "full", "empty", revenue, expense, comment, category)
+                    VALUES (:date,:full,:empty,:revenue,:expense,:comment,:category)
+                """), {k: r[k] for k in ('date','full','empty','revenue','expense','comment','category')})
                 inserted += 1
 
         # Delete temporary file
@@ -1418,7 +1422,7 @@ def api_import_dry_run():
         elif 'rows' in body and isinstance(body['rows'], list):
             si = io.StringIO()
             w = csv.writer(si, delimiter=';', lineterminator='\n')
-            w.writerow(['Date','Full','Empty','Revenue','Expense','Category'])
+            w.writerow(['Date','Full','Empty','Revenue','Expense','Comment','Category'])
             for r in body['rows']:
                 w.writerow([
                     r.get('Date',''),
@@ -1426,6 +1430,7 @@ def api_import_dry_run():
                     r.get('Empty',''),
                     r.get('Revenue',''),
                     r.get('Expense',''),
+                    r.get('Comment',''),
                     r.get('Category',''),
                 ])
             content = si.getvalue()
@@ -1639,7 +1644,7 @@ def export_pdf():
 
     data = [[
         _('Date'), _('Full'), _('Empty'), _('Inventory'),
-        _('Revenue'), _('Expense'), _('Cash balance'), _('Category')
+        _('Revenue'), _('Expense'), _('Cash balance'), _('Comment'), _('Category')
     ]]
 
     for e in entries:
@@ -1660,6 +1665,7 @@ def export_pdf():
             fmt_money(e['revenue']),
             fmt_money(e['expense']),
             kas_cell,
+            Paragraph(e['comment'] or '', styles['Normal']),
             Paragraph(e['category'] or '', styles['Normal'])
         ])
 

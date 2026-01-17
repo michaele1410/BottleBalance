@@ -482,12 +482,12 @@ def export_csv():
 
     output = io.StringIO()
     writer = csv.writer(output, delimiter=';', lineterminator='\n')
-    writer.writerow(['Date','Full','Empty','Inventory','Revenue','Expense','Cash balance','Category'])
+    writer.writerow(['Date','Full','Empty','Inventory','Revenue','Expense','Cash balance','Comment','Category'])
     for e in entries:
         writer.writerow([
             format_date_de(e['date']), e['full'], e['empty'], e['inventory'],
             str(e['revenue']).replace('.', ','), str(e['expense']).replace('.', ','),
-            str(e['cashBalance']).replace('.', ','), e['category']
+            str(e['cashBalance']).replace('.', ','), e['category'], e['comment']
         ])
     mem = io.BytesIO()
     mem.write(output.getvalue().encode('utf-8-sig'))
@@ -529,31 +529,32 @@ def import_csv():
             for err in validation_errors:
                 flash(err)
             return redirect(url_for('bbalance_routes.index'))
-        expected = ['Date','Full','Empty','Inventory','Revenue','Expense','Cash balance','Category']
-        alt_expected = ['Date','Full','Empty','Revenue','Expense','Category']
+        expected = ['Date','Full','Empty','Inventory','Revenue','Expense','Cash balance','Comment','Category']
+        alt_expected = ['Date','Full','Empty','Revenue','Expense','Comment','Category']
         if headers is None or [h.strip() for h in headers] not in (expected, alt_expected):
             raise ValueError('CSV header does not match the expected format.')
         rows_to_insert = []
         for row in reader:
             if len(row) == 8:
-                date_s, full_s, empty_s, _inv, revenue_s, expense_s, _kas, category = row
+                date_s, full_s, empty_s, _inv, revenue_s, expense_s, _kas, comment, category = row
             else:
-                date_s, full_s, empty_s, revenue_s, expense_s, category = row
+                date_s, full_s, empty_s, revenue_s, expense_s, comment, category = row
             date = parse_date_de_or_today(date_s)
             full = int((full_s or '0').strip() or 0)
             empty = int((empty_s or '0').strip() or 0)
             revenue = parse_money(revenue_s or '0')
             expense = parse_money(expense_s or '0')
+            comment = (comment or '').strip()
             category = (category or '').strip()
             rows_to_insert.append({'date': date, 'full': full, 'empty': empty,
-                                   'revenue': str(revenue), 'expense': str(expense), 'category': category})
+                                   'revenue': str(revenue), 'expense': str(expense), 'category': category, 'comment': comment})
         with engine.begin() as conn:
             if replace_all:
                 conn.execute(text('DELETE FROM entries'))
             for r in rows_to_insert:
                 conn.execute(text("""
-                    INSERT INTO entries (date, "full", "empty", revenue, expense, category)
-                    VALUES (:date,:full,:empty,:revenue,:expense,:category)
+                    INSERT INTO entries (date, "full", "empty", revenue, expense, comment, category)
+                    VALUES (:date,:full,:empty,:revenue,:expense,:comment,:category)
                 """), r)
 
         # Success message with pluralization

@@ -1041,8 +1041,8 @@ msgid "Search"
 msgstr "Suche"
 
 #: templates/audit.html:32 templates/index.html:178
-msgid "Date/Category"
-msgstr "Datum/Notiz"
+msgid "Date/Category/Comment"
+msgstr "Datum/Kategorie/Bemerkung"
 
 #: templates/audit.html:38 templates/audit.html:74
 msgid "Time period"

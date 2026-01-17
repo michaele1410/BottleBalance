@@ -314,7 +314,8 @@ CREATE TABLE IF NOT EXISTS entries (
     "empty" INTEGER NOT NULL DEFAULT 0,
     revenue NUMERIC(12,2) NOT NULL DEFAULT 0,
     expense NUMERIC(12,2) NOT NULL DEFAULT 0,
-    note TEXT,
+    category TEXT,
+    comment TEXT,
     created_by INTEGER,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
@@ -404,8 +405,8 @@ CREATE TABLE IF NOT EXISTS attachments_temp (
 );
 """
 
-CREATE_TABLE_NOTES = """
-CREATE TABLE IF NOT EXISTS notes (
+CREATE_TABLE_CATEGORIES = """
+CREATE TABLE IF NOT EXISTS categories (
     id SERIAL PRIMARY KEY,
     text TEXT NOT NULL UNIQUE,
     active BOOLEAN NOT NULL DEFAULT TRUE,
@@ -516,7 +517,7 @@ ON payment_requests_audit(request_id, action, user_id);
 def migrate_columns(conn):
     conn.execute(text(CREATE_TABLE_ATTACHMENTS))
     conn.execute(text(CREATE_TABLE_ATTACHMENTS_TEMP))
-    conn.execute(text(CREATE_TABLE_NOTES))
+    conn.execute(text(CREATE_TABLE_CATEGORIES))
     conn.execute(text(CREATE_TABLE_PAYMENT_REQUESTS))
     conn.execute(text(CREATE_TABLE_PAYMENT_REQUESTS_AUDIT))
     conn.execute(text(CREATE_TABLE_PAYMENT_REQUESTS_ATTACHMENTS))
@@ -548,7 +549,7 @@ def migrate_columns(conn):
         logging.getLogger(__name__).exception("Migration paragraph -> VARCHAR(50) fehlgeschlagen")
 
     # Insert default values ​​if table is empty
-    default_notes = [
+    default_categories = [
         _("Withdrew money"),
         _("Inventory"),
         _("Count cash register"),
@@ -558,11 +559,11 @@ def migrate_columns(conn):
         _("Deposit PayPal"),
         _("Donation")
     ]
-    existing = conn.execute(text("SELECT COUNT(*) FROM notes")).scalar_one()
+    existing = conn.execute(text("SELECT COUNT(*) FROM categories")).scalar_one()
     if existing == 0:
-        for text_value in default_notes:
+        for text_value in default_categories:
             conn.execute(text("""
-                INSERT INTO notes (text) VALUES (:t)
+                INSERT INTO categories (text) VALUES (:t)
             """), {'t': text_value})
 
 def init_db():
@@ -1103,8 +1104,8 @@ def _parse_csv_file_storage(file_storage):
     if headers and len(headers) == 1 and ';' in headers[0]:
         headers = headers[0].split(';')
 
-    expected = ['Date','Full','Empty','Inventory','Revenue','Expense','Cash balance','Note']
-    alt_expected = ['Date','Full','Empty','Revenue','Expense','Note']
+    expected = ['Date','Full','Empty','Inventory','Revenue','Expense','Cash balance','Comment','Category']
+    alt_expected = ['Date','Full','Empty','Revenue','Expense','Comment','Category']
     if headers is None or [h.strip() for h in headers] not in (expected, alt_expected):
         raise ValueError(_('CSV header does not match the expected format.'))
 
@@ -1112,23 +1113,25 @@ def _parse_csv_file_storage(file_storage):
     for row in reader:
         if not row or all(not (c or '').strip() for c in row):
             continue  # skip blank lines
-        if len(row) == 8:
-            date_s, voll_s, leer_s, _inv, ein_s, aus_s, _kas, note = row
+        if len(row) == 9:
+            date_s, full_s, empty_s, _inv, revenue_s, expense_s, _kas, comment, category = row
         else:
-            date_s, voll_s, leer_s, ein_s, aus_s, note = row
+            date_s, full_s, empty_s, revenue_s, expense_s, comment, category = row
         date = parse_date_de_or_today(date_s)
-        full = int((voll_s or '0').strip() or 0)
-        empty = int((leer_s or '0').strip() or 0)
-        revenue = parse_money(ein_s or '0')
-        expense = parse_money(aus_s or '0')
-        note = (note or '').strip()
+        full = int((full_s or '0').strip() or 0)
+        empty = int((empty_s or '0').strip() or 0)
+        revenue = parse_money(revenue_s or '0')
+        expense = parse_money(expense_s or '0')
+        comment = (comment or '').strip()
+        category = (category or '').strip()
         rows.append({
             'date': date,
             'full': full,
             'empty': empty,
             'revenue': str(revenue),
             'expense': str(expense),
-            'note': note
+            'comment': comment,
+            'category': category
         })
     return rows
 
@@ -1141,7 +1144,7 @@ def import_sample():
     """
     output = io.StringIO()
     writer = csv.writer(output, delimiter=';', lineterminator='\n')
-    writer.writerow(['Date','Full','Empty','Inventory','Revenue','Expense','Cash balance','Note'])
+    writer.writerow(['Date','Full','Empty','Inventory','Revenue','Expense','Cash balance','Comment','Category'])
     today = date.today()
     samples = [
         (today - timedelta(days=4), 10, 0, 'Bottle purchasing'),
@@ -1152,15 +1155,16 @@ def import_sample():
     ]
     inv = 0
     kas = Decimal('0.00')
-    for d, voll, leer, note in samples:
-        inv += (voll - leer)
-        revenue = Decimal('12.50') if voll else Decimal('0')
-        expense = Decimal('1.20') if leer else Decimal('0')
+    for d, full, empty, comment, category in samples:
+        inv += (full - empty)
+        revenue = Decimal('12.50') if full else Decimal('0')
+        expense = Decimal('1.20') if empty else Decimal('0')
         kas = (kas + revenue - expense).quantize(Decimal('0.01'))
         writer.writerow([
-            d.strftime('%d.%m.%Y'), voll, leer, inv,
+            d.strftime('%d.%m.%Y'), full, empty, inv,
             str(revenue).replace('.', ','), str(expense).replace('.', ','), str(kas).replace('.', ','),
-            note
+            comment,
+            category
         ])
     mem = io.BytesIO()
     mem.write(output.getvalue().encode('utf-8-sig'))
@@ -1221,7 +1225,8 @@ def import_preview():
                 'Empty':   _opt_int(_get('Empty')),
                 'Revenue':  _opt_int(_get('Revenue')),
                 'Expense':   _opt_int(_get('Expense')),
-                'Note': _opt_int(_get('Note')),
+                'Comment':  _opt_int(_get('Comment')),
+                'Category': _opt_int(_get('Category')),
             }
         else:
             mapping = None
@@ -1349,9 +1354,9 @@ def import_commit():
                     if _signature(r) in existing:
                         continue
                 conn.execute(text("""
-                    INSERT INTO entries (date, "full", "empty", revenue, expense, note)
-                    VALUES (:date,:full,:empty,:revenue,:expense,:note)
-                """), {k: r[k] for k in ('date','full','empty','revenue','expense','note')})
+                    INSERT INTO entries (date, "full", "empty", revenue, expense, comment, category)
+                    VALUES (:date,:full,:empty,:revenue,:expense,:comment,:category)
+                """), {k: r[k] for k in ('date','full','empty','revenue','expense','comment','category')})
                 inserted += 1
 
         # Delete temporary file
@@ -1417,7 +1422,7 @@ def api_import_dry_run():
         elif 'rows' in body and isinstance(body['rows'], list):
             si = io.StringIO()
             w = csv.writer(si, delimiter=';', lineterminator='\n')
-            w.writerow(['Date','Full','Empty','Revenue','Expense','Note'])
+            w.writerow(['Date','Full','Empty','Revenue','Expense','Comment','Category'])
             for r in body['rows']:
                 w.writerow([
                     r.get('Date',''),
@@ -1425,7 +1430,8 @@ def api_import_dry_run():
                     r.get('Empty',''),
                     r.get('Revenue',''),
                     r.get('Expense',''),
-                    r.get('Note',''),
+                    r.get('Comment',''),
+                    r.get('Category',''),
                 ])
             content = si.getvalue()
         mapping = body.get('mapping')
@@ -1457,7 +1463,8 @@ def api_import_dry_run():
                     'empty': r['empty'],
                     'revenue': r['revenue'],
                     'expense': r['expense'],
-                    'note': r['note'],
+                    'comment': r['comment'],
+                    'category': r['category'],
                     'is_duplicate': r['is_duplicate'],
                     'errors': r['errors'],
                 } for r in preview_rows
@@ -1637,7 +1644,7 @@ def export_pdf():
 
     data = [[
         _('Date'), _('Full'), _('Empty'), _('Inventory'),
-        _('Revenue'), _('Expense'), _('Cash balance'), _('Note')
+        _('Revenue'), _('Expense'), _('Cash balance'), _('Comment'), _('Category')
     ]]
 
     for e in entries:
@@ -1658,7 +1665,8 @@ def export_pdf():
             fmt_money(e['revenue']),
             fmt_money(e['expense']),
             kas_cell,
-            Paragraph(e['note'] or '', styles['Normal'])
+            Paragraph(e['comment'] or '', styles['Normal']),
+            Paragraph(e['category'] or '', styles['Normal'])
         ])
 
     table_width = doc.width
@@ -1760,14 +1768,14 @@ def admin_tools():
     Settings for administrative tools:
         - Send SMTP test email
         - Create and download database dump
-        - Completely override notes
+        - Completely override category
 
     Safety:
         - Login and role permissions (admin:tools) are required.
         - CSRF protection is only available for POST actions.
     """
     state = None
-    current_notes = []
+    current_categories = []
 
     # --- POST-ACTIONS ---
     if request.method == "POST":
@@ -1837,21 +1845,21 @@ def admin_tools():
                 flash(_('Error during database dump: %(error)s', error=str(e)), "error")
                 log_action(session.get('user_id'), 'db:export:error', None, f'Dump failed: {e}')
 
-        # 3) Override notes
-        elif action == "update_notes":
+        # 3) Override category
+        elif action == "update_categories":
             raw = request.form.get("options") or ""
             lines = [line.strip() for line in raw.splitlines() if line.strip()]
             try:
                 with engine.begin() as conn:
-                    conn.execute(text("DELETE FROM notes"))
+                    conn.execute(text("DELETE FROM categories"))
                     for line in lines:
                         conn.execute(
-                            text("INSERT INTO notes (text) VALUES (:t)"),
+                            text("INSERT INTO categories (text) VALUES (:t)"),
                             {'t': line}
                         )
-                flash(_("Updated notes."), "success")
+                flash(_("Updated categories."), "success")
             except Exception as e:
-                flash(_("Error saving notes: %(error)s", error=str(e)), "error")
+                flash(_("Error saving categories: %(error)s", error=str(e)), "error")
 
         # 4) Upload branding logo
         elif action == "branding_upload":
@@ -1948,13 +1956,12 @@ def admin_tools():
 
     try:
         with engine.begin() as conn:
-            current_notes = conn.execute(
-                text("SELECT text FROM notes ORDER BY text ASC")
+            current_categories = conn.execute(
+                text("SELECT text FROM categories ORDER BY text ASC")
             ).scalars().all()
     except Exception:
-        current_notes = []
-
-    return render_template("admin_tools.html", state=state, current_notes=current_notes)
+        current_categories = []
+    return render_template("admin_tools.html", state=state, current_categories=current_categories)
 
 @app.template_filter('strftime')
 def _jinja2_filter_datetime(value, format='%Y-%m-%d'):

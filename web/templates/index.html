@@ -108,16 +108,24 @@
                 <label for="expense">{{ _('Expense') }}</label>
               </div>
             </div>
-            <!-- Note -->
+            <!-- Comment -->
+            <div class="input-group mb-3 w-100">
+              <span class="input-group-text"><i class="bi bi-chat-square-text"></i></span>
+              <div class="form-floating flex-grow-1">
+                <input name="comment" type="text" class="form-control" placeholder="{{ _('Comment') }}" id="comment">
+                <label for="comment">{{ _('Comment') }}</label>
+              </div>
+            </div>
+            <!-- Category -->
             <div class="input-group mb-3 w-100">
               <span class="input-group-text"><i class="bi bi-chat-text"></i></span>
               <div class="form-floating flex-grow-1">
-                <select id="note" name="note" class="form-select">
-                  {% for option in notes %}
+                <select id="category" name="category" class="form-select">
+                  {% for option in categories %}
                     <option value="{{ option }}">{{ option }}</option>
                   {% endfor %}
                 </select>
-                <label for="note">{{ _('Note') }}</label>
+                <label for="category">{{ _('Category') }}</label>
               </div>
             </div>
             <!-- Buttons -->
@@ -145,8 +153,10 @@
   <div class="col-12">
     <div class="card shadow-sm h-100">
       <div class="card-header d-flex justify-content-between align-items-center">
-        <span>{{ _('Filter') }}</span>
-        <span id="filterBadge" class="badge bg-primary ms-2 d-none">{{ _('Active') }}</span>
+        <span class="d-flex align-items-center">
+          {{ _('Filter') }}
+          <span id="filterBadge" class="badge bg-primary ms-2 d-none">{{ _('Active') }}</span>
+        </span>
         <button class="btn btn-sm btn-outline-secondary d-md-none" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFilters">
           <i class="bi-chevron-down"></i>
         </button>
@@ -168,7 +178,7 @@
                         id="filter_q"
                         name="q"
                         class="form-control"
-                        placeholder="{{ _('Date/Note') }}"
+                        placeholder="{{ _('Date/Category/Comment') }}"
                         value="{{ request.args.get('q','') }}"
                         autocomplete="off">
                 </div>
@@ -289,7 +299,8 @@
                 <th class="text-center">{{ _('Inventory') }}</th>
                 <th class="text-center">{{ _('Payment') }}</th>
                 <th class="text-center">{{ _('Cash balance') }}</th>
-                <th class="text-center">{{ _('Note') }}</th>
+                <!--th class="text-center">{{ _('Comment') }}</th-->
+                <th class="text-center">{{ _('Category') }}</th>
                 <th class="text-center">{{ _('Actions') }}</th>
               </tr>
             </thead>
@@ -332,7 +343,8 @@
                         </span>
                       {% endif %}
                       {% if e.full == 0 and e.empty == 0 %}
-                        <span class="text-muted">—</span>
+                        <!--span class="text-muted">—</span-->
+                        <span class="text-muted"></span>
                       {% endif %}
                     </span>
                   </td>
@@ -360,7 +372,7 @@
                         </span>
                       {% endif %}
                       {% if e.revenue == 0 and e.expense == 0 %}
-                        <span class="text-muted">—</span>
+                        <span class="text-muted"></span>
                       {% endif %}
                     </span>
                   </td>
@@ -371,20 +383,38 @@
                       <span class="dir-arrow" aria-hidden="true"></span>
                     </span>
                   </td>
-
-                  <td class="text-start" data-label="{{ _('Note') }}" data-col="note"
-                      data-sort="{{ (e.note or '').lower() }}">
-                    {% if e.note %}
-                      <span class="badge-compact badge-note badge-soft" title="{{ e.note }}">
-                        {{ e.note }}
-                      </span>
+                 
+                  <!--td class="text-start" data-label="{{ _('Comment') }}" data-col="comment">
+                    {% if e.comment %}
+                      {{ e.comment }}
                     {% else %}
-                      <span class="text-muted">—</span>
+                      <span class="text-muted"></span>
+                    {% endif %}
+                  </td-->
+
+                  <td class="text-start" data-label="{{ _('Category') }}" data-col="category">
+                    {% if e.category %}
+                      {{ e.category }}
+                    {% else %}
+                      <span class="text-muted"></span>
                     {% endif %}
                   </td>
 
                   {# Actions unchanged #}
-                    <td class="text-start" data-label="{{ _('Actions') }}" data-col="actions">
+                    <td data-label="{{ _('Actions') }}" data-col="actions">
+                      {% if e.comment %}
+                      <button class="btn btn-sm btn-warning"
+                              onclick="showCommentModal(`{{ e.comment|e }}`)"
+                              title="{{ _('Show comment') }}">
+                        <i class="bi-chat-left-text"></i>
+                      </button>
+                      {% else %}
+                      <button class="btn btn-sm btn-outline-light"
+                              disabled
+                              title="{{ _('No comment') }}">
+                        <i class="bi-chat-left-text"></i>
+                      </button>
+                      {% endif %}
                       {% set role = current_user().get('role') %}
                       {% if role in ['Editor', 'Manager', 'Admin'] %}
                       <a class="btn btn-sm btn-outline-primary"
@@ -457,7 +487,7 @@
               </div>
               <small class="form-text text-muted">
                 {{ _("Expected headers:") }}
-                <code>Date;Full;Empty;Inventory;Revenue;Expense;Cash balance;Note</code>
+                <code>Date;Full;Empty;Inventory;Revenue;Expense;Cash balance;Category;Comment</code>
                 {{ _("or short form without Inventory/Cash balance.") }}
               </small>
             </div>
@@ -532,6 +562,23 @@
   </div>
   <div class="toast-container position-fixed top-0 end-0 p-3" id="bbToastContainer"></div>
 
+  <!-- Comment Modal -->
+  <div class="modal fade" id="commentModal" tabindex="-1" aria-labelledby="commentModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="commentModalLabel">{{ _('Comment') }}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <textarea id="commentModalContent" class="form-control" rows="6" readonly></textarea>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Close') }}</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   {% endblock %}
 
@@ -725,7 +772,7 @@
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const form = document.getElementById('transaction-form');
-      const orderIds = ['date', 'full', 'empty', 'revenue', 'expense', 'note'];
+      const orderIds = ['date', 'full', 'empty', 'revenue', 'expense', 'category', 'comment'];
       const fields = orderIds.map(id => document.getElementById(id) || form?.querySelector(`[name="${id}"]`)).filter(Boolean);
 
       // Auto-Tab
@@ -1307,4 +1354,17 @@
     }
   });
   </script>
+
+  <!-- Comment Script-->
+  <script>
+    function showCommentModal(text) {
+        if (!text) return;
+        const textarea = document.getElementById('commentModalContent');
+        textarea.value = text;
+
+        const m = new bootstrap.Modal(document.getElementById('commentModal'));
+        m.show();
+    }
+  </script>
+
   {% endblock %}

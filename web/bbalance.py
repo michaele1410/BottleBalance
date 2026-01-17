@@ -6,7 +6,7 @@ import io
 import json
 import csv
 
-from flask import render_template, request, redirect, url_for, session, send_file, flash, abort, Blueprint
+from flask import render_template, request, redirect, url_for, session, send_file, flash, abort, Blueprint, current_app
 from flask_babel import gettext as _
 from flask_babel import ngettext
 from markupsafe import escape
@@ -44,7 +44,7 @@ from modules.csv_utils import (
 )
 
 from modules.payment_utils import (
-    get_notes
+    get_categories
 )
 
 from modules.csv_utils import (
@@ -66,7 +66,7 @@ def index():
         session['temp_token'] = temp_token
 
     ctx = _build_index_context(default_date=today_ddmmyyyy())
-    ctx['notes'] = get_notes()
+    ctx['categories'] = get_categories()
     ctx['temp_token'] = temp_token
 
     # Role Redirect
@@ -112,7 +112,8 @@ def add():
         empty   = int((request.form.get('empty') or '0').strip() or '0')
         revenue = parse_money(request.form.get('revenue') or '0')
         expense = parse_money(request.form.get('expense') or '0')
-        note    = (request.form.get('note') or '').strip()
+        category    = (request.form.get('category') or '').strip()
+        comment  = (request.form.get('comment') or '').strip()
     except Exception as e:
         flash(_("Input error: %(error)s", error=str(e)), "danger")
         ctx = _build_index_context(default_date=(date_s or today_ddmmyyyy()))
@@ -139,8 +140,8 @@ def add():
     # Create data record
     with engine.begin() as conn:
         res = conn.execute(text("""
-            INSERT INTO entries (date, "full", "empty", revenue, expense, note, created_by)
-            VALUES (:date,:full,:empty,:revenue,:expense,:note,:cb)
+            INSERT INTO entries (date, "full", "empty", revenue, expense, category, comment, created_by)
+            VALUES (:date,:full,:empty,:revenue,:expense,:category,:comment,:cb)
             RETURNING id
         """), {
             'date': date,
@@ -148,7 +149,8 @@ def add():
             'empty': empty,
             'revenue': str(revenue),
             'expense': str(expense),
-            'note': note,
+            'category': category,
+            'comment': comment,
             'cb': user['id']
         })
         new_id = res.scalar_one()
@@ -238,7 +240,7 @@ def edit(entry_id: int):
     with engine.begin() as conn:
         # Load the entry
         row = conn.execute(text("""
-            SELECT id, date, "full", "empty", revenue, expense, note, created_by
+            SELECT id, date, "full", "empty", revenue, expense, category, comment, created_by
             FROM entries
             WHERE id = :id
         """), {'id': entry_id}).mappings().first()
@@ -272,7 +274,8 @@ def edit(entry_id: int):
         'empty': row['empty'],
         'revenue': row['revenue'],
         'expense': row['expense'],
-        'note': row['note']
+        'category': row['category'],
+        'comment': row['comment'] or ''
     }
 
     # Attachments for display
@@ -285,9 +288,9 @@ def edit(entry_id: int):
         'view_url': url_for('attachments_view', att_id=r['id'])
     } for r in attachments]
 
-    notes = get_notes()
+    categories = get_categories()
     
-    return render_template('edit.html', data=data, attachments=att_data, audit=audit, notes=notes)
+    return render_template('edit.html', data=data, attachments=att_data, audit=audit, categories=categories)
 
 @bbalance_routes.post('/edit/<int:entry_id>')
 @login_required
@@ -297,7 +300,7 @@ def edit_post(entry_id: int):
     # 1) Load old values
     with engine.begin() as conn:
         row = conn.execute(text("""
-            SELECT id, date, "full", "empty", revenue, expense, note, created_by
+            SELECT id, date, "full", "empty", revenue, expense, category, comment, created_by
             FROM entries
             WHERE id=:id
         """), {'id': entry_id}).mappings().first()
@@ -326,7 +329,8 @@ def edit_post(entry_id: int):
         empty = int((request.form.get('empty') or '0').strip() or '0')
         revenue = parse_money(request.form.get('revenue') or '0')
         expense  = parse_money(request.form.get('expense')  or '0')
-        note = (request.form.get('note') or '').strip()
+        category = (request.form.get('category') or '').strip()
+        comment  = (request.form.get('comment') or '').strip()
     except Exception as e:
         flash(f"{_('Input error:')} {e}", 'danger')
         return redirect(url_for('bbalance_routes.edit', entry_id=entry_id))
@@ -378,10 +382,15 @@ def edit_post(entry_id: int):
     if old_expense != new_expense:
         changes.append(("expense", "Expense", _fmt_money(old_expense), _fmt_money(new_expense)))
 
-    # Note (compare trim)
-    old_note = (row['note'] or '').strip()
-    if old_note != note:
-        changes.append(("note", "Note", old_note, note))
+    # Category (compare trim)
+    old_category = (row['category'] or '').strip()
+    if old_category != category:
+        changes.append(("category", "Category", old_category, category))
+
+    # Comment
+    old_comment = (row.get('comment') or '').strip()
+    if old_comment != comment:
+        changes.append(("comment", "Comment", old_comment, comment))
 
     # 5) Save + Audit (similar to payment.py: separate audit entry for each field change)
     with engine.begin() as conn:
@@ -392,7 +401,8 @@ def edit_post(entry_id: int):
                 "empty"=:empty,
                 revenue=:revenue,
                 expense=:expense,
-                note=:note,
+                category=:category,
+                comment=:comment,
                 updated_at=NOW()
             WHERE id=:id
         """), {
@@ -402,7 +412,8 @@ def edit_post(entry_id: int):
             'empty': empty,
             'revenue': str(revenue) if revenue is not None else None,
             'expense':  str(expense)  if expense  is not None else None,
-            'note': note
+            'category': category,
+            'comment': comment
         })
 
         # b) Summary edit entry
@@ -471,12 +482,12 @@ def export_csv():
 
     output = io.StringIO()
     writer = csv.writer(output, delimiter=';', lineterminator='\n')
-    writer.writerow(['Date','Full','Empty','Inventory','Revenue','Expense','Cash balance','Note'])
+    writer.writerow(['Date','Full','Empty','Inventory','Revenue','Expense','Cash balance','Comment','Category'])
     for e in entries:
         writer.writerow([
             format_date_de(e['date']), e['full'], e['empty'], e['inventory'],
             str(e['revenue']).replace('.', ','), str(e['expense']).replace('.', ','),
-            str(e['cashBalance']).replace('.', ','), e['note']
+            str(e['cashBalance']).replace('.', ','), e['category'], e['comment']
         ])
     mem = io.BytesIO()
     mem.write(output.getvalue().encode('utf-8-sig'))
@@ -518,31 +529,32 @@ def import_csv():
             for err in validation_errors:
                 flash(err)
             return redirect(url_for('bbalance_routes.index'))
-        expected = ['Date','Full','Empty','Inventory','Revenue','Expense','Cash balance','Note']
-        alt_expected = ['Date','Full','Empty','Revenue','Expense','Note']
+        expected = ['Date','Full','Empty','Inventory','Revenue','Expense','Cash balance','Comment','Category']
+        alt_expected = ['Date','Full','Empty','Revenue','Expense','Comment','Category']
         if headers is None or [h.strip() for h in headers] not in (expected, alt_expected):
             raise ValueError('CSV header does not match the expected format.')
         rows_to_insert = []
         for row in reader:
             if len(row) == 8:
-                date_s, voll_s, leer_s, _inv, ein_s, aus_s, _kas, bem = row
+                date_s, full_s, empty_s, _inv, revenue_s, expense_s, _kas, comment, category = row
             else:
-                date_s, voll_s, leer_s, ein_s, aus_s, bem = row
+                date_s, full_s, empty_s, revenue_s, expense_s, comment, category = row
             date = parse_date_de_or_today(date_s)
-            full = int((voll_s or '0').strip() or 0)
-            empty = int((leer_s or '0').strip() or 0)
-            revenue = parse_money(ein_s or '0')
-            expense = parse_money(aus_s or '0')
-            note = (bem or '').strip()
+            full = int((full_s or '0').strip() or 0)
+            empty = int((empty_s or '0').strip() or 0)
+            revenue = parse_money(revenue_s or '0')
+            expense = parse_money(expense_s or '0')
+            comment = (comment or '').strip()
+            category = (category or '').strip()
             rows_to_insert.append({'date': date, 'full': full, 'empty': empty,
-                                   'revenue': str(revenue), 'expense': str(expense), 'note': note})
+                                   'revenue': str(revenue), 'expense': str(expense), 'category': category, 'comment': comment})
         with engine.begin() as conn:
             if replace_all:
                 conn.execute(text('DELETE FROM entries'))
             for r in rows_to_insert:
                 conn.execute(text("""
-                    INSERT INTO entries (date, "full", "empty", revenue, expense, note)
-                    VALUES (:date,:full,:empty,:revenue,:expense,:note)
+                    INSERT INTO entries (date, "full", "empty", revenue, expense, comment, category)
+                    VALUES (:date,:full,:empty,:revenue,:expense,:comment,:category)
                 """), r)
 
         # Success message with pluralization

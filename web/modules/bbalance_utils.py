@@ -24,7 +24,7 @@ def fetch_entries(
 
     # Filter (external, alias "ar")
     if search:
-        where.append("(ar.note ILIKE :q OR to_char(ar.date, 'DD.MM.YYYY') ILIKE :q)")
+        where.append("(ar.category ILIKE :q OR to_char(ar.date, 'DD.MM.YYYY') ILIKE :q OR ar.comment ILIKE :q)")
         params['q'] = f"%{search}%"
     if date_from:
         where.append("ar.date >= :df")
@@ -65,7 +65,8 @@ def fetch_entries(
                 e.empty,
                 e.revenue,
                 e.expense,
-                e.note,
+                e.category,
+                e.comment,
                 e.created_by,
                 SUM(e.revenue - e.expense)
                     OVER (ORDER BY e.date, e.id ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS "cashBalance",
@@ -81,7 +82,8 @@ def fetch_entries(
             ar.empty,
             ar.revenue,
             ar.expense,
-            ar.note,
+            ar.category,
+            ar.comment,
             ar.created_by,
             ar."cashBalance",
             ar.inventory,
@@ -104,7 +106,8 @@ def fetch_entries(
             'empty': int(r['empty'] or 0),
             'revenue': Decimal(r['revenue'] or 0),
             'expense': Decimal(r['expense'] or 0),
-            'note': r['note'] or '',
+            'comment': r['comment'] or '',
+            'category': r['category'] or '',
             'inventory': int(r['inventory'] or 0),  # Inventory in bottles
             'cashBalance': Decimal(r['cashBalance'] or 0).quantize(Decimal('0.01')),
             'created_by': r['created_by'],

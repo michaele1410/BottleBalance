@@ -60,9 +60,9 @@ def get_payment_request_email(request_id: int):
             WHERE z.id = :id
         """), {'id': request_id}).scalar_one_or_none()
 
-def get_notes():
+def get_categories():
     with engine.begin() as conn:
-        rows = conn.execute(text("SELECT text FROM notes WHERE active = TRUE ORDER BY text ASC")).scalars().all()
+        rows = conn.execute(text("SELECT text FROM categories WHERE active = TRUE ORDER BY text ASC")).scalars().all()
     return rows
 
 def _approvals_total(conn) -> int:

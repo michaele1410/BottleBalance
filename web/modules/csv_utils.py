@@ -21,7 +21,7 @@ from modules.core_utils import (
 IMPORT_ALLOW_MAPPING = os.getenv("IMPORT_ALLOW_MAPPING", "true").lower() in ("1", "true", "yes", "on")
 
 # Canonical target fields
-CANONICAL_FIELDS = ['Date', 'Full', 'Empty', 'Revenue', 'Expense', 'Note']
+CANONICAL_FIELDS = ['Date', 'Full', 'Empty', 'Revenue', 'Expense', 'Category']
 
 # Synonyms (freely expandable)
 HEADER_SYNONYMS = {
@@ -30,7 +30,7 @@ HEADER_SYNONYMS = {
     'Empty':   {'empty', 'leer', 'out', 'ausgang', 'bestandsabgang', 'bottlesout', 'pfand'},
     'Revenue': {'revenue', 'einzahlung', 'cashin'},
     'Expense': {'expense', 'auszahlung', 'cost', 'cashout'},
-    'Note':    {'note', 'notiz', 'kommentar', 'comment', 'description', 'desc'},
+    'Category':    {'category', 'notiz', 'kommentar', 'comment', 'description', 'desc'},
 }
 
 _money_re = re.compile(r'^\s*[+-]?\d{1,3}([.,]\d{3})*([.,]\d{1,2})?\s*(€)?\s*$')
@@ -139,25 +139,25 @@ def _signature(row: dict) -> tuple:
         int(row['empty']),
         str(Decimal(row['revenue'] or 0).quantize(Decimal('0.01'))),
         str(Decimal(row['expense'] or 0).quantize(Decimal('0.01'))),
-        (row['note'] or '').strip().lower()
+        (row['category'] or '').strip().lower()
     )
 
 def _fetch_existing_signature_set(conn) -> set[tuple]:
     existing = conn.execute(text("""
         SELECT date, COALESCE("full",0), COALESCE("empty",0),
-               COALESCE(revenue,0), COALESCE(expense,0), COALESCE(note,'')
+               COALESCE(revenue,0), COALESCE(expense,0), COALESCE(category,'')
         FROM entries
     """)).fetchall()
 
     result = set()
-    for d, voll, leer, ein, aus, bem in existing:
+    for d, full, empty, revenue, expense, category in existing:
         result.add((
             d,
-            int(voll),
-            int(leer),
-            str(Decimal(ein or 0).quantize(Decimal('0.01'))),
-            str(Decimal(aus or 0).quantize(Decimal('0.01'))),
-            (bem or '').strip().lower()
+            int(full),
+            int(empty),
+            str(Decimal(revenue or 0).quantize(Decimal('0.01'))),
+            str(Decimal(expense or 0).quantize(Decimal('0.01'))),
+            (category or '').strip().lower()
         ))
     return result
 
@@ -168,7 +168,7 @@ def compute_auto_mapping(headers: list[str]) -> dict:
         candidates = { _norm(c) for c in HEADER_SYNONYMS.get(canon, set()) } | {_norm(canon)}
         idx = next((i for i, nh in enumerate(norm_headers) if nh in candidates), None)
         if idx is None:
-            if canon in ('Revenue', 'Expense', 'Note'):
+            if canon in ('Revenue', 'Expense', 'Category'):
                 mapping[canon] = None
                 continue
             return {}
@@ -190,7 +190,7 @@ def _parse_csv_with_mapping(content: str, replace_all: bool, mapping: dict | Non
     idx_empty   = mapping.get('Empty')
     idx_revenue  = mapping.get('Revenue')
     idx_expense   = mapping.get('Expense')
-    idx_note = mapping.get('Note')
+    idx_category = mapping.get('Category')
 
     preview_rows = []
     dup_count = 0
@@ -212,7 +212,7 @@ def _parse_csv_with_mapping(content: str, replace_all: bool, mapping: dict | Non
         v_empty   = raw[idx_empty]   if idx_empty   is not None and idx_empty   < len(raw) else ''
         v_revenue  = raw[idx_revenue]  if idx_revenue  is not None and idx_revenue  < len(raw) else ''
         v_expense   = raw[idx_expense]   if idx_expense   is not None and idx_expense   < len(raw) else ''
-        v_note = raw[idx_note] if idx_note is not None and idx_note < len(raw) else ''
+        v_category = raw[idx_category] if idx_category is not None and idx_category < len(raw) else ''
 
         try:
             date = parse_date_de_strict(v_date)
@@ -239,7 +239,7 @@ def _parse_csv_with_mapping(content: str, replace_all: bool, mapping: dict | Non
 
         revenue = parse_money(v_revenue or '0')
         expense  = parse_money(v_expense or '0')
-        note = (v_note or '').strip()
+        category = (v_category or '').strip()
 
         row_obj = {
             'date': date,
@@ -247,7 +247,7 @@ def _parse_csv_with_mapping(content: str, replace_all: bool, mapping: dict | Non
             'empty': empty,
             'revenue': str(revenue),
             'expense': str(expense),
-            'note': note,
+            'category': category,
             'line_no': line_no,
             'errors': errors,
             'is_duplicate': False

@@ -13,7 +13,7 @@
         <th class="text-center">{{ _('Revenue') }}</th>
         <th class="text-center">{{ _('Expense') }}</th>
         <th class="text-center">{{ _('Cash balance') }}</th>
-        <th class="text-center">{{ _('Note') }}</th>
+        <th class="text-center">{{ _('Category') }}</th>
         <th class="text-center">{{ _('Actions') }}</th>
       </tr>
     </thead>
@@ -43,8 +43,8 @@
         <!-- Cash balance: Always show or optionally hide -->
         <td class="text-end" data-label="{{ _('Cash balance') }}" data-col="cashBalance">{{ format_eur_de(e.cashBalance) if changed else '' }}</td>
 
-        <!-- Note: Always display -->
-        <td class="text-start" data-label="{{ _('Note') }}" data-col="note">{{ e.note }}</td>
+        <!-- Category: Always display -->
+        <td class="text-start" data-label="{{ _('Category') }}" data-col="category">{{ e.category }}</td>
           <td class="text-center" data-label="{{ _('Actions') }}" data-col="actions">
             {% set role = current_user().get('role') %}
             {% if role in ['Editor', 'Manager', 'Admin'] %}

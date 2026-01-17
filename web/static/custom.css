@@ -511,7 +511,7 @@ table.table-stacked.is-stacked td::before {
   color: #fff;
 }
 
-.badge-note {
+.badge-category {
   background: var(--bs-info);
   color: #08222a;
 }
@@ -547,7 +547,7 @@ table.table-stacked.is-stacked td::before {
   td[data-col="delta-inv"] .badge,
   td[data-col="delta-kasse"] .badge,
   td[data-col="date"] .badge-compact,
-  td[data-col="note"] .badge-compact {
+  td[data-col="category"] .badge-compact {
     white-space: nowrap;
   }
 

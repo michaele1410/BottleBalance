@@ -4,32 +4,32 @@
   <div class="card-body">
     <h1 class="h5 mb-3">{{ _('Settings') }}</h1>
     <div class="row g-4">
-      {# ---------- Notes (full width) ---------- #}
+      {# ---------- Categories (full width) ---------- #}
       <div class="col-12">
         <div class="card shadow-sm">
           <div class="card-header d-flex justify-content-between align-items-center">
-            {{ _('Manage notes') }}
+            {{ _('Manage categories') }}
             <span class="text-muted small">{{ _('One option per line') }}</span>
           </div>
           <div class="card-body">
             <div class="row g-3 align-items-start">
               <div class="col-md-5 order-2 order-md-1">
-                <label class="form-label">{{ _('Current notes') }}</label>
+                <label class="form-label">{{ _('Current categories') }}</label>
                 <ul class="list-group list-group-flush border rounded">
-                  {% for opt in current_notes %}
+                  {% for opt in current_categories %}
                   <li class="list-group-item py-1">{{ opt }}</li>
                   {% else %}
-                  <li class="list-group-item text-muted">{{ _('No notes available') }}</li>
+                  <li class="list-group-item text-muted">{{ _('No categories available') }}</li>
                   {% endfor %}
                 </ul>
               </div>
               <div class="col-md-7 order-1 order-md-2">
                 <form method="post" action="{{ url_for('admin_tools') }}" class="h-100 d-flex flex-column">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                  <input type="hidden" name="action" value="update_notes">
-                  <label for="options" class="form-label">{{ _('Replace notes') }}</label>
+                  <input type="hidden" name="action" value="update_categories">
+                  <label for="options" class="form-label">{{ _('Replace categories') }}</label>
                   <textarea id="options" name="options" class="form-control" rows="10"
-                    placeholder="{{ _('One option per line ...') }}">{{ current_notes|join('\n') }}</textarea>
+                    placeholder="{{ _('One option per line ...') }}">{{ current_categories|join('\n') }}</textarea>
                   <div class="mt-3 d-flex gap-2">
                     <button type="submit" class="btn btn-primary">
                       <i class="bi bi-save me-1"></i>{{ _('Save') }}

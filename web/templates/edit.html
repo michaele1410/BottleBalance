@@ -68,23 +68,34 @@
             </div>
           </div>
 
-          <!-- Note as a dropdown -->
+        <!-- Comment -->
+          <div class="input-group mb-3">
+            <span class="input-group-text"><i class="bi bi-chat-left-text"></i></span>
+            <div class="form-floating flex-grow-1">
+              <input name="comment" type="text" class="form-control" id="comment"
+                    placeholder="Kommentar"
+                    value="{{ data.comment if data.comment is not none else '' }}">
+              <label for="comment">{{ _('Comment') }}</label>
+            </div>
+          </div>
+
+          <!-- Category as a dropdown -->
            <div class="input-group mb-3">
             <span class="input-group-text"><i class="bi bi-chat-text"></i></span>
             <div class="form-floating flex-grow-1">
-              <select id="note" name="note" class="form-select">
+              <select id="category" name="category" class="form-select">
                 {% set found = false %}
-                {% for option in notes %}
-                  {% if data.note == option %}
+                {% for option in categories %}
+                  {% if data.category == option %}
                     {% set found = true %}
                   {% endif %}
-                  <option value="{{ option }}" {% if data.note == option %}selected{% endif %}>{{ option }}</option>
+                  <option value="{{ option }}" {% if data.category == option %}selected{% endif %}>{{ option }}</option>
                 {% endfor %}
-                {% if data.note and not found %}
-                  <option value="{{ data.note }}" selected>{{ data.note }}</option>
+                {% if data.category and not found %}
+                  <option value="{{ data.category }}" selected>{{ data.category }}</option>
                 {% endif %}
               </select>
-              <label for="note">{{ _('Note') }}</label>
+              <label for="category">{{ _('Category') }}</label>
             </div>
           </div>
 

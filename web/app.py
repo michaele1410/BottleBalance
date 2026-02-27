@@ -225,7 +225,7 @@ def serialize_attachment(att):
 def notify_managing_users(request_id, requestor, amount, date):
     subject = _('New payment request from %(requester)s', requester=requestor)
     body = _(
-        "A new payment request has been created.\n\n"
+        "a new payment request has been created.\n\n"
         "Requestor: %(requester)s\n"
         "Amount: %(amount).2f EUR\n"
         "Date: %(date)s\n"
@@ -425,6 +425,7 @@ CREATE TABLE IF NOT EXISTS payment_requests (
     amount NUMERIC(10,2),
     supplier TEXT,
     justification TEXT,
+    link TEXT CHECK (link ~ '^(https?://).*'),
     state VARCHAR(20) DEFAULT 'pending',
     read_only BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),

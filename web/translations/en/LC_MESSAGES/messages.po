@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-01-17 20:03+0100\n"
+"POT-Creation-Date: 2026-02-27 12:56+0100\n"
 "PO-Revision-Date: 2026-01-13 08:55+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -23,16 +23,16 @@ msgstr ""
 msgid "Database dump successfully created."
 msgstr ""
 
-#: admin.py:62 app.py:1838
+#: admin.py:62 app.py:1846
 #, python-format
 msgid "Error during database dump: %(error)s"
 msgstr ""
 
-#: admin.py:73 app.py:1930
+#: admin.py:73 app.py:1938
 msgid "App title cannot be empty."
 msgstr ""
 
-#: admin.py:77 app.py:1933
+#: admin.py:77 app.py:1941
 msgid "Application title updated."
 msgstr ""
 
@@ -44,7 +44,7 @@ msgstr ""
 #: app.py:227
 #, python-format
 msgid ""
-"A new payment request has been created.\n"
+"a new payment request has been created.\n"
 "\n"
 "Requestor: %(requester)s\n"
 "Amount: %(amount).2f EUR\n"
@@ -54,285 +54,285 @@ msgid ""
 "Please check the request in the system."
 msgstr ""
 
-#: app.py:553
+#: app.py:554
 msgid "Withdrew money"
 msgstr ""
 
-#: app.py:554 app.py:1640 templates/index.html:296 templates/index.html:348
-#: templates/table_partial.html:12 templates/table_partial.html:38
+#: app.py:555 app.py:1647 templates/index.html:299 templates/index.html:352
+#: templates/table_partial.html:12 templates/table_partial.html:39
 msgid "Inventory"
 msgstr ""
 
-#: app.py:555
+#: app.py:556
 msgid "Count cash register"
 msgstr ""
 
-#: app.py:556
+#: app.py:557
 msgid "Emptying cash register GR"
 msgstr ""
 
-#: app.py:557
+#: app.py:558
 msgid "Delivery of Bottles"
 msgstr ""
 
-#: app.py:558
+#: app.py:559
 msgid "Individual bottle purchase"
 msgstr ""
 
-#: app.py:559
+#: app.py:560
 msgid "Deposit PayPal"
 msgstr ""
 
-#: app.py:560
+#: app.py:561
 msgid "Donation"
 msgstr ""
 
-#: app.py:618
+#: app.py:619
 #, python-format
 msgid ""
 "APP_BASE_URL is not set to production-ready (currently '%(url)s'). Set a "
 "publicly accessible base URL so that hints/links in emails are correct."
 msgstr ""
 
-#: app.py:674
+#: app.py:675
 msgid "File too large. Please upload a smaller file."
 msgstr ""
 
-#: app.py:742 auth.py:261 user.py:73
+#: app.py:743 auth.py:261 user.py:73
 msgid "Password must be at least 8 characters long."
 msgstr ""
 
-#: app.py:745 auth.py:264 templates/profile.html:224
+#: app.py:746 auth.py:264 templates/profile.html:224
 msgid "Passwords do not match."
 msgstr ""
 
-#: app.py:757 user.py:84 user.py:137
+#: app.py:758 user.py:84 user.py:137
 msgid "Username already exists."
 msgstr ""
 
-#: app.py:770 user.py:94 user.py:148
+#: app.py:771 user.py:94 user.py:148
 msgid "Email already in use."
 msgstr ""
 
-#: app.py:802
+#: app.py:803
 msgid "Profile updated."
 msgstr ""
 
-#: app.py:818 app.py:843
+#: app.py:819 app.py:844
 msgid "User not found."
 msgstr ""
 
-#: app.py:861
+#: app.py:862
 msgid "No 2FA setup active."
 msgstr ""
 
-#: app.py:866
+#: app.py:867
 msgid "Invalid 2FA code."
 msgstr ""
 
-#: app.py:875
+#: app.py:876
 msgid "2FA enabled."
 msgstr ""
 
-#: app.py:894
+#: app.py:895
 msgid "Password verification failed."
 msgstr ""
 
-#: app.py:908 auth.py:143
+#: app.py:909 auth.py:143
 msgid "2FA disabled."
 msgstr ""
 
-#: app.py:918 app.py:945
+#: app.py:919 app.py:946
 msgid "Invalid theme selection."
 msgstr ""
 
-#: app.py:924
+#: app.py:925
 msgid "Theme settings saved."
 msgstr ""
 
-#: app.py:941
+#: app.py:942
 msgid "Invalid language."
 msgstr ""
 
-#: app.py:965
+#: app.py:966
 msgid "Settings saved."
 msgstr ""
 
-#: app.py:1093
+#: app.py:1094
 msgid "Approval authorization changed."
 msgstr ""
 
-#: app.py:1110
+#: app.py:1111
 msgid "CSV header does not match the expected format."
 msgstr ""
 
-#: app.py:1185
+#: app.py:1189
 msgid "CSV preview is disabled."
 msgstr ""
 
-#: app.py:1196 app.py:1314
+#: app.py:1200 app.py:1319
 msgid "Preview expired or not found."
 msgstr ""
 
-#: app.py:1201 app.py:1328
+#: app.py:1205 app.py:1333
 msgid "CSV file not found."
 msgstr ""
 
-#: app.py:1210
+#: app.py:1214
 msgid "CSV could not be read."
 msgstr ""
 
-#: app.py:1257 bbalance.py:506
+#: app.py:1262 bbalance.py:506
 msgid "Please select a CSV file."
 msgstr ""
 
-#: app.py:1320
+#: app.py:1325
 msgid "Preview expired or already used."
 msgstr ""
 
-#: app.py:1372
+#: app.py:1377
 #, python-format
 msgid "Import successful: %(rows)d lines transferred."
 msgstr ""
 
-#: app.py:1378 bbalance.py:567
+#: app.py:1383 bbalance.py:568
 #, python-format
 msgid "Import failed: %(error)s"
 msgstr ""
 
-#: app.py:1640 templates/edit.html:25 templates/import_preview.html:46
-#: templates/import_preview.html:95 templates/index.html:76
-#: templates/index.html:294 templates/index.html:319
+#: app.py:1647 templates/edit.html:25 templates/index.html:76
+#: templates/index.html:297 templates/index.html:322
 #: templates/payment_authorization.html:47
 #: templates/payment_authorization.html:76
-#: templates/payment_authorization.html:238
-#: templates/payment_authorization_detail.html:39
-#: templates/payment_authorization_detail.html:104
-#: templates/table_partial.html:8 templates/table_partial.html:31
+#: templates/payment_authorization.html:231
+#: templates/payment_authorization_detail.html:41
+#: templates/payment_authorization_detail.html:155
+#: templates/table_partial.html:8 templates/table_partial.html:32
 msgid "Date"
 msgstr ""
 
-#: app.py:1640 templates/import_preview.html:47
-#: templates/import_preview.html:96 templates/table_partial.html:10
-#: templates/table_partial.html:34
+#: app.py:1647 templates/table_partial.html:10 templates/table_partial.html:35
 msgid "Full"
 msgstr ""
 
-#: app.py:1640 templates/import_preview.html:48
-#: templates/import_preview.html:97 templates/index.html:92
-#: templates/index.html:337 templates/index.html:339
-#: templates/table_partial.html:11 templates/table_partial.html:35
+#: app.py:1647 templates/index.html:92 templates/index.html:340
+#: templates/index.html:342 templates/table_partial.html:11
+#: templates/table_partial.html:36
 msgid "Empty"
 msgstr ""
 
-#: app.py:1641 templates/edit.html:56 templates/import_preview.html:49
-#: templates/import_preview.html:98 templates/index.html:100
-#: templates/index.html:359 templates/index.html:361
-#: templates/table_partial.html:13 templates/table_partial.html:40
+#: app.py:1648 templates/edit.html:56 templates/index.html:100
+#: templates/index.html:363 templates/index.html:365
+#: templates/table_partial.html:13 templates/table_partial.html:41
 msgid "Revenue"
 msgstr ""
 
-#: app.py:1641 templates/edit.html:67 templates/import_preview.html:50
-#: templates/import_preview.html:99 templates/index.html:108
-#: templates/index.html:365 templates/index.html:367
-#: templates/table_partial.html:14 templates/table_partial.html:41
+#: app.py:1648 templates/edit.html:67 templates/index.html:108
+#: templates/index.html:369 templates/index.html:371
+#: templates/table_partial.html:14 templates/table_partial.html:42
 msgid "Expense"
 msgstr ""
 
-#: app.py:1641 templates/index.html:298 templates/index.html:376
-#: templates/table_partial.html:15 templates/table_partial.html:44
+#: app.py:1648 templates/index.html:301 templates/index.html:380
+#: templates/table_partial.html:15 templates/table_partial.html:45
 msgid "Cash balance"
 msgstr ""
 
-#: app.py:1641 templates/edit.html:98 templates/import_preview.html:51
-#: templates/import_preview.html:100 templates/index.html:127
-#: templates/index.html:300 templates/index.html:390
-#: templates/table_partial.html:16 templates/table_partial.html:47
+#: app.py:1648 templates/edit.html:78 templates/index.html:115
+#: templates/index.html:116 templates/index.html:302 templates/index.html:387
+#: templates/index.html:570 templates/table_partial.html:16
+#: templates/table_partial.html:47
+msgid "Comment"
+msgstr ""
+
+#: app.py:1648 templates/edit.html:98 templates/index.html:128
+#: templates/index.html:303 templates/index.html:395
+#: templates/table_partial.html:17 templates/table_partial.html:49
 msgid "Category"
 msgstr ""
 
-#: app.py:1686 payment.py:467
+#: app.py:1694 payment.py:468
 #, python-format
 msgid "Created at: %(ts)s"
 msgstr ""
 
-#: app.py:1713
+#: app.py:1721
 msgid "Filters applied:"
 msgstr ""
 
-#: app.py:1741
+#: app.py:1749
 msgid "Language changed."
 msgstr ""
 
-#: app.py:1784 app.py:1945 mail.py:35 mail.py:99
+#: app.py:1792 app.py:1953 mail.py:35 mail.py:99
 msgid "SMTP configuration incomplete."
 msgstr ""
 
-#: app.py:1801 mail.py:51
+#: app.py:1809 mail.py:51
 msgid "This is a test message to check the SMTP configuration."
 msgstr ""
 
-#: app.py:1805 mail.py:50 modules/mail_utils.py:153
+#: app.py:1813 mail.py:50 modules/mail_utils.py:153
 #, python-format
 msgid "SMTP test by %(app)s"
 msgstr ""
 
-#: app.py:1812 mail.py:88
+#: app.py:1820 mail.py:88
 msgid "SMTP test successful – test email sent."
 msgstr ""
 
-#: app.py:1814
+#: app.py:1822
 msgid "SMTP test failed: "
 msgstr ""
 
-#: app.py:1833
+#: app.py:1841
 msgid "Database dump successfully generated."
 msgstr ""
 
-#: app.py:1853
+#: app.py:1861
 msgid "Updated categories."
 msgstr ""
 
-#: app.py:1855
+#: app.py:1863
 #, python-format
 msgid "Error saving categories: %(error)s"
 msgstr ""
 
-#: app.py:1861
+#: app.py:1869
 msgid "Please select an image file."
 msgstr ""
 
-#: app.py:1875
+#: app.py:1883
 msgid "Invalid file format. Permitted formats: SVG, PNG, JPG, WEBP."
 msgstr ""
 
-#: app.py:1894
+#: app.py:1902
 msgid "Logo successfully uploaded."
 msgstr ""
 
-#: app.py:1896
+#: app.py:1904
 #, python-format
 msgid "Upload failed: %(error)s"
 msgstr ""
 
-#: app.py:1915
+#: app.py:1923
 msgid "Custom logo removed. Fallback to default logo active."
 msgstr ""
 
-#: app.py:1919
+#: app.py:1927
 #, python-format
 msgid "Could not delete file: %(msg)s"
 msgstr ""
 
-#: app.py:1922
+#: app.py:1930
 msgid "No logo found."
 msgstr ""
 
-#: app.py:1938
+#: app.py:1946
 msgid "Unknown action."
 msgstr ""
 
-#: app.py:1947 mail.py:101
+#: app.py:1955 mail.py:101
 #, python-format
 msgid "SMTP configuration detected for host %(host)s:%(port)s."
 msgstr ""
@@ -341,7 +341,7 @@ msgstr ""
 msgid "Please select files."
 msgstr ""
 
-#: attachments.py:55 payment.py:550
+#: attachments.py:55 payment.py:552
 #, python-format
 msgid "Invalid file type: %(filename)s"
 msgstr ""
@@ -351,11 +351,11 @@ msgstr ""
 msgid "%(num)d Files uploaded."
 msgstr ""
 
-#: attachments.py:78 payment.py:584
+#: attachments.py:78 payment.py:586
 msgid "No files uploaded."
 msgstr ""
 
-#: attachments.py:149 payment.py:695
+#: attachments.py:149 payment.py:697
 msgid "Attachment deleted."
 msgstr ""
 
@@ -429,7 +429,7 @@ msgstr ""
 msgid "Input error: %(error)s"
 msgstr ""
 
-#: bbalance.py:135 templates/index.html:832 templates/index.html:857
+#: bbalance.py:135 templates/index.html:867 templates/index.html:892
 msgid "Please enter at least one value for revenue, expenditure, full or empty."
 msgstr ""
 
@@ -459,190 +459,194 @@ msgstr ""
 msgid "SMTP test failed: %(error)s"
 msgstr ""
 
-#: payment.py:169
+#: payment.py:170
 msgid "Only pending requests can be approved."
 msgstr ""
 
-#: payment.py:174
+#: payment.py:175
 msgid "You have already approved this request."
 msgstr ""
 
-#: payment.py:223
+#: payment.py:224
 msgid ""
 "All necessary approvals have been received – the payment request has now "
 "been approved."
 msgstr ""
 
-#: payment.py:225
+#: payment.py:226
 #, python-format
 msgid "Partial approval recorded: %(done)d/%(total)d."
 msgstr ""
 
-#: payment.py:237
+#: payment.py:238
 msgid "Only pending payment requests can be placed on hold."
 msgstr ""
 
-#: payment.py:244
+#: payment.py:245
 msgid "The payment request was placed on hold."
 msgstr ""
 
-#: payment.py:256
+#: payment.py:257
 msgid "The payment request can only be completed after approval."
 msgstr ""
 
-#: payment.py:263
+#: payment.py:264
 msgid "Payment request has been completed."
 msgstr ""
 
-#: payment.py:285
+#: payment.py:286
 msgid "Rejected, approved, or completed payment requests cannot be deleted."
 msgstr ""
 
-#: payment.py:298
+#: payment.py:299
 msgid "Payment request was deleted."
 msgstr ""
 
-#: payment.py:312
+#: payment.py:313
 msgid "Only pending or paused payment requests can be rejected."
 msgstr ""
 
-#: payment.py:315
+#: payment.py:316
 msgid "Please specify a reason for rejection."
 msgstr ""
 
-#: payment.py:326
+#: payment.py:327
 msgid "Payment request was rejected."
 msgstr ""
 
-#: payment.py:347
+#: payment.py:348
 msgid "You can only withdraw your own, pending, or paused payment requests."
 msgstr ""
 
-#: payment.py:367
+#: payment.py:368
 msgid "Payment request was withdrawn."
 msgstr ""
 
-#: payment.py:384
+#: payment.py:385
 msgid "Only paused payment requests can be resumed."
 msgstr ""
 
-#: payment.py:404
+#: payment.py:405
 msgid "The payment request was continued and is pending again."
 msgstr ""
 
-#: payment.py:473 payment.py:892
+#: payment.py:474 payment.py:900
 msgid "Requestor:"
 msgstr ""
 
-#: payment.py:474 payment.py:893
+#: payment.py:475 payment.py:901
 msgid "Date:"
 msgstr ""
 
-#: payment.py:475 payment.py:894
+#: payment.py:476 payment.py:902
 msgid "Paragraph:"
 msgstr ""
 
-#: payment.py:476 payment.py:895
+#: payment.py:477 payment.py:903
 msgid "Purpose:"
-msgstr ""
+msgstr "Procurement:"
 
-#: payment.py:477 payment.py:896
-msgid "Amount:"
-msgstr ""
-
-#: payment.py:478 payment.py:897
-msgid "Supplier:"
-msgstr ""
-
-#: payment.py:479 payment.py:898
+#: payment.py:478 payment.py:904
 msgid "Justification:"
 msgstr ""
 
-#: payment.py:480 payment.py:899
+#: payment.py:479 payment.py:905
+msgid "Amount:"
+msgstr ""
+
+#: payment.py:480 payment.py:906
+msgid "Supplier:"
+msgstr ""
+
+#: payment.py:481 payment.py:907
+msgid "Link:"
+msgstr ""
+
+#: payment.py:482 payment.py:908
 msgid "State:"
 msgstr ""
 
-#: payment.py:487 payment.py:906 templates/audit.html:67
-#: templates/payment_authorization_detail.html:242
+#: payment.py:489 payment.py:915 templates/audit.html:67
+#: templates/payment_authorization_detail.html:331
 msgid "Audit history"
 msgstr ""
 
-#: payment.py:530
+#: payment.py:532
 msgid ""
 "Attachments can no longer be uploaded because the request has been "
 "completed or rejected."
 msgstr ""
 
-#: payment.py:539
+#: payment.py:541
 msgid "Please select file(s)."
 msgstr ""
 
-#: payment.py:577
+#: payment.py:579
 #, python-format
 msgid "%(count)d Files uploaded."
 msgid_plural "%(count)d Files uploaded."
 msgstr[0] ""
 msgstr[1] ""
 
-#: payment.py:717
+#: payment.py:719
 msgid "Editing is no longer possible."
 msgstr ""
 
-#: payment.py:748
+#: payment.py:751
 msgid "Invalid amount."
 msgstr ""
 
-#: payment.py:751
+#: payment.py:754
 #, python-format
 msgid "Invalid input: %(error)s"
 msgstr ""
 
-#: payment.py:821
+#: payment.py:829
 msgid "Payment request saved."
 msgstr ""
 
-#: payment.py:875
+#: payment.py:883
 msgid "Payment request - Overall document"
 msgstr ""
 
-#: payment.py:880
+#: payment.py:888
 #, python-format
 msgid "Created at: %(ts)s – Number of requests: %(count)d"
 msgstr ""
 
-#: payment.py:930
+#: payment.py:939
 msgid "all_payment_requests.pdf"
 msgstr ""
 
-#: payment.py:965
+#: payment.py:975
 msgid "Please enter a valid date."
 msgstr ""
 
-#: payment.py:969
+#: payment.py:979
 msgid "Please enter a valid amount."
 msgstr ""
 
-#: payment.py:975
+#: payment.py:985
 msgid "Invalid date format. Please enter in YYYY-MM-DD format."
 msgstr ""
 
-#: payment.py:981
+#: payment.py:991
 msgid "Invalid amount. Please enter a number."
 msgstr ""
 
-#: payment.py:1028
+#: payment.py:1039
 msgid "Payment request created successfully."
 msgstr ""
 
-#: payment.py:1047
+#: payment.py:1058
 msgid "Completed payment requests can not longer be changed."
 msgstr ""
 
-#: payment.py:1057
+#: payment.py:1068
 msgid "No approval found for withdrawal."
 msgstr ""
 
-#: payment.py:1079
+#: payment.py:1090
 msgid "Your approval has been withdrawn."
 msgstr ""
 
@@ -711,34 +715,34 @@ msgstr ""
 msgid "File too large. Maximum allowed: 10 MB."
 msgstr ""
 
-#: modules/csv_utils.py:61
+#: modules/csv_utils.py:62
 msgid "Date missing."
 msgstr ""
 
-#: modules/csv_utils.py:65
+#: modules/csv_utils.py:66
 #, python-format
 msgid "Invalid date (expected DD.MM.YYYY): %(value)s"
 msgstr ""
 
-#: modules/csv_utils.py:88
+#: modules/csv_utils.py:89
 #, python-format
 msgid "Invalid integer for %(field)s: %(value)s"
 msgstr ""
 
-#: modules/csv_utils.py:92 modules/utils.py:13 templates/index.html:646
+#: modules/csv_utils.py:93 modules/utils.py:13 templates/index.html:681
 msgid "currency"
 msgstr "$"
 
-#: modules/csv_utils.py:182
+#: modules/csv_utils.py:185
 msgid "Empty CSV or missing header."
 msgstr ""
 
-#: modules/csv_utils.py:236
+#: modules/csv_utils.py:240
 #, python-format
 msgid "Invalid money format for revenue: %(value)s"
 msgstr ""
 
-#: modules/csv_utils.py:238
+#: modules/csv_utils.py:242
 #, python-format
 msgid "Invalid money format for expense: %(value)s"
 msgstr ""
@@ -751,7 +755,7 @@ msgstr ""
 #: modules/mail_utils.py:77
 #, python-format
 msgid ""
-"Your payment request #%(id)d was sent to '%(state)s'.\n"
+"The payment request #%(id)d was set to '%(state)s'.\n"
 "\n"
 "Link: %(link)s"
 msgstr ""
@@ -772,7 +776,7 @@ msgstr ""
 msgid ""
 "Hello,\n"
 "\n"
-"A new payment request (#%(id)d) has just been created.\n"
+"a new payment request (#%(id)d) has just been created.\n"
 "For review/approval:\n"
 "%(link)s\n"
 "\n"
@@ -945,8 +949,8 @@ msgid "Select logo file"
 msgstr ""
 
 #: templates/admin_tools.html:157 templates/edit.html:118
-#: templates/index.html:137 templates/index.html:529
-#: templates/payment_authorization_detail.html:201
+#: templates/index.html:138 templates/index.html:547
+#: templates/payment_authorization_detail.html:290
 msgid "Upload"
 msgstr ""
 
@@ -966,15 +970,15 @@ msgstr ""
 msgid "Remove"
 msgstr ""
 
-#: templates/audit.html:8 templates/audit.html:49 templates/index.html:155
+#: templates/audit.html:8 templates/audit.html:49 templates/index.html:157
 msgid "Filter"
 msgstr ""
 
-#: templates/audit.html:25 templates/index.html:171
+#: templates/audit.html:25 templates/index.html:174
 msgid "Search"
 msgstr ""
 
-#: templates/audit.html:32 templates/index.html:178
+#: templates/audit.html:32 templates/index.html:181
 msgid "Date/Category/Comment"
 msgstr ""
 
@@ -982,11 +986,11 @@ msgstr ""
 msgid "Time period"
 msgstr ""
 
-#: templates/audit.html:42 templates/index.html:193
+#: templates/audit.html:42 templates/index.html:196
 msgid "TT.MM.JJJJ – TT.MM.JJJJ"
 msgstr ""
 
-#: templates/audit.html:52 templates/index.html:231
+#: templates/audit.html:52 templates/index.html:234
 msgid "Reset filter"
 msgstr ""
 
@@ -994,16 +998,16 @@ msgstr ""
 #: templates/edit.html:153 templates/edit.html:162
 #: templates/payment_authorization_audit.html:17
 #: templates/payment_authorization_audit.html:28
-#: templates/payment_authorization_detail.html:248
-#: templates/payment_authorization_detail.html:257
+#: templates/payment_authorization_detail.html:337
+#: templates/payment_authorization_detail.html:346
 msgid "User"
 msgstr ""
 
 #: templates/audit.html:76 templates/audit.html:86 templates/edit.html:152
 #: templates/edit.html:161 templates/payment_authorization_audit.html:18
 #: templates/payment_authorization_audit.html:29
-#: templates/payment_authorization_detail.html:247
-#: templates/payment_authorization_detail.html:256
+#: templates/payment_authorization_detail.html:336
+#: templates/payment_authorization_detail.html:345
 msgid "Action"
 msgstr ""
 
@@ -1015,14 +1019,14 @@ msgstr ""
 #: templates/edit.html:163 templates/payment_authorization.html:86
 #: templates/payment_authorization_audit.html:20
 #: templates/payment_authorization_audit.html:31
-#: templates/payment_authorization_detail.html:249
-#: templates/payment_authorization_detail.html:258
+#: templates/payment_authorization_detail.html:338
+#: templates/payment_authorization_detail.html:347
 msgid "Details"
 msgstr ""
 
 #: templates/audit.html:84 templates/edit.html:151 templates/edit.html:160
-#: templates/payment_authorization_detail.html:246
-#: templates/payment_authorization_detail.html:255
+#: templates/payment_authorization_detail.html:335
+#: templates/payment_authorization_detail.html:344
 msgid "Time"
 msgstr ""
 
@@ -1092,9 +1096,9 @@ msgstr ""
 msgid "Buy me a coffee"
 msgstr ""
 
-#: templates/base.html:168 templates/index.html:457 templates/index.html:502
-#: templates/index.html:508 templates/index.html:521 templates/index.html:540
-#: templates/login.html:50 templates/users.html:24
+#: templates/base.html:168 templates/index.html:475 templates/index.html:520
+#: templates/index.html:526 templates/index.html:539 templates/index.html:558
+#: templates/index.html:577 templates/login.html:50 templates/users.html:24
 msgid "Close"
 msgstr ""
 
@@ -1106,14 +1110,13 @@ msgstr ""
 msgid "Edit record"
 msgstr ""
 
-#: templates/edit.html:11 templates/import_preview.html:11
-#: templates/payment_authorization_audit.html:8
+#: templates/edit.html:11 templates/payment_authorization_audit.html:8
 #: templates/payment_authorization_detail.html:20
 msgid "Back"
 msgstr ""
 
-#: templates/edit.html:35 templates/index.html:84 templates/index.html:331
-#: templates/index.html:333
+#: templates/edit.html:35 templates/index.html:84 templates/index.html:334
+#: templates/index.html:336
 msgid "Full bottles"
 msgstr ""
 
@@ -1121,52 +1124,46 @@ msgstr ""
 msgid "Empty Bottles"
 msgstr ""
 
-#: templates/edit.html:78 templates/index.html:115 templates/index.html:116
-#: templates/index.html:299 templates/index.html:383
-msgid "Comment"
-msgstr ""
-
-#: templates/edit.html:103 templates/edit_user.html:66
-#: templates/import_preview.html:171 templates/login.html:66
+#: templates/edit.html:103 templates/edit_user.html:66 templates/login.html:66
 #: templates/payment_authorization.html:182
-#: templates/payment_authorization.html:272 templates/profile.html:68
+#: templates/payment_authorization.html:314 templates/profile.html:68
 #: templates/profile.html:190 templates/reset.html:38 templates/users.html:70
 msgid "Cancel"
 msgstr ""
 
-#: templates/edit.html:109 templates/index.html:217 templates/index.html:501
-#: templates/payment_authorization_detail.html:190
+#: templates/edit.html:109 templates/index.html:220 templates/index.html:519
+#: templates/payment_authorization_detail.html:279
 msgid "Attachments"
 msgstr ""
 
-#: templates/edit.html:122 templates/index.html:533
-#: templates/payment_authorization_detail.html:205
+#: templates/edit.html:122 templates/index.html:551
+#: templates/payment_authorization_detail.html:294
 msgid "Acceptable formats:"
 msgstr ""
 
-#: templates/edit.html:122 templates/index.html:533
-#: templates/payment_authorization_detail.html:205
+#: templates/edit.html:122 templates/index.html:551
+#: templates/payment_authorization_detail.html:294
 msgid "Multiple files possible."
 msgstr ""
 
 #: templates/edit.html:134 templates/edit.html:241
-#: templates/payment_authorization_detail.html:224
+#: templates/payment_authorization_detail.html:313
 msgid "View"
 msgstr ""
 
-#: templates/edit.html:137 templates/index.html:1040
+#: templates/edit.html:137 templates/index.html:1075
 msgid "Delete attachment for real?"
 msgstr ""
 
-#: templates/edit.html:139 templates/edit.html:245 templates/index.html:427
-#: templates/index.html:1037 templates/payment_authorization.html:153
-#: templates/payment_authorization_detail.html:231
-#: templates/table_partial.html:76
+#: templates/edit.html:139 templates/edit.html:245 templates/index.html:445
+#: templates/index.html:1072 templates/payment_authorization.html:153
+#: templates/payment_authorization_detail.html:320
+#: templates/table_partial.html:78
 msgid "Delete"
 msgstr ""
 
-#: templates/edit.html:144 templates/edit.html:226 templates/index.html:910
-#: templates/index.html:1014
+#: templates/edit.html:144 templates/edit.html:226 templates/index.html:945
+#: templates/index.html:1049
 msgid "No attachments available."
 msgstr ""
 
@@ -1178,7 +1175,7 @@ msgstr ""
 msgid "Error loading attachments:"
 msgstr ""
 
-#: templates/edit.html:253 templates/index.html:956
+#: templates/edit.html:253 templates/index.html:991
 msgid "Error loading attachments."
 msgstr ""
 
@@ -1215,7 +1212,7 @@ msgstr ""
 msgid "Role"
 msgstr ""
 
-#: templates/edit_user.html:57 templates/index.html:156 templates/users.html:88
+#: templates/edit_user.html:57 templates/index.html:158 templates/users.html:88
 #: templates/users.html:118
 msgid "Active"
 msgstr ""
@@ -1224,96 +1221,14 @@ msgstr ""
 msgid "May approve payment requests"
 msgstr ""
 
-#: templates/import_preview.html:9
-msgid "CSV import – Preview"
-msgstr ""
-
-#: templates/import_preview.html:17
-msgid "Total:"
-msgstr ""
-
-#: templates/import_preview.html:18
-msgid "potential duplicates:"
-msgstr ""
-
-#: templates/import_preview.html:20
-msgid "Mode: All existing entries will be replaced"
-msgstr ""
-
-#: templates/import_preview.html:22
-msgid "Mode: Append (existing entries are retained)"
-msgstr ""
-
-#: templates/import_preview.html:28
-msgid "Duplicate"
-msgstr ""
-
-#: templates/import_preview.html:29
-msgid "Error in line"
-msgstr ""
-
-#: templates/import_preview.html:36
-msgid "Field mapping"
-msgstr ""
-
-#: templates/import_preview.html:60
-msgid "none"
-msgstr ""
-
-#: templates/import_preview.html:76
-msgid "Apply mapping & refresh preview"
-msgstr ""
-
-#: templates/import_preview.html:87
-msgid "Preview"
-msgstr ""
-
-#: templates/import_preview.html:101 templates/payment_authorization.html:49
-#: templates/payment_authorization.html:78
-#: templates/payment_authorization_detail.html:10
-msgid "State"
-msgstr ""
-
-#: templates/import_preview.html:117
-msgid "Error:"
-msgstr ""
-
-#: templates/import_preview.html:123
-msgid "is being imported"
-msgstr ""
-
-#: templates/import_preview.html:126
-msgid "Duplicate – skipped (default)"
-msgstr ""
-
-#: templates/import_preview.html:128
-msgid "new – being imported"
-msgstr ""
-
-#: templates/import_preview.html:150
-msgid "Skip duplicates (recommended)"
-msgstr ""
-
-#: templates/import_preview.html:154
-msgid "Insert all (including duplicates)"
-msgstr ""
-
-#: templates/import_preview.html:163
-msgid "Import lines with errors (not recommended)"
-msgstr ""
-
-#: templates/import_preview.html:168
-msgid "Import now"
-msgstr ""
-
 #: templates/index.html:11
 msgid "Inventory:"
 msgstr ""
 
-#: templates/index.html:13 templates/index.html:332 templates/index.html:338
-#: templates/index.html:350 templates/index.html:648
-#: templates/table_partial.html:34 templates/table_partial.html:35
-#: templates/table_partial.html:38
+#: templates/index.html:13 templates/index.html:335 templates/index.html:341
+#: templates/index.html:354 templates/index.html:683
+#: templates/table_partial.html:35 templates/table_partial.html:36
+#: templates/table_partial.html:39
 msgid "Btl."
 msgstr ""
 
@@ -1325,136 +1240,146 @@ msgstr ""
 msgid "Add new record"
 msgstr ""
 
-#: templates/index.html:133 templates/payment_authorization.html:274
+#: templates/index.html:134 templates/payment_authorization.html:316
 #: templates/users.html:72
 msgid "Add"
 msgstr ""
 
-#: templates/index.html:167
+#: templates/index.html:170
 msgid "Filter for entries"
 msgstr ""
 
-#: templates/index.html:186 templates/payment_authorization_audit.html:19
+#: templates/index.html:189 templates/payment_authorization_audit.html:19
 #: templates/payment_authorization_audit.html:30
 msgid "Timestamp"
 msgstr ""
 
-#: templates/index.html:203
+#: templates/index.html:206
 msgid "Year"
 msgstr ""
 
-#: templates/index.html:207 templates/index.html:221
+#: templates/index.html:210 templates/index.html:224
 msgid "All"
 msgstr ""
 
-#: templates/index.html:222
+#: templates/index.html:225
 msgid "With attachment"
 msgstr ""
 
-#: templates/index.html:223
+#: templates/index.html:226
 msgid "Without attachment"
 msgstr ""
 
-#: templates/index.html:238 templates/index.html:239
+#: templates/index.html:241 templates/index.html:242
 #: templates/payment_authorization.html:17
 #: templates/payment_authorization_detail.html:18
 msgid "PDF export"
 msgstr ""
 
-#: templates/index.html:246 templates/index.html:247
+#: templates/index.html:249 templates/index.html:250
 #: templates/payment_authorization.html:27
 #: templates/payment_authorization.html:28
 msgid "Additional export options"
 msgstr ""
 
-#: templates/index.html:254
+#: templates/index.html:257
 msgid "CSV export"
 msgstr ""
 
-#: templates/index.html:266
+#: templates/index.html:269
 msgid "CSV import"
 msgstr ""
 
-#: templates/index.html:287
+#: templates/index.html:290
 msgid "Entries"
 msgstr ""
 
-#: templates/index.html:295 templates/index.html:328
+#: templates/index.html:298 templates/index.html:331
 msgid "Inventory change"
 msgstr ""
 
-#: templates/index.html:297 templates/index.html:356
+#: templates/index.html:300 templates/index.html:360
 msgid "Payment"
 msgstr ""
 
-#: templates/index.html:301 templates/index.html:399
+#: templates/index.html:304 templates/index.html:404
 #: templates/payment_authorization.html:50
-#: templates/payment_authorization.html:81 templates/table_partial.html:17
-#: templates/table_partial.html:48 templates/users.html:92
+#: templates/payment_authorization.html:81 templates/table_partial.html:18
+#: templates/table_partial.html:50 templates/users.html:92
 #: templates/users.html:157
 msgid "Actions"
 msgstr ""
 
-#: templates/index.html:404 templates/table_partial.html:53
+#: templates/index.html:408
+msgid "Show comment"
+msgstr ""
+
+#: templates/index.html:414
+msgid "No comment"
+msgstr ""
+
+#: templates/index.html:422 templates/table_partial.html:55
 msgid "Edit"
 msgstr ""
 
-#: templates/index.html:412 templates/table_partial.html:61
+#: templates/index.html:430 templates/table_partial.html:63
 msgid "Open documents"
 msgstr ""
 
-#: templates/index.html:425 templates/table_partial.html:74
+#: templates/index.html:443 templates/table_partial.html:76
 msgid "Delete entry permanently?"
 msgstr ""
 
-#: templates/index.html:436 templates/table_partial.html:85
+#: templates/index.html:454 templates/table_partial.html:87
 msgid "No entries available."
 msgstr ""
 
-#: templates/index.html:456
+#: templates/index.html:474
 msgid "CSV file import"
 msgstr ""
 
-#: templates/index.html:468
+#: templates/index.html:486
 msgid "Select CSV file"
 msgstr ""
 
-#: templates/index.html:471
+#: templates/index.html:489
 msgid "Expected headers:"
 msgstr ""
 
-#: templates/index.html:473
+#: templates/index.html:491
 msgid "or short form without Inventory/Cash balance."
 msgstr ""
 
-#: templates/index.html:479
+#: templates/index.html:497
 msgid "Completely replace existing entries"
 msgstr ""
 
-#: templates/index.html:485
+#: templates/index.html:503
 msgid "Download sample CSV file"
 msgstr ""
 
-#: templates/index.html:488
+#: templates/index.html:506
 msgid "Show preview"
 msgstr ""
 
-#: templates/index.html:520
+#: templates/index.html:538
 msgid "Upload attachments"
 msgstr ""
 
-#: templates/index.html:800
+#: templates/index.html:835
 msgid ""
 "Please enter at least one value for revenue, expenditure, full or empty "
 "bottles."
 msgstr ""
 
-#: templates/index.html:947 templates/index.html:1033
+#: templates/index.html:982 templates/index.html:1068
+#: templates/payment_authorization_detail.html:131
+#: templates/payment_authorization_detail.html:240
 msgid "Open"
 msgstr ""
 
-#: templates/index.html:1047 templates/index.html:1084
-#: templates/index.html:1087 templates/index.html:1099
+#: templates/index.html:1082 templates/index.html:1119
+#: templates/index.html:1122 templates/index.html:1134
 msgid "Upload failed"
 msgstr ""
 
@@ -1510,25 +1435,32 @@ msgstr ""
 #: templates/payment_authorization.html:46
 #: templates/payment_authorization.html:57
 #: templates/payment_authorization.html:75
-#: templates/payment_authorization_detail.html:29
+#: templates/payment_authorization.html:218
+#: templates/payment_authorization.html:219
 #: templates/payment_authorization_detail.html:30
-#: templates/payment_authorization_detail.html:94
-#: templates/payment_authorization_detail.html:95
+#: templates/payment_authorization_detail.html:31
+#: templates/payment_authorization_detail.html:142
+#: templates/payment_authorization_detail.html:143
 msgid "Requestor"
 msgstr ""
 
 #: templates/payment_authorization.html:48
 #: templates/payment_authorization.html:77
-#: templates/payment_authorization.html:248
-#: templates/payment_authorization.html:249
-#: templates/payment_authorization_detail.html:67
-#: templates/payment_authorization_detail.html:132
-#: templates/payment_authorization_detail.html:133
+#: templates/payment_authorization.html:286
+#: templates/payment_authorization_detail.html:85
+#: templates/payment_authorization_detail.html:196
+#: templates/payment_authorization_detail.html:197
 msgid "Amount"
 msgstr ""
 
+#: templates/payment_authorization.html:49
+#: templates/payment_authorization.html:78
+#: templates/payment_authorization_detail.html:10
+msgid "State"
+msgstr ""
+
 #: templates/payment_authorization.html:59
-#: templates/payment_authorization_detail.html:160
+#: templates/payment_authorization_detail.html:249
 msgid "Approval progress"
 msgstr ""
 
@@ -1537,7 +1469,7 @@ msgid "from"
 msgstr ""
 
 #: templates/payment_authorization.html:60
-#: templates/payment_authorization_detail.html:178
+#: templates/payment_authorization_detail.html:267
 msgid "approved"
 msgstr ""
 
@@ -1599,48 +1531,78 @@ msgstr ""
 msgid "Create new payment request"
 msgstr ""
 
-#: templates/payment_authorization.html:219
+#: templates/payment_authorization.html:221
+#: templates/payment_authorization_detail.html:145
+msgid "Please enter a requestor"
+msgstr ""
+
+#: templates/payment_authorization.html:233
+msgid "Please enter a valid date"
+msgstr ""
+
+#: templates/payment_authorization.html:243
 msgid "e.g. 3a"
 msgstr ""
 
-#: templates/payment_authorization.html:220
+#: templates/payment_authorization.html:244
+#: templates/payment_authorization_detail.html:52
+#: templates/payment_authorization_detail.html:167
 msgid "Paragraph (optional)"
 msgstr ""
 
-#: templates/payment_authorization.html:229
+#: templates/payment_authorization.html:253
 msgid "What is the payment request for?"
 msgstr ""
 
-#: templates/payment_authorization.html:230
-#: templates/payment_authorization_detail.html:57
-#: templates/payment_authorization_detail.html:58
-#: templates/payment_authorization_detail.html:123
-#: templates/payment_authorization_detail.html:124
+#: templates/payment_authorization.html:254
+#: templates/payment_authorization_detail.html:61
+#: templates/payment_authorization_detail.html:62
+#: templates/payment_authorization_detail.html:176
+#: templates/payment_authorization_detail.html:177
 msgid "Purpose"
-msgstr ""
+msgstr "Procurement"
 
-#: templates/payment_authorization.html:247
-msgid "eg. 49,90"
-msgstr ""
-
-#: templates/payment_authorization.html:257
-msgid "Company / Supplier"
-msgstr ""
-
-#: templates/payment_authorization.html:258
-msgid "Supplier (optional)"
+#: templates/payment_authorization.html:256
+msgid "Please enter a purpose"
 msgstr ""
 
 #: templates/payment_authorization.html:266
-msgid "Why is the payment request necessary?"
+msgid "Why is the procurement necessary?"
 msgstr ""
 
 #: templates/payment_authorization.html:267
-#: templates/payment_authorization_detail.html:84
-#: templates/payment_authorization_detail.html:85
-#: templates/payment_authorization_detail.html:150
-#: templates/payment_authorization_detail.html:151
+#: templates/payment_authorization_detail.html:71
+#: templates/payment_authorization_detail.html:72
+#: templates/payment_authorization_detail.html:186
+#: templates/payment_authorization_detail.html:187
 msgid "Justification"
+msgstr ""
+
+#: templates/payment_authorization.html:282
+msgid "eg. 49,90"
+msgstr ""
+
+#: templates/payment_authorization.html:288
+#: templates/payment_authorization_detail.html:87
+msgid "Please enter an amount such as 49.90"
+msgstr ""
+
+#: templates/payment_authorization.html:298
+msgid "Company / Supplier"
+msgstr ""
+
+#: templates/payment_authorization.html:299
+#: templates/payment_authorization_detail.html:98
+#: templates/payment_authorization_detail.html:207
+msgid "Supplier (optional)"
+msgstr ""
+
+#: templates/payment_authorization.html:308
+#: templates/payment_authorization.html:309
+#: templates/payment_authorization_detail.html:112
+#: templates/payment_authorization_detail.html:117
+#: templates/payment_authorization_detail.html:226
+msgid "Link (optional)"
 msgstr ""
 
 #: templates/payment_authorization_audit.html:6
@@ -1657,37 +1619,51 @@ msgstr ""
 msgid "Request"
 msgstr ""
 
-#: templates/payment_authorization_detail.html:48
-#: templates/payment_authorization_detail.html:49
-#: templates/payment_authorization_detail.html:114
-#: templates/payment_authorization_detail.html:115
+#: templates/payment_authorization_detail.html:51
+#: templates/payment_authorization_detail.html:166
 msgid "Paragraph"
 msgstr ""
 
-#: templates/payment_authorization_detail.html:75
-#: templates/payment_authorization_detail.html:76
-#: templates/payment_authorization_detail.html:141
-#: templates/payment_authorization_detail.html:142
+#: templates/payment_authorization_detail.html:74
+msgid "Please enter a justification"
+msgstr ""
+
+#: templates/payment_authorization_detail.html:97
+#: templates/payment_authorization_detail.html:206
 msgid "Supplier"
 msgstr ""
 
-#: templates/payment_authorization_detail.html:166
+#: templates/payment_authorization_detail.html:119
+#: templates/payment_authorization_detail.html:228
+msgid "Bitte eine gültige URL mit http(s):// eingeben."
+msgstr ""
+
+#: templates/payment_authorization_detail.html:128
+#: templates/payment_authorization_detail.html:237
+msgid "Open link"
+msgstr ""
+
+#: templates/payment_authorization_detail.html:221
+msgid "Link"
+msgstr ""
+
+#: templates/payment_authorization_detail.html:255
 msgid "Approvals"
 msgstr ""
 
-#: templates/payment_authorization_detail.html:170
+#: templates/payment_authorization_detail.html:259
 msgid "Chairmans"
 msgstr ""
 
-#: templates/payment_authorization_detail.html:182
+#: templates/payment_authorization_detail.html:271
 msgid "pending"
 msgstr ""
 
-#: templates/payment_authorization_detail.html:228
+#: templates/payment_authorization_detail.html:317
 msgid "Are you sure to delete the attachment?"
 msgstr ""
 
-#: templates/payment_authorization_detail.html:238
+#: templates/payment_authorization_detail.html:327
 msgid "No attachments available"
 msgstr ""
 
@@ -1937,5 +1913,65 @@ msgstr ""
 #~ msgstr ""
 
 #~ msgid "Replace category"
+#~ msgstr ""
+
+#~ msgid "CSV import – Preview"
+#~ msgstr ""
+
+#~ msgid "Total:"
+#~ msgstr ""
+
+#~ msgid "potential duplicates:"
+#~ msgstr ""
+
+#~ msgid "Mode: All existing entries will be replaced"
+#~ msgstr ""
+
+#~ msgid "Mode: Append (existing entries are retained)"
+#~ msgstr ""
+
+#~ msgid "Duplicate"
+#~ msgstr ""
+
+#~ msgid "Error in line"
+#~ msgstr ""
+
+#~ msgid "Field mapping"
+#~ msgstr ""
+
+#~ msgid "none"
+#~ msgstr ""
+
+#~ msgid "Apply mapping & refresh preview"
+#~ msgstr ""
+
+#~ msgid "Preview"
+#~ msgstr ""
+
+#~ msgid "Error:"
+#~ msgstr ""
+
+#~ msgid "is being imported"
+#~ msgstr ""
+
+#~ msgid "Duplicate – skipped (default)"
+#~ msgstr ""
+
+#~ msgid "new – being imported"
+#~ msgstr ""
+
+#~ msgid "Skip duplicates (recommended)"
+#~ msgstr ""
+
+#~ msgid "Insert all (including duplicates)"
+#~ msgstr ""
+
+#~ msgid "Import lines with errors (not recommended)"
+#~ msgstr ""
+
+#~ msgid "Import now"
+#~ msgstr ""
+
+#~ msgid "Why is the procurement request necessary?"
 #~ msgstr ""
 

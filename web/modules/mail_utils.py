@@ -75,7 +75,7 @@ def send_status_email(to_email: str, request_id: int, state: str, cc_approvers: 
     
     subject = _('Payment request #%(id)d – State: %(state)s', id=request_id, state=state.capitalize())
     body = _(
-        "Your payment request #%(id)d was sent to '%(state)s'.\n\n"
+        "The payment request #%(id)d was set to '%(state)s'.\n\n"
         "Link: %(link)s",
         id=request_id,
         state=state,

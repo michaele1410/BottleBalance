@@ -89,7 +89,7 @@ def payment_requests():
             SELECT z.id, z.requestor_id, u.username AS requestor,
             z.date, z.paragraph, z.purpose, z.amount,
             z.supplier, z.justification, z.state, z.read_only,
-            z.created_at, z.updated_at,
+            z.created_at, z.updated_at, z.link,
             z.approver_snapshot,
             COALESCE(a.approvals_done, 0) AS approvals_done
 
@@ -131,6 +131,7 @@ def payment_requests():
                 'purpose': r['purpose'],
                 'amount': str(r['amount']),
                 'supplier': r['supplier'],
+                'link': r['link'],
                 'justification': r['justification'],
                 'state': r['state'],
                 'read_only': r['read_only'],
@@ -474,9 +475,10 @@ def export_single_request_pdf(request_id: int):
         [_("Date:"), P(r['date'].strftime('%d.%m.%Y') if r['date'] else '')],
         [_("Paragraph:"), P(r['paragraph'])],
         [_("Purpose:"), P(r['purpose'])],
+        [_("Justification:"), P(r['justification'])],
         [_("Amount:"), P(f"{r['amount']} {_('currency')}")],
         [_("Supplier:"), P(r['supplier'])],
-        [_("Justification:"), P(r['justification'])],
+        [_("Link:"), P(r['link'])],
         [_("State:"), P(r['state'])],
     ]
     details_table = Table(details_data, colWidths=[42*mm, None])
@@ -705,7 +707,7 @@ def edit_payment_request(request_id):
     # Load old values + Check permissions
     with engine.begin() as conn:
         row = conn.execute(text("""
-            SELECT purpose, amount, supplier, justification, paragraph, date,
+            SELECT purpose, amount, supplier, link, justification, paragraph, date,
                    requestor_id, state
             FROM payment_requests
             WHERE id=:id
@@ -723,6 +725,7 @@ def edit_payment_request(request_id):
     purpose = (request.form.get('purpose') or '').strip()
     amount_str       = (request.form.get('amount') or '').strip()
     supplier        = (request.form.get('supplier') or '').strip()
+    link        = (request.form.get('link') or '').strip()
     justification      = (request.form.get('justification') or '').strip()
     paragraph        = (request.form.get('paragraph') or '').strip()
     date_str        = (request.form.get('date') or '').strip()
@@ -765,6 +768,7 @@ def edit_payment_request(request_id):
     old_purpose         = row['purpose']
     old_amount          = row['amount']
     old_supplier        = row['supplier']
+    old_link            = row['link']
     old_justification   = row['justification']
     old_paragraph       = row['paragraph']
     old_date_norm       = row['date'].date() if isinstance(row['date'], datetime) else row['date']
@@ -776,6 +780,8 @@ def edit_payment_request(request_id):
         changes.append(("amount", "Amount", _fmt_money(old_amount), _fmt_money(amount_decimal)))
     if (old_supplier or '') != supplier:
         changes.append(("supplier", "Supplier", (old_supplier or ''), supplier))
+    if (old_link or '') != link:
+        changes.append(("link", "Link", (old_link or ''), link))
     if (old_justification or '') != justification:
         changes.append(("justification", "Justification", (old_justification or ''), justification))
     if (old_paragraph or '') != paragraph:
@@ -790,6 +796,7 @@ def edit_payment_request(request_id):
             SET purpose=:purpose,
                 amount=:amount,
                 supplier=:supplier,
+                link=:link,
                 justification=:justification,
                 paragraph=:paragraph,
                 -- behalte alten Wert, wenn :date NULL kommt
@@ -800,6 +807,7 @@ def edit_payment_request(request_id):
             'purpose': purpose,
             'amount': str(amount_decimal),
             'supplier': supplier,
+            'link': link,
             'justification': justification,
             'paragraph': paragraph,
             'date': date_obj,  # can be None; COALESCE intercepts it
@@ -893,9 +901,10 @@ def export_all_payment_requests_pdf():
             [_("Date:"), P(r['date'].strftime('%d.%m.%Y') if r['date'] else '')],
             [_("Paragraph:"), P(r['paragraph'])],
             [_("Purpose:"), P(r['purpose'])],
+            [_("Justification:"), P(r['justification'])],
             [_("Amount:"), P(f"{r['amount']} {_('currency')}")],
             [_("Supplier:"), P(r['supplier'])],
-            [_("Justification:"), P(r['justification'])],
+            [_("Link:"), P(r['link'])],
             [_("State:"), P(r['state'])],
         ]
         details_table = Table(details_data, colWidths=[42*mm, None])
@@ -958,6 +967,7 @@ def payment_requests_request():
     date_str = (request.form.get('date') or '').strip()
     amount_str = (request.form.get('amount') or '').strip()
     supplier = (request.form.get('supplier') or '').strip()
+    link = (request.form.get('link') or '').strip()
     justification = (request.form.get('justification') or '').strip()
 
     # Validate entries
@@ -987,10 +997,10 @@ def payment_requests_request():
         res = conn.execute(text("""
             INSERT INTO payment_requests (
                 requestor_id, date, paragraph, purpose, amount,
-                supplier, justification, state, read_only, created_at, updated_at
+                supplier, link, justification, state, read_only, created_at, updated_at
             ) VALUES (
                 :uid, :date, :para, :purpose, :amount,
-                :supplier, :justification, 'pending', TRUE, NOW(), NOW()
+                :supplier, :link, :justification, 'pending', TRUE, NOW(), NOW()
             ) RETURNING id
         """), {
             'uid': user['id'],
@@ -999,6 +1009,7 @@ def payment_requests_request():
             'purpose': purpose,
             'amount': str(amount),
             'supplier': supplier,
+            'link': link,
             'justification': justification
         })
         request_id = res.scalar_one()

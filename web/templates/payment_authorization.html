@@ -208,48 +208,89 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
 
-        <div class="modal-body">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-          <div class="mb-3">
-            <div class="input-group mb-3">
-              <span class="input-group-text"><i class="bi bi-text-paragraph"></i></span>
-              <div class="form-floating flex-grow-1">
-                <input type="text" name="paragraph"  inputmode="text" class="form-control"
-                  placeholder="{{ _('e.g. 3a') }}" value="§14 Abs. 2">
-                  <label for="paragraph">{{ _('Paragraph (optional)') }}</label>
+        <!-- Requestor -->
+          <div class="input-group mb-3">
+            <span class="input-group-text"><i class="bi bi-person"></i></span>
+            <div class="form-floating flex-grow-1">
+              <input type="text" name="requestor" inputmode="text" class="form-control" 
+              placeholder="{{ _('Requestor') }}" value="{% if session.get('user_id') %}{{ current_user().username|capitalize }}{% endif %}" required >
+              <label for="requestor">{{ _('Requestor') }}</label>
+              <div class="invalid-feedback">
+                {{ _('Please enter a requestor') }}
               </div>
             </div>
           </div>
 
-          <div class="input-group mb-3">
-            <span class="input-group-text"><i class="bi bi-chat-text"></i></span>
-            <div class="form-floating flex-grow-1">
-              <input type="text" name="purpose"  inputmode="text" class="form-control"
-                placeholder="{{ _('What is the payment request for?') }}?" value="">
-                <label for="purpose">{{ _('Purpose') }}</label>
-            </div>
-          </div>
-
+          <!-- Date -->
           <div class="input-group mb-3">
             <span class="input-group-text"><i class="bi bi-calendar"></i></span>
             <div class="form-floating flex-grow-1">
               <input type="date" name="date" class="form-control" required value="{{ today.strftime('%Y-%m-%d') }}">
                 <label for="date">{{ _('Date') }}</label>
+              <div class="invalid-feedback">
+                {{ _('Please enter a valid date') }}
+              </div>
+            </div>
+          </div>
+        
+          <!-- Paragraph -->
+          <div class="input-group mb-3">
+            <span class="input-group-text"><i class="bi bi-text-paragraph"></i></span>
+            <div class="form-floating flex-grow-1">
+              <input type="text" name="paragraph"  inputmode="text" class="form-control"
+                placeholder="{{ _('e.g. 3a') }}" value="§14 Abs. 2">
+                <label for="paragraph">{{ _('Paragraph (optional)') }}</label>
             </div>
           </div>
 
+          <!-- Purpose -->
+          <div class="input-group mb-3">
+            <span class="input-group-text"><i class="bi bi-chat-text"></i></span>
+            <div class="form-floating flex-grow-1">
+              <input type="text" name="purpose"  inputmode="text" class="form-control"
+                placeholder="{{ _('What is the payment request for?') }}?" value="" required>
+                <label for="purpose">{{ _('Purpose') }}</label>
+                <div class="invalid-feedback">
+                  {{ _('Please enter a purpose') }}
+                </div>
+            </div>
+          </div>
+
+          <!-- Justification -->
+          <div class="input-group mb-3">
+            <span class="input-group-text"><i class="bi bi-chat-quote"></i></span>
+            <div class="form-floating flex-grow-1">
+              <input type="text" name="justification" rows="3" inputmode="text" class="form-control"
+                placeholder="{{ _('Why is the procurement necessary?') }}?" value="">
+                <label for="justification">{{ _('Justification (optional)') }}</label>
+            </div>
+          </div>
+
+          <!-- Amount -->
           <div class="input-group mb-3">
             <span class="input-group-text"><i class="bi bi-wallet2"></i></span>
-            <!-- Amount input -->
             <div class="form-floating flex-grow-1">
-              <input type="number" name="amount" inputmode="decimal" class="form-control"
-                    placeholder="{{ _('eg. 49,90') }}" value="">
+              <!-- max. 9 digits before the decimal point, 2 digits after the decimal point -->
+              <input
+                id="amount"
+                name="amount"
+                type="text"
+                inputmode="decimal"
+                class="form-control"
+                placeholder="{{ _('eg. 49,90') }}"
+                autocomplete="off"
+                pattern="^\s*\d{1,9}([.,]\d{1,2})?\s*$"
+                required>
               <label for="amount">{{ _('Amount') }}</label>
-              <div class="invalid-feedback">{{ _('Amount') }}.</div>
+              <div class="invalid-feedback">
+                {{ _('Please enter an amount such as 49.90') }}
+              </div>
             </div>
           </div>
 
+          <!-- Supplier / Company -->
           <div class="input-group mb-3">
             <span class="input-group-text"><i class="bi bi-building"></i></span>
             <div class="form-floating flex-grow-1">
@@ -259,12 +300,13 @@
             </div>
           </div>
 
+          <!-- Link -->
           <div class="input-group mb-3">
-            <span class="input-group-text"><i class="bi bi-chat-quote"></i></span>
+            <span class="input-group-text"><i class="bi bi-link-45deg"></i></span>
             <div class="form-floating flex-grow-1">
-              <input type="text" name="justification" rows="3" inputmode="text" class="form-control"
-                placeholder="{{ _('Why is the payment request necessary?') }}?" value="">
-                <label for="justification">{{ _('Justification') }}</label>
+              <input type="text" name="link"  inputmode="text" class="form-control"
+                placeholder="{{ _('Link (optional)') }}" value="">
+                <label for="link">{{ _('Link (optional)') }}</label>
             </div>
           </div>
 

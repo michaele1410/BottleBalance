@@ -105,7 +105,7 @@ def send_new_request_notifications(request_id: int, approver_emails: list[str]) 
     subject = _('New payment request #%(id)d', id=request_id)
     body = _(
         "Hello,\n\n"
-        "A new payment request (#%(id)d) has just been created.\n"
+        "a new payment request (#%(id)d) has just been created.\n"
         "For review/approval:\n%(link)s\n\n"
         "Best regards, %(app)s",
         id=request_id,

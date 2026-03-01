@@ -22,6 +22,7 @@
 
       </div>
         {% if payment_request.state not in ['approved', 'completed', 'rejected', 'withdrawn'] and approvals_done == 0 %}
+        <!-- Requestor -->
         <div class="input-group mb-3">
           <span class="input-group-text"><i class="bi bi-person"></i></span>
           <div class="form-floating flex-grow-1">
@@ -31,6 +32,7 @@
           </div>
         </div>
 
+        <!-- Date -->
         <div class="input-group mb-3">
           <span class="input-group-text"><i class="bi bi-calendar"></i></span>
           <div class="form-floating flex-grow-1">
@@ -41,61 +43,110 @@
         </div>
 
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <!-- Paragraph -->
         <div class="input-group mb-3">
           <span class="input-group-text"><i class="bi bi-text-paragraph"></i></span>
           <div class="form-floating flex-grow-1">
             <input type="text" name="paragraph"  inputmode="text" class="form-control"
               placeholder="{{ _('Paragraph') }}" value="{{ payment_request.paragraph or '' }}">
-              <label for="paragraph">{{ _('Paragraph') }}</label>
+              <label for="paragraph">{{ _('Paragraph (optional)') }}</label>
           </div>
         </div>
 
+        <!-- Purpose -->
         <div class="input-group mb-3">
           <span class="input-group-text"><i class="bi bi-chat-text"></i></span>
           <div class="form-floating flex-grow-1">
             <input type="text" name="purpose"  inputmode="text" class="form-control"
-              placeholder="{{ _('Purpose') }}" value="{{ payment_request.purpose or '' }}">
+              placeholder="{{ _('Purpose') }}" value="{{ payment_request.purpose or '' }}" required>
               <label for="purpose">{{ _('Purpose') }}</label>
+               <div class="invalid-feedback">
+                {{ _('Please enter a purpose') }}
+              </div>
           </div>
         </div>
 
+        <!-- Justification -->
+         <div class="input-group mb-3">
+          <span class="input-group-text"><i class="bi bi-chat-quote"></i></span>
+          <div class="form-floating flex-grow-1">
+            <input type="text" name="justification"  inputmode="text" class="form-control"
+              placeholder="{{ _('Justification') }}" rows="3" value="{{ payment_request.justification or '' }}" >
+              <label for="justification">{{ _('Justification (optional)') }}</label>
+          </div>
+        </div>
+
+        <!-- Amount -->
         <div class="input-group mb-3">
           <span class="input-group-text"><i class="bi bi-wallet2"></i></span>
           <div class="form-floating flex-grow-1">
             <input type="number" name="amount"  inputmode="decimal" inputmode="decimal" step="0.01" class="form-control"
-              placeholder="0.00" value="{{ payment_request.amount or '' }}" autocomplete="off">
+              placeholder="0.00" value="{{ payment_request.amount or '' }}" autocomplete="off" required>
               <label for="amount">{{ _('Amount') }}</label>
+              <div class="invalid-feedback">
+                {{ _('Please enter an amount such as 49.90') }}
+              </div>
           </div>
         </div>
 
+        <!-- Supplier / Company-->
         <div class="input-group mb-3">
           <span class="input-group-text"><i class="bi bi-building"></i></span>
           <div class="form-floating flex-grow-1">
             <input type="text" name="supplier"  inputmode="text" class="form-control"
               placeholder="{{ _('Supplier') }}" value="{{ payment_request.supplier or '' }}">
-              <label for="supplier">{{ _('Supplier') }}</label>
+              <label for="supplier">{{ _('Supplier (optional)') }}</label>
           </div>
         </div>
 
-         <div class="input-group mb-3">
-          <span class="input-group-text"><i class="bi bi-chat-quote"></i></span>
+        <!-- Link -->
+        <div class="input-group mb-3">
+          <span class="input-group-text"><i class="bi bi-link-45deg"></i></span>
+
           <div class="form-floating flex-grow-1">
-            <input type="text" name="justification"  inputmode="text" class="form-control"
-              placeholder="{{ _('Justification') }}" rows="3" value="{{ payment_request.justification or '' }}">
-              <label for="justification">{{ _('Justification') }}</label>
+            <input
+              type="url"
+              name="link"
+              id="link"
+              class="form-control"
+              placeholder="{{ _('Link (optional)') }}"
+              value="{{ payment_request.link or '' }}"
+              inputmode="url"
+              pattern="https?://.+"
+            >
+            <label for="link">{{ _('Link (optional)') }}</label>
+            <div class="invalid-feedback">
+              {{ _('Please enter a valid URL with http(s)://.') }}
+            </div>
           </div>
+
+          <button
+            type="button"
+            id="openLinkBtn"
+            class="btn btn-outline-primary"
+            disabled
+            title="{{ _('Open link') }}"
+          >
+            <i class="bi bi-box-arrow-up-right"></i>
+            <span class="d-none d-sm-inline">{{ _('Open') }}</span>
+          </button>
         </div>
 
+        <!-- ELSE READONYL-->
         {% else %}
-          <div class="input-group mb-3">
+        <!-- Requestor -->  
+        <div class="input-group mb-3">
           <span class="input-group-text"><i class="bi bi-person"></i></span>
           <div class="form-floating flex-grow-1">
             <input type="text" name="requestor"  inputmode="text" class="form-control"
-              placeholder="{{ _('Requestor') }}" value="{{ payment_request.requestor or '' }}" readonly>
+              placeholder="{{ _('Requestor') }}" value="{{ payment_request.requestor or '' }}" required>
               <label for="requestor">{{ _('Requestor') }}</label>
+              <div class="invalid-feedback">
+                {{ _('Please enter a requestor') }}
           </div>
         </div>
 
+        <!-- Date -->
         <div class="input-group mb-3">
           <span class="input-group-text"><i class="bi bi-calendar"></i></span>
           <div class="form-floating flex-grow-1">
@@ -107,15 +158,17 @@
 
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
+        <!-- Paragraph -->
         <div class="input-group mb-3">
           <span class="input-group-text"><i class="bi bi-text-paragraph"></i></span>
           <div class="form-floating flex-grow-1">
             <input type="text" name="paragraph"  inputmode="text" class="form-control"
               placeholder="{{ _('Paragraph') }}" value="{{ payment_request.paragraph or '' }}" readonly>
-              <label for="paragraph">{{ _('Paragraph') }}</label>
+              <label for="paragraph">{{ _('Paragraph (optional)') }}</label>
           </div>
         </div>
         
+        <!-- Purpose -->
         <div class="input-group mb-3">
           <span class="input-group-text"><i class="bi bi-chat-text"></i></span>
           <div class="form-floating flex-grow-1">
@@ -125,6 +178,17 @@
           </div>
         </div>
 
+        <!-- Justification -->
+         <div class="input-group mb-3">
+          <span class="input-group-text"><i class="bi bi-chat-quote"></i></span>
+          <div class="form-floating flex-grow-1">
+            <input type="text" name="justification"  inputmode="text" class="form-control"
+              placeholder="{{ _('Justification') }}" value="{{ payment_request.justification or '' }}" readonly>
+              <label for="justification">{{ _('Justification (optional)') }}</label>
+          </div>
+        </div>
+
+        <!-- Amount -->
         <div class="input-group mb-3">
           <span class="input-group-text"><i class="bi bi-cash"></i></span>
           <div class="form-floating flex-grow-1">
@@ -134,22 +198,47 @@
           </div>
         </div>
 
+        <!-- Supplier / Company-->
         <div class="input-group mb-3">
           <span class="input-group-text"><i class="bi bi-building"></i></span>
           <div class="form-floating flex-grow-1">
             <input type="text" name="supplier"  inputmode="text" class="form-control"
               placeholder="{{ _('Supplier') }}" value="{{ payment_request.supplier or '' }}" readonly>
-              <label for="supplier">{{ _('Supplier') }}</label>
+              <label for="supplier">{{ _('Supplier (optional)') }}</label>
           </div>
         </div>
 
-         <div class="input-group mb-3">
-          <span class="input-group-text"><i class="bi bi-chat-quote"></i></span>
+        <!-- Link -->
+        <div class="input-group mb-3">
+          <span class="input-group-text"><i class="bi bi-link-45deg"></i></span>
+
           <div class="form-floating flex-grow-1">
-            <input type="text" name="justification"  inputmode="text" class="form-control"
-              placeholder="{{ _('Justification') }}" value="{{ payment_request.justification or '' }}" readonly>
-              <label for="justification">{{ _('Justification') }}</label>
+            <input
+              type="url"
+              name="link"
+              id="link"
+              class="form-control"
+              placeholder="{{ _('Link') }}"
+              value="{{ payment_request.link or '' }}"
+              inputmode="url"
+              pattern="https?://.+"
+              readonly>
+            <label for="link">{{ _('Link (optional)') }}</label>
+            <div class="invalid-feedback">
+              {{ _('Bitte eine gültige URL mit http(s):// eingeben.') }}
+            </div>
           </div>
+
+          <button
+            type="button"
+            id="openLinkBtn"
+            class="btn btn-outline-primary"
+            disabled
+            title="{{ _('Open link') }}"
+          >
+            <i class="bi bi-box-arrow-up-right"></i>
+            <span class="d-none d-sm-inline">{{ _('Open') }}</span>
+          </button>
         </div>
 
         {% endif %}
@@ -262,4 +351,43 @@
     </table>
   </div>
 </div>
+
+
+<!-- LINK -->
+<script>
+  // Aktiviert/Deaktiviert den Button und öffnet den Link
+  (function () {
+    const input = document.getElementById('link');
+    const btn = document.getElementById('openLinkBtn');
+
+    function isValidUrl(value) {
+      if (!value) return false;
+      // Erlaubt http/https, verhindert javascript:-URIs
+      try {
+        const u = new URL(value);
+        return u.protocol === 'http:' || u.protocol === 'https:';
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function syncButtonState() {
+      btn.disabled = !isValidUrl(input.value.trim());
+    }
+
+    // Initialzustand (z. B. beim Editieren)
+    syncButtonState();
+
+    // Live-Validierung
+    input.addEventListener('input', syncButtonState);
+
+    // Klick öffnet den Link
+    btn.addEventListener('click', () => {
+      const url = input.value.trim();
+      if (isValidUrl(url)) {
+        window.open(url, '_blank', 'noopener,noreferrer');
+      }
+    });
+  })();
+</script>
 {% endblock %}

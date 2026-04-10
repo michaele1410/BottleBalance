@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-02-27 12:56+0100\n"
+"POT-Creation-Date: 2026-04-10 10:59+0200\n"
 "PO-Revision-Date: 2026-01-13 08:55+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -28,11 +28,11 @@ msgstr ""
 msgid "Error during database dump: %(error)s"
 msgstr ""
 
-#: admin.py:73 app.py:1938
+#: admin.py:73 app.py:1976
 msgid "App title cannot be empty."
 msgstr ""
 
-#: admin.py:77 app.py:1941
+#: admin.py:77 app.py:1979
 msgid "Application title updated."
 msgstr ""
 
@@ -264,7 +264,7 @@ msgstr ""
 msgid "Language changed."
 msgstr ""
 
-#: app.py:1792 app.py:1953 mail.py:35 mail.py:99
+#: app.py:1792 app.py:1991 mail.py:35 mail.py:99
 msgid "SMTP configuration incomplete."
 msgstr ""
 
@@ -289,50 +289,64 @@ msgstr ""
 msgid "Database dump successfully generated."
 msgstr ""
 
-#: app.py:1861
+#: app.py:1880
+#, python-format
+msgid "Database sequences fixed: %(tables)s"
+msgstr ""
+
+#: app.py:1882
+msgid "No sequences to fix found."
+msgstr ""
+
+#: app.py:1884
+#, python-format
+msgid "Database maintenance failed: %(error)s"
+msgstr ""
+
+#: app.py:1899
 msgid "Updated categories."
 msgstr ""
 
-#: app.py:1863
+#: app.py:1901
 #, python-format
 msgid "Error saving categories: %(error)s"
 msgstr ""
 
-#: app.py:1869
+#: app.py:1907
 msgid "Please select an image file."
 msgstr ""
 
-#: app.py:1883
+#: app.py:1921
 msgid "Invalid file format. Permitted formats: SVG, PNG, JPG, WEBP."
 msgstr ""
 
-#: app.py:1902
+#: app.py:1940
 msgid "Logo successfully uploaded."
 msgstr ""
 
-#: app.py:1904
+#: app.py:1942
 #, python-format
 msgid "Upload failed: %(error)s"
 msgstr ""
 
-#: app.py:1923
+#: app.py:1961
 msgid "Custom logo removed. Fallback to default logo active."
 msgstr ""
 
-#: app.py:1927
+#: app.py:1965
 #, python-format
 msgid "Could not delete file: %(msg)s"
 msgstr ""
 
-#: app.py:1930
+#: app.py:1968
 msgid "No logo found."
 msgstr ""
 
-#: app.py:1946
+#: app.py:1984
 msgid "Unknown action."
 msgstr ""
 
-#: app.py:1955 mail.py:101
+#: app.py:1993 mail.py:101
 #, python-format
 msgid "SMTP configuration detected for host %(host)s:%(port)s."
 msgstr ""
@@ -879,7 +893,7 @@ msgstr ""
 msgid "One option per line ..."
 msgstr ""
 
-#: templates/admin_tools.html:35 templates/admin_tools.html:117
+#: templates/admin_tools.html:35 templates/admin_tools.html:140
 #: templates/edit.html:104 templates/edit_user.html:67
 #: templates/payment_authorization_detail.html:14 templates/profile.html:69
 #: templates/profile.html:191 templates/reset.html:39
@@ -920,53 +934,75 @@ msgstr ""
 msgid "Create & download dump"
 msgstr ""
 
-#: templates/admin_tools.html:105 templates/admin_tools.html:112
+#: templates/admin_tools.html:105
+msgid "Database maintenance"
+msgstr ""
+
+#: templates/admin_tools.html:109
+msgid ""
+"Fix database sequence issues that may occur after data manipulation. "
+"Resets auto-increment sequences to match current data."
+msgstr ""
+
+#: templates/admin_tools.html:114
+msgid "Fix database sequences now?"
+msgstr ""
+
+#: templates/admin_tools.html:115
+msgid "Fix sequences"
+msgstr ""
+
+#: templates/admin_tools.html:119
+msgid "Use this if you encounter duplicate key errors when inserting data."
+msgstr ""
+
+#: templates/admin_tools.html:128 templates/admin_tools.html:135
 msgid "Application title"
 msgstr "BottleBalance"
 
-#: templates/admin_tools.html:106
+#: templates/admin_tools.html:129
 msgid "Shown in titles, exports, emails, and 2FA issuer."
 msgstr ""
 
-#: templates/admin_tools.html:129
+#: templates/admin_tools.html:152
 msgid "Branding: Your own logo"
 msgstr ""
 
-#: templates/admin_tools.html:130
+#: templates/admin_tools.html:153
 msgid "SVG, PNG, JPG, WEBP – recommended: SVG or PNG"
 msgstr ""
 
-#: templates/admin_tools.html:135
+#: templates/admin_tools.html:158
 msgid "Current logo (preview)"
 msgstr ""
 
-#: templates/admin_tools.html:140
+#: templates/admin_tools.html:163
 msgid "If no custom logo is stored, the default logo will be used."
 msgstr ""
 
-#: templates/admin_tools.html:151
+#: templates/admin_tools.html:174
 msgid "Select logo file"
 msgstr ""
 
-#: templates/admin_tools.html:157 templates/edit.html:118
+#: templates/admin_tools.html:180 templates/edit.html:118
 #: templates/index.html:138 templates/index.html:547
 #: templates/payment_authorization_detail.html:290
 msgid "Upload"
 msgstr ""
 
-#: templates/admin_tools.html:162
+#: templates/admin_tools.html:185
 msgid "Note: The logo is stored on the server side under uploads/branding/. "
 msgstr ""
 
-#: templates/admin_tools.html:163
+#: templates/admin_tools.html:186
 msgid "Cache is updated automatically."
 msgstr ""
 
-#: templates/admin_tools.html:172
+#: templates/admin_tools.html:195
 msgid "Remove your own logo?"
 msgstr ""
 
-#: templates/admin_tools.html:173
+#: templates/admin_tools.html:196
 msgid "Remove"
 msgstr ""
 
@@ -1563,6 +1599,7 @@ msgid "Purpose"
 msgstr "Procurement"
 
 #: templates/payment_authorization.html:256
+#: templates/payment_authorization_detail.html:64
 msgid "Please enter a purpose"
 msgstr ""
 
@@ -1571,11 +1608,9 @@ msgid "Why is the procurement necessary?"
 msgstr ""
 
 #: templates/payment_authorization.html:267
-#: templates/payment_authorization_detail.html:71
-#: templates/payment_authorization_detail.html:72
-#: templates/payment_authorization_detail.html:186
+#: templates/payment_authorization_detail.html:75
 #: templates/payment_authorization_detail.html:187
-msgid "Justification"
+msgid "Justification (optional)"
 msgstr ""
 
 #: templates/payment_authorization.html:282
@@ -1625,7 +1660,8 @@ msgid "Paragraph"
 msgstr ""
 
 #: templates/payment_authorization_detail.html:74
-msgid "Please enter a justification"
+#: templates/payment_authorization_detail.html:186
+msgid "Justification"
 msgstr ""
 
 #: templates/payment_authorization_detail.html:97
@@ -1634,8 +1670,7 @@ msgid "Supplier"
 msgstr ""
 
 #: templates/payment_authorization_detail.html:119
-#: templates/payment_authorization_detail.html:228
-msgid "Bitte eine gültige URL mit http(s):// eingeben."
+msgid "Please enter a valid URL with http(s)://."
 msgstr ""
 
 #: templates/payment_authorization_detail.html:128
@@ -1645,6 +1680,10 @@ msgstr ""
 
 #: templates/payment_authorization_detail.html:221
 msgid "Link"
+msgstr ""
+
+#: templates/payment_authorization_detail.html:228
+msgid "Please enter a valid URL starting with http(s)://"
 msgstr ""
 
 #: templates/payment_authorization_detail.html:255
@@ -1975,3 +2014,5 @@ msgstr ""
 #~ msgid "Why is the procurement request necessary?"
 #~ msgstr ""
 
+#~ msgid "Please enter a justification"
+#~ msgstr ""

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-02-27 13:10+0100\n"
+"POT-Creation-Date: 2026-04-10 10:59+0200\n"
 "PO-Revision-Date: 2026-01-13 08:55+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: de\n"
@@ -28,11 +28,11 @@ msgstr "Datenbank-Dump erfolgreich erstellt."
 msgid "Error during database dump: %(error)s"
 msgstr "Fehler beim Datenbank-Dump: %(error)s"
 
-#: admin.py:73 app.py:1938
+#: admin.py:73 app.py:1976
 msgid "App title cannot be empty."
 msgstr "Der Titel der App darf nicht leer sein.."
 
-#: admin.py:77 app.py:1941
+#: admin.py:77 app.py:1979
 msgid "Application title updated."
 msgstr "Anwendungstitel aktualisiert."
 
@@ -275,7 +275,7 @@ msgstr "Angewandte Filter:"
 msgid "Language changed."
 msgstr "Sprache geändert."
 
-#: app.py:1792 app.py:1953 mail.py:35 mail.py:99
+#: app.py:1792 app.py:1991 mail.py:35 mail.py:99
 msgid "SMTP configuration incomplete."
 msgstr "SMTP-Konfiguration unvollständig."
 
@@ -300,50 +300,64 @@ msgstr "SMTP-Test fehlgeschlagen: "
 msgid "Database dump successfully generated."
 msgstr "Datenbank-Dump erfolgreich erstellt."
 
-#: app.py:1861
+#: app.py:1880
+#, python-format
+msgid "Database sequences fixed: %(tables)s"
+msgstr "Datenbanksequenzen korrigiert: %(tables)s"
+
+#: app.py:1882
+msgid "No sequences to fix found."
+msgstr "Es wurden keine zu korrigierenden Sequenzen gefunden."
+
+#: app.py:1884
+#, python-format
+msgid "Database maintenance failed: %(error)s"
+msgstr "Die Datenbankwartung ist fehlgeschlagen: %(error)s"
+
+#: app.py:1899
 msgid "Updated categories."
 msgstr "Kategorien aktualisiert."
 
-#: app.py:1863
+#: app.py:1901
 #, python-format
 msgid "Error saving categories: %(error)s"
 msgstr "Fehler beim Speichern von Kategorien: %(error)s"
 
-#: app.py:1869
+#: app.py:1907
 msgid "Please select an image file."
 msgstr "Bitte wählen Sie eine Bilddatei aus."
 
-#: app.py:1883
+#: app.py:1921
 msgid "Invalid file format. Permitted formats: SVG, PNG, JPG, WEBP."
 msgstr "Ungültiges Dateiformat. Zulässige Formate: SVG, PNG, JPG, WEBP."
 
-#: app.py:1902
+#: app.py:1940
 msgid "Logo successfully uploaded."
 msgstr "Logo erfolgreich hochgeladen."
 
-#: app.py:1904
+#: app.py:1942
 #, python-format
 msgid "Upload failed: %(error)s"
 msgstr "Upload fehlgeschlagen: %(error)s"
 
-#: app.py:1923
+#: app.py:1961
 msgid "Custom logo removed. Fallback to default logo active."
 msgstr "Benutzerdefiniertes Logo entfernt. Standardlogo aktiv."
 
-#: app.py:1927
+#: app.py:1965
 #, python-format
 msgid "Could not delete file: %(msg)s"
 msgstr "Datei konnte nicht gelöscht werden: %(msg)s"
 
-#: app.py:1930
+#: app.py:1968
 msgid "No logo found."
 msgstr "Kein Logo gefunden."
 
-#: app.py:1946
+#: app.py:1984
 msgid "Unknown action."
 msgstr "Unbekannte Aktion."
 
-#: app.py:1955 mail.py:101
+#: app.py:1993 mail.py:101
 #, python-format
 msgid "SMTP configuration detected for host %(host)s:%(port)s."
 msgstr "SMTP-Konfiguration für Host %(host)s:%(port)s erkannt."
@@ -939,7 +953,7 @@ msgstr "Kategorien ersetzen"
 msgid "One option per line ..."
 msgstr "Eine Option pro Zeile ..."
 
-#: templates/admin_tools.html:35 templates/admin_tools.html:117
+#: templates/admin_tools.html:35 templates/admin_tools.html:140
 #: templates/edit.html:104 templates/edit_user.html:67
 #: templates/payment_authorization_detail.html:14 templates/profile.html:69
 #: templates/profile.html:191 templates/reset.html:39
@@ -982,57 +996,81 @@ msgstr "Jetzt Dump erstellen?"
 msgid "Create & download dump"
 msgstr "Erstellen und Herunterladen von Dumps"
 
-#: templates/admin_tools.html:105 templates/admin_tools.html:112
+#: templates/admin_tools.html:105
+msgid "Database maintenance"
+msgstr "Datenbankwartung"
+
+#: templates/admin_tools.html:109
+msgid ""
+"Fix database sequence issues that may occur after data manipulation. "
+"Resets auto-increment sequences to match current data."
+msgstr ""
+
+#: templates/admin_tools.html:114
+msgid "Fix database sequences now?"
+"Behebung von Problemen mit Datenbanksequenzen, die nach der Datenbearbeitung auftreten können. "
+"Setzt Auto-Inkrement-Sequenzen zurück, um sie an die aktuellen Daten anzupassen."
+msgstr ""
+
+#: templates/admin_tools.html:115
+msgid "Fix sequences"
+msgstr "Sequenzen korrigieren"
+
+#: templates/admin_tools.html:119
+msgid "Use this if you encounter duplicate key errors when inserting data."
+msgstr "Verwenden Sie diese Option, wenn beim Einfügen von Daten Fehler wegen doppelter Schlüssel auftreten."
+
+#: templates/admin_tools.html:128 templates/admin_tools.html:135
 msgid "Application title"
 msgstr "BottleBalance"
 
-#: templates/admin_tools.html:106
+#: templates/admin_tools.html:129
 msgid "Shown in titles, exports, emails, and 2FA issuer."
 msgstr "Angezeigt in Titeln, Exporten, E-Mails und 2FA-Aussteller."
 
-#: templates/admin_tools.html:129
+#: templates/admin_tools.html:152
 msgid "Branding: Your own logo"
 msgstr "Branding: Ihr eigenes Logo"
 
-#: templates/admin_tools.html:130
+#: templates/admin_tools.html:153
 msgid "SVG, PNG, JPG, WEBP – recommended: SVG or PNG"
 msgstr "SVG, PNG, JPG, WEBP – empfohlen: SVG oder PNG"
 
-#: templates/admin_tools.html:135
+#: templates/admin_tools.html:158
 msgid "Current logo (preview)"
 msgstr "Aktuelles Logo (Vorschau)"
 
-#: templates/admin_tools.html:140
+#: templates/admin_tools.html:163
 msgid "If no custom logo is stored, the default logo will be used."
 msgstr ""
 "Wenn kein benutzerdefiniertes Logo gespeichert ist, wird das Standardlogo"
 " verwendet."
 
-#: templates/admin_tools.html:151
+#: templates/admin_tools.html:174
 msgid "Select logo file"
 msgstr "Logo-Datei auswählen"
 
-#: templates/admin_tools.html:157 templates/edit.html:118
+#: templates/admin_tools.html:180 templates/edit.html:118
 #: templates/index.html:138 templates/index.html:547
 #: templates/payment_authorization_detail.html:290
 msgid "Upload"
 msgstr "Hochladen"
 
-#: templates/admin_tools.html:162
+#: templates/admin_tools.html:185
 msgid "Note: The logo is stored on the server side under uploads/branding/. "
 msgstr ""
 "Hinweis: Das Logo wird auf der Serverseite unter uploads/branding/ "
 "gespeichert. "
 
-#: templates/admin_tools.html:163
+#: templates/admin_tools.html:186
 msgid "Cache is updated automatically."
 msgstr "Der Cache wird automatisch aktualisiert."
 
-#: templates/admin_tools.html:172
+#: templates/admin_tools.html:195
 msgid "Remove your own logo?"
 msgstr "Ihr eigenes Logo entfernen?"
 
-#: templates/admin_tools.html:173
+#: templates/admin_tools.html:196
 msgid "Remove"
 msgstr "Entfernen"
 
@@ -1645,6 +1683,7 @@ msgstr "Warum ist die Anschaffung notwendig?"
 
 #: templates/payment_authorization.html:267
 #: templates/payment_authorization_detail.html:75
+#: templates/payment_authorization_detail.html:187
 msgid "Justification (optional)"
 msgstr "Begründung (optional)"
 
@@ -1696,7 +1735,6 @@ msgstr "Paragraph"
 
 #: templates/payment_authorization_detail.html:74
 #: templates/payment_authorization_detail.html:186
-#: templates/payment_authorization_detail.html:187
 #, fuzzy
 msgid "Justification"
 msgstr "Begründung"
@@ -1720,8 +1758,8 @@ msgid "Link"
 msgstr "URL"
 
 #: templates/payment_authorization_detail.html:228
-msgid "Bitte eine gültige URL mit http(s):// eingeben."
-msgstr ""
+msgid "Please enter a valid URL starting with http(s)://"
+msgstr "Bitte eine gültige URL mit http(s):// eingeben."
 
 #: templates/payment_authorization_detail.html:255
 msgid "Approvals"
@@ -2064,4 +2102,3 @@ msgstr "Ein unerwarteter Fehler ist aufgetreten."
 
 #~ msgid "Please enter a justification"
 #~ msgstr "Bitte geben Sie einen Begründung ein."
-

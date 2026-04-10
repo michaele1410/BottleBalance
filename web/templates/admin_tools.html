@@ -98,6 +98,29 @@
           </div>
         </div>
       </div>
+
+      <div class="col-md-6">
+        <div class="card shadow-sm">
+          <div class="card-header">
+            {{ _('Database maintenance') }}
+          </div>
+          <div class="card-body">
+            <p class="text-muted">
+              {{ _('Fix database sequence issues that may occur after data manipulation. Resets auto-increment sequences to match current data.') }}
+            </p>
+            <form method="post" action="{{ url_for('admin_tools') }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="hidden" name="action" value="db_maintenance">
+              <button type="submit" class="btn btn-primary" onclick="return confirm('{{ _('Fix database sequences now?') }}')">
+                <i class="bi bi-tools me-1"></i>{{ _('Fix sequences') }}
+              </button>
+            </form>
+            <small class="text-muted d-block mt-2">
+              {{ _('Use this if you encounter duplicate key errors when inserting data.') }}
+            </small>
+          </div>
+        </div>
+      </div>
       
       <div class="col-12">
         <div class="card shadow-sm">

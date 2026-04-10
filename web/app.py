@@ -1846,7 +1846,45 @@ def admin_tools():
                 flash(_('Error during database dump: %(error)s', error=str(e)), "error")
                 log_action(session.get('user_id'), 'db:export:error', None, f'Dump failed: {e}')
 
-        # 3) Override category
+        # 3) Database maintenance - reset sequences
+        elif action == "db_maintenance":
+            try:
+                with engine.begin() as conn:
+                    # Get all tables with serial/bigserial columns
+                    tables = conn.execute(text("""
+                        SELECT tablename FROM pg_tables 
+                        WHERE schemaname = 'public'
+                    """)).scalars().all()
+                    
+                    fixed_tables = []
+                    for table_name in tables:
+                        # Find sequence for this table's id column
+                        seq_name = f"{table_name}_id_seq"
+                        
+                        # Check if sequence exists
+                        seq_exists = conn.execute(text("""
+                            SELECT 1 FROM pg_sequences 
+                            WHERE sequencename = :seq
+                        """), {'seq': seq_name}).scalar()
+                        
+                        if seq_exists:
+                            # Get max id from table
+                            max_id = conn.execute(text(f"SELECT COALESCE(MAX(id), 0) FROM {table_name}")).scalar()
+                            
+                            # Reset sequence to max_id + 1
+                            conn.execute(text(f"SELECT setval('{seq_name}', {max_id + 1})"))
+                            fixed_tables.append(table_name)
+                    
+                    log_action(session.get('user_id'), 'db:maintenance', None, f'Reset {len(fixed_tables)} sequences')
+                    if fixed_tables:
+                        flash(_("Database sequences fixed: %(tables)s", tables=", ".join(fixed_tables)), "success")
+                    else:
+                        flash(_("No sequences to fix found."), "info")
+            except Exception as e:
+                flash(_('Database maintenance failed: %(error)s', error=str(e)), "error")
+                log_action(session.get('user_id'), 'db:maintenance:error', None, f'Maintenance failed: {e}')
+
+        # 4) Override category
         elif action == "update_categories":
             raw = request.form.get("options") or ""
             lines = [line.strip() for line in raw.splitlines() if line.strip()]
@@ -1862,7 +1900,7 @@ def admin_tools():
             except Exception as e:
                 flash(_("Error saving categories: %(error)s", error=str(e)), "error")
 
-        # 4) Upload branding logo
+        # 5) Upload branding logo
         elif action == "branding_upload":
             file = request.files.get("logo")
             if not file or file.filename == "":
@@ -1931,7 +1969,7 @@ def admin_tools():
 
             return redirect(url_for("admin_tools"))
         
-        # 5) Set application title
+        # 6) Set application title
         elif action == "set_app_title":
             new_title = (request.form.get("app_title") or "").strip()
             if not new_title:

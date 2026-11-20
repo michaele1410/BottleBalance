@@ -90,7 +90,7 @@ def payment_requests():
             z.date, z.paragraph, z.purpose, z.amount,
             z.supplier, z.justification, z.state, z.read_only,
             z.created_at, z.updated_at, z.link,
-            z.approver_snapshot,
+            z.approver_snapshot, z.is_addendum,
             COALESCE(a.approvals_done, 0) AS approvals_done
 
             FROM payment_requests z
@@ -145,7 +145,15 @@ def payment_requests():
                 'can_withdraw_approval': is_approver and r['state'] in ('pending','approved') and approved_by_me,
                 'can_on_hold': is_approver and r['state'] == 'pending',
                 'can_continue': is_approver and r['state'] == 'on_hold',
-                'can_complete': is_approver and r['state'] == 'approved',
+                'can_complete': (
+                    (is_approver and r['state'] == 'approved')
+                    or (
+                        bool(r['is_addendum'])
+                        and user
+                        and user['id'] == r['requestor_id']
+                        and r['state'] == 'pending'
+                    )
+                ),
                 'can_delete': is_approver,
                 'can_reject': is_approver and r['state'] in ('pending', 'on_hold'),
                 'can_withdraw': (user and user['id'] == r['requestor_id']
@@ -250,15 +258,35 @@ def on_hold_payment_request(request_id):
 @require_csrf
 def complete_payment_request(request_id):
     user = current_user()
-    _require_approver(user)
     with engine.begin() as conn:
-        curr = conn.execute(text("SELECT state FROM payment_requests WHERE id=:id"), {'id': request_id}).scalar_one_or_none()
-        if curr != 'approved':
+        payment_request = conn.execute(text("""
+            SELECT state, requestor_id, is_addendum
+            FROM payment_requests
+            WHERE id=:id
+        """), {'id': request_id}).mappings().first()
+        if not payment_request:
+            abort(404)
+
+        addendum_completion = (
+            bool(payment_request['is_addendum'])
+            and user['id'] == payment_request['requestor_id']
+            and payment_request['state'] == 'pending'
+        )
+        if not addendum_completion:
+            _require_approver(user)
+
+        if payment_request['state'] != 'approved' and not addendum_completion:
             flash(_('The payment request can only be completed after approval.'), 'warning')
             return redirect(url_for('payment_routes.payment_requests'))
         conn.execute(text("UPDATE payment_requests SET state='completed', updated_at=NOW() WHERE id=:id"), {'id': request_id})
-        conn.execute(text("INSERT INTO payment_requests_audit (request_id, user_id, action, timestamp) VALUES (:aid, :uid, 'completed', NOW())"),
-                     {'aid': request_id, 'uid': user['id']})
+        conn.execute(text("""
+            INSERT INTO payment_requests_audit (request_id, user_id, action, timestamp, detail)
+            VALUES (:aid, :uid, 'completed', NOW(), :detail)
+        """), {
+            'aid': request_id,
+            'uid': user['id'],
+            'detail': 'Automatische Freigabe durch Nachtrag' if addendum_completion else None
+        })
     if (email := get_payment_request_email(request_id)):
         send_status_email(email, request_id, 'completed', cc_approvers=True)
     flash(_('Payment request has been completed.'), 'success')
@@ -969,6 +997,7 @@ def payment_requests_request():
     supplier = (request.form.get('supplier') or '').strip()
     link = (request.form.get('link') or '').strip()
     justification = (request.form.get('justification') or '').strip()
+    is_addendum = request.form.get('is_addendum') == 'true'
 
     # Validate entries
     if not date_str:
@@ -997,10 +1026,10 @@ def payment_requests_request():
         res = conn.execute(text("""
             INSERT INTO payment_requests (
                 requestor_id, date, paragraph, purpose, amount,
-                supplier, link, justification, state, read_only, created_at, updated_at
+                supplier, link, justification, state, read_only, is_addendum, created_at, updated_at
             ) VALUES (
                 :uid, :date, :para, :purpose, :amount,
-                :supplier, :link, :justification, 'pending', TRUE, NOW(), NOW()
+                :supplier, :link, :justification, 'pending', TRUE, :is_addendum, NOW(), NOW()
             ) RETURNING id
         """), {
             'uid': user['id'],
@@ -1010,7 +1039,8 @@ def payment_requests_request():
             'amount': str(amount),
             'supplier': supplier,
             'link': link,
-            'justification': justification
+            'justification': justification,
+            'is_addendum': is_addendum
         })
         request_id = res.scalar_one()
 

@@ -1533,6 +1533,10 @@ msgstr ""
 msgid "Complete"
 msgstr ""
 
+#: templates/payment_authorization.html
+msgid "Addendum"
+msgstr "Addendum"
+
 #: templates/payment_authorization.html:133
 #: templates/payment_authorization.html:137
 #: templates/payment_authorization.html:183

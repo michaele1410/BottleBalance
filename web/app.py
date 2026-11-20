@@ -428,6 +428,7 @@ CREATE TABLE IF NOT EXISTS payment_requests (
     link TEXT CHECK (link ~ '^(https?://).*'),
     state VARCHAR(20) DEFAULT 'pending',
     read_only BOOLEAN DEFAULT FALSE,
+    is_addendum BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
     approver_snapshot JSONB
@@ -524,6 +525,9 @@ def migrate_columns(conn):
     conn.execute(text(CREATE_TABLE_PAYMENT_REQUESTS_ATTACHMENTS))
     conn.execute(text(CREATE_TABLE_PAYMENT_REQUESTS_TRANSITIONS))
     conn.execute(text(CREATE_TABLE_SETTINGS))
+    conn.execute(text(
+        "ALTER TABLE payment_requests ADD COLUMN IF NOT EXISTS is_addendum BOOLEAN NOT NULL DEFAULT FALSE"
+    ))
 
     conn.execute(text(CREATE_INDEX_ENTRIES_DATE))
     conn.execute(text(CREATE_INDEX_ATTACHMENTS_TEMP))

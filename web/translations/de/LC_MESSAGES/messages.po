@@ -1605,7 +1605,11 @@ msgstr "Weiter"
 
 #: templates/payment_authorization.html:126
 msgid "Complete"
-msgstr "Abgeschlossen"
+msgstr "Abschließen"
+
+#: templates/payment_authorization.html
+msgid "Addendum"
+msgstr "Nachtrag"
 
 #: templates/payment_authorization.html:133
 #: templates/payment_authorization.html:137
